@@ -20,13 +20,15 @@ YY-Thunks（鸭船）,存在的目的就是抹平不同SP版本系统的差异�
 * 完全的开放代码，广泛的接受用户意见，希望大家能踊跃的 pull requests，为`鸭船`添砖加瓦。
 
 ## 2. 使用YY-Thunks
-1：将`YY-Thunks\objs` 文件夹复制到你的工程目录。
-2：【连接器】-【输入】-【附加依赖项】，添加`objs\$(PlatformShortName)\YY_Thunks_for_WinXP.obj`。
+1：将`YY-Thunks\objs` 文件夹复制到你的工程目录。<br/>
+2：【连接器】-【输入】-【附加依赖项】，添加`objs\$(PlatformShortName)\YY_Thunks_for_WinXP.obj`。<br/>
 3：重新编译代码。
 
 ## 3. YY-Thunks兼容性
 ### 3.1. 支持的编译器
-全平台ABI兼容，所有Visual Studio版本均支持（比如：VC6.0、VS2008、VS2010、VS2015、VS2017等等），所有运行库模式都支持（比如：`/MD`、`/MT`、`/MDd`、`/MTd`）。
+全平台ABI兼容。
+* 所有Visual Studio版本均支持（比如：VC6.0、VS2008、VS2010、VS2015、VS2017等等）。
+* 所有运行库模式都支持（比如：`/MD`、`/MT`、`/MDd`、`/MTd`）。
 
 ### 3.2. Thunks清单
 此表展示了YY-Thunks（鸭船）可以解决的函数不存在问题，欢迎大家扩充！
