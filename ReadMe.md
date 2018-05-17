@@ -20,7 +20,7 @@ YY-Thunks（鸭船）,存在的目的就是抹平不同SP版本系统的差异�
 * 完全的开放代码，广泛的接受用户意见，希望大家能踊跃的 pull requests，为`鸭船`添砖加瓦。
 
 ## 2. 使用YY-Thunks
-1：将`YY-Thunks\objs` 文件夹复制到你的工程目录。<br/>
+1：下载[YY-Thunks Binary](https://github.com/Chuyu-Team/YY-Thunks/releases)，然后解压到你的工程目录。<br/>
 2：【连接器】-【输入】-【附加依赖项】，添加`objs\$(PlatformShortName)\YY_Thunks_for_WinXP.obj`。<br/>
 3：重新编译代码。
 
