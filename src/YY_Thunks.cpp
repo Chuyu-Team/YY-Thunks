@@ -23,6 +23,7 @@
 
 
 #include "YY_Thunks.h"
+#include <Shlwapi.h>
 
 //dll 链接不一致
 #pragma warning(disable:4273)
@@ -223,5 +224,152 @@ IsWow64Message(
 _LCRT_DEFINE_IAT_SYMBOL(IsWow64Process, _0);
 
 #endif
+
+//Windows Vista, Windows Server 2008
+LSTATUS
+APIENTRY
+RegSetKeyValueW(
+	_In_ HKEY hKey,
+	_In_opt_ LPCWSTR lpSubKey,
+	_In_opt_ LPCWSTR lpValueName,
+	_In_ DWORD dwType,
+	_In_reads_bytes_opt_(cbData) LPCVOID lpData,
+	_In_ DWORD cbData
+	)
+{
+	//Empty?
+	if (lpSubKey == nullptr || *lpSubKey == L'\0')
+	{
+		return RegSetValueExW(hKey, lpValueName, 0, dwType, (const BYTE*)lpData, cbData);
+	}
+	else
+	{
+		HKEY hSubKey;
+		auto lStatus = RegCreateKeyExW(hKey, lpSubKey, 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hSubKey, nullptr);
+
+		if (lStatus == ERROR_SUCCESS)
+		{
+			lStatus = RegSetValueExW(hSubKey, lpValueName, 0, dwType, (const BYTE*)lpData, cbData);
+
+			RegCloseKey(hSubKey);
+		}
+
+		return lStatus;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(RegSetKeyValueW, _24);
+
+
+//Windows Vista, Windows Server 2008
+LSTATUS
+APIENTRY
+RegSetKeyValueA(
+	_In_ HKEY hKey,
+	_In_opt_ LPCSTR lpSubKey,
+	_In_opt_ LPCSTR lpValueName,
+	_In_ DWORD dwType,
+	_In_reads_bytes_opt_(cbData) LPCVOID lpData,
+	_In_ DWORD cbData
+	)
+{
+	//Empty?
+	if (lpSubKey == nullptr || *lpSubKey == '\0')
+	{
+		return RegSetValueExA(hKey, lpValueName, 0, dwType, (const BYTE*)lpData, cbData);
+	}
+	else
+	{
+		HKEY hSubKey;
+		auto lStatus = RegCreateKeyExA(hKey, lpSubKey, 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hSubKey, nullptr);
+
+		if (lStatus == ERROR_SUCCESS)
+		{
+			lStatus = RegSetValueExA(hSubKey, lpValueName, 0, dwType, (const BYTE*)lpData, cbData);
+
+			RegCloseKey(hSubKey);
+		}
+
+		return lStatus;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(RegSetKeyValueA, _24);
+
+
+//Windows Vista, Windows Server 2008
+LSTATUS
+APIENTRY
+RegDeleteKeyValueW(
+    _In_ HKEY hKey,
+    _In_opt_ LPCWSTR lpSubKey,
+    _In_opt_ LPCWSTR lpValueName
+    )
+{
+	HKEY hSubKey;
+	auto lStatus = RegOpenKeyExW(hKey, lpSubKey, 0, KEY_SET_VALUE, &hSubKey);
+
+	if (lStatus == ERROR_SUCCESS)
+	{
+		lStatus = RegDeleteValueW(hSubKey, lpValueName);
+		RegCloseKey(hSubKey);
+	}
+
+	return lStatus;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(RegDeleteKeyValueW, _12);
+
+
+//Windows Vista, Windows Server 2008
+LSTATUS
+APIENTRY
+RegDeleteKeyValueA(
+	_In_ HKEY hKey,
+	_In_opt_ LPCSTR lpSubKey,
+	_In_opt_ LPCSTR lpValueName
+	)
+{
+	HKEY hSubKey;
+	auto lStatus = RegOpenKeyExA(hKey, lpSubKey, 0, KEY_SET_VALUE, &hSubKey);
+
+	if (lStatus == ERROR_SUCCESS)
+	{
+		lStatus = RegDeleteValueA(hSubKey, lpValueName);
+		RegCloseKey(hSubKey);
+	}
+
+	return lStatus;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(RegDeleteKeyValueA, _12);
+
+
+//Windows Vista, Windows Server 2008
+LSTATUS
+APIENTRY
+RegDeleteTreeW(
+	_In_ HKEY hKey,
+	_In_opt_ LPCWSTR lpSubKey
+	)
+{
+	return SHDeleteKeyW(hKey, lpSubKey);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(RegDeleteTreeW, _8);
+
+
+//Windows Vista, Windows Server 2008
+LSTATUS
+APIENTRY
+RegDeleteTreeA(
+    _In_ HKEY hKey,
+    _In_opt_ LPCSTR lpSubKey
+    )
+{
+	return SHDeleteKeyA(hKey, lpSubKey);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(RegDeleteTreeA, _8);
 
 EXTERN_C_END
