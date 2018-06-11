@@ -19,6 +19,9 @@
     _APPLY(IsWow64Process2,                              kernel32                                      ) \
     _APPLY(IsWow64GuestMachineSupported,                 kernel32                                      ) \
     _APPLY(GetTickCount64,                               kernel32                                      ) \
+    _APPLY(GetSystemTimePreciseAsFileTime,               kernel32                                      ) \
+    _APPLY(InitializeCriticalSectionEx,                  kernel32                                      ) \
+    _APPLY(InitOnceExecuteOnce,                          kernel32                                      ) \
     _APPLY(RegDeleteKeyExW,                              advapi32                                      ) \
     _APPLY(RegDeleteKeyExA,                              advapi32                                      ) \
     _APPLY(IsWow64Message,                               user32                                        ) 
@@ -497,6 +500,103 @@ RegDeleteTreeA(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(RegDeleteTreeA, _8);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+//Windows 8, Windows Server 2012
+VOID
+WINAPI
+GetSystemTimePreciseAsFileTime(
+	_Out_ LPFILETIME lpSystemTimeAsFileTime
+    )
+{
+	if (auto const pGetSystemTimePreciseAsFileTime = try_get_GetSystemTimePreciseAsFileTime())
+	{
+		return pGetSystemTimePreciseAsFileTime(lpSystemTimeAsFileTime);
+	}
+
+	return GetSystemTimeAsFileTime(lpSystemTimeAsFileTime);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetSystemTimePreciseAsFileTime, _4);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista, Windows Server 2008
+BOOL
+WINAPI
+InitializeCriticalSectionEx(
+    _Out_ LPCRITICAL_SECTION lpCriticalSection,
+    _In_ DWORD dwSpinCount,
+    _In_ DWORD Flags
+    )
+{
+	if (auto const pInitializeCriticalSectionEx = try_get_InitializeCriticalSectionEx())
+	{
+		return pInitializeCriticalSectionEx(lpCriticalSection, dwSpinCount, Flags);
+	}
+
+	return InitializeCriticalSectionAndSpinCount(lpCriticalSection, dwSpinCount);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(InitializeCriticalSectionEx, _12);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista, Windows Server 2008
+BOOL
+WINAPI
+InitOnceExecuteOnce(
+    _Inout_ PINIT_ONCE InitOnce,
+    _In_ __callback PINIT_ONCE_FN InitFn,
+    _Inout_opt_ PVOID Parameter,
+    _Outptr_opt_result_maybenull_ LPVOID* Context
+    )
+{
+	if (auto const pInitOnceExecuteOnce = try_get_InitOnceExecuteOnce())
+	{
+		return pInitOnceExecuteOnce(InitOnce, InitFn, Parameter, Context);
+	}
+
+
+	//目标系统不支持，切换到XP兼容模式
+	for (;;)
+	{
+		switch (InterlockedCompareExchange((volatile size_t*)InitOnce, 1, 0))
+		{
+		case 2:
+			//同步完成，并且其他线程已经操作成功
+			return TRUE;
+			break;
+		case 1:
+			//尚未完成，继续等待
+			Sleep(0);
+			break;
+		case 0:
+			//同步完成，确认是处，调用指定函数
+		{
+			BOOL bRet = InitFn(InitOnce, Parameter, Context) == TRUE;
+			//函数调用完成
+
+			if (InterlockedExchange((volatile size_t*)InitOnce, bRet ? 2 : 0) == 1)
+			{
+				return bRet;
+			}
+
+		}
+		default:
+			//同步完成，但是发生错误
+			SetLastError(ERROR_INVALID_DATA);
+			return FALSE;
+			break;
+		}
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(InitOnceExecuteOnce, _16);
 
 #endif
 
