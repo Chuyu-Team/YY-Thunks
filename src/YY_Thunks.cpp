@@ -22,6 +22,11 @@
     _APPLY(GetSystemTimePreciseAsFileTime,               kernel32                                      ) \
     _APPLY(InitializeCriticalSectionEx,                  kernel32                                      ) \
     _APPLY(InitOnceExecuteOnce,                          kernel32                                      ) \
+    _APPLY(GetCurrentProcessorNumber,                    kernel32                                      ) \
+    _APPLY(GetCurrentProcessorNumberEx,                  kernel32                                      ) \
+    _APPLY(GetNumaNodeProcessorMask,                     kernel32                                      ) \
+    _APPLY(GetNumaNodeProcessorMaskEx,                   kernel32                                      ) \
+    _APPLY(SetThreadGroupAffinity,                       kernel32                                      ) \
     _APPLY(RegDeleteKeyExW,                              advapi32                                      ) \
     _APPLY(RegDeleteKeyExA,                              advapi32                                      ) \
     _APPLY(IsWow64Message,                               user32                                        ) 
@@ -246,6 +251,7 @@ IsWow64Process2(
 		{
 			*pProcessMachine = IMAGE_FILE_MACHINE_I386;
 
+			//IA64已经哭晕在厕所
 			if (pNativeMachine)
 				*pNativeMachine = IMAGE_FILE_MACHINE_AMD64;
 		}
@@ -597,6 +603,155 @@ InitOnceExecuteOnce(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(InitOnceExecuteOnce, _16);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
+//Windows Vista, Windows Server 2003
+DWORD
+WINAPI
+GetCurrentProcessorNumber(
+	VOID
+    )
+{
+	if (auto pGetCurrentProcessorNumber = try_get_GetCurrentProcessorNumber())
+	{
+		return pGetCurrentProcessorNumber();
+	}
+	else
+	{
+		//如果不支持此接口，那么假定是单核
+		return 0;
+	}
+
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetCurrentProcessorNumber, _0);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+//Windows 7, Windows Server 2008 R2
+VOID
+WINAPI
+GetCurrentProcessorNumberEx(
+	_Out_ PPROCESSOR_NUMBER ProcNumber
+    )
+{
+	if (auto pGetCurrentProcessorNumberEx = try_get_GetCurrentProcessorNumberEx())
+	{
+		pGetCurrentProcessorNumberEx(ProcNumber);
+	}
+	else
+	{
+		//不支持GetCurrentProcessorNumberEx时假定用户只有一组CPU
+		ProcNumber->Group = 0;
+		ProcNumber->Number = GetCurrentProcessorNumber();
+		ProcNumber->Reserved = 0;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetCurrentProcessorNumberEx, _4);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WINXPSP2) || defined _X86_
+//Windows Vista, Windows XP Professional x64 Edition, Windows XP with SP2, Windows Server 2003
+BOOL
+WINAPI
+GetNumaNodeProcessorMask(
+	_In_  UCHAR Node,
+	_Out_ PULONGLONG ProcessorMask
+    )
+{
+	if (auto pGetNumaNodeProcessorMask = try_get_GetNumaNodeProcessorMask())
+	{
+		return pGetNumaNodeProcessorMask(Node, ProcessorMask);
+	}
+	else
+	{
+		//不支持此接口
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetNumaNodeProcessorMask, _8);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+//Windows 7, Windows Server 2008 R2
+BOOL
+WINAPI
+GetNumaNodeProcessorMaskEx(
+	_In_ USHORT Node,
+	_Out_ PGROUP_AFFINITY ProcessorMask
+)
+{
+	if (auto pGetNumaNodeProcessorMaskEx = try_get_GetNumaNodeProcessorMaskEx())
+	{
+		return pGetNumaNodeProcessorMaskEx(Node, ProcessorMask);
+	}
+	else
+	{
+		ULONGLONG ullProcessorMask;
+		auto bRet = GetNumaNodeProcessorMask(Node, &ullProcessorMask);
+
+		if (bRet)
+		{
+			ProcessorMask->Mask = ullProcessorMask;
+			//假定只有一组CPU
+			ProcessorMask->Group = 0;
+			ProcessorMask->Reserved[0] = 0;
+			ProcessorMask->Reserved[1] = 0;
+			ProcessorMask->Reserved[2] = 0;
+		}
+
+		return bRet;
+	}
+
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetNumaNodeProcessorMaskEx, _8);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+//Windows 7, Windows Server 2008 R2
+BOOL
+WINAPI
+SetThreadGroupAffinity(
+	_In_ HANDLE hThread,
+	_In_ CONST GROUP_AFFINITY* GroupAffinity,
+	_Out_opt_ PGROUP_AFFINITY PreviousGroupAffinity
+    )
+{
+	if (auto pSetThreadGroupAffinity = try_get_SetThreadGroupAffinity())
+	{
+		return pSetThreadGroupAffinity(hThread, GroupAffinity, PreviousGroupAffinity);
+	}
+
+	auto NewMask = SetThreadAffinityMask(hThread, GroupAffinity->Mask);
+
+	if (NewMask==0)
+	{
+		return FALSE;
+	}
+
+	if (PreviousGroupAffinity)
+	{
+		PreviousGroupAffinity->Mask = NewMask;
+		PreviousGroupAffinity->Group = 0;
+		PreviousGroupAffinity->Reserved[0] = 0;
+		PreviousGroupAffinity->Reserved[1] = 0;
+		PreviousGroupAffinity->Reserved[2] = 0;
+	}
+
+	return TRUE;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(SetThreadGroupAffinity, _12);
 
 #endif
 

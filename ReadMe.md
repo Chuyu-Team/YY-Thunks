@@ -1,11 +1,13 @@
 ﻿
-# YY-Thunks——让兼容Windows XP更轻松
+# YY-Thunks——让兼容Windows更轻松
 
 
 ## 1. 关于YY-Thunks
-Windows XP每个SP都会新增大量新接口，这使得兼容不同SP版本的Windows XP需要大量的判断。而现在大量开源代码已经不再兼容一些早期的Windows XP版本，比如 Windows XP RTM。
+总众所周知Windows XP每个SP都会新增大量API，而Windows 10每次更新又会新增大量API，这使得兼容不同版本的Windows需要大量的判断。
 
-YY-Thunks（鸭船）,存在的目的就是抹平不同SP版本系统的差异，编译时单纯添加一个obj即可自动解决这些兼容性问题。让你兼容Windows XP更轻松！
+甚至大量开源代码已经不再兼容一些早期的Windows XP版本，比如 Windows XP RTM。难道就没有一种快速高效的方案解决无法定位程序输入点的问题吗？
+
+YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编译时单纯添加一个obj即可自动解决这些兼容性问题。让你兼容Windows更轻松！
 
 
 [ [鸭船交流群 633710173](https://shang.qq.com/wpa/qunwpa?idkey=21d51d8ad1d77b99ea9544b399e080ec347ca6a1bc04267fb59cebf22644a42a) ]
@@ -20,7 +22,7 @@ YY-Thunks（鸭船）,存在的目的就是抹平不同SP版本系统的差异�
 * 完全的开放代码，广泛的接受用户意见，希望大家能踊跃的 pull requests，为`鸭船`添砖加瓦。
 
 ## 2. 使用YY-Thunks
-1：下载[YY-Thunks Binary](https://github.com/Chuyu-Team/YY-Thunks/releases)，然后解压到你的工程目录。<br/>
+1：下载[YY-Thunks-Binary](https://github.com/Chuyu-Team/YY-Thunks/releases)，然后解压到你的工程目录。<br/>
 2：【链接器】-【输入】-【附加依赖项】，添加`objs\$(PlatformShortName)\YY_Thunks_for_WinXP.obj`。<br/>
 3：重新编译代码。
 
@@ -33,26 +35,55 @@ YY-Thunks（鸭船）,存在的目的就是抹平不同SP版本系统的差异�
 ### 3.2. Thunks清单
 此表展示了YY-Thunks（鸭船）可以解决的函数不存在问题，欢迎大家扩充！
 
+> 开头带`*`的函数并不建议使用，仅用于编译通过处理，如果使用可能导致老版本系统无法充分发挥性能。
+
 | 函数                                                                                                         | Fallback
 | ----                                                                                                         | -----------
 | [DecodePointer](https://msdn.microsoft.com/en-us/library/bb432242.aspx)                                      | 不存在时，返回指针本身。
 | [EncodePointer](https://msdn.microsoft.com/en-us/library/bb432254.aspx)                                      | 不存在时，返回指针本身。
-| [RegDeleteKeyExW(A)](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724847.aspx)                 | 不存在时，调用RegDeleteKey(W/A)。
+| [RegDeleteKeyExW(A)](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724847.aspx)                 | 不存在时，调用RegDeleteKeyW(A)。
 | [Wow64DisableWow64FsRedirection](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365743.aspx)     | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
 | [Wow64RevertWow64FsRedirection](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365745.aspx)      | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
 | [Wow64EnableWow64FsRedirection](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365744.aspx)      | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
 | [IsWow64Process](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684139.aspx)                     | 不存在时，返回TRUE，并设置 `*Wow64Process = FALSE`。
 | [IsWow64Message](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684136.aspx)                     | 不存在时，返回FALSE。
-| [RegSetKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724921.aspx)                                 | 调用RegCreateKeyEx以及RegSetValueEx实现。
-| [RegDeleteKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724848.aspx)                              | 调用RegOpenKeyEx以及RegDeleteValue实现。
-| [RegDeleteTreeW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                  | 调用SHDeleteKey实现。
+| [RegSetKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724921.aspx)                                 | 调用RegCreateKeyExW(A)以及RegSetValueExW(A)实现。
+| [RegDeleteKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724848.aspx)                              | 调用RegOpenKeyExW(A)以及RegDeleteValueW(A)实现。
+| [RegDeleteTreeW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                  | 调用SHDeleteKeyW(A)实现。
+| [IsWow64Process2](https://msdn.microsoft.com/en-us/library/windows/desktop/mt804318.aspx)                    | 不存在时，调用IsWow64Process。
+| [IsWow64GuestMachineSupported](https://msdn.microsoft.com/en-us/library/windows/desktop/mt804321.aspx)       | 不存在时，调用GetNativeSystemInfo。
+| [GetTickCount64](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724411.aspx)                     | 不存在时，调用GetTickCount。
+| [GetSystemTimePreciseAsFileTime](https://msdn.microsoft.com/en-us/library/windows/desktop/hh706895.aspx)     | 不存在时，调用GetSystemTimeAsFileTime。
+| [InitializeCriticalSectionEx](https://msdn.microsoft.com/en-us/library/ms683477.aspx)                        | 不存在时，调用InitializeCriticalSectionAndSpinCount。
+| [InitOnceExecuteOnce](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683493.aspx)                | 不存在时，调用自旋锁（InterlockedCompareExchange）。
+| *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)          | 不存在时，返回0。
+| *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)        | 不存在时，调用GetCurrentProcessorNumber。
+| *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)           | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
+| *[GetNumaNodeProcessorMaskEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405493.aspx)         | 不存在时，调用GetNumaNodeProcessorMask。
+| *[SetThreadGroupAffinity](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405516.aspx)             | 不存在时，调用SetThreadAffinityMask。
 
 
 ## Changes
 
-### 1.0.0.2 2018-06-01 18:30
-* 补充RegSetKeyValueW(A)、RegDeleteKeyValueW(A)以及RegDeleteTreeW(A)
+### 1.0.0.3 - 让兼容Windows ARM64更轻松（2018-06-18 11:30）
+* 添加IsWow64Process2
+* 添加IsWow64GuestMachineSupported
+* 添加GetTickCount64
+* 添加GetSystemTimePreciseAsFileTime
+* 添加InitializeCriticalSectionEx
+* 添加InitOnceExecuteOnce
+* 添加GetCurrentProcessorNumber
+* 添加GetCurrentProcessorNumberEx
+* 添加GetNumaNodeProcessorMask
+* 添加GetNumaNodeProcessorMaskEx
+* 添加SetThreadGroupAffinity
 
 
-### 1.0.0.1 2018-05-17 19:00
+### 1.0.0.2 - 补充API支持（2018-06-01 18:30）
+* 添加RegSetKeyValueW(A)
+* 添加RegDeleteKeyValueW(A)
+* 添加RegDeleteTreeW(A)
+
+
+### 1.0.0.1 - 第一版（2018-05-17 19:00）
 * YY-Thunks第一版
