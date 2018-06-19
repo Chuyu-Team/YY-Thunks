@@ -225,8 +225,8 @@ _LCRT_DEFINE_IAT_SYMBOL(IsWow64Process, _8);
 
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN10_TH2) && (defined _X86_ || defined _AMD64_)
-//Windows 10, version 1511
+#if (YY_Thunks_Support_Version < NTDDI_WIN10_RS3) && (defined _X86_ || defined _AMD64_)
+//Windows 10, Version 1709，坑爹微软MSDN文档有误！
 BOOL
 WINAPI
 IsWow64Process2(
@@ -260,7 +260,7 @@ IsWow64Process2(
 			*pProcessMachine = IMAGE_FILE_MACHINE_UNKNOWN;
 
 			if (pNativeMachine)
-				*pNativeMachine = IMAGE_FILE_MACHINE_UNKNOWN;
+				*pNativeMachine = IMAGE_FILE_MACHINE_I386;
 		}
 	}
 
