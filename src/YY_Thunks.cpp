@@ -259,8 +259,15 @@ IsWow64Process2(
 		{
 			*pProcessMachine = IMAGE_FILE_MACHINE_UNKNOWN;
 
+#if defined _X86_
 			if (pNativeMachine)
 				*pNativeMachine = IMAGE_FILE_MACHINE_I386;
+#elif defined _AMD64_
+			if (pNativeMachine)
+				*pNativeMachine = IMAGE_FILE_MACHINE_AMD64;
+#else
+#error 不支持此体系
+#endif
 		}
 	}
 
