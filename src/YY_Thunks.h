@@ -323,6 +323,6 @@ static int __cdecl __YY_initialize_winapi_thunks()
 
 typedef int(__cdecl* _PIFV)(void);
 
-#pragma section(".CRT$XIC",    long, read) // CRT C Initializers
+#pragma section(".CRT$XID",    long, read) // CRT C Initializers
 
-__declspec(allocate(".CRT$XIC")) static _PIFV ___Initialization = __YY_initialize_winapi_thunks;
+__declspec(allocate(".CRT$XID")) static _PIFV ___Initialization = __YY_initialize_winapi_thunks;

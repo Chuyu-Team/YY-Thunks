@@ -56,14 +56,18 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [GetSystemTimePreciseAsFileTime](https://msdn.microsoft.com/en-us/library/windows/desktop/hh706895.aspx)     | 不存在时，调用GetSystemTimeAsFileTime。
 | [InitializeCriticalSectionEx](https://msdn.microsoft.com/en-us/library/ms683477.aspx)                        | 不存在时，调用InitializeCriticalSectionAndSpinCount。
 | [InitOnceExecuteOnce](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683493.aspx)                | 不存在时，调用自旋锁（InterlockedCompareExchange）。
-| *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)          | 不存在时，返回0。
-| *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)        | 不存在时，调用GetCurrentProcessorNumber。
-| *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)           | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
-| *[GetNumaNodeProcessorMaskEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405493.aspx)         | 不存在时，调用GetNumaNodeProcessorMask。
-| *[SetThreadGroupAffinity](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405516.aspx)             | 不存在时，调用SetThreadAffinityMask。
+| *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)         | 不存在时，返回0。
+| *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)       | 不存在时，调用GetCurrentProcessorNumber。
+| *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)          | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
+| *[GetNumaNodeProcessorMaskEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405493.aspx)        | 不存在时，调用GetNumaNodeProcessorMask。
+| *[SetThreadGroupAffinity](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405516.aspx)            | 不存在时，调用SetThreadAffinityMask。
 
 
 ## Changes
+
+### 1.0.0.4 - 兼容性更新（2018-09-08 18:00）
+* 解决Bug，将初始化时机推迟到`.CRT$XID`，避免VC2008下过早初始化导致atexit崩溃（感谢 死田鸡）。
+
 
 ### 1.0.0.3 - 让兼容Windows ARM64更轻松（2018-06-18 11:30）
 * 添加IsWow64Process2
