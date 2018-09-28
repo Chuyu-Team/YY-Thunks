@@ -50,6 +50,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [RegSetKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724921.aspx)                                 | 调用RegCreateKeyExW(A)以及RegSetValueExW(A)实现。
 | [RegDeleteKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724848.aspx)                              | 调用RegOpenKeyExW(A)以及RegDeleteValueW(A)实现。
 | [RegDeleteTreeW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                  | 调用SHDeleteKeyW(A)实现。
+| [RegGetValueW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                    | 调用RegQueryValueExW(A)实现。
 | [IsWow64Process2](https://msdn.microsoft.com/en-us/library/windows/desktop/mt804318.aspx)                    | 不存在时，调用IsWow64Process。
 | [IsWow64GuestMachineSupported](https://msdn.microsoft.com/en-us/library/windows/desktop/mt804321.aspx)       | 不存在时，调用GetNativeSystemInfo。
 | [GetTickCount64](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724411.aspx)                     | 不存在时，调用GetTickCount。
@@ -64,6 +65,10 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 
 
 ## Changes
+
+### 1.0.0.5 Beta - 功能更新（2018-09-28 17:00）
+* 添加RegGetValueW(A)
+
 
 ### 1.0.0.4 - 兼容性更新（2018-09-08 18:00）
 * 解决Bug，将初始化时机推迟到`.CRT$XID`，避免VC2008下过早初始化导致atexit崩溃（感谢 死田鸡）。
