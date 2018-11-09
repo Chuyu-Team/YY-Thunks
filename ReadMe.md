@@ -37,37 +37,55 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 
 > 开头带`*`的函数并不建议使用，仅用于编译通过处理，如果使用可能导致老版本系统无法充分发挥性能。
 
-| 函数                                                                                                         | Fallback
-| ----                                                                                                         | -----------
-| [DecodePointer](https://msdn.microsoft.com/en-us/library/bb432242.aspx)                                      | 不存在时，返回指针本身。
-| [EncodePointer](https://msdn.microsoft.com/en-us/library/bb432254.aspx)                                      | 不存在时，返回指针本身。
-| [RegDeleteKeyExW(A)](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724847.aspx)                 | 不存在时，调用RegDeleteKeyW(A)。
-| [Wow64DisableWow64FsRedirection](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365743.aspx)     | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
-| [Wow64RevertWow64FsRedirection](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365745.aspx)      | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
-| [Wow64EnableWow64FsRedirection](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365744.aspx)      | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
-| [IsWow64Process](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684139.aspx)                     | 不存在时，返回TRUE，并设置 `*Wow64Process = FALSE`。
-| [IsWow64Message](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684136.aspx)                     | 不存在时，返回FALSE。
-| [RegSetKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724921.aspx)                                 | 调用RegCreateKeyExW(A)以及RegSetValueExW(A)实现。
-| [RegDeleteKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724848.aspx)                              | 调用RegOpenKeyExW(A)以及RegDeleteValueW(A)实现。
-| [RegDeleteTreeW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                  | 调用SHDeleteKeyW(A)实现。
-| [RegGetValueW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                    | 调用RegQueryValueExW(A)实现。
-| [IsWow64Process2](https://msdn.microsoft.com/en-us/library/windows/desktop/mt804318.aspx)                    | 不存在时，调用IsWow64Process。
-| [IsWow64GuestMachineSupported](https://msdn.microsoft.com/en-us/library/windows/desktop/mt804321.aspx)       | 不存在时，调用GetNativeSystemInfo。
-| [GetTickCount64](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724411.aspx)                     | 不存在时，调用GetTickCount。
-| [GetSystemTimePreciseAsFileTime](https://msdn.microsoft.com/en-us/library/windows/desktop/hh706895.aspx)     | 不存在时，调用GetSystemTimeAsFileTime。
-| [InitializeCriticalSectionEx](https://msdn.microsoft.com/en-us/library/ms683477.aspx)                        | 不存在时，调用InitializeCriticalSectionAndSpinCount。
-| [InitOnceExecuteOnce](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683493.aspx)                | 不存在时，调用自旋锁（InterlockedCompareExchange）。
-| *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)         | 不存在时，返回0。
-| *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)       | 不存在时，调用GetCurrentProcessorNumber。
-| *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)          | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
-| *[GetNumaNodeProcessorMaskEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405493.aspx)        | 不存在时，调用GetNumaNodeProcessorMask。
-| *[SetThreadGroupAffinity](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405516.aspx)            | 不存在时，调用SetThreadAffinityMask。
+| 函数                                                                                                                           | Fallback
+| ----                                                                                                                           | -----------
+| [DecodePointer](https://msdn.microsoft.com/en-us/library/bb432242.aspx)                                                        | 不存在时，返回指针本身。
+| [EncodePointer](https://msdn.microsoft.com/en-us/library/bb432254.aspx)                                                        | 不存在时，返回指针本身。
+| [RegDeleteKeyExW(A)](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724847.aspx)                                   | 不存在时，调用RegDeleteKeyW(A)。
+| [Wow64DisableWow64FsRedirection](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365743.aspx)                       | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
+| [Wow64RevertWow64FsRedirection](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365745.aspx)                        | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
+| [Wow64EnableWow64FsRedirection](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365744.aspx)                        | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
+| [IsWow64Process](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684139.aspx)                                       | 不存在时，返回TRUE，并设置 `*Wow64Process = FALSE`。
+| [IsWow64Message](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684136.aspx)                                       | 不存在时，返回FALSE。
+| [RegSetKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724921.aspx)                                                   | 调用RegCreateKeyExW(A)以及RegSetValueExW(A)实现。
+| [RegDeleteKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724848.aspx)                                                | 调用RegOpenKeyExW(A)以及RegDeleteValueW(A)实现。
+| [RegDeleteTreeW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                                    | 调用SHDeleteKeyW(A)实现。
+| [RegGetValueW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                                      | 调用RegQueryValueExW(A)实现。
+| [IsWow64Process2](https://msdn.microsoft.com/en-us/library/windows/desktop/mt804318.aspx)                                      | 不存在时，调用IsWow64Process。
+| [IsWow64GuestMachineSupported](https://msdn.microsoft.com/en-us/library/windows/desktop/mt804321.aspx)                         | 不存在时，调用GetNativeSystemInfo。
+| [GetTickCount64](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724411.aspx)                                       | 不存在时，调用GetTickCount。
+| [GetSystemTimePreciseAsFileTime](https://msdn.microsoft.com/en-us/library/windows/desktop/hh706895.aspx)                       | 不存在时，调用GetSystemTimeAsFileTime。
+| [InitializeCriticalSectionEx](https://msdn.microsoft.com/en-us/library/ms683477.aspx)                                          | 不存在时，调用InitializeCriticalSectionAndSpinCount。
+| [InitOnceExecuteOnce](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683493.aspx)                                  | 不存在时，调用自旋锁（InterlockedCompareExchange）。
+| [LocaleNameToLCID](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-localenametolcid)                     | 不存在时，查LocaleNameToLcidTable。
+| [LCIDToLocaleName](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-lcidtolocalename)                     | 不存在时，查LcidToLocaleNameTable。
+| [GetLocaleInfoEx](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-getlocaleinfoex)                       | 不存在时，调用GetLocaleInfoW。
+| [GetDateFormatEx](https://docs.microsoft.com/en-us/windows/desktop/api/datetimeapi/nf-datetimeapi-getdateformatex)             | 不存在时，调用GetDateFormatW。
+| [GetTimeFormatEx](https://docs.microsoft.com/en-us/windows/desktop/api/datetimeapi/nf-datetimeapi-gettimeformatex)             | 不存在时，调用GetTimeFormatW。
+| [GetNumberFormatEx](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-getnumberformatex)                   | 不存在时，调用GetNumberFormatW。
+| [GetCurrencyFormatEx](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-getcurrencyformatex)               | 不存在时，调用GetCurrencyFormatW。
+| [GetUserDefaultLocaleName](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-getuserdefaultlocalename)     | 不存在时，调用LCIDToLocaleName。
+| [GetSystemDefaultLocaleName](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-getsystemdefaultlocalename) | 不存在时，调用LCIDToLocaleName。
+| *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
+| *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
+| *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
+| *[GetNumaNodeProcessorMaskEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405493.aspx)                          | 不存在时，调用GetNumaNodeProcessorMask。
+| *[SetThreadGroupAffinity](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405516.aspx)                              | 不存在时，调用SetThreadAffinityMask。
 
 
 ## Changes
 
-### 1.0.0.5 Beta - 功能更新（2018-09-28 17:00）
+### 1.0.0.6 Beta - 功能更新（2018-11-09 21:10）
 * 添加RegGetValueW(A)
+* 添加LocaleNameToLCID
+* 添加LCIDToLocaleName
+* 添加GetLocaleInfoEx
+* 添加GetDateFormatEx
+* 添加GetTimeFormatEx
+* 添加GetNumberFormatEx
+* 添加GetCurrencyFormatEx
+* 添加GetUserDefaultLocaleName
+* 添加GetSystemDefaultLocaleName
 
 
 ### 1.0.0.4 - 兼容性更新（2018-09-08 18:00）

@@ -60,6 +60,31 @@ static void* encoded_function_pointers[function_id_count];
 	_YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)
 #undef _APPLY
 
+
+// Implements wcsncpmp for ASCII chars only.
+// NOTE: We can't use wcsncmp in this context because we may end up trying to modify
+// locale data structs or even calling the same function in NLS code.
+static int _fastcall __wcsnicmp_ascii(const wchar_t* string1, const wchar_t* string2, size_t count) throw()
+{
+	wchar_t f, l;
+	int result = 0;
+
+	if (count)
+	{
+		/* validation section */
+		do {
+			f = __ascii_towlower(*string1);
+			l = __ascii_towlower(*string2);
+			string1++;
+			string2++;
+		} while ((--count) && f && (f == l));
+
+		result = (int)(f - l);
+	}
+
+	return result;
+}
+
 enum : int
 {
 	__crt_maximum_pointer_shift = sizeof(uintptr_t) * 8
