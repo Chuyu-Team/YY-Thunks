@@ -75,7 +75,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 
 ## Changes
 
-### 1.0.0.6 Beta - 功能更新（2018-11-09 21:10）
+### 1.0.0.7 - 功能更新（2019-01-02 15:10）
 * 添加RegGetValueW(A)
 * 添加LocaleNameToLCID
 * 添加LCIDToLocaleName
@@ -86,6 +86,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加GetCurrencyFormatEx
 * 添加GetUserDefaultLocaleName
 * 添加GetSystemDefaultLocaleName
+* 重新编译，解决潜在符号修饰问题。
 
 
 ### 1.0.0.4 - 兼容性更新（2018-09-08 18:00）
