@@ -36,6 +36,8 @@
     _APPLY(GetCurrencyFormatEx,                          kernel32                                      ) \
     _APPLY(GetUserDefaultLocaleName,                     kernel32                                      ) \
     _APPLY(GetSystemDefaultLocaleName,                   kernel32                                      ) \
+    _APPLY(EnumCalendarInfoExEx,                         kernel32                                      ) \
+    _APPLY(EnumDateFormatsExEx,                          kernel32                                      ) \
     _APPLY(RegDeleteKeyExW,                              advapi32                                      ) \
     _APPLY(RegDeleteKeyExA,                              advapi32                                      ) \
     _APPLY(RegGetValueW,                                 advapi32                                      ) \
@@ -2060,6 +2062,118 @@ GetSystemDefaultLocaleName(
 
 
 	return LCIDToLocaleName(LOCALE_SYSTEM_DEFAULT, lpLocaleName, cchLocaleName, 0);
+}
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista,  Windows Server 2008
+#include <winnls.h>
+
+struct EnumCalendarInfoExExDataInfo
+{
+	CALINFO_ENUMPROCEXEX pCalInfoEnumProcExEx;
+	LPARAM lParam;
+};
+
+static thread_local EnumCalendarInfoExExDataInfo __EnumCalendarInfoExExDataInfo;
+
+BOOL
+WINAPI
+EnumCalendarInfoExEx(
+	_In_ CALINFO_ENUMPROCEXEX pCalInfoEnumProcExEx,
+	_In_opt_ LPCWSTR lpLocaleName,
+	_In_ CALID Calendar,
+	_In_opt_ LPCWSTR lpReserved,
+	_In_ CALTYPE CalType,
+	_In_ LPARAM lParam
+	)
+{
+	if (auto pEnumCalendarInfoExEx = try_get_EnumCalendarInfoExEx())
+	{
+		return pEnumCalendarInfoExEx(pCalInfoEnumProcExEx, lpLocaleName, Calendar, lpReserved, CalType, lParam);
+	}
+
+	if (pCalInfoEnumProcExEx == nullptr)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	auto Locale = LocaleNameToLCID(lpLocaleName, 0);
+
+	if (Locale == 0)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	//保存上下文
+	__EnumCalendarInfoExExDataInfo.pCalInfoEnumProcExEx = pCalInfoEnumProcExEx;
+	__EnumCalendarInfoExExDataInfo.lParam = lParam;
+
+	return EnumCalendarInfoExW(
+			[](LPWSTR lpCalendarInfoString, CALID Calendar)->BOOL
+			{
+				return __EnumCalendarInfoExExDataInfo.pCalInfoEnumProcExEx(lpCalendarInfoString, Calendar, nullptr, __EnumCalendarInfoExExDataInfo.lParam);
+			},
+			Locale,
+			Calendar,
+			CalType);
+}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista,  Windows Server 2008
+#include <winnls.h>
+
+struct EnumDateFormatsExExDataInfo
+{
+	DATEFMT_ENUMPROCEXEX pCalInfoEnumProcExEx;
+	LPARAM lParam;
+};
+
+static thread_local EnumDateFormatsExExDataInfo __EnumDateFormatsExExDataInfo;
+
+BOOL
+WINAPI
+EnumDateFormatsExEx(
+    _In_ DATEFMT_ENUMPROCEXEX lpDateFmtEnumProcExEx,
+    _In_opt_ LPCWSTR lpLocaleName,
+    _In_ DWORD dwFlags,
+    _In_ LPARAM lParam
+	)
+{
+	if (auto pEnumDateFormatsExEx = try_get_EnumDateFormatsExEx())
+	{
+		return pEnumDateFormatsExEx(lpDateFmtEnumProcExEx, lpLocaleName, dwFlags, lParam);
+	}
+
+	if (lpDateFmtEnumProcExEx == nullptr)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	auto Locale = LocaleNameToLCID(lpLocaleName, 0);
+
+	if (Locale == 0)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	//保存上下文
+	__EnumDateFormatsExExDataInfo.pCalInfoEnumProcExEx = lpDateFmtEnumProcExEx;
+	__EnumDateFormatsExExDataInfo.lParam = lParam;
+
+	return EnumDateFormatsExW(
+			[](LPWSTR lpDateFormatString, CALID CalendarID)->BOOL
+			{
+				return __EnumDateFormatsExExDataInfo.pCalInfoEnumProcExEx(lpDateFormatString, CalendarID, __EnumCalendarInfoExExDataInfo.lParam);
+			},
+			Locale,
+			dwFlags);
 }
 #endif
 

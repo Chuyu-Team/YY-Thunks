@@ -66,6 +66,8 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [GetCurrencyFormatEx](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-getcurrencyformatex)               | 不存在时，调用GetCurrencyFormatW。
 | [GetUserDefaultLocaleName](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-getuserdefaultlocalename)     | 不存在时，调用LCIDToLocaleName。
 | [GetSystemDefaultLocaleName](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-getsystemdefaultlocalename) | 不存在时，调用LCIDToLocaleName。
+| [EnumCalendarInfoExEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/winnls/nf-winnls-enumcalendarinfoexex)             | 不存在时，调用EnumCalendarInfoExW。
+| [EnumDateFormatsExEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/winnls/nf-winnls-enumdateformatsexex)               | 不存在时，调用EnumDateFormatsExW。
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
@@ -74,6 +76,11 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 
 
 ## Changes
+
+### 1.0.0.8 - 功能更新（2019-01-24 16:10）
+* 添加EnumCalendarInfoExEx
+* 添加EnumDateFormatsExEx
+
 
 ### 1.0.0.7 - 功能更新（2019-01-02 15:10）
 * 添加RegGetValueW(A)
