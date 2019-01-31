@@ -4,12 +4,19 @@
 
 
 #define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                          \
+    _APPLY(ntdll,                                        "ntdll"                                       ) \
     _APPLY(kernel32,                                     "kernel32"                                    ) \
 	_APPLY(advapi32,                                     "advapi32"                                    ) \
     _APPLY(user32,                                       "user32"                                      ) 
 
 
 #define _YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)                                                        \
+    _APPLY(NtQueryDirectoryFile,                         ntdll                                         ) \
+    _APPLY(NtQueryInformationFile,                       ntdll                                         ) \
+    _APPLY(NtSetInformationFile,                         ntdll                                         ) \
+    _APPLY(RtlNtStatusToDosError,                        ntdll                                         ) \
+    _APPLY(RtlDosPathNameToNtPathName_U_WithStatus,      ntdll                                         ) \
+    _APPLY(RtlFreeUnicodeString,                         ntdll                                         ) \
     _APPLY(DecodePointer,                                kernel32                                      ) \
     _APPLY(EncodePointer,                                kernel32                                      ) \
     _APPLY(Wow64DisableWow64FsRedirection,               kernel32                                      ) \
@@ -38,6 +45,8 @@
     _APPLY(GetSystemDefaultLocaleName,                   kernel32                                      ) \
     _APPLY(EnumCalendarInfoExEx,                         kernel32                                      ) \
     _APPLY(EnumDateFormatsExEx,                          kernel32                                      ) \
+    _APPLY(GetFileInformationByHandleEx,                 kernel32                                      ) \
+    _APPLY(SetFileInformationByHandle,                   kernel32                                      ) \
     _APPLY(RegDeleteKeyExW,                              advapi32                                      ) \
     _APPLY(RegDeleteKeyExA,                              advapi32                                      ) \
     _APPLY(RegGetValueW,                                 advapi32                                      ) \
@@ -48,7 +57,8 @@
 #define YY_Thunks_Support_Version WDK_NTDDI_VERSION
 #endif
 
-
+#define _Disallow_YY_KM_Namespace
+#include "km.h"
 #include "YY_Thunks.h"
 #include <Shlwapi.h>
 
@@ -2063,6 +2073,9 @@ GetSystemDefaultLocaleName(
 
 	return LCIDToLocaleName(LOCALE_SYSTEM_DEFAULT, lpLocaleName, cchLocaleName, 0);
 }
+
+_LCRT_DEFINE_IAT_SYMBOL(GetSystemDefaultLocaleName, _8);
+
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
@@ -2120,6 +2133,9 @@ EnumCalendarInfoExEx(
 			Calendar,
 			CalType);
 }
+
+_LCRT_DEFINE_IAT_SYMBOL(EnumCalendarInfoExEx, _24);
+
 #endif
 
 
@@ -2175,6 +2191,338 @@ EnumDateFormatsExEx(
 			Locale,
 			dwFlags);
 }
+
+_LCRT_DEFINE_IAT_SYMBOL(EnumDateFormatsExEx, _16);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista,  Windows Server 2008
+BOOL
+WINAPI
+GetFileInformationByHandleEx(
+	_In_  HANDLE hFile,
+	_In_  FILE_INFO_BY_HANDLE_CLASS FileInformationClass,
+	_Out_writes_bytes_(dwBufferSize) LPVOID lpFileInformation,
+	_In_  DWORD dwBufferSize
+	)
+{
+	if (auto pGetFileInformationByHandleEx = try_get_GetFileInformationByHandleEx())
+	{
+		return pGetFileInformationByHandleEx(hFile, FileInformationClass, lpFileInformation, dwBufferSize);
+	}
+
+
+	FILE_INFORMATION_CLASS NtFileInformationClass;
+	DWORD cbMinBufferSize;
+	bool bNtQueryDirectoryFile = false;
+	BOOLEAN RestartScan = false;
+
+	switch (FileInformationClass)
+	{
+	case FileBasicInfo:
+		NtFileInformationClass = FileBasicInformation;
+		cbMinBufferSize = sizeof(FILE_BASIC_INFO);
+		break;
+	case FileStandardInfo:
+		NtFileInformationClass = FileStandardInformation;
+		cbMinBufferSize = sizeof(FILE_STANDARD_INFO);
+		break;
+	case FileNameInfo:
+		NtFileInformationClass = FileNameInformation;
+		cbMinBufferSize = sizeof(FILE_NAME_INFO);
+		break;
+	case FileStreamInfo:
+		NtFileInformationClass = FileStreamInformation;
+		cbMinBufferSize = sizeof(FILE_STREAM_INFO);
+		break;
+	case FileCompressionInfo:
+		NtFileInformationClass = FileCompressionInformation;
+		cbMinBufferSize = sizeof(FILE_COMPRESSION_INFO);
+		break;
+	case FileAttributeTagInfo:
+		NtFileInformationClass = FileAttributeTagInformation;
+		cbMinBufferSize = sizeof(FILE_ATTRIBUTE_TAG_INFO);
+		break;
+	case FileIdBothDirectoryRestartInfo:
+		RestartScan = true;
+	case FileIdBothDirectoryInfo:
+		NtFileInformationClass = FileIdBothDirectoryInformation;
+		cbMinBufferSize = sizeof(FILE_ID_BOTH_DIR_INFO);
+		bNtQueryDirectoryFile = true;
+		break;
+	case FileRemoteProtocolInfo:
+		NtFileInformationClass = FileRemoteProtocolInformation;
+		cbMinBufferSize = sizeof(FILE_REMOTE_PROTOCOL_INFO);
+		break;
+	default:
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+		break;
+	}
+
+
+	if (cbMinBufferSize > dwBufferSize)
+	{
+		SetLastError(ERROR_BAD_LENGTH);
+		return FALSE;
+	}
+
+	IO_STATUS_BLOCK IoStatusBlock;
+	NTSTATUS Status;
+
+	if (bNtQueryDirectoryFile)
+	{
+		auto pNtQueryDirectoryFile = try_get_NtQueryDirectoryFile();
+		if (!pNtQueryDirectoryFile)
+		{
+			SetLastError(ERROR_INVALID_FUNCTION);
+			return FALSE;
+		}
+
+		Status = pNtQueryDirectoryFile(
+			hFile,
+			nullptr,
+			nullptr,
+			nullptr,
+			&IoStatusBlock,
+			lpFileInformation,
+			dwBufferSize,
+			NtFileInformationClass,
+			false,
+			nullptr,
+			RestartScan
+			);
+
+		if (STATUS_PENDING == Status)
+		{
+			if (WaitForSingleObjectEx(hFile, 0, FALSE) == WAIT_FAILED)
+			{
+				//WaitForSingleObjectEx会设置LastError
+				return FALSE;
+			}
+
+			Status = IoStatusBlock.Status;
+		}
+	}
+	else
+	{
+		auto pNtQueryInformationFile = try_get_NtQueryInformationFile();
+
+		if (!pNtQueryInformationFile)
+		{
+			SetLastError(ERROR_INVALID_FUNCTION);
+			return FALSE;
+		}
+
+		Status = pNtQueryInformationFile(hFile, &IoStatusBlock, lpFileInformation, dwBufferSize, NtFileInformationClass);
+	}
+
+	if (Status >= STATUS_SUCCESS)
+	{
+		if (FileStreamInfo == FileInformationClass && IoStatusBlock.Information == 0)
+		{
+			SetLastError(ERROR_HANDLE_EOF);
+			return FALSE;
+		}
+		else
+		{
+			return TRUE;
+		}
+	}
+	else
+	{
+		auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
+
+		//如果没有RtlNtStatusToDosError就直接设置Status代码吧，反正至少比没有错误代码强
+		SetLastError(pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status);
+
+		return FALSE;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetFileInformationByHandleEx, _16);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista,  Windows Server 2008
+BOOL
+WINAPI
+SetFileInformationByHandle(
+	_In_ HANDLE hFile,
+	_In_ FILE_INFO_BY_HANDLE_CLASS FileInformationClass,
+	_In_reads_bytes_(dwBufferSize) LPVOID lpFileInformation,
+	_In_ DWORD dwBufferSize
+	)
+{
+	if (auto pSetFileInformationByHandle = try_get_SetFileInformationByHandle())
+	{
+		return pSetFileInformationByHandle(hFile, FileInformationClass, lpFileInformation, dwBufferSize);
+	}
+
+
+	auto pNtSetInformationFile = try_get_NtSetInformationFile();
+	if (!pNtSetInformationFile)
+	{
+		SetLastError(ERROR_INVALID_FUNCTION);
+		return FALSE;
+	}
+
+
+	FILE_INFORMATION_CLASS NtFileInformationClass;
+	DWORD cbMinBufferSize;
+	bool bFreeFileInformation = false;
+
+	switch (FileInformationClass)
+	{
+	case FileBasicInfo:
+		NtFileInformationClass = FileBasicInformation;
+		cbMinBufferSize = sizeof(FILE_BASIC_INFO);
+		break;
+	case FileRenameInfo:
+		NtFileInformationClass = FileRenameInformation;
+		cbMinBufferSize = sizeof(FILE_RENAME_INFO);
+
+		if (cbMinBufferSize > dwBufferSize)
+		{
+			SetLastError(ERROR_BAD_LENGTH);
+			return FALSE;
+		}
+
+		if (lpFileInformation == nullptr)
+		{
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return FALSE;
+		}
+		else
+		{
+			auto pRenameInfo = (FILE_RENAME_INFO*)lpFileInformation;
+
+			if (pRenameInfo->FileNameLength < sizeof(wchar_t) || pRenameInfo->FileName[0] != L':')
+			{
+				auto pRtlDosPathNameToNtPathName_U_WithStatus = try_get_RtlDosPathNameToNtPathName_U_WithStatus();
+				auto pRtlFreeUnicodeString = try_get_RtlFreeUnicodeString();
+
+				if (pRtlDosPathNameToNtPathName_U_WithStatus == nullptr || pRtlFreeUnicodeString ==nullptr)
+				{
+					SetLastError(ERROR_INVALID_FUNCTION);
+					return FALSE;
+				}
+
+				UNICODE_STRING NtName;
+
+				auto Status = pRtlDosPathNameToNtPathName_U_WithStatus(pRenameInfo->FileName, &NtName, nullptr, nullptr);
+
+				if (Status < STATUS_SUCCESS)
+				{
+					auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
+
+					SetLastError(pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status);
+
+					return FALSE;
+				}
+
+				auto dwNewBufferSize = sizeof(FILE_RENAME_INFO) + NtName.Length;
+
+				auto NewRenameInfo = (FILE_RENAME_INFO*)GlobalAlloc(GMEM_FIXED, dwNewBufferSize);
+				if (!NewRenameInfo)
+				{
+					auto lStatus = GetLastError();
+
+					pRtlFreeUnicodeString(&NtName);
+
+					SetLastError(lStatus);
+					return FALSE;
+				}
+
+				bFreeFileInformation = true;
+
+				NewRenameInfo->ReplaceIfExists = pRenameInfo->ReplaceIfExists;
+				NewRenameInfo->RootDirectory = pRenameInfo->RootDirectory;
+				NewRenameInfo->FileNameLength = NtName.Length;
+
+				memcpy(NewRenameInfo->FileName, NtName.Buffer, NtName.Length);
+
+				*(wchar_t*)((byte*)NewRenameInfo->FileName + NtName.Length) = L'\0';
+
+
+				lpFileInformation = NewRenameInfo;
+				dwBufferSize = dwNewBufferSize;
+
+				pRtlFreeUnicodeString(&NtName);
+			}
+		}
+		break;
+	case FileDispositionInfo:
+		NtFileInformationClass = FileDispositionInformation;
+		cbMinBufferSize = sizeof(FILE_DISPOSITION_INFO);
+		break;
+	case FileAllocationInfo:
+		NtFileInformationClass = FileAllocationInformation;
+		cbMinBufferSize = sizeof(FILE_ALLOCATION_INFO);
+		break;
+	case FileEndOfFileInfo:
+		NtFileInformationClass = FileEndOfFileInformation;
+		cbMinBufferSize = sizeof(FILE_END_OF_FILE_INFO);
+		break;
+	case FileIoPriorityHintInfo:
+		NtFileInformationClass = FileIoPriorityHintInformation;
+		cbMinBufferSize = sizeof(FILE_IO_PRIORITY_HINT_INFO);
+
+		//长度检查，微软原版似乎没有该安全检查
+		if (cbMinBufferSize > dwBufferSize)
+		{
+			SetLastError(ERROR_BAD_LENGTH);
+			return FALSE;
+		}
+
+		if (lpFileInformation == nullptr || ((FILE_IO_PRIORITY_HINT_INFO*)lpFileInformation)->PriorityHint >= MaximumIoPriorityHintType)
+		{
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return FALSE;
+		}
+
+		break;
+	default:
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+		break;
+	}
+
+	if (cbMinBufferSize > dwBufferSize)
+	{
+		if (bFreeFileInformation)
+		{
+			GlobalFree((HGLOBAL)lpFileInformation);
+		}
+
+		SetLastError(ERROR_BAD_LENGTH);
+		return FALSE;
+	}
+
+	IO_STATUS_BLOCK IoStatusBlock;
+
+	auto Status = pNtSetInformationFile(hFile, &IoStatusBlock, lpFileInformation, dwBufferSize, NtFileInformationClass);
+
+	if (bFreeFileInformation)
+	{
+		GlobalFree((HGLOBAL)lpFileInformation);
+	}
+
+	if (Status >= STATUS_SUCCESS)
+		return TRUE;
+
+	auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
+
+	//如果没有RtlNtStatusToDosError就直接设置Status代码吧，反正至少比没有错误代码强
+	SetLastError(pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status);
+
+	return FALSE;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(SetFileInformationByHandle, _16);
+
 #endif
 
 EXTERN_C_END
