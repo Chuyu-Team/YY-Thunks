@@ -1557,7 +1557,7 @@ NtQueryDirectoryFile (
 		);
 
 	EXTERN_C
-	NTSYSAPI NTSTATUS WINAPI RtlpEnsureBufferSize(
+	NTSYSAPI NTSTATUS NTAPI RtlpEnsureBufferSize(
 		ULONG flags,
 		PRTL_BUFFER pBuffer,
 		SIZE_T requiredSize
@@ -1605,7 +1605,7 @@ NtQueryDirectoryFile (
 	} OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
 
 	EXTERN_C
-	NTSYSAPI NTSTATUS NtQueryObject(
+	NTSYSAPI NTSTATUS NTAPI NtQueryObject(
 		_In_opt_  HANDLE                   Handle,
 		_In_      OBJECT_INFORMATION_CLASS ObjectInformationClass,
 		_Out_opt_ PVOID                    ObjectInformation,

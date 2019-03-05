@@ -70,6 +70,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [EnumDateFormatsExEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/winnls/nf-winnls-enumdateformatsexex)               | 不存在时，调用EnumDateFormatsExW。
 | [GetFileInformationByHandleEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/winbase/nf-winbase-getfileinformationbyhandleex)| 不存在时，调用NtQueryInformationFile/NtQueryDirectoryFile。
 | [SetFileInformationByHandle](https://docs.microsoft.com/zh-cn/windows/desktop/api/winbase/nf-winbase-getfileinformationbyhandleex)| 不存在时，调用NtSetInformationFile。
+| [GetFinalPathNameByHandleW(A)](https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getfinalpathnamebyhandlew)| 不存在时，调用NtQueryObject以及NtQueryInformationFile。
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
@@ -78,6 +79,10 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 
 
 ## Changes
+
+### 1.0.0.10 - 功能更新（2019-03-05 20:00）
+* 添加GetFinalPathNameByHandleW(A)
+
 
 ### 1.0.0.9 - 功能更新（2019-01-31 16:10）
 * 添加EnumCalendarInfoExEx

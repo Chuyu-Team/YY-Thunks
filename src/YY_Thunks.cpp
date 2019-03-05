@@ -17,6 +17,7 @@
     _APPLY(RtlNtStatusToDosError,                        ntdll                                         ) \
     _APPLY(RtlDosPathNameToNtPathName_U_WithStatus,      ntdll                                         ) \
     _APPLY(RtlFreeUnicodeString,                         ntdll                                         ) \
+    _APPLY(NtQueryObject,                                ntdll                                         ) \
     _APPLY(DecodePointer,                                kernel32                                      ) \
     _APPLY(EncodePointer,                                kernel32                                      ) \
     _APPLY(Wow64DisableWow64FsRedirection,               kernel32                                      ) \
@@ -47,6 +48,8 @@
     _APPLY(EnumDateFormatsExEx,                          kernel32                                      ) \
     _APPLY(GetFileInformationByHandleEx,                 kernel32                                      ) \
     _APPLY(SetFileInformationByHandle,                   kernel32                                      ) \
+    _APPLY(GetFinalPathNameByHandleW,                    kernel32                                      ) \
+    _APPLY(GetFinalPathNameByHandleA,                    kernel32                                      ) \
     _APPLY(RegDeleteKeyExW,                              advapi32                                      ) \
     _APPLY(RegDeleteKeyExA,                              advapi32                                      ) \
     _APPLY(RegGetValueW,                                 advapi32                                      ) \
@@ -2522,6 +2525,401 @@ SetFileInformationByHandle(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(SetFileInformationByHandle, _16);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista,  Windows Server 2008
+DWORD
+WINAPI
+GetFinalPathNameByHandleW(
+	_In_ HANDLE hFile,
+	_Out_writes_(cchFilePath) LPWSTR lpszFilePath,
+	_In_ DWORD cchFilePath,
+	_In_ DWORD dwFlags
+	)
+{
+	if (auto pGetFinalPathNameByHandleW = try_get_GetFinalPathNameByHandleW())
+	{
+		return pGetFinalPathNameByHandleW(hFile, lpszFilePath, cchFilePath, dwFlags);
+	}
+
+	//参数检查
+	if (INVALID_HANDLE_VALUE == hFile)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return 0;
+	}
+
+
+	switch (dwFlags & (VOLUME_NAME_DOS | VOLUME_NAME_GUID | VOLUME_NAME_NONE | VOLUME_NAME_NT))
+	{
+	case VOLUME_NAME_DOS:
+		break;
+	case VOLUME_NAME_GUID:
+		break;
+	case VOLUME_NAME_NT:
+		break;
+	case VOLUME_NAME_NONE:
+		break;
+	default:
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return 0;
+		break;
+	}
+
+
+	auto pNtQueryObject = try_get_NtQueryObject();
+	auto pNtQueryInformationFile = try_get_NtQueryInformationFile();
+
+	if (nullptr == pNtQueryObject
+		|| nullptr == pNtQueryInformationFile)
+	{
+		SetLastError(ERROR_INVALID_FUNCTION);
+		return 0;
+	}
+
+	LSTATUS lStatus = ERROR_SUCCESS;
+	DWORD   cchReturn = 0;
+
+	OBJECT_NAME_INFORMATION* pObjectName = nullptr;
+	ULONG cbObjectName = 528;
+
+	FILE_NAME_INFORMATION* pFileNameInfo = nullptr;
+	ULONG cbFileNameInfo = 528;
+
+	for (;;)
+	{
+		if (pObjectName)
+		{
+			GlobalFree(pObjectName);
+			pObjectName = nullptr;
+		}
+
+		pObjectName = (OBJECT_NAME_INFORMATION*)GlobalAlloc(GMEM_FIXED, cbObjectName);
+
+		if (!pObjectName)
+		{
+			//内存不足？
+			lStatus = ERROR_NOT_ENOUGH_MEMORY;
+			goto __Exit;
+		}
+
+		auto Status = pNtQueryObject(hFile, ObjectNameInformation, pObjectName, cbObjectName, &cbObjectName);
+
+		if (STATUS_BUFFER_OVERFLOW == Status)
+		{
+			continue;
+		}
+		else if (Status < 0)
+		{
+			auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
+
+			lStatus = pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status;
+
+			goto __Exit;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	for (;;)
+	{
+		if (pFileNameInfo)
+		{
+			GlobalFree(pFileNameInfo);
+			pFileNameInfo = nullptr;
+		}
+
+		pFileNameInfo = (FILE_NAME_INFORMATION*)GlobalAlloc(GMEM_FIXED, cbFileNameInfo);
+
+		if (!pFileNameInfo)
+		{
+			//内存不足？
+			lStatus = ERROR_NOT_ENOUGH_MEMORY;
+			goto __Exit;
+		}
+
+		IO_STATUS_BLOCK IoStatusBlock;
+
+		auto Status = pNtQueryInformationFile(hFile, &IoStatusBlock, pFileNameInfo, cbFileNameInfo, FileNameInformation);
+
+		if (STATUS_BUFFER_OVERFLOW == Status)
+		{
+			cbFileNameInfo = pFileNameInfo->FileNameLength + sizeof(FILE_NAME_INFORMATION);
+			continue;
+		}
+		else if (Status < 0)
+		{
+			auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
+
+			lStatus = pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status;
+
+			goto __Exit;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	if (pFileNameInfo->FileName[0] != '\\')
+	{
+		lStatus = ERROR_ACCESS_DENIED;
+		goto __Exit;
+	}
+
+
+
+	if (pFileNameInfo->FileNameLength >= pObjectName->Name.Length)
+	{
+		lStatus = ERROR_BAD_PATHNAME;
+		goto __Exit;
+	}
+
+	//低于Vista平台无法支持 FILE_NAME_OPENED，因此忽略
+
+	if (VOLUME_NAME_NT & dwFlags)
+	{
+		//返回NT路径
+		cchReturn = pObjectName->Name.Length / sizeof(lpszFilePath[0]);
+
+		if (cchFilePath <= cchReturn)
+		{
+			//长度不足……
+
+			cchReturn += 1;
+		}
+		else
+		{
+			memcpy(lpszFilePath, pObjectName->Name.Buffer, cchReturn * sizeof(lpszFilePath[0]));
+
+			lpszFilePath[cchReturn] = L'\0';
+		}
+	}
+	else if (VOLUME_NAME_NONE & dwFlags)
+	{
+		//仅返回文件名
+		cchReturn = pFileNameInfo->FileNameLength / sizeof(lpszFilePath[0]);
+
+		if (cchFilePath <= cchReturn)
+		{
+			//长度不足……
+
+			cchReturn += 1;
+		}
+		else
+		{
+			memcpy(lpszFilePath, pFileNameInfo->FileName, cchReturn * sizeof(lpszFilePath[0]));
+			lpszFilePath[cchReturn] = L'\0';
+		}
+	}
+	else
+	{
+		const wchar_t szGobal[] = L"\\\\?\\GLOBALROOT";
+
+		const DWORD cbVolumeName = pObjectName->Name.Length - pFileNameInfo->FileNameLength + sizeof(lpszFilePath[0]);
+
+		auto szVolumeMountPoint = (wchar_t*)GlobalAlloc(GMEM_FIXED, cbVolumeName + sizeof(szGobal));
+		if (!szVolumeMountPoint)
+		{
+			lStatus = ERROR_NOT_ENOUGH_MEMORY;
+			goto __Exit;
+		}
+
+		DWORD cbVolumeMountPoint = sizeof(szGobal) - sizeof(szGobal[0]);
+
+		memcpy(szVolumeMountPoint, szGobal, cbVolumeMountPoint);
+
+		memcpy((byte*)szVolumeMountPoint + cbVolumeMountPoint, pObjectName->Name.Buffer, cbVolumeName);
+		cbVolumeMountPoint += cbVolumeName;
+
+		szVolumeMountPoint[cbVolumeMountPoint / sizeof(szVolumeMountPoint[0])] = L'\0';
+
+		wchar_t szVolumeName[MAX_PATH];
+
+		if (!GetVolumeNameForVolumeMountPointW(szVolumeMountPoint, szVolumeName, _countof(szVolumeName)))
+		{
+			lStatus = GetLastError();
+			GlobalFree(szVolumeMountPoint);
+
+			goto __Exit;
+		}
+
+		GlobalFree(szVolumeMountPoint);
+
+
+		if (VOLUME_NAME_GUID & dwFlags)
+		{
+			//返回分区GUID名称
+
+			auto cchVolumeName = wcslen(szVolumeName);
+
+			if (cchVolumeName == 0)
+			{
+				//逗我？
+				lStatus = ERROR_INVALID_FUNCTION;
+				goto __Exit;
+			}
+
+			--cchVolumeName;
+
+			cchReturn = cchVolumeName + pFileNameInfo->FileNameLength / sizeof(pFileNameInfo->FileName[0]);
+
+			if (cchFilePath <= cchReturn)
+			{
+				cchReturn += 1;
+			}
+			else
+			{
+				//复制VolumeName
+				memcpy(lpszFilePath, szVolumeName, cchVolumeName * sizeof(szVolumeName[0]));
+
+				//复制文件名
+				memcpy(lpszFilePath + cchVolumeName, pFileNameInfo->FileName, pFileNameInfo->FileNameLength);
+
+				//NULL边界
+				lpszFilePath[cchReturn] = L'\0';
+			}
+		}
+		else
+		{
+			//返回Dos路径
+			DWORD cchVolumePathName = 0;
+
+			wchar_t VolumePathName[MAX_PATH + 4] = L"\\\\?\\";
+
+			if (!GetVolumePathNamesForVolumeNameW(szVolumeName, VolumePathName + 4, MAX_PATH, &cchVolumePathName))
+			{
+				lStatus = GetLastError();
+				goto __Exit;
+			}
+
+			cchVolumePathName = wcslen(VolumePathName);
+
+			if (cchVolumePathName == 0)
+			{
+				//逗我？
+				lStatus = ERROR_INVALID_FUNCTION;
+				goto __Exit;
+			}
+
+			--cchVolumePathName;
+
+			cchReturn = cchVolumePathName + pFileNameInfo->FileNameLength / sizeof(pFileNameInfo->FileName[0]);
+
+			if (cchFilePath <= cchReturn)
+			{
+				cchReturn += 1;
+			}
+			else
+			{
+				//复制VolumePathName 
+				memcpy(lpszFilePath, VolumePathName, cchVolumePathName * sizeof(VolumePathName[0]));
+
+				//复制文件名
+				memcpy(lpszFilePath + cchVolumePathName, pFileNameInfo->FileName, pFileNameInfo->FileNameLength);
+
+				//NULL边界
+				lpszFilePath[cchReturn] = L'\0';
+			}
+		}
+	}
+
+__Exit:
+	if (pFileNameInfo)
+		GlobalFree(pFileNameInfo);
+	if (pObjectName)
+		GlobalFree(pObjectName);
+
+	if (lStatus != ERROR_SUCCESS)
+	{
+		SetLastError(lStatus);
+		return 0;
+	}
+	else
+	{
+		return cchReturn;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetFinalPathNameByHandleW, _16);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista,  Windows Server 2008
+DWORD
+WINAPI
+GetFinalPathNameByHandleA(
+	_In_ HANDLE hFile,
+	_Out_writes_(cchFilePath) LPSTR lpszFilePath,
+	_In_ DWORD cchFilePath,
+	_In_ DWORD dwFlags
+	)
+{
+	if (auto pGetFinalPathNameByHandleA = try_get_GetFinalPathNameByHandleA())
+	{
+		return pGetFinalPathNameByHandleA(hFile, lpszFilePath, cchFilePath, dwFlags);
+	}
+
+
+	for (DWORD cchszFilePathUnicode = 1040;;)
+	{
+		auto szFilePathUnicode = (wchar_t*)GlobalAlloc(GMEM_FIXED, cchszFilePathUnicode * sizeof(wchar_t));
+		if (!szFilePathUnicode)
+		{
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			return 0;
+		}
+
+		auto cchReturn = GetFinalPathNameByHandleW(hFile, szFilePathUnicode, cchszFilePathUnicode, dwFlags);
+
+		if (cchReturn == 0)
+		{
+		__Error:
+
+			auto lStatus = GetLastError();
+			GlobalFree(szFilePathUnicode);
+			SetLastError(lStatus);
+		}
+		else if (cchReturn > cchszFilePathUnicode)
+		{
+			//缓冲区不足
+			cchszFilePathUnicode = cchReturn;
+			GlobalFree(szFilePathUnicode);
+			continue;
+		}
+		else
+		{
+			//操作成功！
+
+			auto cchReturnANSI = WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, szFilePathUnicode, cchReturn, nullptr, 0, nullptr, nullptr);
+
+			if (0 == cchReturnANSI)
+			{
+				goto __Error;
+			}
+			else if (cchReturnANSI >= cchFilePath)
+			{
+				//长度不足
+				++cchReturnANSI;
+			}
+			else
+			{
+				WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, szFilePathUnicode, cchReturn, lpszFilePath, cchFilePath, nullptr, nullptr);
+				lpszFilePath[cchReturnANSI] = '\0';
+			}
+
+			GlobalFree(szFilePathUnicode);
+			return cchReturnANSI;
+		}
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetFinalPathNameByHandleA, _16);
 
 #endif
 
