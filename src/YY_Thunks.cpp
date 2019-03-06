@@ -2884,6 +2884,8 @@ GetFinalPathNameByHandleA(
 			auto lStatus = GetLastError();
 			GlobalFree(szFilePathUnicode);
 			SetLastError(lStatus);
+
+			return 0;
 		}
 		else if (cchReturn > cchszFilePathUnicode)
 		{
