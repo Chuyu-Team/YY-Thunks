@@ -22,9 +22,9 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 完全的开放代码，广泛的接受用户意见，希望大家能踊跃的 pull requests，为`鸭船`添砖加瓦。
 
 ## 2. 使用YY-Thunks
-1：下载[YY-Thunks-Binary](https://github.com/Chuyu-Team/YY-Thunks/releases)，然后解压到你的工程目录。<br/>
-2：【链接器】-【输入】-【附加依赖项】，添加`objs\$(PlatformShortName)\YY_Thunks_for_WinXP.obj`。<br/>
-3：重新编译代码。
+1. 下载[YY-Thunks-Binary](https://github.com/Chuyu-Team/YY-Thunks/releases)，然后解压到你的工程目录。<br/>
+2. 【链接器】-【输入】-【附加依赖项】，添加`objs\$(PlatformShortName)\YY_Thunks_for_WinXP.obj`。<br/>
+3. 重新编译代码。
 
 ## 3. YY-Thunks兼容性
 ### 3.1. 支持的编译器
@@ -50,7 +50,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [RegSetKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724921.aspx)                                                   | 调用RegCreateKeyExW(A)以及RegSetValueExW(A)实现。
 | [RegDeleteKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724848.aspx)                                                | 调用RegOpenKeyExW(A)以及RegDeleteValueW(A)实现。
 | [RegDeleteTreeW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                                    | 调用SHDeleteKeyW(A)实现。
-| [RegGetValueW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                                      | 调用RegQueryValueExW(A)实现。
+| [RegGetValueW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                                      | 不存在时，调用RegQueryValueExW(A)实现。
 | [IsWow64Process2](https://msdn.microsoft.com/en-us/library/windows/desktop/mt804318.aspx)                                      | 不存在时，调用IsWow64Process。
 | [IsWow64GuestMachineSupported](https://msdn.microsoft.com/en-us/library/windows/desktop/mt804321.aspx)                         | 不存在时，调用GetNativeSystemInfo。
 | [GetTickCount64](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724411.aspx)                                       | 不存在时，调用GetTickCount。
@@ -81,14 +81,11 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 ## Changes
 
 ### 1.0.0.10 - 功能更新（2019-03-05 20:00）
-* 添加GetFinalPathNameByHandleW(A)
-
-
-### 1.0.0.9 - 功能更新（2019-01-31 16:10）
 * 添加EnumCalendarInfoExEx
 * 添加EnumDateFormatsExEx
 * 添加GetFileInformationByHandleEx
 * 添加SetFileInformationByHandle
+* 添加GetFinalPathNameByHandleW(A)
 
 
 ### 1.0.0.7 - 功能更新（2019-01-02 15:10）
