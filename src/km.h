@@ -10,7 +10,7 @@
 #include <Windows.h>
 #include <winnt.h>
 
-#pragma comment(lib,"ntdll.lib")
+//#pragma comment(lib,"ntdll.lib")
 
 
 #define FILE_SUPERSEDE                  0x00000000
