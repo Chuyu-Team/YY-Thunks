@@ -80,30 +80,14 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 
 ## Changes
 
-### 1.0.0.10 - 功能更新（2019-03-05 20:00）
-* 添加EnumCalendarInfoExEx
-* 添加EnumDateFormatsExEx
-* 添加GetFileInformationByHandleEx
-* 添加SetFileInformationByHandle
-* 添加GetFinalPathNameByHandleW(A)
+### 1.0.0.1 - 第一版（2018-05-17 19:00）
+* YY-Thunks第一版
 
 
-### 1.0.0.7 - 功能更新（2019-01-02 15:10）
-* 添加RegGetValueW(A)
-* 添加LocaleNameToLCID
-* 添加LCIDToLocaleName
-* 添加GetLocaleInfoEx
-* 添加GetDateFormatEx
-* 添加GetTimeFormatEx
-* 添加GetNumberFormatEx
-* 添加GetCurrencyFormatEx
-* 添加GetUserDefaultLocaleName
-* 添加GetSystemDefaultLocaleName
-* 重新编译，解决潜在符号修饰问题。
-
-
-### 1.0.0.4 - 兼容性更新（2018-09-08 18:00）
-* 解决Bug，将初始化时机推迟到`.CRT$XID`，避免VC2008下过早初始化导致atexit崩溃（感谢 死田鸡）。
+### 1.0.0.2 - 补充API支持（2018-06-01 18:30）
+* 添加RegSetKeyValueW(A)
+* 添加RegDeleteKeyValueW(A)
+* 添加RegDeleteTreeW(A)
 
 
 ### 1.0.0.3 - 让兼容Windows ARM64更轻松（2018-06-18 11:30）
@@ -120,11 +104,28 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加SetThreadGroupAffinity
 
 
-### 1.0.0.2 - 补充API支持（2018-06-01 18:30）
-* 添加RegSetKeyValueW(A)
-* 添加RegDeleteKeyValueW(A)
-* 添加RegDeleteTreeW(A)
+### 1.0.0.4 - 兼容性更新（2018-09-08 18:00）
+* 解决Bug，将初始化时机推迟到`.CRT$XID`，避免VC2008下过早初始化导致atexit崩溃（感谢 死田鸡）。
 
 
-### 1.0.0.1 - 第一版（2018-05-17 19:00）
-* YY-Thunks第一版
+### 1.0.0.7 - 功能更新（2019-01-02 15:10）
+* 添加RegGetValueW(A)
+* 添加LocaleNameToLCID
+* 添加LCIDToLocaleName
+* 添加GetLocaleInfoEx
+* 添加GetDateFormatEx
+* 添加GetTimeFormatEx
+* 添加GetNumberFormatEx
+* 添加GetCurrencyFormatEx
+* 添加GetUserDefaultLocaleName
+* 添加GetSystemDefaultLocaleName
+* 重新编译，解决潜在符号修饰问题。
+
+
+### 1.0.0.11 - 功能更新（2019-03-27 18:30）
+* 添加EnumCalendarInfoExEx
+* 添加EnumDateFormatsExEx
+* 添加GetFileInformationByHandleEx
+* 添加SetFileInformationByHandle
+* 添加GetFinalPathNameByHandleW(A)
+* 解决Bug，1.0.0.10版意外引入ntdll.lib问题（感谢 小古）。
