@@ -71,6 +71,8 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [GetFileInformationByHandleEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/winbase/nf-winbase-getfileinformationbyhandleex)| 不存在时，调用NtQueryInformationFile/NtQueryDirectoryFile。
 | [SetFileInformationByHandle](https://docs.microsoft.com/zh-cn/windows/desktop/api/winbase/nf-winbase-getfileinformationbyhandleex)| 不存在时，调用NtSetInformationFile。
 | [GetFinalPathNameByHandleW(A)](https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getfinalpathnamebyhandlew)| 不存在时，调用NtQueryObject以及NtQueryInformationFile。
+| [GetLogicalProcessorInformation](https://docs.microsoft.com/zh-cn/windows/desktop/api/sysinfoapi/nf-sysinfoapi-getlogicalprocessorinformation)| 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
+| [GetLogicalProcessorInformationEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/sysinfoapi/nf-sysinfoapi-getlogicalprocessorinformationex)| 不存在时，调用GetLogicalProcessorInformation。
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
@@ -122,10 +124,12 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 重新编译，解决潜在符号修饰问题。
 
 
-### 1.0.0.11 - 功能更新（2019-03-27 18:30）
+### 1.0.0.12 - 功能更新（2019-03-28 12:30）
 * 添加EnumCalendarInfoExEx
 * 添加EnumDateFormatsExEx
 * 添加GetFileInformationByHandleEx
 * 添加SetFileInformationByHandle
 * 添加GetFinalPathNameByHandleW(A)
 * 解决Bug，1.0.0.10版意外引入ntdll.lib问题（感谢 小古）。
+* 添加GetLogicalProcessorInformation
+* 添加GetLogicalProcessorInformationEx
