@@ -144,12 +144,6 @@ static __forceinline T* __crt_interlocked_exchange_pointer(T* const volatile* ta
 	return reinterpret_cast<T*>(_InterlockedExchangePointer((void**)target, (void*)value));
 }
 
-template <typename T>
-static __forceinline T* __crt_interlocked_read_pointer(T* const volatile* target) throw()
-{
-	return __crt_interlocked_compare_exchange_pointer(target, nullptr, nullptr);
-}
-
 template <typename T, typename E, typename C>
 static __forceinline T* __crt_interlocked_compare_exchange_pointer(T* const volatile* target, E const exchange, C const comparand) throw()
 {
@@ -160,6 +154,12 @@ static __forceinline T* __crt_interlocked_compare_exchange_pointer(T* const vola
 		(void**)target, (void*)exchange, (void*)comparand));
 }
 
+
+template <typename T>
+static __forceinline T* __crt_interlocked_read_pointer(T* const volatile* target) throw()
+{
+	return __crt_interlocked_compare_exchange_pointer(target, nullptr, nullptr);
+}
 
 static HMODULE __cdecl try_load_library_from_system_directory(wchar_t const* const name) throw()
 {
