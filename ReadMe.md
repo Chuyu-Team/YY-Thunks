@@ -75,6 +75,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [GetLogicalProcessorInformationEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/sysinfoapi/nf-sysinfoapi-getlogicalprocessorinformationex)| 不存在时，调用GetLogicalProcessorInformation。
 | [InetPtonW(inet_pton)](https://docs.microsoft.com/en-us/windows/desktop/api/ws2tcpip/nf-ws2tcpip-inetptonw)                    | 不存在时，类似于sscanf手工分析字符串。
 | [InetNtopW(inet_ntop)](https://docs.microsoft.com/en-us/windows/desktop/api/ws2tcpip/nf-ws2tcpip-inetntopw)                    | 不存在时，类似于sprintf_s手工生成字符串。
+| [GetNumaHighestNodeNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683203.aspx)                             | 不存在时，返回0。
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
@@ -126,7 +127,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 重新编译，解决潜在符号修饰问题。
 
 
-### 1.0.1.0 - 功能更新（2019-03-29 20:30）
+### 1.0.1.1 - 功能更新（2019-04-01 17:00）
 * 添加EnumCalendarInfoExEx
 * 添加EnumDateFormatsExEx
 * 添加GetFileInformationByHandleEx
@@ -137,3 +138,4 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加GetLogicalProcessorInformationEx
 * 添加InetPtonW(inet_pton)
 * 添加InetNtopW(inet_ntop)
+* 添加GetNumaHighestNodeNumber

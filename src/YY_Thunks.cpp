@@ -53,6 +53,7 @@
     _APPLY(GetFinalPathNameByHandleA,                    kernel32                                      ) \
     _APPLY(GetLogicalProcessorInformation,               kernel32                                      ) \
     _APPLY(GetLogicalProcessorInformationEx,             kernel32                                      ) \
+    _APPLY(GetNumaHighestNodeNumber,                     kernel32                                      ) \
     _APPLY(RegDeleteKeyExW,                              advapi32                                      ) \
     _APPLY(RegDeleteKeyExA,                              advapi32                                      ) \
     _APPLY(RegGetValueW,                                 advapi32                                      ) \
@@ -4021,4 +4022,28 @@ _LCRT_DEFINE_IAT_SYMBOL(InetNtopW, _16);
 
 #endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WS03) || (YY_Thunks_Support_Version < NTDDI_WINXPSP2)
+//Windows Vista, Windows XP Professional x64 Edition, Windows XP with SP2 [desktop apps only]
+//Windows Server 2003 [desktop apps only]
+
+BOOL
+WINAPI
+GetNumaHighestNodeNumber(
+    _Out_ PULONG HighestNodeNumber
+    )
+{
+	if (auto pGetNumaHighestNodeNumber = try_get_GetNumaHighestNodeNumber())
+	{
+		return pGetNumaHighestNodeNumber(HighestNodeNumber);
+	}
+
+	//不支持时始终假定只有一个NUMA节点
+	*HighestNodeNumber = 0;
+
+	return TRUE;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetNumaHighestNodeNumber, _4);
+
+#endif
 EXTERN_C_END
