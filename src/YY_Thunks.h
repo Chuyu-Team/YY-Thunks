@@ -17,7 +17,7 @@
 
 #define _LCRT_DEFINE_IAT_SYMBOL(f,prefixed)                                                          \
     extern "C" __declspec(selectany) void const* const _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(f,prefixed) \
-        = reinterpret_cast<void const*>(f)
+        = reinterpret_cast<void const*>(YYThunks::f)
 
 
 

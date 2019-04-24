@@ -77,8 +77,17 @@
 #include <ws2tcpip.h>
 #include "YY_Thunks.h"
 
-//dll 链接不一致
-#pragma warning(disable:4273)
+#if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
+#pragma comment(lib, "Advapi32.lib")
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#pragma comment(lib, "Shlwapi.lib")
+#pragma comment(lib, "Ws2_32.lib")
+#endif
+
+namespace YYThunks
+{
 
 EXTERN_C_START
 
@@ -2997,7 +3006,7 @@ GetLogicalProcessorInformationEx(
 	SYSTEM_LOGICAL_PROCESSOR_INFORMATION* pProcessorInfo = nullptr;
 	DWORD cbLogicalProcessorInformation = 0;
 
-	for (; GetLogicalProcessorInformation(pProcessorInfo, &cbLogicalProcessorInformation) == FALSE;)
+	for (; ::GetLogicalProcessorInformation(pProcessorInfo, &cbLogicalProcessorInformation) == FALSE;)
 	{
 		lStatus = GetLastError();
 
@@ -4047,3 +4056,5 @@ _LCRT_DEFINE_IAT_SYMBOL(GetNumaHighestNodeNumber, _4);
 
 #endif
 EXTERN_C_END
+
+}
