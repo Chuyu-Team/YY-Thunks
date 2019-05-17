@@ -19,6 +19,7 @@
     _APPLY(RtlDosPathNameToNtPathName_U_WithStatus,      ntdll                                         ) \
     _APPLY(RtlFreeUnicodeString,                         ntdll                                         ) \
     _APPLY(NtQueryObject,                                ntdll                                         ) \
+    _APPLY(NtQueryInformationThread,                     ntdll                                         ) \
     _APPLY(DecodePointer,                                kernel32                                      ) \
     _APPLY(EncodePointer,                                kernel32                                      ) \
     _APPLY(Wow64DisableWow64FsRedirection,               kernel32                                      ) \
@@ -54,6 +55,11 @@
     _APPLY(GetLogicalProcessorInformation,               kernel32                                      ) \
     _APPLY(GetLogicalProcessorInformationEx,             kernel32                                      ) \
     _APPLY(GetNumaHighestNodeNumber,                     kernel32                                      ) \
+    _APPLY(RaiseFailFastException,                       kernel32                                      ) \
+    _APPLY(GetThreadId,                                  kernel32                                      ) \
+    _APPLY(GetProcessIdOfThread,                         kernel32                                      ) \
+    _APPLY(QueryThreadCycleTime,                         kernel32                                      ) \
+    _APPLY(QueryProcessCycleTime,                        kernel32                                      ) \
     _APPLY(RegDeleteKeyExW,                              advapi32                                      ) \
     _APPLY(RegDeleteKeyExA,                              advapi32                                      ) \
     _APPLY(RegGetValueW,                                 advapi32                                      ) \
@@ -88,7 +94,20 @@
 
 namespace YYThunks
 {
+	namespace internal
+	{
+		static DWORD __fastcall BaseSetLastNTError(
+			_In_ NTSTATUS Status
+			)
+		{
+			auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
 
+			//如果没有RtlNtStatusToDosError就直接设置Status代码吧，反正至少比没有错误代码强
+			DWORD lStatus = pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status;
+			SetLastError(lStatus);
+			return lStatus;
+		}
+	}
 EXTERN_C_START
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
@@ -2356,10 +2375,7 @@ GetFileInformationByHandleEx(
 	}
 	else
 	{
-		auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
-
-		//如果没有RtlNtStatusToDosError就直接设置Status代码吧，反正至少比没有错误代码强
-		SetLastError(pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status);
+		internal::BaseSetLastNTError(Status);
 
 		return FALSE;
 	}
@@ -2440,9 +2456,7 @@ SetFileInformationByHandle(
 
 				if (Status < STATUS_SUCCESS)
 				{
-					auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
-
-					SetLastError(pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status);
+					internal::BaseSetLastNTError(Status);
 
 					return FALSE;
 				}
@@ -2537,10 +2551,9 @@ SetFileInformationByHandle(
 	if (Status >= STATUS_SUCCESS)
 		return TRUE;
 
-	auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
 
-	//如果没有RtlNtStatusToDosError就直接设置Status代码吧，反正至少比没有错误代码强
-	SetLastError(pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status);
+	
+	internal::BaseSetLastNTError(Status);
 
 	return FALSE;
 }
@@ -4055,6 +4068,188 @@ GetNumaHighestNodeNumber(
 _LCRT_DEFINE_IAT_SYMBOL(GetNumaHighestNodeNumber, _4);
 
 #endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+//Windows 7 [desktop apps | UWP apps]
+//Windows Server 2008 R2 [desktop apps | UWP apps]
+
+VOID
+WINAPI
+RaiseFailFastException(
+    _In_opt_ PEXCEPTION_RECORD pExceptionRecord,
+    _In_opt_ PCONTEXT pContextRecord,
+    _In_ DWORD dwFlags
+    )
+{
+	if (auto pRaiseFailFastException = try_get_RaiseFailFastException())
+	{
+		return pRaiseFailFastException(pExceptionRecord, pContextRecord, dwFlags);
+	}
+
+	//直接结束进程
+	TerminateProcess(NtGetCurrentProcess(), pExceptionRecord ? pExceptionRecord->ExceptionCode : STATUS_FAIL_FAST_EXCEPTION);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(RaiseFailFastException, _12);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2003 [desktop apps | UWP apps]
+
+//感谢 过客 提供
+DWORD
+WINAPI
+GetThreadId(
+    _In_ HANDLE Thread
+    )
+{
+	if (auto pGetThreadId = try_get_GetThreadId())
+	{
+		return pGetThreadId(Thread);
+	}
+	else if (auto pNtQueryInformationThread = try_get_NtQueryInformationThread())
+	{
+		THREAD_BASIC_INFORMATION ThreadBasicInfo;
+
+		auto Status = pNtQueryInformationThread(Thread, ThreadBasicInformation, &ThreadBasicInfo, sizeof(ThreadBasicInfo), nullptr);
+
+		if (Status == 0)
+		{
+			return (DWORD)ThreadBasicInfo.ClientId.UniqueThread;
+		}
+
+		internal::BaseSetLastNTError(Status);
+		return 0;
+	}
+	else
+	{
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		return 0;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetThreadId, _4);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2003 [desktop apps | UWP apps]
+
+DWORD
+WINAPI
+GetProcessIdOfThread(
+    _In_ HANDLE Thread
+    )
+{
+	if (auto pGetProcessIdOfThread = try_get_GetProcessIdOfThread())
+	{
+		return pGetProcessIdOfThread(Thread);
+	}
+	else if (auto pNtQueryInformationThread = try_get_NtQueryInformationThread())
+	{
+		THREAD_BASIC_INFORMATION ThreadBasicInfo;
+
+		auto Status = pNtQueryInformationThread(Thread, ThreadBasicInformation, &ThreadBasicInfo, sizeof(ThreadBasicInfo), nullptr);
+
+		if (Status == 0)
+		{
+			return (DWORD)ThreadBasicInfo.ClientId.UniqueProcess;
+		}
+		
+		internal::BaseSetLastNTError(Status);
+		return 0;
+	}
+	else
+	{
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		return 0;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetProcessIdOfThread, _4);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+BOOL
+WINAPI
+QueryThreadCycleTime(
+    _In_ HANDLE ThreadHandle,
+    _Out_ PULONG64 CycleTime
+    )
+{
+	if (auto pQueryThreadCycleTime = try_get_QueryThreadCycleTime())
+	{
+		return pQueryThreadCycleTime(ThreadHandle, CycleTime);
+	}
+	
+
+	//GetThreadTimes凑合用吧……
+	FILETIME CreationTime;
+	FILETIME ExitTime;
+	FILETIME KernelTime;
+	FILETIME UserTime;
+
+	if (!GetThreadTimes(ThreadHandle, &CreationTime, &ExitTime, &KernelTime, &UserTime))
+	{
+		return FALSE;
+	}
+
+	((ULARGE_INTEGER*)CycleTime)->LowPart = UserTime.dwLowDateTime;
+	((ULARGE_INTEGER*)CycleTime)->HighPart = UserTime.dwHighDateTime;
+
+	return TRUE;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(QueryThreadCycleTime, _8);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+BOOL
+WINAPI
+QueryProcessCycleTime(
+    _In_ HANDLE ProcessHandle,
+    _Out_ PULONG64 CycleTime
+    )
+{
+	if (auto pQueryProcessCycleTime = try_get_QueryProcessCycleTime())
+	{
+		return pQueryProcessCycleTime(ProcessHandle, CycleTime);
+	}
+
+	//GetProcessTimes凑合用吧……
+	FILETIME CreationTime;
+	FILETIME ExitTime;
+	FILETIME KernelTime;
+	FILETIME UserTime;
+
+	if (!GetProcessTimes(ProcessHandle, &CreationTime, &ExitTime, &KernelTime, &UserTime))
+	{
+		return FALSE;
+	}
+
+	((ULARGE_INTEGER*)CycleTime)->LowPart = UserTime.dwLowDateTime;
+	((ULARGE_INTEGER*)CycleTime)->HighPart = UserTime.dwHighDateTime;
+
+	return TRUE;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(QueryProcessCycleTime, _8);
+
+#endif
+
 EXTERN_C_END
 
 }

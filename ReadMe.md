@@ -76,6 +76,11 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [InetPtonW(inet_pton)](https://docs.microsoft.com/en-us/windows/desktop/api/ws2tcpip/nf-ws2tcpip-inetptonw)                    | 不存在时，类似于sscanf手工分析字符串。
 | [InetNtopW(inet_ntop)](https://docs.microsoft.com/en-us/windows/desktop/api/ws2tcpip/nf-ws2tcpip-inetntopw)                    | 不存在时，类似于sprintf_s手工生成字符串。
 | [GetNumaHighestNodeNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683203.aspx)                             | 不存在时，返回0。
+| [RaiseFailFastException](https://msdn.microsoft.com/en-us/library/windows/desktop/dd941688.aspx)                               | 不存在时，调用TerminateProcess。
+| [GetThreadId](https://docs.microsoft.com/zh-cn/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getthreadid)         | 不存在时，调用NtQueryInformationThread。
+| [GetProcessIdOfThread](https://docs.microsoft.com/zh-cn/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getprocessidofthread)   | 不存在时，调用NtQueryInformationThread。
+| [QueryThreadCycleTime](https://docs.microsoft.com/zh-cn/windows/desktop/api/realtimeapiset/nf-realtimeapiset-querythreadcycletime)         | 不存在时，调用GetThreadTimes。
+| [QueryProcessCycleTime](https://docs.microsoft.com/zh-cn/windows/desktop/api/realtimeapiset/nf-realtimeapiset-queryprocesscycletime)       | 不存在时，调用GetProcessTimes。
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
@@ -139,3 +144,10 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加InetPtonW(inet_pton)
 * 添加InetNtopW(inet_ntop)
 * 添加GetNumaHighestNodeNumber
+
+### 1.0.1.2 - 功能更新（2019-05-17 16:00）
+* 添加RaiseFailFastException（感谢 过客）
+* 添加GetThreadId（感谢 过客）
+* 添加GetProcessIdOfThread
+* 添加QueryThreadCycleTime（感谢 过客）
+* 添加QueryProcessCycleTime
