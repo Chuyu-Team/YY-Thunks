@@ -92,6 +92,10 @@
 #pragma comment(lib, "Ws2_32.lib")
 #endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#pragma comment(lib, "psapi.lib")
+#endif
+
 namespace YYThunks
 {
 	namespace internal

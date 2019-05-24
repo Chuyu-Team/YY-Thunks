@@ -81,6 +81,23 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [GetProcessIdOfThread](https://docs.microsoft.com/zh-cn/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getprocessidofthread)   | 不存在时，调用NtQueryInformationThread。
 | [QueryThreadCycleTime](https://docs.microsoft.com/zh-cn/windows/desktop/api/realtimeapiset/nf-realtimeapiset-querythreadcycletime)         | 不存在时，调用GetThreadTimes。
 | [QueryProcessCycleTime](https://docs.microsoft.com/zh-cn/windows/desktop/api/realtimeapiset/nf-realtimeapiset-queryprocesscycletime)       | 不存在时，调用GetProcessTimes。
+| [K32EnumProcessModules](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-enumprocessmodules)                | 调用EnumProcessModules。
+| [K32EnumProcessModulesEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-enumprocessmodulesex)            | 调用EnumProcessModulesEx。
+| [K32GetModuleBaseNameW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-getmodulebasenamea)             | 调用GetModuleBaseNameW(A)。
+| [K32GetModuleFileNameExW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-getmodulefilenameexw)         | 调用K32GetModuleFileNameExW(A)。
+| [K32EmptyWorkingSet](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-emptyworkingset)                      | 调用EmptyWorkingSet。
+| [K32QueryWorkingSet](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-queryworkingset)                      | 调用QueryWorkingSet。
+| [K32QueryWorkingSetEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-queryworkingsetex)                  | 调用QueryWorkingSetEx。
+| [K32InitializeProcessForWsWatch](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-initializeprocessforwswatch) | 调用InitializeProcessForWsWatch。
+| [K32GetWsChanges](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-getwschanges)                            | 调用GetWsChanges。
+| [K32GetWsChangesEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-getwschangesex)                        | 调用GetWsChangesEx。
+| [K32GetMappedFileNameW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-getmappedfilenamew)             | 调用GetMappedFileNameW(A)。
+| [K32EnumDeviceDrivers](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-enumdevicedrivers)                  | 调用EnumDeviceDrivers。
+| [K32GetDeviceDriverBaseNameW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-getdevicedriverbasenamew) | 调用GetDeviceDriverBaseNameW(A)。
+| [K32GetDeviceDriverFileNameW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-getdevicedriverfilenamew) | 调用GetDeviceDriverFileNameW(A)。
+| [K32GetPerformanceInfo](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-getperformanceinfo)                | 调用GetPerformanceInfo。
+| [K32EnumPageFilesW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-enumpagefilesw)                     | 调用EnumPageFilesW(A)。
+| [K32GetProcessImageFileNameW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-enumpagefilesw)           | 调用GetProcessImageFileNameW(A)。
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
@@ -145,9 +162,26 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加InetNtopW(inet_ntop)
 * 添加GetNumaHighestNodeNumber
 
-### 1.0.1.2 - 功能更新（2019-05-17 16:00）
+### 1.0.1.3 - 功能更新（2019-05-24 23:00）
 * 添加RaiseFailFastException（感谢 过客）
 * 添加GetThreadId（感谢 过客）
 * 添加GetProcessIdOfThread
 * 添加QueryThreadCycleTime（感谢 过客）
 * 添加QueryProcessCycleTime
+* 添加K32EnumProcessModules
+* 添加K32EnumProcessModulesEx
+* 添加K32GetModuleBaseNameW(A)
+* 添加K32GetModuleFileNameExW(A)
+* 添加K32EmptyWorkingSet
+* 添加K32QueryWorkingSet
+* 添加K32QueryWorkingSetEx
+* 添加K32InitializeProcessForWsWatch
+* 添加K32GetWsChanges
+* 添加K32GetWsChangesEx
+* 添加K32GetMappedFileNameW(A)
+* 添加K32EnumDeviceDrivers
+* 添加K32GetDeviceDriverBaseNameW(A)
+* 添加K32GetDeviceDriverFileNameW(A)
+* 添加K32GetPerformanceInfo
+* 添加K32EnumPageFilesW(A)
+* 添加K32GetProcessImageFileNameW(A)
