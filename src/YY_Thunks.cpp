@@ -6,6 +6,7 @@
 #define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                          \
     _APPLY(ntdll,                                        "ntdll"                                       ) \
     _APPLY(kernel32,                                     "kernel32"                                    ) \
+    _APPLY(psapi,                                        "psapi"                                       ) \
 	_APPLY(advapi32,                                     "advapi32"                                    ) \
     _APPLY(user32,                                       "user32"                                      ) \
     _APPLY(ws2_32,                                       "ws2_32"                                      ) 
@@ -60,6 +61,8 @@
     _APPLY(GetProcessIdOfThread,                         kernel32                                      ) \
     _APPLY(QueryThreadCycleTime,                         kernel32                                      ) \
     _APPLY(QueryProcessCycleTime,                        kernel32                                      ) \
+    _APPLY(EnumProcessModulesEx,                         psapi                                         ) \
+    _APPLY(GetWsChangesEx,                               psapi                                         ) \
     _APPLY(RegDeleteKeyExW,                              advapi32                                      ) \
     _APPLY(RegDeleteKeyExA,                              advapi32                                      ) \
     _APPLY(RegGetValueW,                                 advapi32                                      ) \
@@ -75,12 +78,14 @@
 #endif
 
 #define _WINSOCKAPI_
+#define PSAPI_VERSION 1
 
 #define _Disallow_YY_KM_Namespace
 #include "km.h"
 #include <Shlwapi.h>
 #include <WinSock2.h>
 #include <ws2tcpip.h>
+#include <psapi.h>
 #include "YY_Thunks.h"
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
@@ -4254,6 +4259,149 @@ _LCRT_DEFINE_IAT_SYMBOL(QueryProcessCycleTime, _8);
 
 #endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+BOOL
+WINAPI
+EnumProcessModulesEx(
+    _In_ HANDLE hProcess,
+    _Out_writes_bytes_(cb) HMODULE* lphModule,
+    _In_ DWORD cb,
+    _Out_ LPDWORD lpcbNeeded,
+    _In_ DWORD dwFilterFlag
+    )
+{
+	if (auto pEnumProcessModulesEx = try_get_EnumProcessModulesEx())
+	{
+		return pEnumProcessModulesEx(hProcess, lphModule, cb, lpcbNeeded, dwFilterFlag);
+	}
+
+	return EnumProcessModules(hProcess, lphModule, cb, lpcbNeeded);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(EnumProcessModulesEx, _20);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+BOOL
+WINAPI
+GetWsChangesEx(
+    _In_ HANDLE hProcess,
+    _Out_writes_bytes_to_(*cb, *cb) PPSAPI_WS_WATCH_INFORMATION_EX lpWatchInfoEx,
+    _Inout_ PDWORD cb
+    )
+{
+	if (auto pGetWsChangesEx = try_get_GetWsChangesEx())
+	{
+		return pGetWsChangesEx(hProcess, lpWatchInfoEx, cb);
+	}
+
+	PPSAPI_WS_WATCH_INFORMATION pWatchInfo = nullptr;
+	DWORD cbWatchInfo = 1024 * sizeof(pWatchInfo[0]);
+	const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+	LSTATUS lStatus = ERROR_SUCCESS;
+
+	for (;;)
+	{
+		if (pWatchInfo)
+		{
+			cbWatchInfo *= 2;
+			
+			auto pNewWatchInfo = (PPSAPI_WS_WATCH_INFORMATION)HeapReAlloc(ProcessHeap, 0, pWatchInfo, cbWatchInfo);
+
+			if (!pNewWatchInfo)
+			{
+				lStatus = ERROR_OUTOFMEMORY;
+				break;
+			}
+
+			pWatchInfo = pNewWatchInfo;
+		}
+		else
+		{
+			pWatchInfo = (PPSAPI_WS_WATCH_INFORMATION)HeapAlloc(ProcessHeap, 0, cbWatchInfo);
+			if (!pWatchInfo)
+			{
+				lStatus = ERROR_OUTOFMEMORY;
+				break;
+			}
+		}
+
+		if (!GetWsChanges(hProcess, pWatchInfo, cbWatchInfo))
+		{
+			lStatus = GetLastError();
+
+			if (lStatus == ERROR_INSUFFICIENT_BUFFER)
+			{
+				continue;
+
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		//确定实际个数
+		const auto pWatchInfoMax = (PPSAPI_WS_WATCH_INFORMATION)((byte*)pWatchInfo + cbWatchInfo);
+		auto pWatchInfoTerminated = pWatchInfo;
+		for (; pWatchInfoTerminated < pWatchInfoMax && pWatchInfoTerminated->FaultingPc != nullptr; pWatchInfoTerminated += sizeof(pWatchInfoTerminated[0]));
+
+		auto ccWatchInfo = pWatchInfoTerminated - pWatchInfo;
+
+		auto cbWatchInfoExRequest = (ccWatchInfo + 1) * sizeof(lpWatchInfoEx[0]);
+
+		auto cbBuffer = *cb;
+		*cb = cbWatchInfoExRequest;
+
+		if (cbBuffer < cbWatchInfoExRequest)
+		{
+			lStatus = ERROR_INSUFFICIENT_BUFFER;
+			break;
+		}
+
+
+		//复制到新缓冲区
+		for (int i = 0; i != ccWatchInfo; ++i)
+		{
+			lpWatchInfoEx[i].BasicInfo = pWatchInfo[i];
+			lpWatchInfoEx[i].FaultingThreadId = 0;
+			lpWatchInfoEx[i].Flags = 0;
+		}
+		
+		//插入终止标记
+		lpWatchInfoEx[ccWatchInfo] = PSAPI_WS_WATCH_INFORMATION_EX{};
+
+		lStatus = ERROR_SUCCESS;
+		break;
+	}
+
+	if (pWatchInfo)
+	{
+		HeapFree(ProcessHeap, 0, pWatchInfo);
+	}
+	
+	if (lStatus == ERROR_SUCCESS)
+	{
+		return TRUE;
+	}
+	else
+	{
+		SetLastError(lStatus);
+		return FALSE;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetWsChangesEx, _12);
+
+#endif
 EXTERN_C_END
 
 }

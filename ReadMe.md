@@ -98,6 +98,8 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [K32GetPerformanceInfo](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-getperformanceinfo)                | 调用GetPerformanceInfo。
 | [K32EnumPageFilesW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-enumpagefilesw)                     | 调用EnumPageFilesW(A)。
 | [K32GetProcessImageFileNameW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-enumpagefilesw)           | 调用GetProcessImageFileNameW(A)。
+| [EnumProcessModulesEx](https://docs.microsoft.com/en-us/windows/desktop/api/psapi/nf-psapi-enumprocessmodulesex)               | 不存在时，调用EnumProcessModules。
+| [GetWsChangesEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-getwschangesex)                           | 不存在时，调用GetWsChanges。
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
@@ -162,7 +164,8 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加InetNtopW(inet_ntop)
 * 添加GetNumaHighestNodeNumber
 
-### 1.0.1.3 - 功能更新（2019-05-24 23:00）
+
+### 1.0.1.4 - 功能更新（2019-05-25 23:00）
 * 添加RaiseFailFastException（感谢 过客）
 * 添加GetThreadId（感谢 过客）
 * 添加GetProcessIdOfThread
@@ -185,3 +188,5 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加K32GetPerformanceInfo
 * 添加K32EnumPageFilesW(A)
 * 添加K32GetProcessImageFileNameW(A)
+* 添加EnumProcessModulesEx
+* 添加GetWsChangesEx
