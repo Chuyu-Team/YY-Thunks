@@ -7,9 +7,10 @@
     _APPLY(ntdll,                                        "ntdll"                                       ) \
     _APPLY(kernel32,                                     "kernel32"                                    ) \
     _APPLY(psapi,                                        "psapi"                                       ) \
+    _APPLY(version,                                      "version"                                     ) \
 	_APPLY(advapi32,                                     "advapi32"                                    ) \
     _APPLY(user32,                                       "user32"                                      ) \
-    _APPLY(ws2_32,                                       "ws2_32"                                      ) 
+    _APPLY(ws2_32,                                       "ws2_32"                                      )
 
 
 #define _YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)                                                        \
@@ -21,6 +22,7 @@
     _APPLY(RtlFreeUnicodeString,                         ntdll                                         ) \
     _APPLY(NtQueryObject,                                ntdll                                         ) \
     _APPLY(NtQueryInformationThread,                     ntdll                                         ) \
+    _APPLY(NtQueryInformationProcess,                    ntdll                                         ) \
     _APPLY(DecodePointer,                                kernel32                                      ) \
     _APPLY(EncodePointer,                                kernel32                                      ) \
     _APPLY(Wow64DisableWow64FsRedirection,               kernel32                                      ) \
@@ -59,10 +61,27 @@
     _APPLY(RaiseFailFastException,                       kernel32                                      ) \
     _APPLY(GetThreadId,                                  kernel32                                      ) \
     _APPLY(GetProcessIdOfThread,                         kernel32                                      ) \
+    _APPLY(GetProcessId,                                 kernel32                                      ) \
     _APPLY(QueryThreadCycleTime,                         kernel32                                      ) \
     _APPLY(QueryProcessCycleTime,                        kernel32                                      ) \
+    _APPLY(QueryFullProcessImageNameW,                   kernel32                                      ) \
+    _APPLY(QueryFullProcessImageNameA,                   kernel32                                      ) \
+    _APPLY(CreateFile2,                                  kernel32                                      ) \
+    _APPLY(CreateEventExW,                               kernel32                                      ) \
+    _APPLY(CreateEventExA,                               kernel32                                      ) \
+    _APPLY(CreateMutexExW,                               kernel32                                      ) \
+    _APPLY(CreateMutexExA,                               kernel32                                      ) \
+    _APPLY(CreateSemaphoreExW,                           kernel32                                      ) \
+    _APPLY(CreateWaitableTimerExW,                       kernel32                                      ) \
+    _APPLY(SetThreadErrorMode,                           kernel32                                      ) \
+    _APPLY(GetThreadErrorMode,                           kernel32                                      ) \
+    _APPLY(GetErrorMode,                                 kernel32                                      ) \
     _APPLY(EnumProcessModulesEx,                         psapi                                         ) \
     _APPLY(GetWsChangesEx,                               psapi                                         ) \
+    _APPLY(GetFileVersionInfoExW,                        version                                       ) \
+    _APPLY(GetFileVersionInfoExA,                        version                                       ) \
+    _APPLY(GetFileVersionInfoSizeExW,                    version                                       ) \
+    _APPLY(GetFileVersionInfoSizeExA,                    version                                       ) \
     _APPLY(RegDeleteKeyExW,                              advapi32                                      ) \
     _APPLY(RegDeleteKeyExA,                              advapi32                                      ) \
     _APPLY(RegGetValueW,                                 advapi32                                      ) \
@@ -4124,13 +4143,15 @@ GetThreadId(
 
 		auto Status = pNtQueryInformationThread(Thread, ThreadBasicInformation, &ThreadBasicInfo, sizeof(ThreadBasicInfo), nullptr);
 
-		if (Status == 0)
+		if (Status < 0)
+		{
+			internal::BaseSetLastNTError(Status);
+			return 0;
+		}
+		else
 		{
 			return (DWORD)ThreadBasicInfo.ClientId.UniqueThread;
 		}
-
-		internal::BaseSetLastNTError(Status);
-		return 0;
 	}
 	else
 	{
@@ -4164,13 +4185,15 @@ GetProcessIdOfThread(
 
 		auto Status = pNtQueryInformationThread(Thread, ThreadBasicInformation, &ThreadBasicInfo, sizeof(ThreadBasicInfo), nullptr);
 
-		if (Status == 0)
+		if (Status < 0)
+		{
+			internal::BaseSetLastNTError(Status);
+			return 0;
+		}
+		else
 		{
 			return (DWORD)ThreadBasicInfo.ClientId.UniqueProcess;
 		}
-		
-		internal::BaseSetLastNTError(Status);
-		return 0;
 	}
 	else
 	{
@@ -4180,6 +4203,48 @@ GetProcessIdOfThread(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(GetProcessIdOfThread, _4);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WINXPSP1)
+//Windows Vista, Windows XP with SP1 [desktop apps | UWP apps]
+//Windows Server 2003 [desktop apps | UWP apps]
+
+DWORD
+WINAPI
+GetProcessId(
+    _In_ HANDLE Process
+    )
+{
+	if (auto pGetProcessId = try_get_GetProcessId())
+	{
+		return pGetProcessId(Process);
+	}
+	else if (auto pNtQueryInformationProcess = try_get_NtQueryInformationProcess())
+	{
+		PROCESS_BASIC_INFORMATION ProcessBasicInfo;
+
+		auto Status = pNtQueryInformationProcess(Process, ProcessBasicInformation, &ProcessBasicInfo, sizeof(ProcessBasicInfo), nullptr);
+
+		if (Status < 0)
+		{
+			internal::BaseSetLastNTError(Status);
+			return 0;
+		}
+		else
+		{
+			return (DWORD)ProcessBasicInfo.UniqueProcessId;
+		}
+	}
+	else
+	{
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		return 0;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetProcessId, _4);
 
 #endif
 
@@ -4402,6 +4467,519 @@ GetWsChangesEx(
 _LCRT_DEFINE_IAT_SYMBOL(GetWsChangesEx, _12);
 
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+BOOL
+WINAPI
+QueryFullProcessImageNameW(
+    _In_ HANDLE hProcess,
+    _In_ DWORD dwFlags,
+    _Out_writes_to_(*lpdwSize, *lpdwSize) LPWSTR lpExeName,
+    _Inout_ PDWORD lpdwSize
+    )
+{
+	if (auto pQueryFullProcessImageNameW = try_get_QueryFullProcessImageNameW())
+	{
+		return pQueryFullProcessImageNameW(hProcess, dwFlags, lpExeName, lpdwSize);
+	}
+
+	auto dwSize = *lpdwSize;
+
+	if (dwFlags & PROCESS_NAME_NATIVE)
+	{
+		dwSize = GetProcessImageFileNameW(hProcess, lpExeName, dwSize);
+	}
+	else
+	{
+		dwSize = GetModuleFileNameExW(hProcess, nullptr, lpExeName, dwSize);
+	}
+
+	if (dwSize)
+	{
+		*lpdwSize = dwSize;
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(QueryFullProcessImageNameW, _16);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+BOOL
+WINAPI
+QueryFullProcessImageNameA(
+    _In_ HANDLE hProcess,
+    _In_ DWORD dwFlags,
+    _Out_writes_to_(*lpdwSize, *lpdwSize) LPSTR lpExeName,
+    _Inout_ PDWORD lpdwSize
+    )
+{
+	if (auto pQueryFullProcessImageNameA = try_get_QueryFullProcessImageNameA())
+	{
+		return pQueryFullProcessImageNameA(hProcess, dwFlags, lpExeName, lpdwSize);
+	}
+
+	auto dwSize = *lpdwSize;
+
+	if (dwFlags & PROCESS_NAME_NATIVE)
+	{
+		dwSize = GetProcessImageFileNameA(hProcess, lpExeName, dwSize);
+	}
+	else
+	{
+		dwSize = GetModuleFileNameExA(hProcess, nullptr, lpExeName, dwSize);
+	}
+
+	if (dwSize)
+	{
+		*lpdwSize = dwSize;
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(QueryFullProcessImageNameA, _16);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+//Windows 8 [desktop apps | UWP apps]
+//Windows Server 2012 [desktop apps | UWP apps]
+
+HANDLE
+WINAPI
+CreateFile2(
+    _In_ LPCWSTR lpFileName,
+    _In_ DWORD dwDesiredAccess,
+    _In_ DWORD dwShareMode,
+    _In_ DWORD dwCreationDisposition,
+    _In_opt_ LPCREATEFILE2_EXTENDED_PARAMETERS pCreateExParams
+    )
+{
+	if (auto pCreateFile2 = try_get_CreateFile2())
+	{
+		return pCreateFile2(lpFileName, dwDesiredAccess, dwShareMode, dwCreationDisposition, pCreateExParams);
+	}
+
+	DWORD dwFlagsAndAttributes = 0;
+	LPSECURITY_ATTRIBUTES lpSecurityAttributes = nullptr;
+	HANDLE hTemplateFile = nullptr;
+
+	if (pCreateExParams)
+	{
+		if (pCreateExParams->dwSize < sizeof(*pCreateExParams))
+		{
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return INVALID_HANDLE_VALUE;
+		}
+
+		dwFlagsAndAttributes = pCreateExParams->dwFileAttributes | pCreateExParams->dwFileFlags | pCreateExParams->dwSecurityQosFlags;
+		lpSecurityAttributes = pCreateExParams->lpSecurityAttributes;
+		hTemplateFile        = pCreateExParams->hTemplateFile;
+	}
+	 
+	return CreateFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(CreateFile2, _20);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+HANDLE
+WINAPI
+CreateEventExW(
+    _In_opt_ LPSECURITY_ATTRIBUTES lpEventAttributes,
+    _In_opt_ LPCWSTR lpName,
+    _In_ DWORD dwFlags,
+    _In_ DWORD dwDesiredAccess
+    )
+{
+	if (auto pCreateEventExW = try_get_CreateEventExW())
+	{
+		return pCreateEventExW(lpEventAttributes, lpName, dwFlags, dwDesiredAccess);
+	}
+
+	return CreateEventW(lpEventAttributes, dwFlags & CREATE_EVENT_MANUAL_RESET, dwFlags & CREATE_EVENT_INITIAL_SET, lpName);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(CreateEventExW, _16);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+HANDLE
+WINAPI
+CreateEventExA(
+    _In_opt_ LPSECURITY_ATTRIBUTES lpEventAttributes,
+    _In_opt_ LPCSTR lpName,
+    _In_ DWORD dwFlags,
+    _In_ DWORD dwDesiredAccess
+    )
+{
+	if (auto pCreateEventExA = try_get_CreateEventExA())
+	{
+		return pCreateEventExA(lpEventAttributes, lpName, dwFlags, dwDesiredAccess);
+	}
+
+	return CreateEventA(lpEventAttributes, dwFlags & CREATE_EVENT_MANUAL_RESET, dwFlags & CREATE_EVENT_INITIAL_SET, lpName);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(CreateEventExA, _16);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+HANDLE
+WINAPI
+CreateMutexExW(
+    _In_opt_ LPSECURITY_ATTRIBUTES lpMutexAttributes,
+    _In_opt_ LPCWSTR lpName,
+    _In_ DWORD dwFlags,
+    _In_ DWORD dwDesiredAccess
+    )
+{
+	if (auto pCreateMutexExW = try_get_CreateMutexExW())
+	{
+		return pCreateMutexExW(lpMutexAttributes, lpName, dwFlags, dwDesiredAccess);
+	}
+
+	return CreateMutexW(lpMutexAttributes, dwFlags & CREATE_MUTEX_INITIAL_OWNER, lpName);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(CreateMutexExW, _16);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+HANDLE
+WINAPI
+CreateMutexExA(
+    _In_opt_ LPSECURITY_ATTRIBUTES lpMutexAttributes,
+    _In_opt_ LPCSTR lpName,
+    _In_ DWORD dwFlags,
+    _In_ DWORD dwDesiredAccess
+    )
+{
+	if (auto pCreateMutexExA = try_get_CreateMutexExA())
+	{
+		return pCreateMutexExA(lpMutexAttributes, lpName, dwFlags, dwDesiredAccess);
+	}
+
+	return CreateMutexA(lpMutexAttributes, dwFlags & CREATE_MUTEX_INITIAL_OWNER, lpName);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(CreateMutexExA, _16);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+HANDLE
+WINAPI
+CreateSemaphoreExW(
+    _In_opt_ LPSECURITY_ATTRIBUTES lpSemaphoreAttributes,
+    _In_ LONG lInitialCount,
+    _In_ LONG lMaximumCount,
+    _In_opt_ LPCWSTR lpName,
+    _Reserved_ DWORD dwFlags,
+    _In_ DWORD dwDesiredAccess
+    )
+{
+	if (auto pCreateSemaphoreExW = try_get_CreateSemaphoreExW())
+	{
+		return pCreateSemaphoreExW(lpSemaphoreAttributes, lInitialCount, lMaximumCount, lpName, dwFlags, dwDesiredAccess);
+	}
+
+	return CreateSemaphoreW(lpSemaphoreAttributes, lInitialCount, lMaximumCount, lpName);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(CreateSemaphoreExW, _24);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+HANDLE
+WINAPI
+CreateWaitableTimerExW(
+    _In_opt_ LPSECURITY_ATTRIBUTES lpTimerAttributes,
+    _In_opt_ LPCWSTR lpTimerName,
+    _In_ DWORD dwFlags,
+    _In_ DWORD dwDesiredAccess
+    )
+{
+	if (auto pCreateWaitableTimerExW = try_get_CreateWaitableTimerExW())
+	{
+		return pCreateWaitableTimerExW(lpTimerAttributes, lpTimerName, dwFlags, dwDesiredAccess);
+	}
+
+	return CreateWaitableTimerW(lpTimerAttributes, dwFlags&CREATE_WAITABLE_TIMER_MANUAL_RESET, lpTimerName);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(CreateWaitableTimerExW, _16);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+BOOL APIENTRY GetFileVersionInfoExW(
+    _In_ DWORD dwFlags,
+	_In_ LPCWSTR lpwstrFilename,
+	_Reserved_ DWORD dwHandle,
+	_In_ DWORD dwLen,
+	_Out_writes_bytes_(dwLen) LPVOID lpData
+    )
+{
+	if (auto pGetFileVersionInfoExW = try_get_GetFileVersionInfoExW())
+	{
+		return pGetFileVersionInfoExW(dwFlags, lpwstrFilename, dwHandle, dwLen, lpData);
+	}
+
+	return GetFileVersionInfoW(lpwstrFilename, dwHandle, dwLen, lpData);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetFileVersionInfoExW, _20);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+BOOL APIENTRY GetFileVersionInfoExA(
+    _In_ DWORD dwFlags,
+    _In_ LPCSTR lpwstrFilename,
+    _Reserved_ DWORD dwHandle,
+    _In_ DWORD dwLen,
+    _Out_writes_bytes_(dwLen) LPVOID lpData
+    )
+{
+	if (auto pGetFileVersionInfoExA = try_get_GetFileVersionInfoExA())
+	{
+		return pGetFileVersionInfoExA(dwFlags, lpwstrFilename, dwHandle, dwLen, lpData);
+	}
+
+	return GetFileVersionInfoA(lpwstrFilename, dwHandle, dwLen, lpData);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetFileVersionInfoExA, _20);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+DWORD
+APIENTRY
+GetFileVersionInfoSizeExW(
+	_In_ DWORD dwFlags,
+	_In_ LPCWSTR lpwstrFilename,
+	_Out_ LPDWORD lpdwHandle
+	)
+{
+	if (auto pGetFileVersionInfoSizeExW = try_get_GetFileVersionInfoSizeExW())
+	{
+		return pGetFileVersionInfoSizeExW(dwFlags, lpwstrFilename, lpdwHandle);
+	}
+
+	return GetFileVersionInfoSizeW(lpwstrFilename, lpdwHandle);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetFileVersionInfoSizeExW, _12);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+DWORD
+APIENTRY
+GetFileVersionInfoSizeExA(
+	_In_ DWORD dwFlags,
+	_In_ LPCSTR lpwstrFilename,
+	_Out_ LPDWORD lpdwHandle
+	)
+{
+	if (auto pGetFileVersionInfoSizeExA = try_get_GetFileVersionInfoSizeExA())
+	{
+		return pGetFileVersionInfoSizeExA(dwFlags, lpwstrFilename, lpdwHandle);
+	}
+
+	return GetFileVersionInfoSizeA(lpwstrFilename, lpdwHandle);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetFileVersionInfoSizeExA, _12);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2003 [desktop apps | UWP apps]
+
+#pragma push_macro("InterlockedCompareExchange64")
+#undef InterlockedCompareExchange64
+LONG64
+WINAPI
+InterlockedCompareExchange64(
+    _Inout_ _Interlocked_operand_ LONG64 volatile *Destination,
+    _In_ LONG64 ExChange,
+    _In_ LONG64 Comperand
+    )
+{
+	return _InterlockedCompareExchange64(Destination, ExChange, Comperand);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(InterlockedCompareExchange64, _12);
+#pragma pop_macro("InterlockedCompareExchange64")
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+//Windows 7 [desktop apps | UWP apps]
+//Windows Server 2008 R2 [desktop apps | UWP apps]
+
+BOOL
+WINAPI
+SetThreadErrorMode(
+    _In_ DWORD dwNewMode,
+    _In_opt_ LPDWORD lpOldMode
+    )
+{
+	if (auto pSetThreadErrorMode = try_get_SetThreadErrorMode())
+	{
+		return pSetThreadErrorMode(dwNewMode, lpOldMode);
+	}
+
+	auto dwOldMode = SetErrorMode(dwNewMode);
+	if (lpOldMode)
+		*lpOldMode = dwOldMode;
+
+	return TRUE;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(SetThreadErrorMode, _8);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+//Windows 7 [desktop apps | UWP apps]
+//Windows Server 2008 R2 [desktop apps | UWP apps]
+
+DWORD
+WINAPI
+GetThreadErrorMode(
+    VOID
+    )
+{
+	if (auto pGetThreadErrorMode = try_get_GetThreadErrorMode())
+	{
+		return pGetThreadErrorMode();
+	}
+	
+	return GetErrorMode();
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetThreadErrorMode, _0);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+UINT
+WINAPI
+GetErrorMode(
+	VOID
+    )
+{
+	if (auto pGetErrorMode = try_get_GetErrorMode())
+	{
+		return pGetErrorMode();
+	}
+	else if (auto pNtQueryInformationProcess = try_get_NtQueryInformationProcess())
+	{
+		DWORD dwDefaultHardErrorMode;
+
+		auto Status = pNtQueryInformationProcess(NtCurrentProcess(), ProcessDefaultHardErrorMode, &dwDefaultHardErrorMode, sizeof(dwDefaultHardErrorMode), nullptr);
+
+		if (Status >= 0)
+		{
+			if (dwDefaultHardErrorMode & 0x00000001)
+			{
+				return dwDefaultHardErrorMode & 0xFFFFFFFE;
+			}
+			else
+			{
+				return dwDefaultHardErrorMode | 0x00000001;
+			}
+		}
+
+		internal::BaseSetLastNTError(Status);
+
+		return 0;
+	}
+	else
+	{
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		return 0;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(GetErrorMode, _0);
+
+#endif
+
 EXTERN_C_END
 
 }

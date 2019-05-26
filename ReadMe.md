@@ -79,6 +79,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [RaiseFailFastException](https://msdn.microsoft.com/en-us/library/windows/desktop/dd941688.aspx)                               | 不存在时，调用TerminateProcess。
 | [GetThreadId](https://docs.microsoft.com/zh-cn/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getthreadid)         | 不存在时，调用NtQueryInformationThread。
 | [GetProcessIdOfThread](https://docs.microsoft.com/zh-cn/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getprocessidofthread)   | 不存在时，调用NtQueryInformationThread。
+| [GetProcessId](https://docs.microsoft.com/zh-cn/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getprocessid)                   | 不存在时，调用NtQueryInformationProcess。
 | [QueryThreadCycleTime](https://docs.microsoft.com/zh-cn/windows/desktop/api/realtimeapiset/nf-realtimeapiset-querythreadcycletime)         | 不存在时，调用GetThreadTimes。
 | [QueryProcessCycleTime](https://docs.microsoft.com/zh-cn/windows/desktop/api/realtimeapiset/nf-realtimeapiset-queryprocesscycletime)       | 不存在时，调用GetProcessTimes。
 | [K32EnumProcessModules](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-enumprocessmodules)                | 调用EnumProcessModules。
@@ -100,6 +101,18 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [K32GetProcessImageFileNameW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-enumpagefilesw)           | 调用GetProcessImageFileNameW(A)。
 | [EnumProcessModulesEx](https://docs.microsoft.com/en-us/windows/desktop/api/psapi/nf-psapi-enumprocessmodulesex)               | 不存在时，调用EnumProcessModules。
 | [GetWsChangesEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/psapi/nf-psapi-getwschangesex)                           | 不存在时，调用GetWsChanges。
+| [QueryFullProcessImageNameW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/winbase/nf-winbase-queryfullprocessimagenamew) | 不存在时，调用GetProcessImageFileNameW(A) 或者 GetModuleFileNameExW(A)。
+| [CreateFile2](https://docs.microsoft.com/zh-cn/windows/desktop/api/fileapi/nf-fileapi-createfile2)                             | 不存在时，调用CreateFileW。
+| [CreateEventExW(A)](https://docs.microsoft.com/en-us/windows/desktop/api/synchapi/nf-synchapi-createeventexw)                  | 不存在时，调用CreateEventW(A)。
+| [CreateMutexExW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-createmutexexw)                  | 不存在时，调用CreateMutexW(A)。
+| [CreateSemaphoreExW](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-createsemaphoreexw)             | 不存在时，调用CreateSemaphoreW。
+| [CreateWaitableTimerExW](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-createwaitabletimerexw)     | 不存在时，调用CreateWaitableTimerW。
+| [GetFileVersionInfoExW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/winver/nf-winver-getfileversioninfosizeexw)    | 不存在时，调用GetFileVersionInfoW(A)。
+| [GetFileVersionInfoSizeExW(A)](https://docs.microsoft.com/zh-cn/windows/desktop/api/winver/nf-winver-getfileversioninfosizeexw)| 不存在时，调用GetFileVersionInfoSizeW(A)。
+| [InterlockedCompareExchange64](https://docs.microsoft.com/en-us/windows/desktop/api/winnt/nf-winnt-interlockedcompareexchange64)| 调用内部函数_InterlockedCompareExchange64。
+| [SetThreadErrorMode](https://docs.microsoft.com/en-us/windows/desktop/api/errhandlingapi/nf-errhandlingapi-setthreaderrormode) | 不存在时，调用SetErrorMode。
+| [GetThreadErrorMode](https://docs.microsoft.com/en-us/windows/desktop/api/errhandlingapi/nf-errhandlingapi-getthreaderrormode) | 不存在时，调用GetErrorMode。
+| [GetErrorMode](https://docs.microsoft.com/en-us/windows/desktop/api/errhandlingapi/nf-errhandlingapi-geterrormode)             | 不存在时，调用NtQueryInformationProcess。
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
@@ -165,7 +178,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加GetNumaHighestNodeNumber
 
 
-### 1.0.1.4 - 功能更新（2019-05-25 23:00）
+### 1.0.1.5 - 功能更新（2019-05-26 19:00）
 * 添加RaiseFailFastException（感谢 过客）
 * 添加GetThreadId（感谢 过客）
 * 添加GetProcessIdOfThread
@@ -190,3 +203,17 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加K32GetProcessImageFileNameW(A)
 * 添加EnumProcessModulesEx
 * 添加GetWsChangesEx
+* 添加QueryFullProcessImageNameW(A)
+* 添加CreateFile2
+* 添加CreateEventExW(A)
+* 添加CreateMutexExW(A)
+* 添加CreateSemaphoreExW
+* 添加CreateWaitableTimerExW
+* 添加GetFileVersionInfoExW(A)
+* 添加GetFileVersionInfoSizeExW(A)
+* 添加QueryFullProcessImageNameW(A)
+* 添加InterlockedCompareExchange64
+* 添加GetProcessId
+* 添加SetThreadErrorMode
+* 添加GetThreadErrorMode
+* 添加GetErrorMode
