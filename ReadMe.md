@@ -29,7 +29,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 ## 3. YY-Thunks兼容性
 ### 3.1. 支持的编译器
 全平台ABI兼容。
-* 所有Visual Studio版本均支持（比如：VC6.0、VS2008、VS2010、VS2015、VS2017等等）。
+* 所有Visual Studio版本均支持（比如：VC6.0、VS2008、VS2010、VS2015、VS2017、VS2019等等）。
 * 所有运行库模式均支持（比如：`/MD`、`/MT`、`/MDd`、`/MTd`）。
 
 ### 3.2. Thunks清单
@@ -47,16 +47,16 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [Wow64EnableWow64FsRedirection](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365744.aspx)                        | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
 | [IsWow64Process](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684139.aspx)                                       | 不存在时，返回TRUE，并设置 `*Wow64Process = FALSE`。
 | [IsWow64Message](https://msdn.microsoft.com/en-us/library/windows/desktop/ms684136.aspx)                                       | 不存在时，返回FALSE。
-| [RegSetKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724921.aspx)                                                   | 调用RegCreateKeyExW(A)以及RegSetValueExW(A)实现。
-| [RegDeleteKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724848.aspx)                                                | 调用RegOpenKeyExW(A)以及RegDeleteValueW(A)实现。
-| [RegDeleteTreeW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                                    | 调用SHDeleteKeyW(A)实现。
-| [RegGetValueW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                                      | 不存在时，调用RegQueryValueExW(A)实现。
+| [RegSetKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724921.aspx)                                                   | 调用RegCreateKeyExW(A)以及RegSetValueExW(A)。
+| [RegDeleteKeyValueW(A)](https://msdn.microsoft.com/en-us/library/ms724848.aspx)                                                | 调用RegOpenKeyExW(A)以及RegDeleteValueW(A)。
+| [RegDeleteTreeW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                                    | 调用SHDeleteKeyW(A)。
+| [RegGetValueW(A)](https://msdn.microsoft.com/en-us/library/aa379776.aspx)                                                      | 不存在时，调用RegQueryValueExW(A)。
 | [IsWow64Process2](https://msdn.microsoft.com/en-us/library/windows/desktop/mt804318.aspx)                                      | 不存在时，调用IsWow64Process。
 | [IsWow64GuestMachineSupported](https://msdn.microsoft.com/en-us/library/windows/desktop/mt804321.aspx)                         | 不存在时，调用GetNativeSystemInfo。
 | [GetTickCount64](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724411.aspx)                                       | 不存在时，调用GetTickCount。
 | [GetSystemTimePreciseAsFileTime](https://msdn.microsoft.com/en-us/library/windows/desktop/hh706895.aspx)                       | 不存在时，调用GetSystemTimeAsFileTime。
 | [InitializeCriticalSectionEx](https://msdn.microsoft.com/en-us/library/ms683477.aspx)                                          | 不存在时，调用InitializeCriticalSectionAndSpinCount。
-| [InitOnceExecuteOnce](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683493.aspx)                                  | 不存在时，调用自旋锁（InterlockedCompareExchange）。
+| [InitOnceExecuteOnce](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683493.aspx)                                  | 不存在时，调用InterlockedCompareExchange。
 | [LocaleNameToLCID](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-localenametolcid)                     | 不存在时，查LocaleNameToLcidTable。
 | [LCIDToLocaleName](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-lcidtolocalename)                     | 不存在时，查LcidToLocaleNameTable。
 | [GetLocaleInfoEx](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-getlocaleinfoex)                       | 不存在时，调用GetLocaleInfoW。
@@ -68,13 +68,13 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [GetSystemDefaultLocaleName](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-getsystemdefaultlocalename) | 不存在时，调用LCIDToLocaleName。
 | [EnumCalendarInfoExEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/winnls/nf-winnls-enumcalendarinfoexex)             | 不存在时，调用EnumCalendarInfoExW。
 | [EnumDateFormatsExEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/winnls/nf-winnls-enumdateformatsexex)               | 不存在时，调用EnumDateFormatsExW。
-| [GetFileInformationByHandleEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/winbase/nf-winbase-getfileinformationbyhandleex)| 不存在时，调用NtQueryInformationFile/NtQueryDirectoryFile。
+| [GetFileInformationByHandleEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/winbase/nf-winbase-getfileinformationbyhandleex)| 不存在时，调用NtQueryInformationFile 或者 NtQueryDirectoryFile。
 | [SetFileInformationByHandle](https://docs.microsoft.com/zh-cn/windows/desktop/api/winbase/nf-winbase-getfileinformationbyhandleex)| 不存在时，调用NtSetInformationFile。
 | [GetFinalPathNameByHandleW(A)](https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getfinalpathnamebyhandlew)| 不存在时，调用NtQueryObject以及NtQueryInformationFile。
 | [GetLogicalProcessorInformation](https://docs.microsoft.com/zh-cn/windows/desktop/api/sysinfoapi/nf-sysinfoapi-getlogicalprocessorinformation)| 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
 | [GetLogicalProcessorInformationEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/sysinfoapi/nf-sysinfoapi-getlogicalprocessorinformationex)| 不存在时，调用GetLogicalProcessorInformation。
 | [InetPtonW(inet_pton)](https://docs.microsoft.com/en-us/windows/desktop/api/ws2tcpip/nf-ws2tcpip-inetptonw)                    | 不存在时，类似于sscanf手工分析字符串。
-| [InetNtopW(inet_ntop)](https://docs.microsoft.com/en-us/windows/desktop/api/ws2tcpip/nf-ws2tcpip-inetntopw)                    | 不存在时，类似于sprintf_s手工生成字符串。
+| [InetNtopW(inet_ntop)](https://docs.microsoft.com/en-us/windows/desktop/api/ws2tcpip/nf-ws2tcpip-inetntopw)                    | 不存在时，类似于sprintf手工生成字符串。
 | [GetNumaHighestNodeNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683203.aspx)                             | 不存在时，返回0。
 | [RaiseFailFastException](https://msdn.microsoft.com/en-us/library/windows/desktop/dd941688.aspx)                               | 不存在时，调用TerminateProcess。
 | [GetThreadId](https://docs.microsoft.com/zh-cn/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getthreadid)         | 不存在时，调用NtQueryInformationThread。
@@ -118,6 +118,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
 | *[GetNumaNodeProcessorMaskEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405493.aspx)                          | 不存在时，调用GetNumaNodeProcessorMask。
 | *[SetThreadGroupAffinity](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405516.aspx)                              | 不存在时，调用SetThreadAffinityMask。
+| *[CancelIoEx](https://docs.microsoft.com/en-us/windows/desktop/FileIO/cancelioex-func)                                         | 不存在时，调用CancelIo（会把此句柄的所有IO操作取消掉！）。
 
 
 ## Changes
@@ -217,3 +218,4 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加SetThreadErrorMode
 * 添加GetThreadErrorMode
 * 添加GetErrorMode
+* 添加CancelIoEx

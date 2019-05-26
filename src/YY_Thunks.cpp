@@ -76,6 +76,7 @@
     _APPLY(SetThreadErrorMode,                           kernel32                                      ) \
     _APPLY(GetThreadErrorMode,                           kernel32                                      ) \
     _APPLY(GetErrorMode,                                 kernel32                                      ) \
+    _APPLY(CancelIoEx,                                   kernel32                                      ) \
     _APPLY(EnumProcessModulesEx,                         psapi                                         ) \
     _APPLY(GetWsChangesEx,                               psapi                                         ) \
     _APPLY(GetFileVersionInfoExW,                        version                                       ) \
@@ -4977,6 +4978,31 @@ GetErrorMode(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(GetErrorMode, _0);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+BOOL
+WINAPI
+CancelIoEx(
+    _In_ HANDLE hFile,
+    _In_opt_ LPOVERLAPPED lpOverlapped
+    )
+{
+	if (auto pCancelIoEx = try_get_CancelIoEx())
+	{
+		return pCancelIoEx(hFile, lpOverlapped);
+	}
+
+	//downlevel逻辑会把该文件所有IO动作给取消掉！凑合用吧。
+	return CancelIo(hFile);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(CancelIoEx, _8);
 
 #endif
 
