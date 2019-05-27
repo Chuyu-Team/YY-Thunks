@@ -115,6 +115,7 @@
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "version.lib")
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
