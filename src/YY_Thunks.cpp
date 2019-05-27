@@ -447,7 +447,7 @@ IsWow64Message(
 	return FALSE;
 }
 
-_LCRT_DEFINE_IAT_SYMBOL(IsWow64Process, _0);
+_LCRT_DEFINE_IAT_SYMBOL(IsWow64Message, _0);
 
 #endif
 
@@ -4878,7 +4878,7 @@ InterlockedCompareExchange64(
 	return _InterlockedCompareExchange64(Destination, ExChange, Comperand);
 }
 
-_LCRT_DEFINE_IAT_SYMBOL(InterlockedCompareExchange64, _12);
+_LCRT_DEFINE_IAT_SYMBOL(InterlockedCompareExchange64, _20);
 #pragma pop_macro("InterlockedCompareExchange64")
 
 #endif
