@@ -113,6 +113,13 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [SetThreadErrorMode](https://docs.microsoft.com/en-us/windows/desktop/api/errhandlingapi/nf-errhandlingapi-setthreaderrormode) | 不存在时，调用SetErrorMode。
 | [GetThreadErrorMode](https://docs.microsoft.com/en-us/windows/desktop/api/errhandlingapi/nf-errhandlingapi-getthreaderrormode) | 不存在时，调用GetErrorMode。
 | [GetErrorMode](https://docs.microsoft.com/en-us/windows/desktop/api/errhandlingapi/nf-errhandlingapi-geterrormode)             | 不存在时，调用NtQueryInformationProcess。
+| [InitializeSRWLock](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-initializesrwlock)               | 不存在时，初始化为 0。
+| [AcquireSRWLockExclusive](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-acquiresrwlockexclusive)   | 不存在时，调用InterlockedBitTestAndSet(64)。
+| [TryAcquireSRWLockExclusive](https://msdn.microsoft.com/en-us/library/Dd405523.aspx)                                           | 不存在时，调用InterlockedBitTestAndSet(64)。
+| [ReleaseSRWLockExclusive](https://msdn.microsoft.com/en-us/library/ms685076.aspx)                                              | 不存在时，调用InterlockedBitTestAndReset(64)。
+| [AcquireSRWLockShared](https://msdn.microsoft.com/en-us/library/ms681934.aspx)                                                 | 不存在时，调用InterlockedCompareExchange。
+| [TryAcquireSRWLockShared](https://msdn.microsoft.com/en-us/library/Dd405524.aspx)                                              | 不存在时，调用InterlockedCompareExchange。
+| [ReleaseSRWLockShared](https://msdn.microsoft.com/en-us/library/ms685080.aspx)                                                 | 不存在时，调用InterlockedCompareExchange。
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
@@ -219,3 +226,13 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加GetThreadErrorMode
 * 添加GetErrorMode
 * 添加CancelIoEx
+
+
+### 1.0.1.6 - 功能更新（2019-05-29 19:00）
+* 添加InitializeSRWLock
+* 添加AcquireSRWLockExclusive
+* 添加ReleaseSRWLockExclusive
+* 添加AcquireSRWLockShared
+* 添加ReleaseSRWLockShared
+* 添加TryAcquireSRWLockExclusive
+* 添加TryAcquireSRWLockShared

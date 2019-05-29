@@ -77,6 +77,13 @@
     _APPLY(GetThreadErrorMode,                           kernel32                                      ) \
     _APPLY(GetErrorMode,                                 kernel32                                      ) \
     _APPLY(CancelIoEx,                                   kernel32                                      ) \
+    _APPLY(InitializeSRWLock,                            kernel32                                      ) \
+    _APPLY(AcquireSRWLockExclusive,                      kernel32                                      ) \
+    _APPLY(ReleaseSRWLockExclusive,                      kernel32                                      ) \
+    _APPLY(AcquireSRWLockShared,                         kernel32                                      ) \
+    _APPLY(ReleaseSRWLockShared,                         kernel32                                      ) \
+    _APPLY(TryAcquireSRWLockExclusive,                   kernel32                                      ) \
+    _APPLY(TryAcquireSRWLockShared,                      kernel32                                      ) \
     _APPLY(EnumProcessModulesEx,                         psapi                                         ) \
     _APPLY(GetWsChangesEx,                               psapi                                         ) \
     _APPLY(GetFileVersionInfoExW,                        version                                       ) \
@@ -121,6 +128,11 @@
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 #pragma comment(lib, "psapi.lib")
 #endif
+
+#define SRWLOCK_LOCKING   0x00000001ul
+//在YY-Thunks实现中，并不会更新等待时间
+#define SRWLOCK_WAITING   0x00000002ul
+#define SRWLOCK_DATA_MARK (~SIZE_T(0xFul))
 
 namespace YYThunks
 {
@@ -5004,6 +5016,265 @@ CancelIoEx(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(CancelIoEx, _8);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+
+VOID
+WINAPI
+InitializeSRWLock(
+    _Out_ PSRWLOCK SRWLock
+    )
+{
+	if (auto const pInitializeSRWLock = try_get_InitializeSRWLock())
+	{
+		return pInitializeSRWLock(SRWLock);
+	}
+
+	*SRWLock = RTL_SRWLOCK_INIT;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(InitializeSRWLock, _4);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+VOID
+WINAPI
+AcquireSRWLockExclusive(
+    _Inout_ PSRWLOCK SRWLock
+    )
+{
+	if (auto const pAcquireSRWLockExclusive = try_get_AcquireSRWLockExclusive())
+	{
+		return pAcquireSRWLockExclusive(SRWLock);
+	}
+
+	for (;;)
+	{
+#if defined(_WIN64)
+		auto OldBit= InterlockedBitTestAndSet64((volatile long long*)SRWLock, 0);
+#else
+		auto OldBit = InterlockedBitTestAndSet((volatile long*)SRWLock, 0);
+#endif
+
+		//当老标记位为 0，说明现在锁定成功
+		if (OldBit == 0)
+			break;
+
+		//等待 10ms 继续尝试
+		Sleep(10);
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(AcquireSRWLockExclusive, _4);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+//Windows 7 [desktop apps | UWP apps]
+//Windows Server 2008 R2 [desktop apps | UWP apps]
+
+BOOLEAN
+WINAPI
+TryAcquireSRWLockExclusive(
+    _Inout_ PSRWLOCK SRWLock
+    )
+{
+	if (auto const pTryAcquireSRWLockExclusive = try_get_TryAcquireSRWLockExclusive())
+	{
+		return pTryAcquireSRWLockExclusive(SRWLock);
+	}
+
+#if defined(_WIN64)
+	return InterlockedBitTestAndSet64((volatile long long*)SRWLock, 0);
+#else
+	return InterlockedBitTestAndSet((volatile long*)SRWLock, 0);
+#endif
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(TryAcquireSRWLockExclusive, _4);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+VOID
+WINAPI
+ReleaseSRWLockExclusive(
+    _Inout_ PSRWLOCK SRWLock
+    )
+{
+	if (auto const pReleaseSRWLockExclusive = try_get_ReleaseSRWLockExclusive())
+	{
+		return pReleaseSRWLockExclusive(SRWLock);
+	}
+
+	//吧标记位取消即可
+#if defined(_WIN64)
+	InterlockedBitTestAndReset64((volatile long long*)SRWLock, 0);
+#else
+	InterlockedBitTestAndReset((volatile long*)SRWLock, 0);
+#endif
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(ReleaseSRWLockExclusive, _4);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+VOID
+WINAPI
+AcquireSRWLockShared(
+    _Inout_ PSRWLOCK SRWLock
+    )
+{
+	if (auto const pAcquireSRWLockShared = try_get_AcquireSRWLockShared())
+	{
+		return pAcquireSRWLockShared(SRWLock);
+	}
+
+	//尝试给全新的锁加锁	
+	auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, size_t(0x11), 0);
+
+	//成功
+	if (OldSRWLock == size_t(0))
+	{
+		return;
+	}
+
+	for (;;)
+	{
+		if ((OldSRWLock & SRWLOCK_LOCKING) && ((OldSRWLock & SRWLOCK_WAITING) || (OldSRWLock & SRWLOCK_DATA_MARK) == size_t(0)))
+		{
+			//正在被锁定中
+			Sleep(10);
+		}
+		else if (InterlockedCompareExchange((volatile size_t*)SRWLock, (OldSRWLock + size_t(0x10)) | size_t(0x1), OldSRWLock) == OldSRWLock)
+		{
+			//锁定完成
+			return;
+		}
+		else
+		{
+			Sleep(0);
+		}
+		
+
+		OldSRWLock = *(volatile size_t*)SRWLock;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(AcquireSRWLockShared, _4);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+//Windows 7 [desktop apps | UWP apps] 
+//Windows Server 2008 R2 [desktop apps | UWP apps]
+
+BOOLEAN
+WINAPI
+TryAcquireSRWLockShared(
+    _Inout_ PSRWLOCK SRWLock
+    )
+{
+	if (auto const pTryAcquireSRWLockShared = try_get_TryAcquireSRWLockShared())
+	{
+		return pTryAcquireSRWLockShared(SRWLock);
+	}
+
+	//尝试给全新的锁加锁
+	auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, size_t(0x11), 0);
+
+	//成功
+	if (OldSRWLock == size_t(0))
+	{
+		return TRUE;
+	}
+
+	for (;;)
+	{
+		if ((OldSRWLock & SRWLOCK_LOCKING) && ((OldSRWLock & SRWLOCK_WAITING) || (OldSRWLock & SRWLOCK_DATA_MARK) == size_t(0)))
+		{
+			//正在被锁定中
+			return FALSE;
+		}
+		else if (InterlockedCompareExchange((volatile size_t*)SRWLock, (OldSRWLock + size_t(0x10)) | size_t(0x1), OldSRWLock) == OldSRWLock)
+		{
+			//锁定完成
+			return TRUE;
+		}
+		else
+		{
+			Sleep(0);
+		}
+
+		OldSRWLock = *(volatile size_t*)SRWLock;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(TryAcquireSRWLockShared, _4);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+VOID
+WINAPI
+ReleaseSRWLockShared(
+    _Inout_ PSRWLOCK SRWLock
+    )
+{
+	if (auto const pReleaseSRWLockShared = try_get_ReleaseSRWLockShared())
+	{
+		return pReleaseSRWLockShared(SRWLock);
+	}
+
+	//尝试解锁只加一次读锁的情况
+
+	auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, 0, size_t(0x11));
+
+	//解锁成功
+	if (OldSRWLock == size_t(0x11))
+	{
+		return;
+	}
+
+	for (;;)
+	{
+		if (InterlockedCompareExchange((volatile size_t*)SRWLock, OldSRWLock >= size_t(0x21) ? OldSRWLock - size_t(0x10) : size_t(0), OldSRWLock) == OldSRWLock)
+		{
+			//解锁成功
+			return;
+		}
+		else
+		{
+			Sleep(0);
+		}
+
+		OldSRWLock = *(volatile size_t*)SRWLock;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(ReleaseSRWLockShared, _4);
 
 #endif
 
