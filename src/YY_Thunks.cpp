@@ -5059,20 +5059,46 @@ AcquireSRWLockExclusive(
 		return pAcquireSRWLockExclusive(SRWLock);
 	}
 
-	for (;;)
-	{
+	//尝试加锁一次
 #if defined(_WIN64)
-		auto OldBit= InterlockedBitTestAndSet64((volatile long long*)SRWLock, 0);
+	auto OldBit = InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, 0);
 #else
-		auto OldBit = InterlockedBitTestAndSet((volatile long*)SRWLock, 0);
+	auto OldBit = InterlockedBitTestAndSet((volatile LONG_PTR*)SRWLock, 0);
 #endif
 
-		//当老标记位为 0，说明现在锁定成功
-		if (OldBit == 0)
-			break;
+	if(OldBit == false)
+	{
+		//成功锁定
+		return;
+	}
 
-		//等待 10ms 继续尝试
-		Sleep(10);
+	for (;;)
+	{
+		auto SRWLockOld =  *(volatile LONG_PTR*)SRWLock;
+
+		if ((SRWLockOld&SRWLOCK_LOCKING)==0)
+		{
+			//尝试加锁
+			if (InterlockedCompareExchange((volatile size_t*)SRWLock, SRWLockOld | SRWLOCK_LOCKING, SRWLockOld) == SRWLockOld)
+			{
+				//成功加锁
+				return;
+			}
+
+			Sleep(0);
+		}
+		else
+		{
+			//锁本身处于锁定中……
+
+			//插入等待标记，阻止 Shared 进入
+			if((SRWLockOld & SRWLOCK_WAITING)==0)
+				InterlockedCompareExchange((volatile size_t*)SRWLock, SRWLockOld | SRWLOCK_WAITING, SRWLockOld);
+
+
+			//等待 10ms 继续尝试
+			Sleep(10);
+		}
 	}
 }
 
@@ -5096,9 +5122,9 @@ TryAcquireSRWLockExclusive(
 	}
 
 #if defined(_WIN64)
-	return InterlockedBitTestAndSet64((volatile long long*)SRWLock, 0);
+	return InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, 0);
 #else
-	return InterlockedBitTestAndSet((volatile long*)SRWLock, 0);
+	return InterlockedBitTestAndSet((volatile LONG_PTR*)SRWLock, 0);
 #endif
 }
 
@@ -5121,12 +5147,20 @@ ReleaseSRWLockExclusive(
 		return pReleaseSRWLockExclusive(SRWLock);
 	}
 
-	//吧标记位取消即可
-#if defined(_WIN64)
-	InterlockedBitTestAndReset64((volatile long long*)SRWLock, 0);
-#else
-	InterlockedBitTestAndReset((volatile long*)SRWLock, 0);
-#endif
+	for (;;)
+	{
+		auto OldSRWLock = *(volatile size_t*)SRWLock;
+
+		//解除锁的所有状态
+		if (InterlockedCompareExchange((volatile size_t*)SRWLock, size_t(0), OldSRWLock) == OldSRWLock)
+		{
+			break;
+		}
+		else
+		{
+			Sleep(0);
+		}
+	}
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(ReleaseSRWLockExclusive, _4);
@@ -5161,7 +5195,7 @@ AcquireSRWLockShared(
 	{
 		if ((OldSRWLock & SRWLOCK_LOCKING) && ((OldSRWLock & SRWLOCK_WAITING) || (OldSRWLock & SRWLOCK_DATA_MARK) == size_t(0)))
 		{
-			//正在被锁定中
+			//正在被锁定中 或者 独占锁尝试进入中
 			Sleep(10);
 		}
 		else if (InterlockedCompareExchange((volatile size_t*)SRWLock, (OldSRWLock + size_t(0x10)) | size_t(0x1), OldSRWLock) == OldSRWLock)

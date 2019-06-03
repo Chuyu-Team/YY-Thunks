@@ -116,7 +116,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [InitializeSRWLock](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-initializesrwlock)               | 不存在时，初始化为 0。
 | [AcquireSRWLockExclusive](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-acquiresrwlockexclusive)   | 不存在时，调用InterlockedBitTestAndSet(64)。
 | [TryAcquireSRWLockExclusive](https://msdn.microsoft.com/en-us/library/Dd405523.aspx)                                           | 不存在时，调用InterlockedBitTestAndSet(64)。
-| [ReleaseSRWLockExclusive](https://msdn.microsoft.com/en-us/library/ms685076.aspx)                                              | 不存在时，调用InterlockedBitTestAndReset(64)。
+| [ReleaseSRWLockExclusive](https://msdn.microsoft.com/en-us/library/ms685076.aspx)                                              | 不存在时，调用InterlockedCompareExchange。
 | [AcquireSRWLockShared](https://msdn.microsoft.com/en-us/library/ms681934.aspx)                                                 | 不存在时，调用InterlockedCompareExchange。
 | [TryAcquireSRWLockShared](https://msdn.microsoft.com/en-us/library/Dd405524.aspx)                                              | 不存在时，调用InterlockedCompareExchange。
 | [ReleaseSRWLockShared](https://msdn.microsoft.com/en-us/library/ms685080.aspx)                                                 | 不存在时，调用InterlockedCompareExchange。
