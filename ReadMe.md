@@ -228,7 +228,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加CancelIoEx
 
 
-### 1.0.1.6 - 功能更新（2019-05-29 19:00）
+### 1.0.1.7 - 功能更新（2019-06-04 13:00）
 * 添加InitializeSRWLock
 * 添加AcquireSRWLockExclusive
 * 添加ReleaseSRWLockExclusive
