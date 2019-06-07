@@ -2451,7 +2451,7 @@ SetFileInformationByHandle(
 		return FALSE;
 	}
 
-
+	const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
 	FILE_INFORMATION_CLASS NtFileInformationClass;
 	DWORD cbMinBufferSize;
 	bool bFreeFileInformation = false;
@@ -2505,7 +2505,7 @@ SetFileInformationByHandle(
 
 				auto dwNewBufferSize = sizeof(FILE_RENAME_INFO) + NtName.Length;
 
-				auto NewRenameInfo = (FILE_RENAME_INFO*)GlobalAlloc(GMEM_FIXED, dwNewBufferSize);
+				auto NewRenameInfo = (FILE_RENAME_INFO*)HeapAlloc(ProcessHeap, 0, dwNewBufferSize);
 				if (!NewRenameInfo)
 				{
 					auto lStatus = GetLastError();
@@ -2574,7 +2574,7 @@ SetFileInformationByHandle(
 	{
 		if (bFreeFileInformation)
 		{
-			GlobalFree((HGLOBAL)lpFileInformation);
+			HeapFree(ProcessHeap, 0, lpFileInformation);
 		}
 
 		SetLastError(ERROR_BAD_LENGTH);
@@ -2587,7 +2587,7 @@ SetFileInformationByHandle(
 
 	if (bFreeFileInformation)
 	{
-		GlobalFree((HGLOBAL)lpFileInformation);
+		HeapFree(ProcessHeap, 0, lpFileInformation);
 	}
 
 	if (Status >= STATUS_SUCCESS)
@@ -2655,6 +2655,7 @@ GetFinalPathNameByHandleW(
 		return 0;
 	}
 
+	const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
 	LSTATUS lStatus = ERROR_SUCCESS;
 	DWORD   cchReturn = 0;
 
@@ -2668,17 +2669,26 @@ GetFinalPathNameByHandleW(
 	{
 		if (pObjectName)
 		{
-			GlobalFree(pObjectName);
-			pObjectName = nullptr;
+			auto pNewBuffer = (OBJECT_NAME_INFORMATION*)HeapReAlloc(ProcessHeap, 0, pObjectName, cbObjectName);
+
+			if (!pNewBuffer)
+			{
+				lStatus = ERROR_NOT_ENOUGH_MEMORY;
+				goto __Exit;
+			}
+
+			pObjectName = pNewBuffer;
 		}
-
-		pObjectName = (OBJECT_NAME_INFORMATION*)GlobalAlloc(GMEM_FIXED, cbObjectName);
-
-		if (!pObjectName)
+		else
 		{
-			//内存不足？
-			lStatus = ERROR_NOT_ENOUGH_MEMORY;
-			goto __Exit;
+			pObjectName = (OBJECT_NAME_INFORMATION*)HeapAlloc(ProcessHeap, 0, cbObjectName);
+
+			if (!pObjectName)
+			{
+				//内存不足？
+				lStatus = ERROR_NOT_ENOUGH_MEMORY;
+				goto __Exit;
+			}
 		}
 
 		auto Status = pNtQueryObject(hFile, ObjectNameInformation, pObjectName, cbObjectName, &cbObjectName);
@@ -2705,17 +2715,25 @@ GetFinalPathNameByHandleW(
 	{
 		if (pFileNameInfo)
 		{
-			GlobalFree(pFileNameInfo);
-			pFileNameInfo = nullptr;
+			auto pNewBuffer = (FILE_NAME_INFORMATION*)HeapReAlloc(ProcessHeap, 0, pFileNameInfo, cbFileNameInfo);
+			if (!pNewBuffer)
+			{
+				lStatus = ERROR_NOT_ENOUGH_MEMORY;
+				goto __Exit;
+			}
+
+			pFileNameInfo = pNewBuffer;
 		}
-
-		pFileNameInfo = (FILE_NAME_INFORMATION*)GlobalAlloc(GMEM_FIXED, cbFileNameInfo);
-
-		if (!pFileNameInfo)
+		else
 		{
-			//内存不足？
-			lStatus = ERROR_NOT_ENOUGH_MEMORY;
-			goto __Exit;
+			pFileNameInfo = (FILE_NAME_INFORMATION*)HeapAlloc(ProcessHeap, 0, cbFileNameInfo);
+
+			if (!pFileNameInfo)
+			{
+				//内存不足？
+				lStatus = ERROR_NOT_ENOUGH_MEMORY;
+				goto __Exit;
+			}
 		}
 
 		IO_STATUS_BLOCK IoStatusBlock;
@@ -2798,7 +2816,7 @@ GetFinalPathNameByHandleW(
 
 		const DWORD cbVolumeName = pObjectName->Name.Length - pFileNameInfo->FileNameLength + sizeof(lpszFilePath[0]);
 
-		auto szVolumeMountPoint = (wchar_t*)GlobalAlloc(GMEM_FIXED, cbVolumeName + sizeof(szGobal));
+		auto szVolumeMountPoint = (wchar_t*)HeapAlloc(ProcessHeap, 0, cbVolumeName + sizeof(szGobal));
 		if (!szVolumeMountPoint)
 		{
 			lStatus = ERROR_NOT_ENOUGH_MEMORY;
@@ -2819,12 +2837,12 @@ GetFinalPathNameByHandleW(
 		if (!GetVolumeNameForVolumeMountPointW(szVolumeMountPoint, szVolumeName, _countof(szVolumeName)))
 		{
 			lStatus = GetLastError();
-			GlobalFree(szVolumeMountPoint);
+			HeapFree(ProcessHeap, 0, szVolumeMountPoint);
 
 			goto __Exit;
 		}
 
-		GlobalFree(szVolumeMountPoint);
+		HeapFree(ProcessHeap, 0, szVolumeMountPoint);
 
 
 		if (VOLUME_NAME_GUID & dwFlags)
@@ -2906,9 +2924,9 @@ GetFinalPathNameByHandleW(
 
 __Exit:
 	if (pFileNameInfo)
-		GlobalFree(pFileNameInfo);
+		HeapFree(ProcessHeap, 0, pFileNameInfo);
 	if (pObjectName)
-		GlobalFree(pObjectName);
+		HeapFree(ProcessHeap, 0, pObjectName);
 
 	if (lStatus != ERROR_SUCCESS)
 	{
@@ -2941,14 +2959,30 @@ GetFinalPathNameByHandleA(
 		return pGetFinalPathNameByHandleA(hFile, lpszFilePath, cchFilePath, dwFlags);
 	}
 
-
+	const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+	wchar_t* szFilePathUnicode = nullptr;
 	for (DWORD cchszFilePathUnicode = 1040;;)
 	{
-		auto szFilePathUnicode = (wchar_t*)GlobalAlloc(GMEM_FIXED, cchszFilePathUnicode * sizeof(wchar_t));
-		if (!szFilePathUnicode)
+		if (szFilePathUnicode)
 		{
-			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-			return 0;
+			auto pNewBuffer = (wchar_t*)HeapReAlloc(ProcessHeap, 0, szFilePathUnicode, cchszFilePathUnicode * sizeof(wchar_t));
+			if (!pNewBuffer)
+			{
+				HeapFree(ProcessHeap, 0, szFilePathUnicode);
+				SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+				return 0;
+			}
+
+			szFilePathUnicode = pNewBuffer;
+		}
+		else
+		{
+			szFilePathUnicode = (wchar_t*)HeapAlloc(ProcessHeap, 0, cchszFilePathUnicode * sizeof(wchar_t));
+			if (!szFilePathUnicode)
+			{
+				SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+				return 0;
+			}
 		}
 
 		auto cchReturn = GetFinalPathNameByHandleW(hFile, szFilePathUnicode, cchszFilePathUnicode, dwFlags);
@@ -2958,7 +2992,7 @@ GetFinalPathNameByHandleA(
 		__Error:
 
 			auto lStatus = GetLastError();
-			GlobalFree(szFilePathUnicode);
+			HeapFree(ProcessHeap, 0, szFilePathUnicode);
 			SetLastError(lStatus);
 
 			return 0;
@@ -2967,7 +3001,6 @@ GetFinalPathNameByHandleA(
 		{
 			//缓冲区不足
 			cchszFilePathUnicode = cchReturn;
-			GlobalFree(szFilePathUnicode);
 			continue;
 		}
 		else
@@ -2991,7 +3024,7 @@ GetFinalPathNameByHandleA(
 				lpszFilePath[cchReturnANSI] = '\0';
 			}
 
-			GlobalFree(szFilePathUnicode);
+			HeapFree(ProcessHeap, 0, szFilePathUnicode);
 			return cchReturnANSI;
 		}
 	}
@@ -3056,6 +3089,7 @@ GetLogicalProcessorInformationEx(
 		return FALSE;
 	}
 	
+	const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
 	LSTATUS lStatus = ERROR_SUCCESS;
 
 	SYSTEM_LOGICAL_PROCESSOR_INFORMATION* pProcessorInfo = nullptr;
@@ -3065,15 +3099,24 @@ GetLogicalProcessorInformationEx(
 	{
 		lStatus = GetLastError();
 
-		if (pProcessorInfo)
-			GlobalFree(pProcessorInfo);
-
 		if (ERROR_INSUFFICIENT_BUFFER == lStatus)
 		{
-			pProcessorInfo = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION*)GlobalAlloc(GMEM_FIXED, cbLogicalProcessorInformation);
+			if (pProcessorInfo)
+			{
+				auto pNewBuffer = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION*)HeapReAlloc(ProcessHeap, 0, pProcessorInfo, cbLogicalProcessorInformation);
+				if (pNewBuffer)
+				{
+					pProcessorInfo = pNewBuffer;
+					continue;
+				}
+			}
+			else
+			{
+				pProcessorInfo = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION*)HeapAlloc(ProcessHeap, 0, cbLogicalProcessorInformation);
 
-			if(pProcessorInfo)
-				continue;
+				if (pProcessorInfo)
+					continue;
+			}
 
 			lStatus = ERROR_NOT_ENOUGH_MEMORY;
 		}
@@ -3230,8 +3273,8 @@ GetLogicalProcessorInformationEx(
 	}
 
 __End:
-	if(pProcessorInfo)
-		GlobalFree(pProcessorInfo);
+	if (pProcessorInfo)
+		HeapFree(ProcessHeap, 0, pProcessorInfo);
 
 	if (lStatus != ERROR_SUCCESS)
 	{
