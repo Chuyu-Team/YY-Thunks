@@ -77,7 +77,6 @@
     _APPLY(GetThreadErrorMode,                           kernel32                                      ) \
     _APPLY(GetErrorMode,                                 kernel32                                      ) \
     _APPLY(CancelIoEx,                                   kernel32                                      ) \
-    _APPLY(InitializeSRWLock,                            kernel32                                      ) \
     _APPLY(AcquireSRWLockExclusive,                      kernel32                                      ) \
     _APPLY(ReleaseSRWLockExclusive,                      kernel32                                      ) \
     _APPLY(AcquireSRWLockShared,                         kernel32                                      ) \
@@ -5074,11 +5073,6 @@ InitializeSRWLock(
     _Out_ PSRWLOCK SRWLock
     )
 {
-	if (auto const pInitializeSRWLock = try_get_InitializeSRWLock())
-	{
-		return pInitializeSRWLock(SRWLock);
-	}
-
 	*SRWLock = RTL_SRWLOCK_INIT;
 }
 
