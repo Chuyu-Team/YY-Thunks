@@ -133,26 +133,29 @@
 #define SRWLOCK_WAITING   0x00000002ul
 #define SRWLOCK_DATA_MARK (~SIZE_T(0xFul))
 
-namespace YYThunks
+namespace YY
 {
-	namespace internal
+	namespace Thunks
 	{
-		static DWORD __fastcall BaseSetLastNTError(
-			_In_ NTSTATUS Status
-			)
+		namespace internal
 		{
-			auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
+			static DWORD __fastcall BaseSetLastNTError(
+				_In_ NTSTATUS Status
+				)
+			{
+				auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
 
-			//如果没有RtlNtStatusToDosError就直接设置Status代码吧，反正至少比没有错误代码强
-			DWORD lStatus = pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status;
-			SetLastError(lStatus);
-			return lStatus;
+				//如果没有RtlNtStatusToDosError就直接设置Status代码吧，反正至少比没有错误代码强
+				DWORD lStatus = pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status;
+				SetLastError(lStatus);
+				return lStatus;
+			}
 		}
-	}
-EXTERN_C_START
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
-//Windows XP with SP2, Windows Server 2003 with SP1 
+//Windows XP with SP2, Windows Server 2003 with SP1
+
+EXTERN_C
 PVOID
 WINAPI
 DecodePointer(
@@ -173,8 +176,11 @@ _LCRT_DEFINE_IAT_SYMBOL(DecodePointer, _4);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
-//Windows XP with SP2, Windows Server 2003 with SP1 
+//Windows XP with SP2, Windows Server 2003 with SP1
+
+EXTERN_C
 PVOID
 WINAPI
 EncodePointer(
@@ -195,8 +201,11 @@ _LCRT_DEFINE_IAT_SYMBOL(EncodePointer, _4);
 
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03SP1) && defined _X86_
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
 //Windows XP Professional x64 Edition, Windows Server 2003 with SP1
+
+EXTERN_C
 LSTATUS
 APIENTRY
 RegDeleteKeyExW(
@@ -219,8 +228,11 @@ _LCRT_DEFINE_IAT_SYMBOL(RegDeleteKeyExW, _16);
 
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03SP1) && defined _X86_
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
 //Windows XP Professional x64 Edition, Windows Server 2003 with SP1
+
+EXTERN_C
 LSTATUS
 APIENTRY
 RegDeleteKeyExA(
@@ -239,10 +251,14 @@ RegDeleteKeyExA(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(RegDeleteKeyExA, _16);
+
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03) && defined _X86_
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
 //Windows XP Professional x64 Edition, Windows Server 2003
+
+EXTERN_C
 BOOL
 WINAPI
 Wow64DisableWow64FsRedirection(
@@ -261,10 +277,14 @@ Wow64DisableWow64FsRedirection(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(Wow64DisableWow64FsRedirection, _4);
+
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03) && defined _X86_
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
 //Windows XP Professional x64 Edition, Windows Server 2003
+
+EXTERN_C
 BOOL
 WINAPI
 Wow64RevertWow64FsRedirection(
@@ -283,10 +303,14 @@ Wow64RevertWow64FsRedirection(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(Wow64RevertWow64FsRedirection, _4);
+
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03) && defined _X86_
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
 //Windows XP Professional x64 Edition, Windows Server 2003
+
+EXTERN_C
 BOOLEAN
 WINAPI
 Wow64EnableWow64FsRedirection(
@@ -306,10 +330,14 @@ Wow64EnableWow64FsRedirection(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(Wow64EnableWow64FsRedirection, _4);
+
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03SP1) && defined _X86_
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
 //Windows XP with SP2, Windows Server 2003 with SP1
+
+EXTERN_C
 BOOL
 WINAPI
 IsWow64Process(
@@ -332,8 +360,12 @@ _LCRT_DEFINE_IAT_SYMBOL(IsWow64Process, _8);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN10_RS3) && (defined _X86_ || defined _AMD64_)
-//Windows 10, Version 1709，坑爹微软MSDN文档有误！
+//Windows 10, Version 1511
+//微软文档有点问题，实际x86以及amd64系统中，16299（RS3）才开始有此API。
+
+EXTERN_C
 BOOL
 WINAPI
 IsWow64Process2(
@@ -385,8 +417,11 @@ _LCRT_DEFINE_IAT_SYMBOL(IsWow64Process2, _12);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN10_RS3) && (defined _X86_ || defined _AMD64_)
 //Windows 10, version 1709
+
+EXTERN_C
 _Must_inspect_result_
 HRESULT
 WINAPI
@@ -424,8 +459,11 @@ _LCRT_DEFINE_IAT_SYMBOL(IsWow64GuestMachineSupported, _8);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista, Windows Server 2008
+
+EXTERN_C
 ULONGLONG
 WINAPI
 GetTickCount64(
@@ -444,12 +482,16 @@ _LCRT_DEFINE_IAT_SYMBOL(GetTickCount64, _0);
 
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03SP1) && defined _X86_
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
 //Windows XP with SP2, Windows Server 2003 with SP1
+
+EXTERN_C
 BOOL
 WINAPI
 IsWow64Message(
-	VOID)
+	VOID
+    )
 {
 	if (auto const pIsWow64Message = try_get_IsWow64Message())
 	{
@@ -463,8 +505,11 @@ _LCRT_DEFINE_IAT_SYMBOL(IsWow64Message, _0);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista, Windows Server 2008
+
+EXTERN_C
 LSTATUS
 APIENTRY
 RegSetKeyValueW(
@@ -501,8 +546,11 @@ _LCRT_DEFINE_IAT_SYMBOL(RegSetKeyValueW, _24);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista, Windows Server 2008
+
+EXTERN_C
 LSTATUS
 APIENTRY
 RegSetKeyValueA(
@@ -539,8 +587,11 @@ _LCRT_DEFINE_IAT_SYMBOL(RegSetKeyValueA, _24);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista, Windows Server 2008
+
+EXTERN_C
 LSTATUS
 APIENTRY
 RegDeleteKeyValueW(
@@ -565,8 +616,11 @@ _LCRT_DEFINE_IAT_SYMBOL(RegDeleteKeyValueW, _12);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista, Windows Server 2008
+
+EXTERN_C
 LSTATUS
 APIENTRY
 RegDeleteKeyValueA(
@@ -591,8 +645,11 @@ _LCRT_DEFINE_IAT_SYMBOL(RegDeleteKeyValueA, _12);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista, Windows Server 2008
+
+EXTERN_C
 LSTATUS
 APIENTRY
 RegDeleteTreeW(
@@ -607,8 +664,11 @@ _LCRT_DEFINE_IAT_SYMBOL(RegDeleteTreeW, _8);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista, Windows Server 2008
+
+EXTERN_C
 LSTATUS
 APIENTRY
 RegDeleteTreeA(
@@ -623,8 +683,11 @@ _LCRT_DEFINE_IAT_SYMBOL(RegDeleteTreeA, _8);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 //Windows 8, Windows Server 2012
+
+EXTERN_C
 VOID
 WINAPI
 GetSystemTimePreciseAsFileTime(
@@ -643,8 +706,11 @@ _LCRT_DEFINE_IAT_SYMBOL(GetSystemTimePreciseAsFileTime, _4);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista, Windows Server 2008
+
+EXTERN_C
 BOOL
 WINAPI
 InitializeCriticalSectionEx(
@@ -665,8 +731,11 @@ _LCRT_DEFINE_IAT_SYMBOL(InitializeCriticalSectionEx, _12);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista, Windows Server 2008
+
+EXTERN_C
 BOOL
 WINAPI
 InitOnceExecuteOnce(
@@ -720,8 +789,11 @@ _LCRT_DEFINE_IAT_SYMBOL(InitOnceExecuteOnce, _16);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WS03)
 //Windows Vista, Windows Server 2003
+
+EXTERN_C
 DWORD
 WINAPI
 GetCurrentProcessorNumber(
@@ -744,8 +816,11 @@ _LCRT_DEFINE_IAT_SYMBOL(GetCurrentProcessorNumber, _0);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 //Windows 7, Windows Server 2008 R2
+
+EXTERN_C
 VOID
 WINAPI
 GetCurrentProcessorNumberEx(
@@ -769,8 +844,11 @@ _LCRT_DEFINE_IAT_SYMBOL(GetCurrentProcessorNumberEx, _4);
 
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WINXPSP2) || defined _X86_
+
+#if (YY_Thunks_Support_Version < NTDDI_WINXPSP2)
 //Windows Vista, Windows XP Professional x64 Edition, Windows XP with SP2, Windows Server 2003
+
+EXTERN_C
 BOOL
 WINAPI
 GetNumaNodeProcessorMask(
@@ -794,8 +872,11 @@ _LCRT_DEFINE_IAT_SYMBOL(GetNumaNodeProcessorMask, _8);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 //Windows 7, Windows Server 2008 R2
+
+EXTERN_C
 BOOL
 WINAPI
 GetNumaNodeProcessorMaskEx(
@@ -831,8 +912,11 @@ _LCRT_DEFINE_IAT_SYMBOL(GetNumaNodeProcessorMaskEx, _8);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 //Windows 7, Windows Server 2008 R2
+
+EXTERN_C
 BOOL
 WINAPI
 SetThreadGroupAffinity(
@@ -870,8 +954,10 @@ _LCRT_DEFINE_IAT_SYMBOL(SetThreadGroupAffinity, _12);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03SP1) || defined _X86_
+#if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
 //Windows Vista, Windows XP Professional x64 Edition, Windows Server 2008, Windows Server 2003 with SP1
+
+EXTERN_C
 LSTATUS
 APIENTRY
 RegGetValueW(
@@ -1119,6 +1205,7 @@ RegGetValueW(
 _LCRT_DEFINE_IAT_SYMBOL(RegGetValueW, _28);
 
 
+EXTERN_C
 LSTATUS
 APIENTRY
 RegGetValueA(
@@ -1338,6 +1425,7 @@ _LCRT_DEFINE_IAT_SYMBOL(RegGetValueA, _28);
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
+EXTERN_C
 LCID
 WINAPI
 LocaleNameToLCID(
@@ -1636,6 +1724,7 @@ _LCRT_DEFINE_IAT_SYMBOL(LocaleNameToLCID, _8);
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
+EXTERN_C
 int
 WINAPI
 LCIDToLocaleName(
@@ -1949,6 +2038,7 @@ _LCRT_DEFINE_IAT_SYMBOL(LCIDToLocaleName, _16);
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
+EXTERN_C
 int
 WINAPI
 GetLocaleInfoEx(
@@ -1980,6 +2070,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetLocaleInfoEx, _16);
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
+EXTERN_C
 int
 WINAPI
 GetDateFormatEx(
@@ -2015,6 +2106,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetDateFormatEx, _28);
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
+EXTERN_C
 int
 WINAPI
 GetTimeFormatEx(
@@ -2049,6 +2141,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetTimeFormatEx, _24);
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
+EXTERN_C
 int
 WINAPI
 GetNumberFormatEx(
@@ -2084,6 +2177,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetNumberFormatEx, _24);
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
+EXTERN_C
 int
 WINAPI
 GetCurrencyFormatEx(
@@ -2119,6 +2213,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetCurrencyFormatEx, _24);
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
+EXTERN_C
 int
 WINAPI
 GetUserDefaultLocaleName(
@@ -2142,6 +2237,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetUserDefaultLocaleName, _8);
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
+EXTERN_C
 int
 WINAPI
 GetSystemDefaultLocaleName(
@@ -2174,6 +2270,7 @@ struct EnumCalendarInfoExExDataInfo
 
 static thread_local EnumCalendarInfoExExDataInfo __EnumCalendarInfoExExDataInfo;
 
+EXTERN_C
 BOOL
 WINAPI
 EnumCalendarInfoExEx(
@@ -2235,6 +2332,7 @@ struct EnumDateFormatsExExDataInfo
 
 static thread_local EnumDateFormatsExExDataInfo __EnumDateFormatsExExDataInfo;
 
+EXTERN_C
 BOOL
 WINAPI
 EnumDateFormatsExEx(
@@ -2282,6 +2380,8 @@ _LCRT_DEFINE_IAT_SYMBOL(EnumDateFormatsExEx, _16);
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
+
+EXTERN_C
 BOOL
 WINAPI
 GetFileInformationByHandleEx(
@@ -2291,7 +2391,7 @@ GetFileInformationByHandleEx(
 	_In_  DWORD dwBufferSize
 	)
 {
-	if (auto pGetFileInformationByHandleEx = try_get_GetFileInformationByHandleEx())
+	if (auto const pGetFileInformationByHandleEx = try_get_GetFileInformationByHandleEx())
 	{
 		return pGetFileInformationByHandleEx(hFile, FileInformationClass, lpFileInformation, dwBufferSize);
 	}
@@ -2428,6 +2528,8 @@ _LCRT_DEFINE_IAT_SYMBOL(GetFileInformationByHandleEx, _16);
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
+
+EXTERN_C
 BOOL
 WINAPI
 SetFileInformationByHandle(
@@ -2605,6 +2707,8 @@ _LCRT_DEFINE_IAT_SYMBOL(SetFileInformationByHandle, _16);
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
+
+EXTERN_C
 DWORD
 WINAPI
 GetFinalPathNameByHandleW(
@@ -2944,6 +3048,8 @@ _LCRT_DEFINE_IAT_SYMBOL(GetFinalPathNameByHandleW, _16);
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
+
+EXTERN_C
 DWORD
 WINAPI
 GetFinalPathNameByHandleA(
@@ -3033,10 +3139,11 @@ _LCRT_DEFINE_IAT_SYMBOL(GetFinalPathNameByHandleA, _16);
 
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03) || (YY_Thunks_Support_Version < NTDDI_WINXPSP3)
+#if (YY_Thunks_Support_Version < NTDDI_WINXPSP3)
 //Windows Vista, Windows XP Professional x64 Edition, Windows XP with SP3 [desktop apps | UWP apps]
 //Windows Server 2003 [desktop apps | UWP apps]
 
+EXTERN_C
 BOOL
 WINAPI
 GetLogicalProcessorInformation(
@@ -3055,11 +3162,15 @@ GetLogicalProcessorInformation(
 
 _LCRT_DEFINE_IAT_SYMBOL(GetLogicalProcessorInformation, _8);
 
+#else
+using ::GetLogicalProcessorInformation;
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03) || (YY_Thunks_Support_Version < NTDDI_WINXPSP3)
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
 //Windows 7, Windows Server 2008 R2
 
+EXTERN_C
 BOOL
 WINAPI
 GetLogicalProcessorInformationEx(
@@ -3094,7 +3205,8 @@ GetLogicalProcessorInformationEx(
 	SYSTEM_LOGICAL_PROCESSOR_INFORMATION* pProcessorInfo = nullptr;
 	DWORD cbLogicalProcessorInformation = 0;
 
-	for (; ::GetLogicalProcessorInformation(pProcessorInfo, &cbLogicalProcessorInformation) == FALSE;)
+	
+	for (; YY::Thunks::GetLogicalProcessorInformation(pProcessorInfo, &cbLogicalProcessorInformation) == FALSE;)
 	{
 		lStatus = GetLastError();
 
@@ -3291,11 +3403,12 @@ _LCRT_DEFINE_IAT_SYMBOL(GetLogicalProcessorInformationEx, _12);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows 8.1, Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
-
+EXTERN_C
 INT
 WINAPI
 inet_pton(
@@ -3515,10 +3628,12 @@ _LCRT_DEFINE_IAT_SYMBOL(inet_pton, _12);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows 8.1, Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 INT
 WINAPI
 InetPtonW(
@@ -3738,10 +3853,12 @@ _LCRT_DEFINE_IAT_SYMBOL(InetPtonW, _12);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows 8.1, Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 PCSTR
 WINAPI
 inet_ntop(
@@ -3933,10 +4050,12 @@ _LCRT_DEFINE_IAT_SYMBOL(inet_ntop, _16);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows 8.1, Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 PCWSTR
 WINAPI
 InetNtopW(
@@ -4128,10 +4247,12 @@ _LCRT_DEFINE_IAT_SYMBOL(InetNtopW, _16);
 
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03) || (YY_Thunks_Support_Version < NTDDI_WINXPSP2)
+
+#if (YY_Thunks_Support_Version < NTDDI_WINXPSP2)
 //Windows Vista, Windows XP Professional x64 Edition, Windows XP with SP2 [desktop apps only]
 //Windows Server 2003 [desktop apps only]
 
+EXTERN_C
 BOOL
 WINAPI
 GetNumaHighestNodeNumber(
@@ -4153,10 +4274,12 @@ _LCRT_DEFINE_IAT_SYMBOL(GetNumaHighestNodeNumber, _4);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 //Windows 7 [desktop apps | UWP apps]
 //Windows Server 2008 R2 [desktop apps | UWP apps]
 
+EXTERN_C
 VOID
 WINAPI
 RaiseFailFastException(
@@ -4178,11 +4301,13 @@ _LCRT_DEFINE_IAT_SYMBOL(RaiseFailFastException, _12);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WS03)
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2003 [desktop apps | UWP apps]
 
 //感谢 过客 提供
+EXTERN_C
 DWORD
 WINAPI
 GetThreadId(
@@ -4225,6 +4350,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetThreadId, _4);
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2003 [desktop apps | UWP apps]
 
+EXTERN_C
 DWORD
 WINAPI
 GetProcessIdOfThread(
@@ -4267,6 +4393,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetProcessIdOfThread, _4);
 //Windows Vista, Windows XP with SP1 [desktop apps | UWP apps]
 //Windows Server 2003 [desktop apps | UWP apps]
 
+EXTERN_C
 DWORD
 WINAPI
 GetProcessId(
@@ -4304,10 +4431,12 @@ _LCRT_DEFINE_IAT_SYMBOL(GetProcessId, _4);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
+EXTERN_C
 BOOL
 WINAPI
 QueryThreadCycleTime(
@@ -4347,6 +4476,7 @@ _LCRT_DEFINE_IAT_SYMBOL(QueryThreadCycleTime, _8);
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
+EXTERN_C
 BOOL
 WINAPI
 QueryProcessCycleTime(
@@ -4380,10 +4510,12 @@ _LCRT_DEFINE_IAT_SYMBOL(QueryProcessCycleTime, _8);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
+EXTERN_C
 BOOL
 WINAPI
 EnumProcessModulesEx(
@@ -4411,6 +4543,7 @@ _LCRT_DEFINE_IAT_SYMBOL(EnumProcessModulesEx, _20);
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
+EXTERN_C
 BOOL
 WINAPI
 GetWsChangesEx(
@@ -4529,6 +4662,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetWsChangesEx, _12);
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
+EXTERN_C
 BOOL
 WINAPI
 QueryFullProcessImageNameW(
@@ -4574,6 +4708,7 @@ _LCRT_DEFINE_IAT_SYMBOL(QueryFullProcessImageNameW, _16);
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
+EXTERN_C
 BOOL
 WINAPI
 QueryFullProcessImageNameA(
@@ -4619,6 +4754,7 @@ _LCRT_DEFINE_IAT_SYMBOL(QueryFullProcessImageNameA, _16);
 //Windows 8 [desktop apps | UWP apps]
 //Windows Server 2012 [desktop apps | UWP apps]
 
+EXTERN_C
 HANDLE
 WINAPI
 CreateFile2(
@@ -4663,6 +4799,7 @@ _LCRT_DEFINE_IAT_SYMBOL(CreateFile2, _20);
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 HANDLE
 WINAPI
 CreateEventExW(
@@ -4689,6 +4826,7 @@ _LCRT_DEFINE_IAT_SYMBOL(CreateEventExW, _16);
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 HANDLE
 WINAPI
 CreateEventExA(
@@ -4715,6 +4853,7 @@ _LCRT_DEFINE_IAT_SYMBOL(CreateEventExA, _16);
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 HANDLE
 WINAPI
 CreateMutexExW(
@@ -4741,6 +4880,7 @@ _LCRT_DEFINE_IAT_SYMBOL(CreateMutexExW, _16);
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 HANDLE
 WINAPI
 CreateMutexExA(
@@ -4767,6 +4907,7 @@ _LCRT_DEFINE_IAT_SYMBOL(CreateMutexExA, _16);
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 HANDLE
 WINAPI
 CreateSemaphoreExW(
@@ -4795,6 +4936,7 @@ _LCRT_DEFINE_IAT_SYMBOL(CreateSemaphoreExW, _24);
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 HANDLE
 WINAPI
 CreateWaitableTimerExW(
@@ -4821,6 +4963,7 @@ _LCRT_DEFINE_IAT_SYMBOL(CreateWaitableTimerExW, _16);
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
+EXTERN_C
 BOOL APIENTRY GetFileVersionInfoExW(
     _In_ DWORD dwFlags,
 	_In_ LPCWSTR lpwstrFilename,
@@ -4846,6 +4989,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetFileVersionInfoExW, _20);
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
+EXTERN_C
 BOOL APIENTRY GetFileVersionInfoExA(
     _In_ DWORD dwFlags,
     _In_ LPCSTR lpwstrFilename,
@@ -4871,6 +5015,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetFileVersionInfoExA, _20);
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
+EXTERN_C
 DWORD
 APIENTRY
 GetFileVersionInfoSizeExW(
@@ -4896,6 +5041,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetFileVersionInfoSizeExW, _12);
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
+EXTERN_C
 DWORD
 APIENTRY
 GetFileVersionInfoSizeExA(
@@ -4916,12 +5062,14 @@ _LCRT_DEFINE_IAT_SYMBOL(GetFileVersionInfoSizeExA, _12);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WS03)
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2003 [desktop apps | UWP apps]
 
 #pragma push_macro("InterlockedCompareExchange64")
 #undef InterlockedCompareExchange64
+EXTERN_C
 LONG64
 WINAPI
 InterlockedCompareExchange64(
@@ -4938,10 +5086,12 @@ _LCRT_DEFINE_IAT_SYMBOL(InterlockedCompareExchange64, _20);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 //Windows 7 [desktop apps | UWP apps]
 //Windows Server 2008 R2 [desktop apps | UWP apps]
 
+EXTERN_C
 BOOL
 WINAPI
 SetThreadErrorMode(
@@ -4970,6 +5120,7 @@ _LCRT_DEFINE_IAT_SYMBOL(SetThreadErrorMode, _8);
 //Windows 7 [desktop apps | UWP apps]
 //Windows Server 2008 R2 [desktop apps | UWP apps]
 
+EXTERN_C
 DWORD
 WINAPI
 GetThreadErrorMode(
@@ -4993,6 +5144,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetThreadErrorMode, _0);
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
+EXTERN_C
 UINT
 WINAPI
 GetErrorMode(
@@ -5041,6 +5193,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetErrorMode, _0);
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 BOOL
 WINAPI
 CancelIoEx(
@@ -5066,7 +5219,7 @@ _LCRT_DEFINE_IAT_SYMBOL(CancelIoEx, _8);
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
-
+EXTERN_C
 VOID
 WINAPI
 InitializeSRWLock(
@@ -5085,6 +5238,7 @@ _LCRT_DEFINE_IAT_SYMBOL(InitializeSRWLock, _4);
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 VOID
 WINAPI
 AcquireSRWLockExclusive(
@@ -5143,10 +5297,12 @@ _LCRT_DEFINE_IAT_SYMBOL(AcquireSRWLockExclusive, _4);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 //Windows 7 [desktop apps | UWP apps]
 //Windows Server 2008 R2 [desktop apps | UWP apps]
 
+EXTERN_C
 BOOLEAN
 WINAPI
 TryAcquireSRWLockExclusive(
@@ -5169,10 +5325,12 @@ _LCRT_DEFINE_IAT_SYMBOL(TryAcquireSRWLockExclusive, _4);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_VISTA)
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 VOID
 WINAPI
 ReleaseSRWLockExclusive(
@@ -5204,10 +5362,12 @@ _LCRT_DEFINE_IAT_SYMBOL(ReleaseSRWLockExclusive, _4);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_VISTA)
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 VOID
 WINAPI
 AcquireSRWLockShared(
@@ -5259,6 +5419,7 @@ _LCRT_DEFINE_IAT_SYMBOL(AcquireSRWLockShared, _4);
 //Windows 7 [desktop apps | UWP apps] 
 //Windows Server 2008 R2 [desktop apps | UWP apps]
 
+EXTERN_C
 BOOLEAN
 WINAPI
 TryAcquireSRWLockShared(
@@ -5304,10 +5465,12 @@ _LCRT_DEFINE_IAT_SYMBOL(TryAcquireSRWLockShared, _4);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_VISTA)
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
+EXTERN_C
 VOID
 WINAPI
 ReleaseSRWLockShared(
@@ -5349,6 +5512,6 @@ _LCRT_DEFINE_IAT_SYMBOL(ReleaseSRWLockShared, _4);
 
 #endif
 
-EXTERN_C_END
+	}//namespace Thunks
 
-}
+} //namespace YY
