@@ -113,7 +113,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [SetThreadErrorMode](https://docs.microsoft.com/en-us/windows/desktop/api/errhandlingapi/nf-errhandlingapi-setthreaderrormode) | 不存在时，调用SetErrorMode。
 | [GetThreadErrorMode](https://docs.microsoft.com/en-us/windows/desktop/api/errhandlingapi/nf-errhandlingapi-getthreaderrormode) | 不存在时，调用GetErrorMode。
 | [GetErrorMode](https://docs.microsoft.com/en-us/windows/desktop/api/errhandlingapi/nf-errhandlingapi-geterrormode)             | 不存在时，调用NtQueryInformationProcess。
-| [InitializeSRWLock](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-initializesrwlock)               | 不存在时，初始化为 0。
+| [InitializeSRWLock](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-initializesrwlock)               | 初始化为 RTL_SRWLOCK_INIT。
 | [AcquireSRWLockExclusive](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-acquiresrwlockexclusive)   | 不存在时，调用InterlockedBitTestAndSet(64)。
 | [TryAcquireSRWLockExclusive](https://msdn.microsoft.com/en-us/library/Dd405523.aspx)                                           | 不存在时，调用InterlockedBitTestAndSet(64)。
 | [ReleaseSRWLockExclusive](https://msdn.microsoft.com/en-us/library/ms685076.aspx)                                              | 不存在时，调用InterlockedCompareExchange。
@@ -236,3 +236,8 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加ReleaseSRWLockShared
 * 添加TryAcquireSRWLockExclusive
 * 添加TryAcquireSRWLockShared
+
+
+### 1.0.1.8 - 优化实现（2019-06-10 13:00）
+* 优化代码结构，减少不必要的全局对象引入。
+* 内部函数采用__fastcall约定，减少栈操作。

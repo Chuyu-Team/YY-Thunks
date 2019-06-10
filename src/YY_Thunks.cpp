@@ -112,6 +112,7 @@
 #include <WinSock2.h>
 #include <ws2tcpip.h>
 #include <psapi.h>
+#include <winnls.h>
 #include "YY_Thunks.h"
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
@@ -149,6 +150,24 @@ namespace YY
 				DWORD lStatus = pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status;
 				SetLastError(lStatus);
 				return lStatus;
+			}
+
+			EXTERN_C typedef struct _ThreadContext
+			{
+				union
+				{
+					CALINFO_ENUMPROCEXEX pCalInfoEnumProcExEx;
+					DATEFMT_ENUMPROCEXEX lpDateFmtEnumProcExEx;
+				};
+				
+				LPARAM lParam;
+			} ThreadContext;
+
+			static ThreadContext* __fastcall BaseGetThreadContext()
+			{
+				static thread_local ThreadContext ThreadContext = {};
+
+				return &ThreadContext;
 			}
 		}
 
@@ -2035,6 +2054,7 @@ _LCRT_DEFINE_IAT_SYMBOL(LCIDToLocaleName, _16);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
@@ -2103,6 +2123,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetDateFormatEx, _28);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
@@ -2137,6 +2158,7 @@ GetTimeFormatEx(
 _LCRT_DEFINE_IAT_SYMBOL(GetTimeFormatEx, _24);
 
 #endif
+
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
@@ -2174,6 +2196,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetNumberFormatEx, _24);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
@@ -2210,6 +2233,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetCurrencyFormatEx, _24);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
 
@@ -2233,6 +2257,7 @@ GetUserDefaultLocaleName(
 _LCRT_DEFINE_IAT_SYMBOL(GetUserDefaultLocaleName, _8);
 
 #endif
+
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
@@ -2258,17 +2283,9 @@ _LCRT_DEFINE_IAT_SYMBOL(GetSystemDefaultLocaleName, _8);
 
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
-#include <winnls.h>
-
-struct EnumCalendarInfoExExDataInfo
-{
-	CALINFO_ENUMPROCEXEX pCalInfoEnumProcExEx;
-	LPARAM lParam;
-};
-
-static thread_local EnumCalendarInfoExExDataInfo __EnumCalendarInfoExExDataInfo;
 
 EXTERN_C
 BOOL
@@ -2302,17 +2319,29 @@ EnumCalendarInfoExEx(
 	}
 
 	//保存上下文
-	__EnumCalendarInfoExExDataInfo.pCalInfoEnumProcExEx = pCalInfoEnumProcExEx;
-	__EnumCalendarInfoExExDataInfo.lParam = lParam;
+	auto pContext = internal::BaseGetThreadContext();
 
-	return EnumCalendarInfoExW(
+	auto pCalInfoEnumProcExExTmp = pContext->pCalInfoEnumProcExEx;
+	pContext->pCalInfoEnumProcExEx = pCalInfoEnumProcExEx;
+
+	auto lParamTmp = pContext->lParam;
+	pContext->lParam = lParam;
+
+	auto bSuccess = EnumCalendarInfoExW(
 			[](LPWSTR lpCalendarInfoString, CALID Calendar)->BOOL
 			{
-				return __EnumCalendarInfoExExDataInfo.pCalInfoEnumProcExEx(lpCalendarInfoString, Calendar, nullptr, __EnumCalendarInfoExExDataInfo.lParam);
+				auto pContext = internal::BaseGetThreadContext();
+				return pContext->pCalInfoEnumProcExEx(lpCalendarInfoString, Calendar, nullptr, pContext->lParam);
 			},
 			Locale,
 			Calendar,
 			CalType);
+
+	//恢复上下文
+	pContext->pCalInfoEnumProcExEx = pCalInfoEnumProcExExTmp;
+	pContext->lParam = lParamTmp;
+
+	return bSuccess;
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(EnumCalendarInfoExEx, _24);
@@ -2322,15 +2351,6 @@ _LCRT_DEFINE_IAT_SYMBOL(EnumCalendarInfoExEx, _24);
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
-#include <winnls.h>
-
-struct EnumDateFormatsExExDataInfo
-{
-	DATEFMT_ENUMPROCEXEX pCalInfoEnumProcExEx;
-	LPARAM lParam;
-};
-
-static thread_local EnumDateFormatsExExDataInfo __EnumDateFormatsExExDataInfo;
 
 EXTERN_C
 BOOL
@@ -2362,21 +2382,35 @@ EnumDateFormatsExEx(
 	}
 
 	//保存上下文
-	__EnumDateFormatsExExDataInfo.pCalInfoEnumProcExEx = lpDateFmtEnumProcExEx;
-	__EnumDateFormatsExExDataInfo.lParam = lParam;
+	auto pContext = internal::BaseGetThreadContext();
 
-	return EnumDateFormatsExW(
+	auto lpDateFmtEnumProcExExTmp = pContext->lpDateFmtEnumProcExEx;
+	pContext->lpDateFmtEnumProcExEx = lpDateFmtEnumProcExEx;
+
+	auto lParamTmp = pContext->lParam;
+	pContext->lParam = lParam;
+
+	auto pSuccess = EnumDateFormatsExW(
 			[](LPWSTR lpDateFormatString, CALID CalendarID)->BOOL
 			{
-				return __EnumDateFormatsExExDataInfo.pCalInfoEnumProcExEx(lpDateFormatString, CalendarID, __EnumCalendarInfoExExDataInfo.lParam);
+				auto pContext = internal::BaseGetThreadContext();
+				return pContext->lpDateFmtEnumProcExEx(lpDateFormatString, CalendarID, pContext->lParam);
 			},
 			Locale,
 			dwFlags);
+
+
+	//恢复上下文
+	pContext->lpDateFmtEnumProcExEx = lpDateFmtEnumProcExExTmp;
+	pContext->lParam = lParamTmp;
+
+	return pSuccess;
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(EnumDateFormatsExEx, _16);
 
 #endif
+
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
@@ -2525,6 +2559,7 @@ GetFileInformationByHandleEx(
 _LCRT_DEFINE_IAT_SYMBOL(GetFileInformationByHandleEx, _16);
 
 #endif
+
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista,  Windows Server 2008
