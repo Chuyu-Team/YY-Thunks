@@ -15,13 +15,16 @@
 	 #error "不支持此体系"
 #endif
 
-#define _LCRT_DEFINE_IAT_SYMBOL(f,prefixed)                                                          \
-    extern "C" __declspec(selectany) void const* const _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(f,prefixed) \
-        = reinterpret_cast<void const*>(YYThunks::f)
+#define _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION,prefixed)                                                           \
+    extern "C" __declspec(selectany) void const* const _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(_FUNCTION, prefixed) \
+        = reinterpret_cast<void const*>(_FUNCTION)
 
 
+#pragma section(".YY$THU",    long, read, write)
+#pragma section(".YY$THV",    long, read, write)
 
-
+__declspec(allocate(".YY$THU")) static void* __YY_THUNKS_START[] = { nullptr };
+__declspec(allocate(".YY$THV")) static void* __YY_THUNKS_END[] = { nullptr };
 
 
 enum module_id : unsigned
@@ -34,15 +37,6 @@ enum module_id : unsigned
 };
 
 
-enum function_id : unsigned
-{
-#define _APPLY(_FUNCTION, _MODULES) _CRT_CONCATENATE(_FUNCTION, _id),
-	_YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)
-#undef _APPLY
-
-	function_id_count
-};
-
 static wchar_t const* const module_names[module_id_count] =
 {
 #define _APPLY(_SYMBOL, _NAME) _CRT_WIDE(_NAME),
@@ -51,9 +45,6 @@ static wchar_t const* const module_names[module_id_count] =
 };
 
 static HMODULE module_handles[module_id_count];
-
-static void* encoded_function_pointers[function_id_count];
-
 
 #define _APPLY(_FUNCTION, _MODULES) \
     using _CRT_CONCATENATE(_FUNCTION, _pft) = decltype(_FUNCTION)*;
@@ -64,7 +55,7 @@ static void* encoded_function_pointers[function_id_count];
 // Implements wcsncpmp for ASCII chars only.
 // NOTE: We can't use wcsncmp in this context because we may end up trying to modify
 // locale data structs or even calling the same function in NLS code.
-static int _fastcall __wcsnicmp_ascii(const wchar_t* string1, const wchar_t* string2, size_t count) throw()
+static int _fastcall __wcsnicmp_ascii(const wchar_t* string1, const wchar_t* string2, size_t count) noexcept
 {
 	wchar_t f, l;
 	int result = 0;
@@ -90,12 +81,12 @@ enum : int
 	__crt_maximum_pointer_shift = sizeof(uintptr_t) * 8
 };
 
-static __forceinline unsigned int __crt_rotate_pointer_value(unsigned int const value, int const shift) throw()
+static __forceinline unsigned int __fastcall __crt_rotate_pointer_value(unsigned int const value, int const shift) noexcept
 {
 	return RotateRight32(value, shift);
 }
 
-static __forceinline unsigned __int64 __crt_rotate_pointer_value(unsigned __int64 const value, int const shift) throw()
+static __forceinline unsigned __int64 __fastcall __crt_rotate_pointer_value(unsigned __int64 const value, int const shift) noexcept
 {
 	return RotateRight64(value, shift);
 }
@@ -123,19 +114,19 @@ static PVOID __fastcall __CRT_EncodePointer(PVOID const Ptr)
 }
 
 template <typename T>
-static __forceinline T __crt_fast_decode_pointer(T const p) throw()
+static __forceinline T __fastcall __crt_fast_decode_pointer(T const p) noexcept
 {
 	return reinterpret_cast<T>(__CRT_DecodePointer(p));
 }
 
 template <typename T>
-static __forceinline T __crt_fast_encode_pointer(T const p) throw()
+static __forceinline T __fastcall __crt_fast_encode_pointer(T const p) noexcept
 {
 	return reinterpret_cast<T>(__CRT_EncodePointer(p));
 }
 
 template <typename T, typename V>
-static __forceinline T* __crt_interlocked_exchange_pointer(T* const volatile* target, V const value) throw()
+static __forceinline T* __fastcall __crt_interlocked_exchange_pointer(T* const volatile* target, V const value) noexcept
 {
 	// This is required to silence a spurious unreferenced formal parameter
 	// warning.
@@ -145,7 +136,7 @@ static __forceinline T* __crt_interlocked_exchange_pointer(T* const volatile* ta
 }
 
 template <typename T, typename E, typename C>
-static __forceinline T* __crt_interlocked_compare_exchange_pointer(T* const volatile* target, E const exchange, C const comparand) throw()
+static __forceinline T* __fastcall __crt_interlocked_compare_exchange_pointer(T* const volatile* target, E const exchange, C const comparand) noexcept
 {
 	UNREFERENCED_PARAMETER(exchange);  // These are required to silence spurious
 	UNREFERENCED_PARAMETER(comparand); // unreferenced formal parameter warnings.
@@ -156,12 +147,12 @@ static __forceinline T* __crt_interlocked_compare_exchange_pointer(T* const vola
 
 
 template <typename T>
-static __forceinline T* __crt_interlocked_read_pointer(T* const volatile* target) throw()
+static __forceinline T* __fastcall __crt_interlocked_read_pointer(T* const volatile* target) noexcept
 {
 	return __crt_interlocked_compare_exchange_pointer(target, nullptr, nullptr);
 }
 
-static HMODULE __cdecl try_load_library_from_system_directory(wchar_t const* const name) throw()
+static HMODULE __fastcall try_load_library_from_system_directory(wchar_t const* const name) noexcept
 {
 	HMODULE const handle = LoadLibraryExW(name, nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
 	if (handle)
@@ -179,7 +170,7 @@ static HMODULE __cdecl try_load_library_from_system_directory(wchar_t const* con
 }
 
 
-static HMODULE __cdecl try_get_module(module_id const id) throw()
+static HMODULE __fastcall try_get_module(module_id const id) noexcept
 {
 	// First check to see if we've cached the module handle:
 	if (HMODULE const cached_handle = __crt_interlocked_read_pointer(module_handles + id))
@@ -221,10 +212,10 @@ static HMODULE __cdecl try_get_module(module_id const id) throw()
 
 
 
-static __forceinline void* __cdecl try_get_proc_address_from_first_available_module(
+static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
 	char      const* const name,
 	module_id        const module_id
-) throw()
+) noexcept
 {
 	HMODULE const module_handle = try_get_module(module_id);
 	if (!module_handle)
@@ -236,21 +227,21 @@ static __forceinline void* __cdecl try_get_proc_address_from_first_available_mod
 }
 
 
-static __forceinline void* __cdecl invalid_function_sentinel() throw()
+static __forceinline void* __cdecl invalid_function_sentinel() noexcept
 {
 	return reinterpret_cast<void*>(static_cast<uintptr_t>(-1));
 }
 
-static void* __cdecl try_get_function(
-	function_id      const id,
+static void* __fastcall try_get_function(
+	void**      ppFunAddress,
 	char      const* const name,
 	module_id        const module_id
-) throw()
+) noexcept
 {
 	// First check to see if we've cached the function pointer:
 	{
 		void* const cached_fp = __crt_fast_decode_pointer(
-			__crt_interlocked_read_pointer(encoded_function_pointers + id));
+			__crt_interlocked_read_pointer(ppFunAddress));
 
 		if (cached_fp == invalid_function_sentinel())
 		{
@@ -271,7 +262,7 @@ static void* __cdecl try_get_function(
 	{
 		void* const cached_fp = __crt_fast_decode_pointer(
 			__crt_interlocked_exchange_pointer(
-				encoded_function_pointers + id,
+				ppFunAddress,
 				__crt_fast_encode_pointer(invalid_function_sentinel())));
 
 		if (cached_fp)
@@ -289,7 +280,7 @@ static void* __cdecl try_get_function(
 	{
 		void* const cached_fp = __crt_fast_decode_pointer(
 			__crt_interlocked_exchange_pointer(
-				encoded_function_pointers + id,
+				ppFunAddress,
 				__crt_fast_encode_pointer(new_fp)));
 
 		if (cached_fp)
@@ -303,11 +294,11 @@ static void* __cdecl try_get_function(
 
 
 #define _APPLY(_FUNCTION, _MODULE)                                                                    \
-    static _CRT_CONCATENATE(_FUNCTION, _pft) __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() throw()  \
+    static _CRT_CONCATENATE(_FUNCTION, _pft) __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept \
     {                                                                                                 \
-                                                                                                      \
+        __declspec(allocate(".YY$THU")) static void* _CRT_CONCATENATE( pFun_ ,_FUNCTION);             \
         return reinterpret_cast<_CRT_CONCATENATE(_FUNCTION, _pft)>(try_get_function(                  \
-            _CRT_CONCATENATE(_FUNCTION, _id),                                                         \
+            &_CRT_CONCATENATE( pFun_ ,_FUNCTION),                                                     \
             _CRT_STRINGIZE(_FUNCTION),                                                                \
             _MODULE));                                                                                \
     }
@@ -335,9 +326,9 @@ static int __cdecl __YY_initialize_winapi_thunks()
 {
 	void* const encoded_nullptr = __crt_fast_encode_pointer((void*)nullptr);
 
-	for (void*& p : encoded_function_pointers)
+	for (auto p = __YY_THUNKS_START; p != __YY_THUNKS_END; ++p)
 	{
-		p = encoded_nullptr;
+		*p = encoded_nullptr;
 	}
 
 	atexit(__YY_uninitialize_winapi_thunks);
