@@ -20,12 +20,50 @@
         = reinterpret_cast<void const*>(_FUNCTION)
 
 
-#pragma section(".YY$THU",    long, read, write)
-#pragma section(".YY$THV",    long, read, write)
+#pragma section(".YY$THUA",    long, read, write) //鸭穿模块缓存节点
+#pragma section(".YY$THUB",    long, read, write) //鸭船函数缓存节点
+#pragma section(".YY$THUC",    long, read, write) //保留，暂时用于边界结束
 
-__declspec(allocate(".YY$THU")) static void* __YY_THUNKS_START[] = { nullptr };
-__declspec(allocate(".YY$THV")) static void* __YY_THUNKS_END[] = { nullptr };
+__declspec(allocate(".YY$THUB")) static void* __YY_THUNKS_FUN_START[] = { nullptr }; //鸭船指针缓存开始位置
+__declspec(allocate(".YY$THUC")) static void* __YY_THUNKS_FUN_END[] = { nullptr };   //鸭船指针缓存开始位置
 
+
+#pragma detect_mismatch("YY-Thunks-Mode", "ver:" _CRT_STRINGIZE(YY_Thunks_Support_Version))
+
+/*
+导出一个外部符号，指示当前鸭船Thunks等级。
+1. 方便外部检测是否使用了鸭船。
+2. 当调用者同时使用多个鸭船时，使其链接失败！
+
+//自行定义为 C 弱符号，C++支持不佳！
+EXTERN_C const DWORD __YY_Thunks_Installed;
+
+if(__YY_Thunks_Installed)
+	wprintf(L"检测到使用YY-Thunks，Thunks级别=0x%.8X\n", __YY_Thunks_Installed);
+else
+	wprintf(L"没有使用YY-Thunks！\n");
+
+*/
+EXTERN_C const DWORD __YY_Thunks_Installed = YY_Thunks_Support_Version;
+
+/*
+导出一个外部弱符号，指示当前是否处于强行卸载模式。
+
+EXTERN_C BOOL __YY_Thunks_Process_Terminating;
+
+BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
+{
+	swtich(dwReason)
+	{
+		case DLL_PROCESS_DETACH:
+		//我们可以通过 lpReserved != NULL 判断，当前是否处于强行卸载模式。
+		__YY_Thunks_Process_Terminating = lpReserved != NULL;
+
+		……
+		break;
+	……
+*/
+EXTERN_C extern BOOL __YY_Thunks_Process_Terminating;
 
 enum module_id : unsigned
 {
@@ -37,13 +75,14 @@ enum module_id : unsigned
 };
 
 
-static wchar_t const* const module_names[module_id_count] =
+static constexpr wchar_t const* const module_names[module_id_count] =
 {
 #define _APPLY(_SYMBOL, _NAME) _CRT_WIDE(_NAME),
 	_YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)
 #undef _APPLY
 };
 
+__declspec(allocate(".YY$THUA"))
 static HMODULE module_handles[module_id_count];
 
 #define _APPLY(_FUNCTION, _MODULES) \
@@ -296,7 +335,7 @@ static void* __fastcall try_get_function(
 #define _APPLY(_FUNCTION, _MODULE)                                                                    \
     static _CRT_CONCATENATE(_FUNCTION, _pft) __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept \
     {                                                                                                 \
-        __declspec(allocate(".YY$THU")) static void* _CRT_CONCATENATE( pFun_ ,_FUNCTION);             \
+        __declspec(allocate(".YY$THUB")) static void* _CRT_CONCATENATE( pFun_ ,_FUNCTION);            \
         return reinterpret_cast<_CRT_CONCATENATE(_FUNCTION, _pft)>(try_get_function(                  \
             &_CRT_CONCATENATE( pFun_ ,_FUNCTION),                                                     \
             _CRT_STRINGIZE(_FUNCTION),                                                                \
@@ -308,6 +347,10 @@ static void* __fastcall try_get_function(
 
 static void __cdecl __YY_uninitialize_winapi_thunks()
 {
+	//当DLL被强行卸载时，我们什么都不做。
+	if (__YY_Thunks_Process_Terminating)
+		return;
+
 	for (HMODULE& module : module_handles)
 	{
 		if (module)
@@ -326,7 +369,7 @@ static int __cdecl __YY_initialize_winapi_thunks()
 {
 	void* const encoded_nullptr = __crt_fast_encode_pointer((void*)nullptr);
 
-	for (auto p = __YY_THUNKS_START; p != __YY_THUNKS_END; ++p)
+	for (auto p = __YY_THUNKS_FUN_START; p != __YY_THUNKS_FUN_END; ++p)
 	{
 		*p = encoded_nullptr;
 	}
