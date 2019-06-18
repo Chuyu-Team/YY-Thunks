@@ -4964,6 +4964,16 @@ EXTERN_C DECLSPEC_IMPORT void __stdcall MD5Update(MD5_CTX* context,
 
 EXTERN_C DECLSPEC_IMPORT void __stdcall MD5Final(MD5_CTX* context);
 
+
+EXTERN_C
+DECLSPEC_IMPORT
+NTSTATUS
+NTAPI
+RtlWow64EnableFsRedirectionEx(
+	_In_opt_ PVOID Wow64FsEnableRedirection,
+	_Out_    PVOID* OldFsRedirectionLevel
+	);
+
 #if defined __cplusplus && !defined _Disallow_YY_KM_Namespace
 } //namespace YY
 #endif

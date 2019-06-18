@@ -191,21 +191,73 @@ static __forceinline T* __fastcall __crt_interlocked_read_pointer(T* const volat
 	return __crt_interlocked_compare_exchange_pointer(target, nullptr, nullptr);
 }
 
+#if defined(_X86_) || defined(_M_IX86)
+static decltype(RtlWow64EnableFsRedirectionEx)* pRtlWow64EnableFsRedirectionEx;
+#endif
+
+static bool bSupportSafe;
+
+
 static HMODULE __fastcall try_load_library_from_system_directory(wchar_t const* const name) noexcept
 {
-	HMODULE const handle = LoadLibraryExW(name, nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-	if (handle)
+	if(bSupportSafe)
 	{
-		return handle;
+		//我们引入 bSupportSafe 变量是因为联想一键影音，会导致老系统 LoadLibraryExW 错误代码 变成 ERROR_ACCESS_DENIED，而不是预期的ERROR_INVALID_PARAMETER。
+		return LoadLibraryExW(name, nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
 	}
-
-	//目标系统不支持 LOAD_LIBRARY_SEARCH_SYSTEM32 ？
-	if (GetLastError() == ERROR_INVALID_PARAMETER )
+	else
 	{
-		return LoadLibraryExW(name, nullptr, 0);
-	}
+		//名字不可能为 空。
+		if (name == nullptr || *name == L'\0')
+			return nullptr;
 
-	return nullptr;
+		wchar_t szDllFilePath[512];
+
+		auto cchResult = GetSystemDirectoryW(szDllFilePath, _countof(szDllFilePath));
+
+		if (cchResult == 0 || cchResult >= _countof(szDllFilePath))
+		{
+			//失败或者缓冲区不足则不处理（因为很显然 512 大小都不够？开玩笑……）
+			return nullptr;
+		}
+
+		szDllFilePath[cchResult++] = L'\\';
+		if (cchResult >= _countof(szDllFilePath))
+		{
+			return nullptr;
+		}
+
+		for (auto szName = name; *szName; ++szName)
+		{
+			szDllFilePath[cchResult++] = *szName;
+			if (cchResult >= _countof(szDllFilePath))
+			{
+				return nullptr;
+			}
+		}
+
+		// 将字符串 \0 截断
+		szDllFilePath[cchResult] = L'\0';
+
+
+#if defined(_X86_) || defined(_M_IX86)
+		PVOID OldFsRedirectionLevel;
+
+		/*
+		Windows 7 RTM以其以前版本 LoadLibrary内部默认不会关闭重定向。
+		为了防止某些线程在关闭重定向的情况下调用API，依然能正常加载相关dll，因此我们在此处恢复重定向。
+		*/
+		auto Status = pRtlWow64EnableFsRedirectionEx ? pRtlWow64EnableFsRedirectionEx(nullptr, &OldFsRedirectionLevel) : STATUS_INVALID_PARAMETER;
+#endif
+		auto hModule = LoadLibraryExW(szDllFilePath, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
+
+#if defined(_X86_) || defined(_M_IX86)
+		//将重定向恢复到以前的状态。
+		if (Status >= 0 && pRtlWow64EnableFsRedirectionEx)
+			pRtlWow64EnableFsRedirectionEx(OldFsRedirectionLevel, &OldFsRedirectionLevel);
+#endif
+		return hModule;
+	}
 }
 
 
@@ -367,6 +419,17 @@ static void __cdecl __YY_uninitialize_winapi_thunks()
 
 static int __cdecl __YY_initialize_winapi_thunks()
 {
+#if defined(_X86_) || defined(_M_IX86)
+	if (auto hNtdll = GetModuleHandleW(L"ntdll"))
+	{
+		pRtlWow64EnableFsRedirectionEx = (decltype(RtlWow64EnableFsRedirectionEx)*)GetProcAddress(hNtdll, "RtlWow64EnableFsRedirectionEx");
+	}
+#endif
+	if (auto hKernel32 = GetModuleHandleW(L"kernel32"))
+	{
+		bSupportSafe = GetProcAddress(hKernel32, "AddDllDirectory") != nullptr;
+	}
+
 	void* const encoded_nullptr = __crt_fast_encode_pointer((void*)nullptr);
 
 	for (auto p = __YY_THUNKS_FUN_START; p != __YY_THUNKS_FUN_END; ++p)
