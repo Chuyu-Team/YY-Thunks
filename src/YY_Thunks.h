@@ -20,12 +20,15 @@
         = reinterpret_cast<void const*>(_FUNCTION)
 
 
-#pragma section(".YY$THUA",    long, read, write) //鸭穿模块缓存节点
-#pragma section(".YY$THUB",    long, read, write) //鸭船函数缓存节点
-#pragma section(".YY$THUC",    long, read, write) //保留，暂时用于边界结束
+#pragma section(".YYThu$AAA",    long, read, write) //鸭穿模块缓存节点
+#pragma section(".YYThu$AAB",    long, read, write) //鸭船函数缓存节点
+#pragma section(".YYThu$AAC",    long, read, write) //保留，暂时用于边界结束
 
-__declspec(allocate(".YY$THUB")) static void* __YY_THUNKS_FUN_START[] = { nullptr }; //鸭船指针缓存开始位置
-__declspec(allocate(".YY$THUC")) static void* __YY_THUNKS_FUN_END[] = { nullptr };   //鸭船指针缓存开始位置
+#pragma comment(linker, "/merge:.YYThu=.data")
+
+
+__declspec(allocate(".YYThu$AAB")) static void* __YY_THUNKS_FUN_START[] = { nullptr }; //鸭船指针缓存开始位置
+__declspec(allocate(".YYThu$AAC")) static void* __YY_THUNKS_FUN_END[] = { nullptr };   //鸭船指针缓存开始位置
 
 
 #pragma detect_mismatch("YY-Thunks-Mode", "ver:" _CRT_STRINGIZE(YY_Thunks_Support_Version))
@@ -82,7 +85,7 @@ static constexpr wchar_t const* const module_names[module_id_count] =
 #undef _APPLY
 };
 
-__declspec(allocate(".YY$THUA"))
+__declspec(allocate(".YYThu$AAA"))
 static HMODULE module_handles[module_id_count];
 
 #define _APPLY(_FUNCTION, _MODULES) \
@@ -387,7 +390,7 @@ static void* __fastcall try_get_function(
 #define _APPLY(_FUNCTION, _MODULE)                                                                    \
     static _CRT_CONCATENATE(_FUNCTION, _pft) __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept \
     {                                                                                                 \
-        __declspec(allocate(".YY$THUB")) static void* _CRT_CONCATENATE( pFun_ ,_FUNCTION);            \
+        __declspec(allocate(".YYThu$AAB")) static void* _CRT_CONCATENATE( pFun_ ,_FUNCTION);            \
         return reinterpret_cast<_CRT_CONCATENATE(_FUNCTION, _pft)>(try_get_function(                  \
             &_CRT_CONCATENATE( pFun_ ,_FUNCTION),                                                     \
             _CRT_STRINGIZE(_FUNCTION),                                                                \
