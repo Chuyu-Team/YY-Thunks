@@ -126,6 +126,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | *[GetNumaNodeProcessorMaskEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405493.aspx)                          | 不存在时，调用GetNumaNodeProcessorMask。
 | *[SetThreadGroupAffinity](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405516.aspx)                              | 不存在时，调用SetThreadAffinityMask。
 | *[CancelIoEx](https://docs.microsoft.com/en-us/windows/desktop/FileIO/cancelioex-func)                                         | 不存在时，调用CancelIo（会把此句柄的所有IO操作取消掉！）。
+| *[QueryWorkingSetEx](https://docs.microsoft.com/en-us/windows/desktop/api/Psapi/nf-psapi-getwschangesex)                       | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
 
 
 ## Changes
@@ -238,9 +239,10 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加TryAcquireSRWLockShared
 
 
-### 1.0.1.8 - 优化实现（2019-06-18 16:00）
+### 1.0.1.9 - 优化实现（2019-06-23 13:00）
 * 优化代码结构，减少不必要的全局对象引入。
 * 内部函数采用__fastcall约定，减少栈操作。
 * 增加YY-Thunks版本互斥。
 * 改进与联想一键影音的兼容性，由于联想一键影音错会乱Hook，导致LoadLibraryExW行为异常。这样将导致YY-Thunks等在没有安装KB2533623的系统上无法正常使用问题。
 * 改进Windows 7 RTM以及以下系统的兼容性，由于这些老版本系统由于在LoadLibraryExW期间不会恢复重定向，因此当目标线程关闭重定向时可能导致YY-Thunks无法正常工作。
+* 添加QueryWorkingSetEx

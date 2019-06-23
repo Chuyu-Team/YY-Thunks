@@ -85,6 +85,7 @@
     _APPLY(TryAcquireSRWLockShared,                      kernel32                                      ) \
     _APPLY(EnumProcessModulesEx,                         psapi                                         ) \
     _APPLY(GetWsChangesEx,                               psapi                                         ) \
+    _APPLY(QueryWorkingSetEx,                            psapi                                         ) \
     _APPLY(GetFileVersionInfoExW,                        version                                       ) \
     _APPLY(GetFileVersionInfoExA,                        version                                       ) \
     _APPLY(GetFileVersionInfoSizeExW,                    version                                       ) \
@@ -4692,6 +4693,34 @@ _LCRT_DEFINE_IAT_SYMBOL(GetWsChangesEx, _12);
 
 #endif
 
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
+//Windows Vista, Windows XP Professional x64 Edition [desktop apps only]
+//Windows Server 2008, Windows Server 2003 with SP1 [desktop apps only]
+
+EXTERN_C
+BOOL
+WINAPI
+QueryWorkingSetEx(
+    _In_ HANDLE hProcess,
+    _Out_writes_bytes_(cb) PVOID pv,
+    _In_ DWORD cb
+    )
+{
+	if (const auto pQueryWorkingSetEx = try_get_QueryWorkingSetEx())
+	{
+		return pQueryWorkingSetEx(hProcess, pv, cb);
+	}
+	else
+	{
+		SetLastError(ERROR_INVALID_FUNCTION);
+		return FALSE;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(QueryWorkingSetEx, _12);
+
+#endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista [desktop apps only]
