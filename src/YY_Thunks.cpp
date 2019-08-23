@@ -770,39 +770,7 @@ InitOnceExecuteOnce(
 		return pInitOnceExecuteOnce(InitOnce, InitFn, Parameter, Context);
 	}
 
-
-	//目标系统不支持，切换到XP兼容模式
-	for (;;)
-	{
-		switch (InterlockedCompareExchange((volatile size_t*)InitOnce, 1, 0))
-		{
-		case 2:
-			//同步完成，并且其他线程已经操作成功
-			return TRUE;
-			break;
-		case 1:
-			//尚未完成，继续等待
-			Sleep(0);
-			break;
-		case 0:
-			//同步完成，确认是处，调用指定函数
-		{
-			BOOL bRet = InitFn(InitOnce, Parameter, Context) == TRUE;
-			//函数调用完成
-
-			if (InterlockedExchange((volatile size_t*)InitOnce, bRet ? 2 : 0) == 1)
-			{
-				return bRet;
-			}
-
-		}
-		default:
-			//同步完成，但是发生错误
-			SetLastError(ERROR_INVALID_DATA);
-			return FALSE;
-			break;
-		}
-	}
+	return InitOnceExecuteOnceDownlevel(InitOnce, InitFn, Parameter, Context);
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(InitOnceExecuteOnce, _16);

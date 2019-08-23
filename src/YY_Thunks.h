@@ -326,12 +326,17 @@ static __forceinline void* __cdecl invalid_function_sentinel() noexcept
 	return reinterpret_cast<void*>(static_cast<uintptr_t>(-1));
 }
 
+static int __cdecl _YY_initialize_winapi_thunks();
+
 static void* __fastcall try_get_function(
 	void**      ppFunAddress,
 	char      const* const name,
 	module_id        const module_id
 ) noexcept
 {
+	//尝试初始化YY-Thunks，避免还未初始化问题。
+	_YY_initialize_winapi_thunks();
+
 	// First check to see if we've cached the function pointer:
 	{
 		void* const cached_fp = __crt_fast_decode_pointer(
@@ -420,26 +425,93 @@ static void __cdecl __YY_uninitialize_winapi_thunks()
 	}
 }
 
+
+#if YY_Thunks_Support_Version < NTDDI_WIN6
+static
+BOOL
+WINAPI
+InitOnceExecuteOnceDownlevel(
+    _Inout_ PINIT_ONCE InitOnce,
+    _In_ __callback PINIT_ONCE_FN InitFn,
+    _Inout_opt_ PVOID Parameter,
+    _Outptr_opt_result_maybenull_ LPVOID* Context
+    )
+{
+	//目标系统不支持，切换到XP兼容模式
+	for (;;)
+	{
+		switch (InterlockedCompareExchange((volatile size_t*)InitOnce, 1, 0))
+		{
+		case 2:
+			//同步完成，并且其他线程已经操作成功
+			return TRUE;
+			break;
+		case 1:
+			//尚未完成，继续等待
+			Sleep(0);
+			break;
+		case 0:
+			//同步完成，确认是处，调用指定函数
+		{
+			BOOL bRet = InitFn(InitOnce, Parameter, Context) == TRUE;
+			//函数调用完成
+
+			if (InterlockedExchange((volatile size_t*)InitOnce, bRet ? 2 : 0) == 1)
+			{
+				return bRet;
+			}
+
+		}
+		default:
+			//同步完成，但是发生错误
+			SetLastError(ERROR_INVALID_DATA);
+			return FALSE;
+			break;
+		}
+	}
+}
+#else
+#define InitOnceExecuteOnceDownlevel InitOnceExecuteOnce
+#endif
+
+
+
+static int __cdecl _YY_initialize_winapi_thunks()
+{
+	//为了防止多线程同时初始化，我们还是加个锁
+	static INIT_ONCE InitOnce;
+
+	InitOnceExecuteOnceDownlevel(&InitOnce, [](PINIT_ONCE InitOnce, PVOID Parameter, PVOID *Context) -> BOOL
+		{
+#if defined(_X86_) || defined(_M_IX86)
+			if (auto hNtdll = GetModuleHandleW(L"ntdll"))
+			{
+				pRtlWow64EnableFsRedirectionEx = (decltype(RtlWow64EnableFsRedirectionEx)*)GetProcAddress(hNtdll, "RtlWow64EnableFsRedirectionEx");
+			}
+#endif
+			if (auto hKernel32 = GetModuleHandleW(L"kernel32"))
+			{
+				bSupportSafe = GetProcAddress(hKernel32, "AddDllDirectory") != nullptr;
+			}
+
+			void* const encoded_nullptr = __crt_fast_encode_pointer((void*)nullptr);
+
+			for (auto p = __YY_THUNKS_FUN_START; p != __YY_THUNKS_FUN_END; ++p)
+			{
+				*p = encoded_nullptr;
+			}
+
+			return TRUE;
+		}, nullptr, nullptr);
+
+	return 0;
+}
+
 static int __cdecl __YY_initialize_winapi_thunks()
 {
-#if defined(_X86_) || defined(_M_IX86)
-	if (auto hNtdll = GetModuleHandleW(L"ntdll"))
-	{
-		pRtlWow64EnableFsRedirectionEx = (decltype(RtlWow64EnableFsRedirectionEx)*)GetProcAddress(hNtdll, "RtlWow64EnableFsRedirectionEx");
-	}
-#endif
-	if (auto hKernel32 = GetModuleHandleW(L"kernel32"))
-	{
-		bSupportSafe = GetProcAddress(hKernel32, "AddDllDirectory") != nullptr;
-	}
+	_YY_initialize_winapi_thunks();
 
-	void* const encoded_nullptr = __crt_fast_encode_pointer((void*)nullptr);
-
-	for (auto p = __YY_THUNKS_FUN_START; p != __YY_THUNKS_FUN_END; ++p)
-	{
-		*p = encoded_nullptr;
-	}
-
+	//只在节点位置插入 atexit 流程，避免CRT还没完全初始化好出现问题。
 	atexit(__YY_uninitialize_winapi_thunks);
 
 	return 0;
