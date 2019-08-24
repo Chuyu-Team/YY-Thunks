@@ -20,7 +20,7 @@
         = reinterpret_cast<void const*>(_FUNCTION)
 
 
-#pragma section(".YYThu$AAA",    long, read, write) //鸭穿模块缓存节点
+#pragma section(".YYThu$AAA",    long, read, write) //鸭船模块缓存节点
 #pragma section(".YYThu$AAB",    long, read, write) //鸭船函数缓存节点
 #pragma section(".YYThu$AAC",    long, read, write) //保留，暂时用于边界结束
 
@@ -28,7 +28,7 @@
 
 
 __declspec(allocate(".YYThu$AAB")) static void* __YY_THUNKS_FUN_START[] = { nullptr }; //鸭船指针缓存开始位置
-__declspec(allocate(".YYThu$AAC")) static void* __YY_THUNKS_FUN_END[] = { nullptr };   //鸭船指针缓存开始位置
+__declspec(allocate(".YYThu$AAC")) static void* __YY_THUNKS_FUN_END[] = { nullptr };   //鸭船指针缓存结束位置
 
 
 #pragma detect_mismatch("YY-Thunks-Mode", "ver:" _CRT_STRINGIZE(YY_Thunks_Support_Version))
