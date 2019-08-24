@@ -98,7 +98,8 @@
     _APPLY(inet_pton,                                    ws2_32                                        ) \
     _APPLY(InetPtonW,                                    ws2_32                                        ) \
     _APPLY(inet_ntop,                                    ws2_32                                        ) \
-    _APPLY(InetNtopW,                                    ws2_32                                        ) 
+    _APPLY(InetNtopW,                                    ws2_32                                        ) \
+    _APPLY(WSAPoll,                                      ws2_32                                        )
 
 #ifndef YY_Thunks_Support_Version
 #define YY_Thunks_Support_Version WDK_NTDDI_VERSION
@@ -5541,6 +5542,98 @@ ReleaseSRWLockShared(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(ReleaseSRWLockShared, _4);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+
+//参考 https://blog.csdn.net/liangzhao_jay/article/details/53261684 实现
+EXTERN_C
+int
+WSAAPI
+WSAPoll(
+    _Inout_ LPWSAPOLLFD fdArray,
+    _In_ ULONG fds,
+    _In_ INT timeout
+    )
+{
+	if (auto const pWSAPoll = try_get_WSAPoll())
+	{
+		return pWSAPoll(fdArray, fds, timeout);
+	}
+
+	fd_set        readfds;
+	fd_set        writefds;
+	fd_set        exceptfds;
+
+	FD_ZERO(&readfds);
+	FD_ZERO(&writefds);
+	FD_ZERO(&exceptfds);
+
+	for (ULONG i = 0; i < fds; i++)
+	{
+		auto& fd = fdArray[i];
+
+		//Read (in) socket
+		if (fd.events & (POLLRDNORM | POLLRDBAND | POLLPRI))
+		{
+			FD_SET(fd.fd, &readfds);
+		}
+
+		//Write (out) socket
+		if (fd.events & (POLLWRNORM | POLLWRBAND))
+		{
+			FD_SET(fd.fd, &writefds);
+		}
+
+		//异常
+		if (fd.events & (POLLERR | POLLHUP | POLLNVAL))
+		{
+			FD_SET(fd.fd, &exceptfds);
+		}
+	}
+
+
+	/*
+	timeout  < 0 ，无限等待
+	timeout == 0 ，马上回来
+	timeout  >0  ，最长等这个时间
+	*/
+	timeval* __ptimeout = nullptr;
+
+	timeval time_out;
+
+	if (timeout >= 0)
+	{
+		time_out.tv_sec = timeout / 1000;
+		time_out.tv_usec = (timeout % 1000) * 1000;
+		__ptimeout = &time_out;
+	}
+
+	const auto result = select(1, &readfds, &writefds, &exceptfds, __ptimeout);
+
+	if (result > 0)
+	{
+		for (ULONG i = 0; i < fds; i++)
+		{
+			auto& fd = fdArray[i];
+
+			fd.revents = 0;
+			if (FD_ISSET(fd.fd, &readfds))
+				fd.revents |= fd.events & (POLLRDNORM | POLLRDBAND | POLLPRI);
+
+			if (FD_ISSET(fd.fd, &writefds))
+				fd.revents |= fd.events & (POLLWRNORM | POLLWRBAND);
+
+			if (FD_ISSET(fd.fd, &exceptfds))
+				fd.revents |= fd.events & (POLLERR | POLLHUP | POLLNVAL);
+		}
+	}
+	
+	return result;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(WSAPoll, _12);
 
 #endif
 

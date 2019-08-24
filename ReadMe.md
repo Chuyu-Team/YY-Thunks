@@ -75,6 +75,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [GetLogicalProcessorInformationEx](https://docs.microsoft.com/zh-cn/windows/desktop/api/sysinfoapi/nf-sysinfoapi-getlogicalprocessorinformationex)| 不存在时，调用GetLogicalProcessorInformation。
 | [InetPtonW(inet_pton)](https://docs.microsoft.com/en-us/windows/desktop/api/ws2tcpip/nf-ws2tcpip-inetptonw)                    | 不存在时，类似于sscanf手工分析字符串。
 | [InetNtopW(inet_ntop)](https://docs.microsoft.com/en-us/windows/desktop/api/ws2tcpip/nf-ws2tcpip-inetntopw)                    | 不存在时，类似于sprintf手工生成字符串。
+| [WSAPoll](https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsapoll)                                     | 不存在时，调用select。
 | [GetNumaHighestNodeNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683203.aspx)                             | 不存在时，返回0。
 | [RaiseFailFastException](https://msdn.microsoft.com/en-us/library/windows/desktop/dd941688.aspx)                               | 不存在时，调用TerminateProcess。
 | [GetThreadId](https://docs.microsoft.com/zh-cn/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getthreadid)         | 不存在时，调用NtQueryInformationThread。
@@ -248,5 +249,6 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加QueryWorkingSetEx
 
 
-### 1.0.1.10 - 兼容性更新 (2019-08-22 13:00) 
+### 1.0.1.11 - 兼容性更新 (2019-08-24 18:00) 
 * 解决Bug，VS2010无法使用问题（感谢 柒零）。
+* 添加WSAPoll
