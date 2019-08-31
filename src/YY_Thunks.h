@@ -68,6 +68,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 */
 EXTERN_C extern BOOL __YY_Thunks_Process_Terminating;
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+static HANDLE _GlobalKeyedEventHandle;
+#endif
+
 enum module_id : unsigned
 {
 #define _APPLY(_SYMBOL, _NAME) _SYMBOL,
@@ -423,6 +427,9 @@ static void __cdecl __YY_uninitialize_winapi_thunks()
 			module = nullptr;
 		}
 	}
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+	CloseHandle(_GlobalKeyedEventHandle);
+#endif
 }
 
 

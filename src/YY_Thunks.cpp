@@ -209,9 +209,7 @@ namespace YY
 
 			static HANDLE __fastcall GetGlobalKeyedEventHandle()
 			{
-				static HANDLE GlobalKeyedEventHandle;
-
-				if (GlobalKeyedEventHandle == nullptr)
+				if (_GlobalKeyedEventHandle == nullptr)
 				{
 					auto pNtOpenKeyedEvent = try_get_NtOpenKeyedEvent();
 
@@ -230,13 +228,13 @@ namespace YY
 						RaiseStatus(0xC0000264);
 					}
 
-					if (InterlockedCompareExchange((size_t*)&GlobalKeyedEventHandle, (size_t)KeyedEventHandle, (size_t)nullptr))
+					if (InterlockedCompareExchange((size_t*)&_GlobalKeyedEventHandle, (size_t)KeyedEventHandle, (size_t)nullptr))
 					{
 						CloseHandle(KeyedEventHandle);
 					}
 				}
 
-				return GlobalKeyedEventHandle;
+				return _GlobalKeyedEventHandle;
 			}
 
 			static void __fastcall RtlpWakeSRWLock(SRWLOCK* SRWLock, size_t Status)
@@ -5559,6 +5557,13 @@ AcquireSRWLockExclusive(
 				internal::RtlpOptimizeSRWLockList(SRWLock, SRWLockNew);
 			}
 
+			auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
+			auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
+			if (!pNtWaitForKeyedEvent)
+			{
+				internal::RaiseStatus(0xC0000264);
+			}
+
 			//自旋
 			for (DWORD SpinCount = SRWLockSpinCount; SpinCount; --SpinCount)
 			{
@@ -5570,14 +5575,7 @@ AcquireSRWLockExclusive(
 
 			if (InterlockedBitTestAndReset((volatile LONG*)&StackWaitBlock.flag, 1))
 			{
-				auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
-				if (!pNtWaitForKeyedEvent)
-				{
-					internal::RaiseStatus(0xC0000264);
-				}
-
-
-				pNtWaitForKeyedEvent(internal::GetGlobalKeyedEventHandle(), (PVOID)&StackWaitBlock, 0, nullptr);
+				pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
 			}
 		}
 		else
@@ -5741,6 +5739,13 @@ AcquireSRWLockShared(
 					internal::RtlpOptimizeSRWLockList(SRWLock, NewSRWLock);
 				}
 
+				auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
+				auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
+				if (!pNtWaitForKeyedEvent)
+				{
+					internal::RaiseStatus(0xC0000264);
+				}
+
 				//自旋
 				for (DWORD SpinCount = SRWLockSpinCount; SpinCount; --SpinCount)
 				{
@@ -5752,14 +5757,7 @@ AcquireSRWLockShared(
 
 				if (InterlockedBitTestAndReset((volatile LONG*)&StackWaitBlock.flag, 1))
 				{
-					auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
-					if (!pNtWaitForKeyedEvent)
-					{
-						internal::RaiseStatus(0xC0000264);
-					}
-
-
-					pNtWaitForKeyedEvent(internal::GetGlobalKeyedEventHandle(), (PVOID)&StackWaitBlock, 0, nullptr);
+					pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
 				}
 
 				continue;
