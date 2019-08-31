@@ -4974,6 +4974,51 @@ RtlWow64EnableFsRedirectionEx(
 	_Out_    PVOID* OldFsRedirectionLevel
 	);
 
+EXTERN_C
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtCreateKeyedEvent(
+	OUT PHANDLE handle,
+	IN ACCESS_MASK access,
+	IN POBJECT_ATTRIBUTES attr,
+	IN ULONG flags
+	);
+
+EXTERN_C
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtOpenKeyedEvent(
+	OUT PHANDLE             KeyedEventHandle,
+	IN ACCESS_MASK          DesiredAccess,
+	IN POBJECT_ATTRIBUTES   ObjectAttributes OPTIONAL
+	);
+
+
+EXTERN_C
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtWaitForKeyedEvent(
+	IN HANDLE               KeyedEventHandle,
+	IN PVOID                Key,
+	IN BOOLEAN              Alertable,
+	IN PLARGE_INTEGER       Timeout OPTIONAL
+	);
+
+
+EXTERN_C
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtReleaseKeyedEvent(
+	IN HANDLE               KeyedEventHandle,
+	IN PVOID                Key,
+	IN BOOLEAN              Alertable,
+	IN PLARGE_INTEGER       Timeout OPTIONAL
+	);
+
 #if defined __cplusplus && !defined _Disallow_YY_KM_Namespace
 } //namespace YY
 #endif

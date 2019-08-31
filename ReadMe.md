@@ -115,12 +115,12 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [GetThreadErrorMode](https://docs.microsoft.com/en-us/windows/desktop/api/errhandlingapi/nf-errhandlingapi-getthreaderrormode) | 不存在时，调用GetErrorMode。
 | [GetErrorMode](https://docs.microsoft.com/en-us/windows/desktop/api/errhandlingapi/nf-errhandlingapi-geterrormode)             | 不存在时，调用NtQueryInformationProcess。
 | [InitializeSRWLock](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-initializesrwlock)               | 初始化为 RTL_SRWLOCK_INIT。
-| [AcquireSRWLockExclusive](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-acquiresrwlockexclusive)   | 不存在时，调用InterlockedBitTestAndSet(64)。
+| [AcquireSRWLockExclusive](https://docs.microsoft.com/zh-cn/windows/desktop/api/synchapi/nf-synchapi-acquiresrwlockexclusive)   | 不存在时，调用NtWaitForKeyedEvent。
 | [TryAcquireSRWLockExclusive](https://msdn.microsoft.com/en-us/library/Dd405523.aspx)                                           | 不存在时，调用InterlockedBitTestAndSet(64)。
-| [ReleaseSRWLockExclusive](https://msdn.microsoft.com/en-us/library/ms685076.aspx)                                              | 不存在时，调用InterlockedCompareExchange。
-| [AcquireSRWLockShared](https://msdn.microsoft.com/en-us/library/ms681934.aspx)                                                 | 不存在时，调用InterlockedCompareExchange。
+| [ReleaseSRWLockExclusive](https://msdn.microsoft.com/en-us/library/ms685076.aspx)                                              | 不存在时，调用NtReleaseKeyedEvent。
+| [AcquireSRWLockShared](https://msdn.microsoft.com/en-us/library/ms681934.aspx)                                                 | 不存在时，调用NtWaitForKeyedEvent。
 | [TryAcquireSRWLockShared](https://msdn.microsoft.com/en-us/library/Dd405524.aspx)                                              | 不存在时，调用InterlockedCompareExchange。
-| [ReleaseSRWLockShared](https://msdn.microsoft.com/en-us/library/ms685080.aspx)                                                 | 不存在时，调用InterlockedCompareExchange。
+| [ReleaseSRWLockShared](https://msdn.microsoft.com/en-us/library/ms685080.aspx)                                                 | 不存在时，调用NtReleaseKeyedEvent。
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
@@ -249,6 +249,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加QueryWorkingSetEx
 
 
-### 1.0.1.11 - 兼容性更新 (2019-08-24 18:00) 
+### 1.0.1.12 - 优化实现 (2019-08-31 18:00) 
 * 解决Bug，VS2010无法使用问题（感谢 柒零）。
 * 添加WSAPoll
+* 改进 SRWLock 实现，现在完全使用 KeyedEvent，避免使用 Sleep。
