@@ -86,6 +86,10 @@
     _APPLY(ReleaseSRWLockShared,                         kernel32                                      ) \
     _APPLY(TryAcquireSRWLockExclusive,                   kernel32                                      ) \
     _APPLY(TryAcquireSRWLockShared,                      kernel32                                      ) \
+    _APPLY(SleepConditionVariableCS,                     kernel32                                      ) \
+    _APPLY(SleepConditionVariableSRW,                    kernel32                                      ) \
+    _APPLY(WakeConditionVariable,                        kernel32                                      ) \
+    _APPLY(WakeAllConditionVariable,                     kernel32                                      ) \
     _APPLY(EnumProcessModulesEx,                         psapi                                         ) \
     _APPLY(GetWsChangesEx,                               psapi                                         ) \
     _APPLY(QueryWorkingSetEx,                            psapi                                         ) \
@@ -155,7 +159,7 @@
 #define SRWLockSpinCount 1024
 
 
-typedef struct _YY_SRWLOCK_WAIT_BLOCK
+typedef struct __declspec(align(16)) _YY_SRWLOCK_WAIT_BLOCK
 {
 	_YY_SRWLOCK_WAIT_BLOCK* back;
 	_YY_SRWLOCK_WAIT_BLOCK* notify;
@@ -163,6 +167,24 @@ typedef struct _YY_SRWLOCK_WAIT_BLOCK
 	volatile size_t         shareCount;
 	volatile size_t         flag;
 } YY_SRWLOCK_WAIT_BLOCK;
+
+
+//正在优化锁
+#define YY_CV_OPTIMIZE_LOCK 0x00000008ul
+#define YY_CV_MASK size_t(0x0000000F)
+#define YY_CV_GET_BLOCK(CV) ((YY_CV_WAIT_BLOCK*)(CV & (~YY_CV_MASK)))
+
+#define ConditionVariableSpinCount 1024
+
+typedef struct __declspec(align(16)) _YY_CV_WAIT_BLOCK
+{
+	_YY_CV_WAIT_BLOCK* back;
+	_YY_CV_WAIT_BLOCK* notify;
+	_YY_CV_WAIT_BLOCK* next;
+	volatile size_t    shareCount;
+	volatile size_t    flag;
+	volatile PSRWLOCK  SRWLock;
+} YY_CV_WAIT_BLOCK;
 
 namespace YY
 {
@@ -203,6 +225,16 @@ namespace YY
 			static void __fastcall RaiseStatus(NTSTATUS Status)
 			{
 				RaiseException(Status, EXCEPTION_NONCONTINUABLE, 0, NULL);
+			}
+
+			static LARGE_INTEGER * __fastcall BaseFormatTimeOut(LARGE_INTEGER *Timeout, DWORD dwMilliseconds)
+			{
+				if (dwMilliseconds == INFINITE)
+					return nullptr;
+
+				Timeout->QuadPart = -10000ll * dwMilliseconds;
+
+				return Timeout;
 			}
 
 #if (YY_Thunks_Support_Version < NTDDI_VISTA)
@@ -274,8 +306,11 @@ namespace YY
 							notify->next = nullptr;
 
 							//SRWLock & (~YY_SRWLOCK_SHARED)
-							InterlockedAnd((volatile LONG_PTR *)SRWLock, ~LONG_PTR(YY_SRWLOCK_SHARED));
-
+#ifdef _WIN64
+							_InterlockedAnd64((volatile LONG_PTR *)SRWLock, ~LONG_PTR(YY_SRWLOCK_SHARED));
+#else
+							_InterlockedAnd((volatile LONG_PTR *)SRWLock, ~LONG_PTR(YY_SRWLOCK_SHARED));
+#endif
 							if (!InterlockedBitTestAndReset((volatile LONG*)&notify->flag, 1))
 							{
 								//块处于等待状态，我们进行线程唤醒
@@ -322,7 +357,7 @@ namespace YY
 					}
 					else
 					{
-						auto NewStatus = _InterlockedCompareExchange((volatile LONG *)SRWLock, Status & ~YY_SRWLOCK_SHARED, Status);
+						auto NewStatus = InterlockedCompareExchange((volatile LONG *)SRWLock, Status & ~YY_SRWLOCK_SHARED, Status);
 						if (NewStatus == Status)
 							return;
 
@@ -367,6 +402,309 @@ namespace YY
 				}
 			}
 
+			//将等待块插入 SRWLock 中
+			static BOOL __fastcall RtlpQueueWaitBlockToSRWLock(YY_CV_WAIT_BLOCK* pBolck, PSRWLOCK SRWLock, DWORD SRWLockMark)
+			{
+				for (;;)
+				{
+					auto Current = *(volatile size_t*)SRWLock;
+
+					if (Current & 0x1)
+						break;
+
+
+					if (SRWLockMark == 0)
+					{
+						pBolck->flag |= 0x1;
+					}
+					else if ((Current & 0x2) == 0 && YY_SRWLOCK_GET_BLOCK(Current))
+					{
+						return FALSE;
+					}
+
+					pBolck->next = nullptr;
+
+					size_t New;
+
+					if (Current & 0x2)
+					{
+						pBolck->notify = nullptr;
+						pBolck->shareCount = 0;
+
+						//_YY_CV_WAIT_BLOCK 结构体跟 _YY_SRWLOCK_WAIT_BLOCK兼容，所以能这样强转
+						pBolck->back = (_YY_CV_WAIT_BLOCK*)YY_SRWLOCK_GET_BLOCK(Current);
+
+						New = size_t(pBolck) | (Current & YY_CV_MASK);
+					}
+					else
+					{
+						auto shareCount = Current >> 4;
+
+						pBolck->shareCount = shareCount;
+						pBolck->notify = pBolck;
+						New = shareCount <= 1 ? (size_t(pBolck) | 0x3) : (size_t(pBolck) | 0xB);
+					}
+
+					if (InterlockedCompareExchange((volatile size_t*)SRWLock, New, Current) == Current)
+						break;
+
+					//RtlBackoff(&v7);
+					YieldProcessor();
+				}
+
+				return FALSE;
+			}
+
+
+			static void __fastcall RtlpWakeConditionVariable(PCONDITION_VARIABLE ConditionVariable, size_t ConditionVariableStatus, size_t WakeCount)
+			{
+				auto GlobalKeyedEventHandle = GetGlobalKeyedEventHandle();
+				auto pNtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
+
+				if (!pNtReleaseKeyedEvent)
+				{
+					RaiseStatus(0xC0000264);
+				}
+
+
+				//v16
+				YY_CV_WAIT_BLOCK* notify = nullptr;
+
+				YY_CV_WAIT_BLOCK* Unknow1 = nullptr;
+				YY_CV_WAIT_BLOCK* Unknow2 = (YY_CV_WAIT_BLOCK*)&Unknow1;
+
+				size_t Count = 0;
+
+				for (;;)
+				{
+					auto pWaitBlock = YY_CV_GET_BLOCK(ConditionVariableStatus);
+
+					if ((ConditionVariableStatus & 0x7) == 0x7)
+					{
+						ConditionVariableStatus = InterlockedExchange((volatile size_t*)ConditionVariable, 0);
+
+						Unknow2->back = YY_CV_GET_BLOCK(ConditionVariableStatus);
+
+						break;
+					}
+
+					const auto MaxWakeCount = WakeCount + (ConditionVariableStatus & 7);
+
+					auto pBlock = pWaitBlock;
+
+					for (; pBlock->notify == nullptr;)
+					{
+						auto tmp = pBlock;
+						pBlock = pBlock->back;
+						pBlock->next = tmp;
+					}
+
+					if (MaxWakeCount <= Count)
+					{
+						const auto LastStatus = InterlockedCompareExchange((volatile size_t*)ConditionVariable, size_t(pWaitBlock), ConditionVariableStatus);
+
+						if (LastStatus == ConditionVariableStatus)
+						{
+							break;
+						}
+
+						ConditionVariableStatus = LastStatus;
+					}
+					else
+					{
+						notify = pBlock->notify;
+
+						for (; MaxWakeCount > Count && notify->next;)
+						{
+							++Count;
+							Unknow2->back = notify;
+							notify->back = nullptr;
+
+							auto next = notify->next;
+
+							pWaitBlock->notify = next;
+							next->back = nullptr;
+
+							Unknow2 = notify;
+
+							notify = next;
+
+						}
+
+						if (MaxWakeCount <= Count)
+						{
+							const auto LastStatus = InterlockedCompareExchange((volatile size_t*)ConditionVariable, size_t(pWaitBlock), ConditionVariableStatus);
+
+							if (LastStatus == ConditionVariableStatus)
+							{
+								break;
+							}
+
+							ConditionVariableStatus = LastStatus;
+						}
+						else
+						{
+							const auto LastStatus = InterlockedCompareExchange((volatile size_t*)ConditionVariable, 0, ConditionVariableStatus);
+
+
+							if (LastStatus == ConditionVariableStatus)
+							{
+								Unknow2->back = notify;
+								notify->back = 0;
+
+								break;
+							}
+
+							ConditionVariableStatus = LastStatus;
+						}
+					}
+				}
+
+				for (; Unknow1;)
+				{
+					auto back = Unknow1->back;
+
+					if (!InterlockedBitTestAndReset((volatile LONG*)&Unknow1->flag, 1))
+					{
+						if (Unknow1->SRWLock == nullptr || RtlpQueueWaitBlockToSRWLock(Unknow1, Unknow1->SRWLock, (Unknow1->flag >> 2) & 0x1) == FALSE)
+						{
+							pNtReleaseKeyedEvent(GlobalKeyedEventHandle, Unknow1, 0, nullptr);
+						}
+					}
+
+					Unknow1 = back;
+				}
+
+				return;
+			}
+
+			static void __fastcall RtlpOptimizeConditionVariableWaitList(PCONDITION_VARIABLE ConditionVariable, size_t ConditionVariableStatus)
+			{
+				for (;;)
+				{
+					auto pWaitBlock = YY_CV_GET_BLOCK(ConditionVariableStatus);
+					auto pItem = pWaitBlock;
+
+					for (; pItem->notify == nullptr;)
+					{
+						auto temp = pItem;
+						pItem = pItem->back;
+						pItem->next = temp;
+					}
+
+					pWaitBlock->notify = pItem->notify;
+
+					const auto LastStatus = InterlockedCompareExchange((volatile size_t*)ConditionVariable, size_t(pWaitBlock), ConditionVariableStatus);
+
+					if (LastStatus == ConditionVariableStatus)
+						break;
+
+					ConditionVariableStatus = LastStatus;
+
+					if (ConditionVariableStatus & 7)
+					{
+						RtlpWakeConditionVariable(ConditionVariable, ConditionVariableStatus, 0);
+						return;
+					}
+				}
+			}
+
+			static BOOL __fastcall RtlpWakeSingle(PCONDITION_VARIABLE ConditionVariable, YY_CV_WAIT_BLOCK* pBlock)
+			{
+				auto Current = *(volatile size_t*)ConditionVariable;
+
+				for (; Current && (Current & 0x7) != 0x7;)
+				{
+					if (Current & 0x8)
+					{
+						const auto Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, Current | 0x7, Current);
+
+						if (Last == Current)
+							return FALSE;
+
+						Current = Last;
+					}
+					else
+					{
+						auto New = Current | 0x8;
+
+						auto Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, New, Current);
+
+						if (Last == Current)
+						{
+							Current = New;
+
+							YY_CV_WAIT_BLOCK* notify = nullptr;
+							BOOL bRet = FALSE;
+
+							auto pWaitBlock = YY_CV_GET_BLOCK(Current);
+							auto pUnkonw2 = pWaitBlock;
+
+							if (pWaitBlock)
+							{
+								for (; pWaitBlock;)
+								{
+									if (pWaitBlock == pBlock)
+									{
+										if (notify)
+										{
+											pWaitBlock = pWaitBlock->back;
+											bRet = TRUE;
+
+											notify->back = pWaitBlock;
+
+											if (!pWaitBlock)
+												break;
+
+											pWaitBlock->next = notify;
+										}
+										else
+										{
+											auto back = size_t(pWaitBlock->back);
+
+											New = back == 0 ? back : (back ^ (New ^ back)) & 0xF;
+
+											Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, New, Current);
+
+											if (Last == Current)
+											{
+												Current = New;
+												if (back == 0)
+													return TRUE;
+
+												bRet = TRUE;
+											}
+											else
+											{
+												Current = Last;
+											}
+
+											pUnkonw2 = pWaitBlock = YY_CV_GET_BLOCK(Current);
+											notify = nullptr;
+										}
+									}
+									else
+									{
+										pWaitBlock->next = notify;
+										notify = pWaitBlock;
+										pWaitBlock = pWaitBlock->back;
+									}
+								}
+
+								if (pUnkonw2)
+									pUnkonw2->notify = notify;
+							}
+
+							RtlpWakeConditionVariable(ConditionVariable, Current, 0);
+							return bRet;
+						}
+
+						Current = Last;
+					}
+				}
+
+				return FALSE;
+			}
 #endif
 
 		}
@@ -5481,7 +5819,7 @@ AcquireSRWLockExclusive(
 		return pAcquireSRWLockExclusive(SRWLock);
 	}
 
-	__declspec(align(16)) volatile YY_SRWLOCK_WAIT_BLOCK StackWaitBlock;
+	YY_SRWLOCK_WAIT_BLOCK StackWaitBlock;
 	bool bOptimize;
 
 	//尝试加锁一次
@@ -5681,7 +6019,7 @@ AcquireSRWLockShared(
 		return pAcquireSRWLockShared(SRWLock);
 	}
 
-	__declspec(align(16)) YY_SRWLOCK_WAIT_BLOCK StackWaitBlock;
+	YY_SRWLOCK_WAIT_BLOCK StackWaitBlock;
 	bool bOptimize;
 
 	//尝试给全新的锁加锁	
@@ -6036,6 +6374,359 @@ WSAPoll(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(WSAPoll, _12);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+
+EXTERN_C
+VOID
+WINAPI
+InitializeConditionVariable(
+    _Out_ PCONDITION_VARIABLE ConditionVariable
+    )
+{
+	*ConditionVariable = CONDITION_VARIABLE_INIT;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(InitializeConditionVariable, _4);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+
+EXTERN_C
+BOOL
+WINAPI
+SleepConditionVariableCS(
+    _Inout_ PCONDITION_VARIABLE ConditionVariable,
+    _Inout_ PCRITICAL_SECTION   CriticalSection,
+    _In_    DWORD               dwMilliseconds
+    )
+{
+	if (auto const pSleepConditionVariableCS = try_get_SleepConditionVariableCS())
+	{
+		return pSleepConditionVariableCS(ConditionVariable, CriticalSection, dwMilliseconds);
+	}
+
+	YY_CV_WAIT_BLOCK StackWaitBlock;
+
+	StackWaitBlock.next = nullptr;
+	StackWaitBlock.flag = 2;
+	StackWaitBlock.SRWLock = nullptr;
+
+	auto OldConditionVariable = *(size_t*)ConditionVariable;
+
+	size_t NewConditionVariable;
+
+	for (;;)
+	{
+		NewConditionVariable = size_t(&StackWaitBlock) | (OldConditionVariable & YY_CV_MASK);
+		StackWaitBlock.back = YY_CV_GET_BLOCK(OldConditionVariable);
+
+		if (StackWaitBlock.back)
+		{
+			StackWaitBlock.notify = nullptr;
+
+			NewConditionVariable |= 0x8;
+		}
+		else
+		{
+			StackWaitBlock.notify = &StackWaitBlock;
+		}
+
+		auto LastConditionVariable = InterlockedCompareExchange((volatile size_t*)ConditionVariable, NewConditionVariable, OldConditionVariable);
+
+		if (LastConditionVariable == OldConditionVariable)
+			break;
+
+		OldConditionVariable = LastConditionVariable;
+	}
+
+	LeaveCriticalSection(CriticalSection);
+
+	//0x8 标记新增时，才进行优化 ConditionVariableWaitList
+	if ((OldConditionVariable ^ NewConditionVariable) & 0x8)
+	{
+		internal::RtlpOptimizeConditionVariableWaitList(ConditionVariable, NewConditionVariable);
+	}
+
+
+	auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
+	auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
+	if (!pNtWaitForKeyedEvent)
+	{
+		internal::RaiseStatus(0xC0000264);
+	}
+
+	//自旋
+	for (auto SpinCount = ConditionVariableSpinCount; SpinCount; --SpinCount)
+	{
+		if (!(StackWaitBlock.flag & 2))
+			break;
+
+		YieldProcessor();
+	}
+
+	NTSTATUS Status = 0;
+
+	if (InterlockedBitTestAndReset((volatile LONG*)&StackWaitBlock.flag, 1))
+	{
+		LARGE_INTEGER TimeOut;
+
+		Status = pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, internal::BaseFormatTimeOut(&TimeOut, dwMilliseconds));
+
+		if (Status == STATUS_TIMEOUT && internal::RtlpWakeSingle(ConditionVariable, &StackWaitBlock) == FALSE)
+		{
+			pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
+			Status = 0;
+		}
+	}
+
+	EnterCriticalSection(CriticalSection);
+
+	internal::BaseSetLastNTError(Status);
+
+	return Status >= 0 && Status != STATUS_TIMEOUT;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(SleepConditionVariableCS, _12);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+
+EXTERN_C
+BOOL
+WINAPI
+SleepConditionVariableSRW(
+    _Inout_ PCONDITION_VARIABLE ConditionVariable,
+    _Inout_ PSRWLOCK SRWLock,
+    _In_ DWORD dwMilliseconds,
+    _In_ ULONG Flags
+    )
+{
+	if (auto const pSleepConditionVariableSRW = try_get_SleepConditionVariableSRW())
+	{
+		return pSleepConditionVariableSRW(ConditionVariable, SRWLock, dwMilliseconds, Flags);
+	}
+
+	YY_CV_WAIT_BLOCK StackWaitBlock;
+
+	NTSTATUS Status = 0;
+
+	do
+	{
+		if (Flags & ~CONDITION_VARIABLE_LOCKMODE_SHARED)
+		{
+			Status = 0xC00000F0;
+			break;
+		}
+
+		StackWaitBlock.next = nullptr;
+		StackWaitBlock.flag = 2;
+		StackWaitBlock.SRWLock = nullptr;
+
+		if (Flags& CONDITION_VARIABLE_LOCKMODE_SHARED)
+		{
+			StackWaitBlock.flag |= 0x4;
+		}
+
+		size_t Current = *(volatile size_t*)ConditionVariable;
+		size_t New;
+
+		for (;;)
+		{
+			New = size_t(&StackWaitBlock) | (Current & YY_CV_MASK);
+
+			if (StackWaitBlock.back = YY_CV_GET_BLOCK(Current))
+			{
+				StackWaitBlock.notify = nullptr;
+
+				New |= 0x8;
+			}
+			else
+			{
+				StackWaitBlock.notify = &StackWaitBlock;
+			}
+
+			const auto Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, New, Current);
+
+			if (Last == Current)
+			{
+				break;
+			}
+
+
+			Current = Last;
+		}
+
+		if (Flags& CONDITION_VARIABLE_LOCKMODE_SHARED)
+			YY::Thunks::ReleaseSRWLockShared(SRWLock);
+		else
+			YY::Thunks::ReleaseSRWLockExclusive(SRWLock);
+
+		if ((Current ^ New) & 0x8)
+		{
+			//新增0x8 标记位才调用 RtlpOptimizeConditionVariableWaitList
+			internal::RtlpOptimizeConditionVariableWaitList(ConditionVariable, New);
+		}
+
+		auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
+		auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
+		if (!pNtWaitForKeyedEvent)
+		{
+			internal::RaiseStatus(0xC0000264);
+		}
+
+		//自旋
+		for (auto SpinCount = ConditionVariableSpinCount; SpinCount; --SpinCount)
+		{
+			if (!(StackWaitBlock.flag & 2))
+				break;
+
+			YieldProcessor();
+		}
+
+		if (InterlockedBitTestAndReset((volatile LONG*)&StackWaitBlock.flag, 1))
+		{
+			LARGE_INTEGER TimeOut;
+
+			Status = pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, internal::BaseFormatTimeOut(&TimeOut, dwMilliseconds));
+
+			if (Status == STATUS_TIMEOUT && internal::RtlpWakeSingle(ConditionVariable, &StackWaitBlock) == FALSE)
+			{
+				pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
+				Status = 0;
+			}
+		}
+
+		if (Flags& CONDITION_VARIABLE_LOCKMODE_SHARED)
+			YY::Thunks::AcquireSRWLockShared(SRWLock);
+		else
+			YY::Thunks::AcquireSRWLockExclusive(SRWLock);
+
+	} while (false);
+
+
+	internal::BaseSetLastNTError(Status);
+
+	return Status >= 0 && Status != STATUS_TIMEOUT;
+
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(SleepConditionVariableSRW, _16);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+
+EXTERN_C
+VOID
+WINAPI
+WakeConditionVariable(
+    _Inout_ PCONDITION_VARIABLE ConditionVariable
+    )
+{
+	if (auto const pWakeConditionVariable = try_get_WakeConditionVariable())
+	{
+		return pWakeConditionVariable(ConditionVariable);
+	}
+
+	size_t Current = *(volatile size_t*)ConditionVariable;
+	size_t Last;
+
+	for (; Current; Current = Last)
+	{
+		if (Current & 0x8)
+		{
+			if ((Current & 0x7) == 0x7)
+			{
+				return;
+			}
+
+			Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, Current + 1, Current);
+			if (Last == Current)
+				return;
+		}
+		else
+		{
+			Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, Current | 0x8, Current);
+			if (Last == Current)
+			{
+				internal::RtlpWakeConditionVariable(ConditionVariable, Current + 8, 1);
+				return;
+			}
+		}
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(WakeConditionVariable, _4);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+
+EXTERN_C
+VOID
+WINAPI
+WakeAllConditionVariable(
+    _Inout_ PCONDITION_VARIABLE ConditionVariable
+    )
+{
+	if (auto const pWakeAllConditionVariable = try_get_WakeAllConditionVariable())
+	{
+		return pWakeAllConditionVariable(ConditionVariable);
+	}
+
+	size_t Current = *(volatile size_t*)ConditionVariable;
+	size_t Last;
+
+	for (; Current && (Current & 0x7) != 0x7; Current = Last)
+	{
+		if (Current & 0x8)
+		{
+			Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, Current | 0x7, Current);
+			if (Last == Current)
+				return;
+		}
+		else
+		{
+			Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, 0, Current);
+			if (Last == Current)
+			{
+				auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
+				auto pNtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
+
+				if (!pNtReleaseKeyedEvent)
+				{
+					internal::RaiseStatus(0xC0000264);
+				}
+
+				for (auto pBlock = YY_CV_GET_BLOCK(Current); pBlock;)
+				{
+					auto Tmp = pBlock->back;
+
+					if (!InterlockedBitTestAndReset((volatile LONG*)&pBlock->flag, 1))
+					{
+						pNtReleaseKeyedEvent(GlobalKeyedEventHandle, pBlock, FALSE, nullptr);
+					}
+
+					pBlock = Tmp;
+				}
+
+				return;
+			}
+		}
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(WakeAllConditionVariable, _4);
 
 #endif
 

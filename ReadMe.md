@@ -121,6 +121,11 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [AcquireSRWLockShared](https://msdn.microsoft.com/en-us/library/ms681934.aspx)                                                 | 不存在时，调用NtWaitForKeyedEvent。
 | [TryAcquireSRWLockShared](https://msdn.microsoft.com/en-us/library/Dd405524.aspx)                                              | 不存在时，调用InterlockedCompareExchange。
 | [ReleaseSRWLockShared](https://msdn.microsoft.com/en-us/library/ms685080.aspx)                                                 | 不存在时，调用NtReleaseKeyedEvent。
+| [InitializeConditionVariable](https://docs.microsoft.com/zh-cn/windows/win32/api/synchapi/nf-synchapi-initializeconditionvariable) | 初始化为 CONDITION_VARIABLE_INIT。
+| [SleepConditionVariableCS](https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-sleepconditionvariablecs)   | 不存在时，调用NtWaitForKeyedEvent。
+| [SleepConditionVariableSRW](https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-sleepconditionvariablesrw) | 不存在时，调用NtWaitForKeyedEvent。
+| [WakeConditionVariable](https://docs.microsoft.com/zh-cn/windows/win32/api/synchapi/nf-synchapi-wakeconditionvariable)         | 不存在时，调用NtReleaseKeyedEvent。
+| [WakeAllConditionVariable](https://docs.microsoft.com/zh-cn/windows/win32/api/synchapi/nf-synchapi-wakeallconditionvariable)   | 不存在时，调用NtReleaseKeyedEvent。
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
@@ -249,7 +254,12 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加QueryWorkingSetEx
 
 
-### 1.0.1.12 - 优化实现 (2019-08-31 18:00) 
+### 1.0.1.13 - 优化实现 (2019-09-01 18:00) 
 * 解决Bug，VS2010无法使用问题（感谢 柒零）。
-* 添加WSAPoll
 * 改进 SRWLock 实现，现在完全使用 KeyedEvent，避免使用 Sleep。
+* 添加WSAPoll
+* 添加InitializeConditionVariable
+* 添加SleepConditionVariableCS
+* 添加SleepConditionVariableSRW
+* 添加WakeConditionVariable
+* 添加WakeAllConditionVariable
