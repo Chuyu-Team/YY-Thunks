@@ -37,6 +37,8 @@
     _APPLY(GetTickCount64,                               kernel32                                      ) \
     _APPLY(GetSystemTimePreciseAsFileTime,               kernel32                                      ) \
     _APPLY(InitializeCriticalSectionEx,                  kernel32                                      ) \
+    _APPLY(InitOnceBeginInitialize,                      kernel32                                      ) \
+    _APPLY(InitOnceComplete,                             kernel32                                      ) \
     _APPLY(InitOnceExecuteOnce,                          kernel32                                      ) \
     _APPLY(GetCurrentProcessorNumber,                    kernel32                                      ) \
     _APPLY(GetCurrentProcessorNumberEx,                  kernel32                                      ) \
@@ -237,7 +239,7 @@ namespace YY
 				return Timeout;
 			}
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
 			static HANDLE __fastcall GetGlobalKeyedEventHandle()
 			{
@@ -246,7 +248,7 @@ namespace YY
 					auto pNtOpenKeyedEvent = try_get_NtOpenKeyedEvent();
 
 					if(pNtOpenKeyedEvent == nullptr)
-						RaiseStatus(0xC0000264);
+						RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 
 					constexpr const wchar_t Name[] = L"\\KernelObjects\\CritSecOutOfMemoryEvent";
 					
@@ -257,7 +259,7 @@ namespace YY
 
 					if (pNtOpenKeyedEvent(&KeyedEventHandle, MAXIMUM_ALLOWED, &attr) < 0)
 					{
-						RaiseStatus(0xC0000264);
+						RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 					}
 
 					if (InterlockedCompareExchange((size_t*)&_GlobalKeyedEventHandle, (size_t)KeyedEventHandle, (size_t)nullptr))
@@ -276,7 +278,7 @@ namespace YY
 
 				if (!pNtReleaseKeyedEvent)
 				{
-					RaiseStatus(0xC0000264);
+					RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 				}
 
 				for (;;)
@@ -463,7 +465,7 @@ namespace YY
 
 				if (!pNtReleaseKeyedEvent)
 				{
-					RaiseStatus(0xC0000264);
+					RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 				}
 
 
@@ -705,6 +707,194 @@ namespace YY
 
 				return FALSE;
 			}
+
+
+			static size_t __fastcall RtlpRunOnceWaitForInit(
+				size_t Current,
+				LPINIT_ONCE lpInitOnce
+				)
+			{
+				auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
+				auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
+				if (!pNtWaitForKeyedEvent)
+					internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+
+				do
+				{
+					const auto Old = Current;
+
+					Current = Current & ~size_t(RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC);
+
+					const auto New = (size_t(&Current) & ~size_t(RTL_RUN_ONCE_ASYNC)) | RTL_RUN_ONCE_CHECK_ONLY;
+					const auto Last = InterlockedCompareExchange((volatile size_t*)lpInitOnce, New, Old);
+					if (Last == Old)
+					{
+						//WinXP等老系统不支持空句柄传入，此行为不能照搬Windows 7
+						pNtWaitForKeyedEvent(GlobalKeyedEventHandle, &Current, 0, nullptr);
+
+						Current = *(volatile size_t*)lpInitOnce;
+					}
+					else
+					{
+						Current = Last;
+					}
+				} while ((Current & (RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC)) == RTL_RUN_ONCE_CHECK_ONLY);
+
+				return Current;
+			}
+
+			static NTSTATUS __fastcall RtlRunOnceBeginInitialize(
+				_Inout_ LPINIT_ONCE lpInitOnce,
+				_In_ DWORD dwFlags,
+				_Outptr_opt_result_maybenull_ LPVOID* lpContext
+				)
+			{
+				//参数检查
+				if ((dwFlags & ~(RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC)) || ((dwFlags - 1) & dwFlags))
+				{
+					return STATUS_INVALID_PARAMETER_2;
+				}
+
+				auto Current = *(volatile size_t*)lpInitOnce;
+
+				if ((Current & (RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC)) == RTL_RUN_ONCE_ASYNC)
+				{
+					InterlockedExchange((volatile size_t *)lpInitOnce, 0);
+
+					if (lpContext)
+						*lpContext = (LPVOID)(Current & ~size_t(RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC));
+
+					return STATUS_SUCCESS;
+				}
+
+				if (dwFlags & RTL_RUN_ONCE_CHECK_ONLY)
+				{
+					return STATUS_UNSUCCESSFUL;
+				}
+
+				const auto New = (dwFlags & RTL_RUN_ONCE_ASYNC) | RTL_RUN_ONCE_CHECK_ONLY;
+
+
+
+				for (;;)
+				{
+					const auto InitOnceData = Current & 3;
+					if (InitOnceData == 0)
+					{
+						const auto Last = InterlockedCompareExchange((volatile size_t *)lpInitOnce, New, Current);
+						if (Last == Current)
+							return STATUS_PENDING;
+
+						Current = Last;
+					}
+					else if (InitOnceData == RTL_RUN_ONCE_CHECK_ONLY)
+					{
+						if (dwFlags & RTL_RUN_ONCE_ASYNC)
+							return STATUS_INVALID_PARAMETER_2;
+
+						Current = RtlpRunOnceWaitForInit(Current, lpInitOnce);
+					}
+					else
+					{
+						//疑惑？为什么微软要这样判断……
+						if (Current != (RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC))
+						{
+							if (lpContext)
+								*lpContext = (LPVOID)(Current & ~size_t(RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC));
+
+							return STATUS_SUCCESS;
+						}
+
+						return (dwFlags & RTL_RUN_ONCE_ASYNC) ? STATUS_PENDING : STATUS_INVALID_PARAMETER_2;
+					}
+				}
+			}
+
+
+			static void __fastcall RtlpRunOnceWakeAll(size_t* pWake)
+			{
+				auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
+				auto pNtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
+				if (!pNtReleaseKeyedEvent)
+					internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+
+				for (auto WakeAddress = (LPVOID)(*pWake & ~size_t(RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC)); WakeAddress; )
+				{
+					//防止地址无效，我们先保存下
+					auto NextWakeAddress = *(LPVOID*)WakeAddress;
+
+					//WinXP等老系统不支持空句柄传入，此行为不能照搬Windows 7
+					pNtReleaseKeyedEvent(GlobalKeyedEventHandle, WakeAddress, 0, nullptr);
+
+					WakeAddress = NextWakeAddress;
+				}
+			}
+
+			static LSTATUS __fastcall RtlRunOnceComplete(
+				_Inout_ LPINIT_ONCE lpInitOnce,
+				_In_ DWORD dwFlags,
+				_In_opt_ LPVOID lpContext
+				)
+			{
+				//参数检查无效  或者 同时使用了多个标记位
+				if ((dwFlags & ~(RTL_RUN_ONCE_ASYNC | RTL_RUN_ONCE_INIT_FAILED)) || ((dwFlags - 1) & dwFlags))
+				{
+					return STATUS_INVALID_PARAMETER_2;
+				}
+
+				/*
+				dwFlags =   0, dwNewFlags = 0x3（RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC）
+				dwFlags = 0x2, dwNewFlags = 0x2（RTL_RUN_ONCE_ASYNC）
+				dwFlags = 0x4, dwNewFlags = 0x5（RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_INIT_FAILED）
+				*/
+				const auto dwNewFlags = (dwFlags ^ ~(dwFlags >> 1)) & 3 ^ dwFlags;
+
+				if (lpContext && ((dwNewFlags & RTL_RUN_ONCE_ASYNC) == 0 || (size_t(lpContext) & (RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC))))
+				{
+					return STATUS_INVALID_PARAMETER_3;
+				}
+
+				auto Current = *(volatile size_t*)lpInitOnce;
+				auto New = (size_t(lpContext) & ~size_t(RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC)) | (dwNewFlags & RTL_RUN_ONCE_ASYNC);
+
+				switch (Current & (RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC))
+				{
+				case RTL_RUN_ONCE_CHECK_ONLY:
+					if ((dwNewFlags & RTL_RUN_ONCE_CHECK_ONLY) == 0)
+					{
+						return STATUS_INVALID_PARAMETER_2;
+					}
+
+					Current = InterlockedExchange((volatile size_t*)lpInitOnce, New);
+					if ((Current & (RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC)) == RTL_RUN_ONCE_CHECK_ONLY)
+					{
+						RtlpRunOnceWakeAll(&Current);
+
+						return STATUS_SUCCESS;
+					}
+
+					return STATUS_INVALID_OWNER;
+					break;
+				case RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC:
+					if (dwNewFlags & RTL_RUN_ONCE_CHECK_ONLY)
+					{
+						return STATUS_INVALID_PARAMETER_2;
+					}
+
+					if (InterlockedCompareExchange((volatile size_t*)lpInitOnce, New, Current) == Current)
+					{
+						return STATUS_SUCCESS;
+					}
+
+					return STATUS_OBJECT_NAME_COLLISION;
+
+					break;
+				default:
+					return STATUS_UNSUCCESSFUL;
+					break;
+				}
+			}
+
 #endif
 
 		}
@@ -1290,7 +1480,101 @@ _LCRT_DEFINE_IAT_SYMBOL(InitializeCriticalSectionEx, _12);
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista, Windows Server 2008
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+EXTERN_C
+VOID
+WINAPI
+InitOnceInitialize(
+    _Out_ PINIT_ONCE InitOnce
+    )
+{
+	*InitOnce = INIT_ONCE_STATIC_INIT;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(InitOnceInitialize, _4);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+EXTERN_C
+BOOL
+WINAPI
+InitOnceBeginInitialize(
+    _Inout_ LPINIT_ONCE lpInitOnce,
+    _In_ DWORD dwFlags,
+    _Out_ PBOOL fPending,
+    _Outptr_opt_result_maybenull_ LPVOID* lpContext
+    )
+{
+	if (auto const pInitOnceBeginInitialize = try_get_InitOnceBeginInitialize())
+	{
+		return pInitOnceBeginInitialize(lpInitOnce, dwFlags, fPending, lpContext);
+	}
+
+	auto Status = internal::RtlRunOnceBeginInitialize(lpInitOnce, dwFlags, lpContext);
+
+	if (Status >= STATUS_SUCCESS)
+	{
+		*fPending = Status == STATUS_PENDING;
+		return TRUE;
+	}
+	else
+	{
+		internal::BaseSetLastNTError(Status);
+		return FALSE;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(InitOnceBeginInitialize, _16);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
+
+EXTERN_C
+BOOL
+WINAPI
+InitOnceComplete(
+    _Inout_ LPINIT_ONCE lpInitOnce,
+    _In_ DWORD dwFlags,
+    _In_opt_ LPVOID lpContext
+    )
+{
+	if (auto const pInitOnceComplete = try_get_InitOnceComplete())
+	{
+		return pInitOnceComplete(lpInitOnce, dwFlags, lpContext);
+	}
+	
+	auto Status = internal::RtlRunOnceComplete(lpInitOnce, dwFlags, lpContext);
+
+	if (Status >= 0)
+	{
+		return TRUE;
+	}
+	else
+	{
+		internal::BaseSetLastNTError(Status);
+		return FALSE;
+	}
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(InitOnceComplete, _12);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
 
 EXTERN_C
 BOOL
@@ -1307,7 +1591,53 @@ InitOnceExecuteOnce(
 		return pInitOnceExecuteOnce(InitOnce, InitFn, Parameter, Context);
 	}
 
-	return InitOnceExecuteOnceDownlevel(InitOnce, InitFn, Parameter, Context);
+	auto Status = internal::RtlRunOnceBeginInitialize(InitOnce, 0, Context);
+
+	ULONG_PTR ExceptionArgument;
+
+	do
+	{
+		if (Status < STATUS_SUCCESS)
+		{
+			ExceptionArgument = 0;
+		}
+		else if (Status == STATUS_PENDING)
+		{
+			if (InitFn(InitOnce, Parameter, Context))
+			{
+				auto NewContext = Context;
+				if (NewContext)
+					NewContext = (LPVOID*)*NewContext;
+
+				Status = internal::RtlRunOnceComplete(InitOnce, 0, NewContext);
+
+				if (Status >= STATUS_SUCCESS)
+					break;
+
+				ExceptionArgument = 1;
+			}
+			else
+			{
+				Status = internal::RtlRunOnceComplete(InitOnce, RTL_RUN_ONCE_INIT_FAILED, nullptr);
+				if (Status >= STATUS_SUCCESS)
+				{
+					Status = STATUS_UNSUCCESSFUL;
+					break;
+				}
+				ExceptionArgument = 2;
+			}
+		}
+		else
+		{
+			break;
+		}
+
+		RaiseException(Status, EXCEPTION_NONCONTINUABLE, 1, &ExceptionArgument);
+
+	} while (false);
+
+	//别问我为什么不设置LastError……，Windows 7的这个函数也没设置 LastError，既然这样，我们都偷懒下吧，行为跟微软保持一致。
+	return Status >= STATUS_SUCCESS;
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(InitOnceExecuteOnce, _16);
@@ -5709,7 +6039,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetThreadErrorMode, _0);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
@@ -5758,7 +6088,7 @@ _LCRT_DEFINE_IAT_SYMBOL(GetErrorMode, _0);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
@@ -5784,7 +6114,7 @@ _LCRT_DEFINE_IAT_SYMBOL(CancelIoEx, _8);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
@@ -5803,7 +6133,7 @@ _LCRT_DEFINE_IAT_SYMBOL(InitializeSRWLock, _4);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
@@ -5899,7 +6229,7 @@ AcquireSRWLockExclusive(
 			auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
 			if (!pNtWaitForKeyedEvent)
 			{
-				internal::RaiseStatus(0xC0000264);
+				internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 			}
 
 			//自旋
@@ -5964,7 +6294,7 @@ _LCRT_DEFINE_IAT_SYMBOL(TryAcquireSRWLockExclusive, _4);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
@@ -5983,7 +6313,7 @@ ReleaseSRWLockExclusive(
 	auto OldSRWLock = InterlockedExchangeAdd((volatile size_t *)SRWLock, size_t(-1));
 	if ((OldSRWLock & YY_SRWLOCK_OWNED) == 0)
 	{
-		internal::RaiseStatus(0xC0000264);
+		internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 	}
 
 	if ((OldSRWLock & YY_SRWLOCK_CONTENDED) && (OldSRWLock & YY_SRWLOCK_SHARED) == 0)
@@ -6003,7 +6333,7 @@ _LCRT_DEFINE_IAT_SYMBOL(ReleaseSRWLockExclusive, _4);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
@@ -6081,7 +6411,7 @@ AcquireSRWLockShared(
 				auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
 				if (!pNtWaitForKeyedEvent)
 				{
-					internal::RaiseStatus(0xC0000264);
+					internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 				}
 
 				//自旋
@@ -6188,7 +6518,7 @@ _LCRT_DEFINE_IAT_SYMBOL(TryAcquireSRWLockShared, _4);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
@@ -6216,7 +6546,7 @@ ReleaseSRWLockShared(
 
 	if ((OldSRWLock & YY_SRWLOCK_OWNED) == 0)
 	{
-		internal::RaiseStatus(0xC0000264);
+		internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 	}
 
 	for (;;)
@@ -6285,7 +6615,9 @@ _LCRT_DEFINE_IAT_SYMBOL(ReleaseSRWLockShared, _4);
 
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows 8.1, Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
 
 //参考 https://blog.csdn.net/liangzhao_jay/article/details/53261684 实现
 EXTERN_C
@@ -6378,7 +6710,9 @@ _LCRT_DEFINE_IAT_SYMBOL(WSAPoll, _12);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
 
 EXTERN_C
 VOID
@@ -6395,7 +6729,9 @@ _LCRT_DEFINE_IAT_SYMBOL(InitializeConditionVariable, _4);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
 
 EXTERN_C
 BOOL
@@ -6458,7 +6794,7 @@ SleepConditionVariableCS(
 	auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
 	if (!pNtWaitForKeyedEvent)
 	{
-		internal::RaiseStatus(0xC0000264);
+		internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 	}
 
 	//自旋
@@ -6497,7 +6833,9 @@ _LCRT_DEFINE_IAT_SYMBOL(SleepConditionVariableCS, _12);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
 
 EXTERN_C
 BOOL
@@ -6522,7 +6860,7 @@ SleepConditionVariableSRW(
 	{
 		if (Flags & ~CONDITION_VARIABLE_LOCKMODE_SHARED)
 		{
-			Status = 0xC00000F0;
+			Status = STATUS_INVALID_PARAMETER_2;
 			break;
 		}
 
@@ -6579,7 +6917,7 @@ SleepConditionVariableSRW(
 		auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
 		if (!pNtWaitForKeyedEvent)
 		{
-			internal::RaiseStatus(0xC0000264);
+			internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 		}
 
 		//自旋
@@ -6623,7 +6961,9 @@ _LCRT_DEFINE_IAT_SYMBOL(SleepConditionVariableSRW, _16);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
 
 EXTERN_C
 VOID
@@ -6670,7 +7010,9 @@ _LCRT_DEFINE_IAT_SYMBOL(WakeConditionVariable, _4);
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps | UWP apps]
+//Windows Server 2008 [desktop apps | UWP apps]
 
 EXTERN_C
 VOID
@@ -6705,7 +7047,7 @@ WakeAllConditionVariable(
 
 				if (!pNtReleaseKeyedEvent)
 				{
-					internal::RaiseStatus(0xC0000264);
+					internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 				}
 
 				for (auto pBlock = YY_CV_GET_BLOCK(Current); pBlock;)

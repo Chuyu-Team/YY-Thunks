@@ -56,7 +56,10 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [GetTickCount64](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724411.aspx)                                       | 不存在时，调用GetTickCount。
 | [GetSystemTimePreciseAsFileTime](https://msdn.microsoft.com/en-us/library/windows/desktop/hh706895.aspx)                       | 不存在时，调用GetSystemTimeAsFileTime。
 | [InitializeCriticalSectionEx](https://msdn.microsoft.com/en-us/library/ms683477.aspx)                                          | 不存在时，调用InitializeCriticalSectionAndSpinCount。
-| [InitOnceExecuteOnce](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683493.aspx)                                  | 不存在时，调用InterlockedCompareExchange。
+| [InitOnceInitialize](https://msdn.microsoft.com/en-us/library/ms683495.aspx)                                                   | 初始化为 INIT_ONCE_STATIC_INIT。
+| [InitOnceBeginInitialize](https://msdn.microsoft.com/en-us/library/ms683487.aspx)                                              | 不存在时，调用NtWaitForKeyedEvent。
+| [InitOnceComplete](https://msdn.microsoft.com/en-us/library/ms683491.aspx)                                                     | 不存在时，调用NtReleaseKeyedEvent。
+| [InitOnceExecuteOnce](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683493.aspx)                                  | 不存在时，调用NtWaitForKeyedEvent以及NtReleaseKeyedEvent。
 | [LocaleNameToLCID](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-localenametolcid)                     | 不存在时，查LocaleNameToLcidTable。
 | [LCIDToLocaleName](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-lcidtolocalename)                     | 不存在时，查LcidToLocaleNameTable。
 | [GetLocaleInfoEx](https://docs.microsoft.com/en-us/windows/desktop/api/winnls/nf-winnls-getlocaleinfoex)                       | 不存在时，调用GetLocaleInfoW。
@@ -254,12 +257,15 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加QueryWorkingSetEx
 
 
-### 1.0.1.13 - 优化实现 (2019-09-01 18:00) 
+### 1.0.1.14 - 优化实现 (2019-09-01 18:00) 
 * 解决Bug，VS2010无法使用问题（感谢 柒零）。
-* 改进 SRWLock 实现，现在完全使用 KeyedEvent，避免使用 Sleep。
+* 改进 SRWLock 以及 One-Time Initialization实现，现在完全使用 KeyedEvent，避免使用 Sleep。
 * 添加WSAPoll
 * 添加InitializeConditionVariable
 * 添加SleepConditionVariableCS
 * 添加SleepConditionVariableSRW
 * 添加WakeConditionVariable
 * 添加WakeAllConditionVariable
+* 添加InitOnceInitialize
+* 添加InitOnceBeginInitialize
+* 添加InitOnceComplete
