@@ -257,9 +257,9 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加QueryWorkingSetEx
 
 
-### 1.0.1.14 - 优化实现 (2019-09-01 18:00) 
+### 1.0.1.15 - 优化实现 (2019-09-03 18:00) 
 * 解决Bug，VS2010无法使用问题（感谢 柒零）。
-* 改进 SRWLock 以及 One-Time Initialization实现，现在完全使用 KeyedEvent，避免使用 Sleep。
+* 改进 SRWLock 以及 One-Time Initialization调整为KeyedEvent实现。
 * 添加WSAPoll
 * 添加InitializeConditionVariable
 * 添加SleepConditionVariableCS
@@ -269,3 +269,6 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加InitOnceInitialize
 * 添加InitOnceBeginInitialize
 * 添加InitOnceComplete
+* 添加InitializeSynchronizationBarrier
+* 添加EnterSynchronizationBarrier
+* 添加DeleteSynchronizationBarrier

@@ -92,6 +92,9 @@
     _APPLY(SleepConditionVariableSRW,                    kernel32                                      ) \
     _APPLY(WakeConditionVariable,                        kernel32                                      ) \
     _APPLY(WakeAllConditionVariable,                     kernel32                                      ) \
+    _APPLY(InitializeSynchronizationBarrier,             kernel32                                      ) \
+    _APPLY(EnterSynchronizationBarrier,                  kernel32                                      ) \
+    _APPLY(DeleteSynchronizationBarrier,                 kernel32                                      ) \
     _APPLY(EnumProcessModulesEx,                         psapi                                         ) \
     _APPLY(GetWsChangesEx,                               psapi                                         ) \
     _APPLY(QueryWorkingSetEx,                            psapi                                         ) \
@@ -187,6 +190,19 @@ typedef struct __declspec(align(16)) _YY_CV_WAIT_BLOCK
 	volatile size_t    flag;
 	volatile PSRWLOCK  SRWLock;
 } YY_CV_WAIT_BLOCK;
+
+
+
+//YY-Thunks中Barrier采用了Windows 8实现
+typedef struct _YY_BARRIER {
+	volatile LONG  lRemainderThreads;
+	volatile LONG  lTotalThreads;
+	HANDLE         hEvent[2];
+	DWORD          dwNumProcessors;
+	DWORD          dwSpinCount;
+} YY_BARRIER;
+
+static_assert(sizeof(SYNCHRONIZATION_BARRIER) >= sizeof(YY_BARRIER), "必须跟系统ABI兼容！！！！");
 
 namespace YY
 {
@@ -7069,6 +7085,229 @@ WakeAllConditionVariable(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(WakeAllConditionVariable, _4);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+//Windows 8 [desktop apps only]
+//Windows Server 2012 [desktop apps only]
+
+EXTERN_C
+BOOL
+WINAPI
+InitializeSynchronizationBarrier(
+    _Out_ LPSYNCHRONIZATION_BARRIER lpBarrier,
+    _In_ LONG lTotalThreads,
+    _In_ LONG lSpinCount
+    )
+{
+	if (auto const pEnterSynchronizationBarrier = try_get_InitializeSynchronizationBarrier())
+	{
+		return pEnterSynchronizationBarrier(lpBarrier, lTotalThreads, lSpinCount);
+	}
+
+	auto pYYBarrier = (YY_BARRIER*)lpBarrier;
+
+	pYYBarrier->lTotalThreads = lTotalThreads;
+	pYYBarrier->lRemainderThreads = lTotalThreads;
+	pYYBarrier->dwNumProcessors = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->NumberOfProcessors;
+	pYYBarrier->dwSpinCount = lSpinCount == -1 ? 2000 : lSpinCount;
+
+	if ((pYYBarrier->hEvent[0] = CreateEventW(nullptr, TRUE, FALSE, nullptr)) == nullptr)
+		return FALSE;
+
+	if ((pYYBarrier->hEvent[1] = CreateEventW(nullptr, TRUE, FALSE, nullptr)) == nullptr)
+	{
+		auto lStatus = GetLastError();
+		CloseHandle(pYYBarrier->hEvent[0]);
+		SetLastError(lStatus);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(InitializeSynchronizationBarrier, _12);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+//Windows 8 [desktop apps only]
+//Windows Server 2012 [desktop apps only]
+
+EXTERN_C
+BOOL
+WINAPI
+EnterSynchronizationBarrier(
+    _Inout_ LPSYNCHRONIZATION_BARRIER lpBarrier,
+    _In_ DWORD dwFlags
+    )
+{
+	if (auto const pEnterSynchronizationBarrier = try_get_EnterSynchronizationBarrier())
+	{
+		return pEnterSynchronizationBarrier(lpBarrier, dwFlags);
+	}
+
+	if (dwFlags & ~(SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY | SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY | SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE))
+	{
+		internal::RaiseStatus(STATUS_INVALID_PARAMETER);
+	}
+
+	DWORD dwRtlBarrierFlags = dwFlags & (SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY | SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY);
+
+	if ((dwFlags & SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE) == 0)
+		dwRtlBarrierFlags |= 0x10000;
+
+
+	auto pYYBarrier = (YY_BARRIER*)lpBarrier;
+
+
+	auto Current = InterlockedDecrement(&pYYBarrier->lRemainderThreads);
+
+	const auto GroupStatus = Current & 0x80000000;
+
+	const auto EventIndex = Current >= 0 ? 1 : 0;
+	DWORD dwRemainderThreads = Current & 0x7FFFFFFF;
+
+	if (dwRemainderThreads == 0)
+	{
+		//剩余数量已经变成 0 了，我们需要唤醒之前等待的线程，并且翻转 EventIndex
+		const auto NewEventIndex = EventIndex ? 0 : 1;
+
+
+		//将下次需要使用的事件设置为 无信号状态
+		auto NewEvent = pYYBarrier->hEvent[NewEventIndex];
+		if (size_t(NewEvent) & 0x1)
+		{
+			auto hEvent = (HANDLE)(size_t(NewEvent) & ~size_t(0x1));
+			pYYBarrier->hEvent[NewEventIndex] = hEvent;
+
+			ResetEvent(hEvent);
+		}
+
+		//吧当前的 GroupStatus 状态置反，然后组合成新的 RemainderThreads
+		auto NewRemainderThreads = pYYBarrier->lTotalThreads | (GroupStatus ^ 0x80000000);
+
+		//此标记后将自动删除 Barrier，后续也将无法再次利用 Barrier
+		if (dwRtlBarrierFlags & 0x10000)
+		{
+			pYYBarrier->lTotalThreads = 1;
+		}
+		pYYBarrier->lRemainderThreads = NewRemainderThreads;
+
+		auto Event = pYYBarrier->hEvent[EventIndex];
+		if (size_t(Event) & 0x1)
+		{
+			SetEvent((HANDLE)(size_t(Event) & ~size_t(0x1)));
+		}
+
+		return TRUE;
+	}
+
+	if (pYYBarrier->dwSpinCount && ((dwRemainderThreads < pYYBarrier->dwNumProcessors && (dwRtlBarrierFlags & SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY) == 0) || (dwRtlBarrierFlags & SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY)))
+	{
+		DWORD CurrentSpinCount = 0;
+		for (;;)
+		{
+			if ((pYYBarrier->lRemainderThreads & 0x80000000) != GroupStatus)
+			{
+				//自旋等待成功
+				auto dwSpinCount = pYYBarrier->dwSpinCount;
+
+				if (dwSpinCount < 5000)
+				{
+					pYYBarrier->dwSpinCount = dwSpinCount + 1;
+				}
+
+				goto __retrun;
+			}
+
+			//指定 SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY 标识时会始终自旋，所以没有此标识时我们无需更新当前自旋次数
+			if ((dwRtlBarrierFlags & SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY) == 0)
+			{
+				++CurrentSpinCount;
+			}
+
+			YieldProcessor();
+
+			auto dwSpinCount = pYYBarrier->dwSpinCount;
+
+			if (CurrentSpinCount >= dwSpinCount)
+			{
+				if (dwSpinCount > 50)
+				{
+					pYYBarrier->dwSpinCount = dwSpinCount - 1;
+				}
+
+				break;
+			}
+		}
+	}
+
+	{
+		//如果没有 0x1标记则添加一个，来指示已经 WaitForSingleObject 了
+		HANDLE hEnvet = pYYBarrier->hEvent[EventIndex];
+		if ((size_t(hEnvet) & 0x1) == 0)
+		{
+			pYYBarrier->hEvent[EventIndex] = HANDLE(size_t(hEnvet) | 0x1);
+		}
+
+		if ((pYYBarrier->lRemainderThreads & 0x80000000) == GroupStatus)
+			WaitForSingleObject((HANDLE)(size_t(hEnvet) & ~size_t(0x1)), INFINITE);
+	}
+
+__retrun:
+
+	if (dwRtlBarrierFlags & 0x10000)
+		InterlockedIncrement(&pYYBarrier->lTotalThreads);
+
+	return TRUE;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(EnterSynchronizationBarrier, _8);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+//Windows 8 [desktop apps only]
+//Windows Server 2012 [desktop apps only]
+
+EXTERN_C
+BOOL
+WINAPI
+DeleteSynchronizationBarrier(
+    _Inout_ LPSYNCHRONIZATION_BARRIER lpBarrier
+    )
+{
+	if (auto const pDeleteSynchronizationBarrier = try_get_DeleteSynchronizationBarrier())
+	{
+		return pDeleteSynchronizationBarrier(lpBarrier);
+	}
+
+	auto pYYBarrier = (YY_BARRIER*)lpBarrier;
+
+	//自旋等待所有 EnterSynchronizationBarrier 都进入就绪
+	for (; pYYBarrier->lTotalThreads != (pYYBarrier->lRemainderThreads & 0x7FFFFFFF);)
+	{
+		//等待16毫秒
+		Sleep(16);
+	}
+
+	BOOL bSuccess = FALSE;
+	if (auto hEnent = (HANDLE)(size_t(pYYBarrier->hEvent[0]) & ~size_t(0x1)))
+		CloseHandle(hEnent);
+
+	if (auto hEnent = (HANDLE)(size_t(pYYBarrier->hEvent[1]) & ~size_t(0x1)))
+		CloseHandle(hEnent);
+
+	//微软文档说的，这个函数总是返回 TRUE，但是微软Windows 8的实现略有问题，直接转发了 RtlDeleteBarrier，返回值并不正确
+	return TRUE;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(DeleteSynchronizationBarrier, _4);
 
 #endif
 
