@@ -95,6 +95,9 @@
     _APPLY(InitializeSynchronizationBarrier,             kernel32                                      ) \
     _APPLY(EnterSynchronizationBarrier,                  kernel32                                      ) \
     _APPLY(DeleteSynchronizationBarrier,                 kernel32                                      ) \
+    _APPLY(WaitOnAddress,                                kernel32                                      ) \
+    _APPLY(WakeByAddressSingle,                          kernel32                                      ) \
+    _APPLY(WakeByAddressAll,                             kernel32                                      ) \
     _APPLY(EnumProcessModulesEx,                         psapi                                         ) \
     _APPLY(GetWsChangesEx,                               psapi                                         ) \
     _APPLY(QueryWorkingSetEx,                            psapi                                         ) \
@@ -192,6 +195,24 @@ typedef struct __declspec(align(16)) _YY_CV_WAIT_BLOCK
 } YY_CV_WAIT_BLOCK;
 
 
+#define YY_ADDRESS_GET_BLOCK(AW) ((YY_ADDRESS_WAIT_BLOCK*)(size_t(AW) & (~size_t(0x3))))
+
+//WaitOnAddress自旋次数
+#define RtlpWaitOnAddressSpinCount 1024
+
+typedef struct __declspec(align(8)) _YY_ADDRESS_WAIT_BLOCK
+{
+	volatile void *        Address;
+	//因为Windows 8以及更高版本才支持 ZwWaitForAlertByThreadId，所以我们直接把 ThreadId 砍掉了，反正没鸟用
+	//ULONG_PTR            ThreadId;
+
+	_YY_ADDRESS_WAIT_BLOCK* back;
+	_YY_ADDRESS_WAIT_BLOCK* notify;
+	_YY_ADDRESS_WAIT_BLOCK* next;
+	volatile size_t         flag;
+
+} YY_ADDRESS_WAIT_BLOCK;
+
 
 //YY-Thunks中Barrier采用了Windows 8实现
 typedef struct _YY_BARRIER {
@@ -254,11 +275,9 @@ namespace YY
 
 				return Timeout;
 			}
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-
 			static HANDLE __fastcall GetGlobalKeyedEventHandle()
 			{
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
 				if (_GlobalKeyedEventHandle == nullptr)
 				{
 					auto pNtOpenKeyedEvent = try_get_NtOpenKeyedEvent();
@@ -285,7 +304,13 @@ namespace YY
 				}
 
 				return _GlobalKeyedEventHandle;
+#else
+				//Vista以上平台支持给 KeyedEvent直接传 nullptr
+				return nullptr;
+#endif
 			}
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
 			static void __fastcall RtlpWakeSRWLock(SRWLOCK* SRWLock, size_t Status)
 			{
@@ -913,6 +938,457 @@ namespace YY
 
 #endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+			static auto __fastcall GetBlockByWaitOnAddressHashTable(LPVOID Address)
+			{
+				static volatile ULONG_PTR WaitOnAddressHashTable[128];
+
+				const auto Index = (size_t(Address) >> 5) & 0x7F;
+
+				return &WaitOnAddressHashTable[Index];
+			}
+
+			static void __fastcall RtlpWaitOnAddressWakeEntireList(YY_ADDRESS_WAIT_BLOCK* pBlock)
+			{
+				auto GlobalKeyedEventHandle = GetGlobalKeyedEventHandle();
+				auto pNtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
+				if (pNtReleaseKeyedEvent)
+					internal::RaiseStatus(STATUS_NOT_FOUND);
+
+				for (; pBlock;)
+				{
+					auto Tmp = pBlock->back;
+
+					if (InterlockedExchange(&pBlock->flag, 2) == 0)
+					{
+						pNtReleaseKeyedEvent(GlobalKeyedEventHandle, pBlock, 0, nullptr);
+					}
+
+
+					pBlock = Tmp;
+				}
+			}
+
+			static void __fastcall RtlpOptimizeWaitOnAddressWaitList(volatile ULONG_PTR* ppFirstBlock)
+			{
+				auto Current = *ppFirstBlock;
+
+				for (;;)
+				{
+					auto pBlock = YY_ADDRESS_GET_BLOCK(Current);
+
+					for (auto pItem = pBlock;;)
+					{
+						if (pItem->next == nullptr)
+						{
+							pBlock->next = pItem->next;
+							break;
+						}
+
+						auto Tmp = pItem;
+						pItem = pItem->back;
+						pItem->notify = Tmp;
+					}
+
+					const auto Last = InterlockedCompareExchange(ppFirstBlock, (Current & 1) == 0 ? size_t(pBlock) : 0, Current);
+
+					if (Last == Current)
+					{
+						if(Current & 1)
+						{
+							RtlpWaitOnAddressWakeEntireList(pBlock);
+						}
+
+						return;
+					}
+
+
+					Current = Last;
+				}
+			}
+
+
+			static void __fastcall RtlpAddWaitBlockToWaitList(YY_ADDRESS_WAIT_BLOCK* pWaitBlock)
+			{
+				auto ppFirstBlock = GetBlockByWaitOnAddressHashTable((LPVOID)pWaitBlock->Address);
+
+				auto Current = *ppFirstBlock;
+
+				for (;;)
+				{
+					auto New = size_t(pWaitBlock) | (size_t(Current) & 0x3);
+
+					auto back = YY_ADDRESS_GET_BLOCK(Current);
+					pWaitBlock->back = back;
+					if (back)
+					{
+						New |= 0x2;
+
+						pWaitBlock->next = nullptr;
+					}
+					else
+					{
+						pWaitBlock->next = pWaitBlock;
+					}
+
+					const auto Last = InterlockedCompareExchange(ppFirstBlock, New, Current);
+
+					if (Last == Current)
+					{
+						//0x2状态发生变化 才需要重新优化锁。
+						if ((Current ^ New) & 0x2)
+						{
+							RtlpOptimizeWaitOnAddressWaitList(ppFirstBlock);
+						}
+
+						return;
+					}
+
+					Current = Last;
+				}
+			}
+
+			static NTSTATUS __fastcall RtlpWaitOnAddressWithTimeout(YY_ADDRESS_WAIT_BLOCK* pWaitBlock, LARGE_INTEGER *TimeOut);
+
+			static void __fastcall RtlpWaitOnAddressRemoveWaitBlock(YY_ADDRESS_WAIT_BLOCK* pWaitBlock)
+			{
+				auto GlobalKeyedEventHandle = GetGlobalKeyedEventHandle();
+				auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
+				if (!pNtWaitForKeyedEvent)
+					internal::RaiseStatus(STATUS_NOT_FOUND);
+
+				auto ppFirstBlock = GetBlockByWaitOnAddressHashTable((LPVOID)pWaitBlock->Address);
+
+				auto Current = *ppFirstBlock;
+				size_t Last;
+
+				for (; Current; Current = Last)
+				{
+					if (Current & 2)
+					{
+						Last = InterlockedCompareExchange(ppFirstBlock, Current | 1, Current);
+
+						if (Last == Current)
+						{
+							break;
+						}
+					}
+					else
+					{
+						auto New = Current | 0x2;
+						Last = InterlockedCompareExchange(ppFirstBlock, New, Current);
+
+						if (Last == Current)
+						{
+							Current = New;
+
+							bool bFind = false;
+
+							//同步成功！
+							auto pBlock = YY_ADDRESS_GET_BLOCK(New);
+							auto pItem = pBlock;
+
+							auto pNotify = pBlock->notify;
+							YY_ADDRESS_WAIT_BLOCK* Tmp;
+
+							do
+							{
+								Tmp = pBlock->back;
+
+								if (pBlock != pWaitBlock)
+								{
+									pBlock->notify = pNotify;
+									pNotify = pBlock;
+
+
+									pBlock = Tmp;
+									Tmp = pItem;
+									continue;
+								}
+
+								bFind = true;
+
+
+								if (pBlock != pItem)
+								{
+									pNotify->back->back = Tmp;
+									if (Tmp)
+										Tmp->notify = pNotify;
+									else
+										pNotify->next = pNotify;
+
+									pBlock = Tmp;
+									Tmp = pItem;
+									continue;
+								}
+
+								New = size_t(pBlock->back);
+								if (Tmp)
+								{
+									New = size_t(Tmp) ^ (Current ^ size_t(Tmp)) & 0x3;
+								}
+
+								Last = InterlockedCompareExchange(ppFirstBlock, New, Current);
+
+								if (Last == Current)
+								{
+									if (New == 0)
+										return;
+
+									Tmp->notify = nullptr;
+									pBlock = Tmp;
+								}
+								else
+								{
+									Current = Last;
+
+									Tmp = pBlock = YY_ADDRESS_GET_BLOCK(Current);
+									pNotify = pBlock->notify;
+								}
+
+
+								pItem = Tmp;
+							} while (pBlock);
+							
+
+							if (bFind == false && InterlockedExchange(&pWaitBlock->flag, 0) != 2)
+							{
+								pNtWaitForKeyedEvent(GlobalKeyedEventHandle, pWaitBlock, 0, nullptr);
+							}
+
+							Tmp->next = pNotify;
+
+							for (;;)
+							{
+								const auto Last = InterlockedCompareExchange(ppFirstBlock, (Current & 1) == 0 ? size_t(YY_ADDRESS_GET_BLOCK(Current)) : 0, Current);
+
+								if (Last == Current)
+									break;
+
+								Current = Last;
+							}
+
+							if (Current & 1)
+								RtlpWaitOnAddressWakeEntireList(YY_ADDRESS_GET_BLOCK(Current));
+
+
+							return;
+						}
+					}
+				}
+
+				if (InterlockedExchange(&pWaitBlock->flag, 1) == 2)
+					return;
+
+				RtlpWaitOnAddressWithTimeout(pWaitBlock, 0);
+			}
+
+			static NTSTATUS __fastcall RtlpWaitOnAddressWithTimeout(YY_ADDRESS_WAIT_BLOCK* pWaitBlock, LARGE_INTEGER *TimeOut)
+			{
+				//单核 我们无需自旋，直接进入等待过程即可
+				if (NtCurrentTeb()->ProcessEnvironmentBlock->NumberOfProcessors > 1 && RtlpWaitOnAddressSpinCount)
+				{
+					for (DWORD SpinCount = 0; SpinCount < RtlpWaitOnAddressSpinCount;++SpinCount)
+					{
+						if ((pWaitBlock->flag & 1) == 0)
+						{
+							//自旋过程中，等到了信号改变
+							return STATUS_SUCCESS;
+						}
+
+						YieldProcessor();
+					}
+				}
+
+				if (!_interlockedbittestandreset((volatile long *)&pWaitBlock->flag, 0))
+				{
+					//本来我是拒绝的，但是运气好，状态已经发生了反转
+					return STATUS_SUCCESS;
+				}
+
+				auto GlobalKeyedEventHandle = GetGlobalKeyedEventHandle();
+				auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
+				if (!pNtWaitForKeyedEvent)
+					internal::RaiseStatus(STATUS_NOT_FOUND);
+
+				auto Status = pNtWaitForKeyedEvent(GlobalKeyedEventHandle, pWaitBlock, 0, TimeOut);
+
+				if (Status == STATUS_TIMEOUT)
+				{
+					if (InterlockedExchange(&pWaitBlock->flag, 4) == 2)
+					{
+						Status = pNtWaitForKeyedEvent(GlobalKeyedEventHandle, pWaitBlock, 0, nullptr);
+					}
+					else
+					{
+						RtlpWaitOnAddressRemoveWaitBlock(pWaitBlock);
+					}
+				}
+
+				return Status;
+			}
+
+#if defined(_X86_)
+			#define RtlpWakeByAddress(Address, bWakeAll) YY_RtlpWakeByAddress(0, bWakeAll, Address)
+			static void __fastcall YY_RtlpWakeByAddress(DWORD dwReserved/*用于平衡栈需要，利于编译器优化成jmp*/, BOOL bWakeAll, LPVOID Address)
+#else
+			static void __fastcall RtlpWakeByAddress(LPVOID Address, BOOL bWakeAll)
+#endif
+			{
+				auto ppFirstBlock = GetBlockByWaitOnAddressHashTable(Address);
+				YY_ADDRESS_WAIT_BLOCK* LastWake = nullptr;
+
+				auto Current = *ppFirstBlock;
+				size_t Last;
+				bool bNoRemove = false;
+
+				for (; Current && (Current & 1) ==0; Current = Last)
+				{
+					if (Current & 2)
+					{
+						Last = InterlockedCompareExchange(ppFirstBlock, Current | 1, Current);
+
+						if (Last == Current)
+						{
+							return;
+						}
+					}
+					else
+					{
+						auto New = Current | 0x2;
+						Last = InterlockedCompareExchange(ppFirstBlock, New, Current);
+
+						if (Last == Current)
+						{
+							Current = New;
+
+						__retry:
+
+
+							auto pBlock = YY_ADDRESS_GET_BLOCK(Current);
+							auto pItem = pBlock;
+
+							for (; pItem->next == nullptr;)
+							{
+								auto Tmp = pItem;
+								pItem = pItem->back;
+								pItem->notify = Tmp;
+							}
+
+							pItem = pItem->next;
+							pBlock->next = pItem;
+
+							for (; pItem;)
+							{
+								auto notify = pItem->notify;
+
+								if (pItem->Address == Address)
+								{
+									auto back = pItem->back;
+									if (pItem == pBlock)
+									{
+										New = size_t(back);
+										if (New)
+										{
+											New = (Current ^ New) & 3 ^ New;
+										}
+
+										Last = InterlockedCompareExchange(ppFirstBlock, New, Current);
+										
+
+										if (Last != Current)
+										{
+											//换个姿势，再来一次
+											Current = Last;
+											goto __retry;
+										}
+
+										pBlock = YY_ADDRESS_GET_BLOCK(Last);
+
+										bNoRemove = New == 0;
+										if (back)
+										{
+											back->notify = nullptr;
+											back->next = pItem->next;
+										}
+									}
+									else
+									{
+										notify->back = back;
+										back = pItem->back;
+										auto notify = pItem->notify;
+
+										if (back)
+										{
+											back->notify = notify;
+										}
+										else
+										{
+											pBlock->next = notify;
+											notify->next = notify;
+										}
+									}
+
+									const auto LastFlag = InterlockedExchange(&pItem->flag, 2);
+
+									if (LastFlag != 2)
+									{
+										if (LastFlag == 0)
+										{
+											pItem->back = LastWake;
+											LastWake = pItem;
+										}
+
+										if (!bWakeAll)
+											break;
+									}
+								}
+
+								pItem = notify;
+							}
+
+							auto GlobalKeyedEventHandle = GetGlobalKeyedEventHandle();
+							auto pNtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
+							if (!pNtReleaseKeyedEvent)
+								internal::RaiseStatus(STATUS_NOT_FOUND);
+
+							for (auto pItem = LastWake; pItem;)
+							{
+								//NtReleaseKeyedEvent 调用后 pItem 内存块可能无效，因此必须先保存一份。
+								auto Tmp = pItem->back;
+
+								//唤醒等待的Key
+								pNtReleaseKeyedEvent(GlobalKeyedEventHandle, pItem, FALSE, nullptr);
+
+								pItem = Tmp;
+							}
+
+							if (!bNoRemove)
+							{
+								//更新标头块
+
+
+								for (auto Current = *ppFirstBlock;;)
+								{
+									const auto Last = InterlockedCompareExchange(ppFirstBlock, (Current & 1) == 0 ? size_t(YY_ADDRESS_GET_BLOCK(Current)) : 0, Current);
+
+									if (Last == Current)
+									{
+										if(Current & 1)
+											RtlpWaitOnAddressWakeEntireList(YY_ADDRESS_GET_BLOCK(Current));
+
+										break;
+									}
+								}
+							}
+
+							return;
+						}
+					}
+				}
+
+			}
+#endif
 		}
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
@@ -7308,6 +7784,138 @@ DeleteSynchronizationBarrier(
 }
 
 _LCRT_DEFINE_IAT_SYMBOL(DeleteSynchronizationBarrier, _4);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+//Windows 8 [desktop apps | UWP apps]
+//Windows Server 2012 [desktop apps | UWP apps] 
+
+EXTERN_C
+BOOL
+WINAPI
+WaitOnAddress(
+    _In_reads_bytes_(AddressSize) volatile VOID* Address,
+    _In_reads_bytes_(AddressSize) PVOID CompareAddress,
+    _In_ SIZE_T AddressSize,
+    _In_opt_ DWORD dwMilliseconds
+    )
+{
+	if (auto const pWaitOnAddress = try_get_WaitOnAddress())
+	{
+		return pWaitOnAddress(Address, CompareAddress, AddressSize, dwMilliseconds);
+	}
+
+	//参数检查，AddressSize 只能 为 1,2,4,8
+	if (AddressSize > 8 || AddressSize == 0 || ((AddressSize - 1) & AddressSize) != 0)
+	{
+		//STATUS_INVALID_PARAMETER
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	YY_ADDRESS_WAIT_BLOCK WaitBlock;
+	WaitBlock.Address = Address;
+	WaitBlock.back = nullptr;
+	WaitBlock.notify = nullptr;
+	WaitBlock.next = nullptr;
+	WaitBlock.flag = 1;
+
+	internal::RtlpAddWaitBlockToWaitList(&WaitBlock);
+
+	bool bSame;
+	switch (AddressSize)
+	{
+	case 1:
+		bSame = *(volatile byte*)Address == *(volatile byte*)CompareAddress;
+		break;
+	case 2:
+		bSame = *(volatile WORD*)Address == *(volatile WORD*)CompareAddress;
+		break;
+	case 4:
+		bSame = *(volatile DWORD*)Address == *(volatile DWORD*)CompareAddress;
+		break;
+	default:
+	//case 8:
+#if _WIN64
+		//64位自身能保证操作的原子性
+		bSame = *(volatile unsigned long long*)Address == *(volatile unsigned long long*)CompareAddress;
+#else
+		bSame = InterlockedCompareExchange64((volatile long long*)Address, 0, 0) == *(volatile long long*)CompareAddress;
+#endif
+		break;
+	}
+
+
+	if (!bSame)
+	{
+		//结果不相同，我们从等待队列移除
+		internal::RtlpWaitOnAddressRemoveWaitBlock(&WaitBlock);
+		return TRUE;
+	}
+
+	LARGE_INTEGER TimeOut;
+
+	auto Status = internal::RtlpWaitOnAddressWithTimeout(&WaitBlock, internal::BaseFormatTimeOut(&TimeOut, dwMilliseconds));
+
+	if (Status)
+	{
+		internal::BaseSetLastNTError(Status);
+	}
+
+	return Status < 0 || Status == STATUS_TIMEOUT ? FALSE : TRUE;
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(WaitOnAddress, _16);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+//Windows 8 [desktop apps | UWP apps]
+//Windows Server 2012 [desktop apps | UWP apps] 
+
+EXTERN_C
+VOID
+WINAPI
+WakeByAddressSingle(
+    _In_ PVOID Address
+    )
+{
+	if (auto const pWakeByAddressSingle = try_get_WakeByAddressSingle())
+	{
+		return pWakeByAddressSingle(Address);
+	}
+
+	internal::RtlpWakeByAddress(Address, FALSE);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(WakeByAddressSingle, _4);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+//Windows 8 [desktop apps | UWP apps]
+//Windows Server 2012 [desktop apps | UWP apps] 
+
+EXTERN_C
+VOID
+WINAPI
+WakeByAddressAll(
+    _In_ PVOID Address
+    )
+{
+	if (auto const pWakeByAddressAll = try_get_WakeByAddressAll())
+	{
+		return pWakeByAddressAll(Address);
+	}
+
+	internal::RtlpWakeByAddress(Address, TRUE);
+}
+
+_LCRT_DEFINE_IAT_SYMBOL(WakeByAddressAll, _4);
 
 #endif
 

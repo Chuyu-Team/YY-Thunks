@@ -129,6 +129,9 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [SleepConditionVariableSRW](https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-sleepconditionvariablesrw) | 不存在时，调用NtWaitForKeyedEvent。
 | [WakeConditionVariable](https://docs.microsoft.com/zh-cn/windows/win32/api/synchapi/nf-synchapi-wakeconditionvariable)         | 不存在时，调用NtReleaseKeyedEvent。
 | [WakeAllConditionVariable](https://docs.microsoft.com/zh-cn/windows/win32/api/synchapi/nf-synchapi-wakeallconditionvariable)   | 不存在时，调用NtReleaseKeyedEvent。
+| [WaitOnAddress](https://docs.microsoft.com/en-us/windows/desktop/api/SynchAPI/nf-synchapi-waitonaddress)                       | 不存在时，调用NtWaitForKeyedEvent。警告，此函数请勿跨模块使用！！！
+| [WakeByAddressSingle](https://docs.microsoft.com/zh-cn/windows/win32/api/synchapi/nf-synchapi-wakebyaddresssingle)             | 不存在时，调用NtReleaseKeyedEvent。警告，此函数请勿跨模块使用！！！
+| [WakeByAddressAll](https://docs.microsoft.com/zh-cn/windows/win32/api/synchapi/nf-synchapi-wakebyaddressall)                   | 不存在时，调用NtReleaseKeyedEvent。警告，此函数请勿跨模块使用！！！
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683181.aspx)                           | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/en-us/library/windows/desktop/dd405487.aspx)                         | 不存在时，调用GetCurrentProcessorNumber。
 | *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683204.aspx)                            | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
@@ -257,7 +260,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加QueryWorkingSetEx
 
 
-### 1.0.1.15 - 优化实现 (2019-09-03 18:00) 
+### 1.0.1.16 - 优化实现 (2019-09-04 19:00) 
 * 解决Bug，VS2010无法使用问题（感谢 柒零）。
 * 改进 SRWLock 以及 One-Time Initialization调整为KeyedEvent实现。
 * 添加WSAPoll
@@ -272,3 +275,6 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加InitializeSynchronizationBarrier
 * 添加EnterSynchronizationBarrier
 * 添加DeleteSynchronizationBarrier
+* 添加WaitOnAddress
+* 添加WakeByAddressSingle
+* 添加WakeByAddressAll
