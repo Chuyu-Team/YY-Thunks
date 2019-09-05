@@ -278,36 +278,39 @@ namespace YY
 			static HANDLE __fastcall GetGlobalKeyedEventHandle()
 			{
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-				if (_GlobalKeyedEventHandle == nullptr)
+				//Windows XP等平台则 使用系统自身的 CritSecOutOfMemoryEvent，Vista或者更高平台 我们直接返回 nullptr 即可。
+				if (NtCurrentTeb()->ProcessEnvironmentBlock->OSMajorVersion < 6)
 				{
-					auto pNtOpenKeyedEvent = try_get_NtOpenKeyedEvent();
-
-					if(pNtOpenKeyedEvent == nullptr)
-						RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
-
-					constexpr const wchar_t Name[] = L"\\KernelObjects\\CritSecOutOfMemoryEvent";
-					
-					UNICODE_STRING ObjectName = {sizeof(Name) - sizeof(wchar_t),sizeof(Name) - sizeof(wchar_t) ,(PWSTR)Name };
-					OBJECT_ATTRIBUTES attr = { sizeof(attr),nullptr,&ObjectName };
-
-					HANDLE KeyedEventHandle;
-
-					if (pNtOpenKeyedEvent(&KeyedEventHandle, MAXIMUM_ALLOWED, &attr) < 0)
+					if (_GlobalKeyedEventHandle == nullptr)
 					{
-						RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+						auto pNtOpenKeyedEvent = try_get_NtOpenKeyedEvent();
+
+						if(pNtOpenKeyedEvent == nullptr)
+							RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+
+						constexpr const wchar_t Name[] = L"\\KernelObjects\\CritSecOutOfMemoryEvent";
+
+						UNICODE_STRING ObjectName = {sizeof(Name) - sizeof(wchar_t),sizeof(Name) - sizeof(wchar_t) ,(PWSTR)Name };
+						OBJECT_ATTRIBUTES attr = { sizeof(attr),nullptr,&ObjectName };
+
+						HANDLE KeyedEventHandle;
+
+						if (pNtOpenKeyedEvent(&KeyedEventHandle, MAXIMUM_ALLOWED, &attr) < 0)
+						{
+							RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+						}
+
+						if (InterlockedCompareExchange((size_t*)&_GlobalKeyedEventHandle, (size_t)KeyedEventHandle, (size_t)nullptr))
+						{
+							CloseHandle(KeyedEventHandle);
+						}
 					}
 
-					if (InterlockedCompareExchange((size_t*)&_GlobalKeyedEventHandle, (size_t)KeyedEventHandle, (size_t)nullptr))
-					{
-						CloseHandle(KeyedEventHandle);
-					}
+					return _GlobalKeyedEventHandle;
 				}
-
-				return _GlobalKeyedEventHandle;
-#else
+#endif
 				//Vista以上平台支持给 KeyedEvent直接传 nullptr
 				return nullptr;
-#endif
 			}
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
