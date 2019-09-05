@@ -129,6 +129,9 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [SleepConditionVariableSRW](https://docs.microsoft.com/windows/win32/api/synchapi/nf-synchapi-sleepconditionvariablesrw)       | 不存在时，调用NtWaitForKeyedEvent。
 | [WakeConditionVariable](https://docs.microsoft.com/windows/win32/api/synchapi/nf-synchapi-wakeconditionvariable)               | 不存在时，调用NtReleaseKeyedEvent。
 | [WakeAllConditionVariable](https://docs.microsoft.com/windows/win32/api/synchapi/nf-synchapi-wakeallconditionvariable)         | 不存在时，调用NtReleaseKeyedEvent。
+| [InitializeSynchronizationBarrier](https://msdn.microsoft.com/library/hh706890.aspx)                                           | 不存在时，调用CreateEvent
+| [EnterSynchronizationBarrier](https://msdn.microsoft.com/library/hh706889.aspx)                                                | 不存在时，调用WaitForSingleObject
+| [DeleteSynchronizationBarrier](https://msdn.microsoft.com/library/hh706887.aspx)                                               | 不存在时，调用CloseHandle
 | [WaitOnAddress](https://docs.microsoft.com/windows/desktop/api/SynchAPI/nf-synchapi-waitonaddress)                             | 不存在时，调用NtWaitForKeyedEvent。警告，此函数请勿跨模块使用！！！
 | [WakeByAddressSingle](https://docs.microsoft.com/windows/win32/api/synchapi/nf-synchapi-wakebyaddresssingle)                   | 不存在时，调用NtReleaseKeyedEvent。警告，此函数请勿跨模块使用！！！
 | [WakeByAddressAll](https://docs.microsoft.com/windows/win32/api/synchapi/nf-synchapi-wakebyaddressall)                         | 不存在时，调用NtReleaseKeyedEvent。警告，此函数请勿跨模块使用！！！
