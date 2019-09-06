@@ -142,6 +142,9 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | *[SetThreadGroupAffinity](https://msdn.microsoft.com/library/windows/desktop/dd405516.aspx)                                    | 不存在时，调用SetThreadAffinityMask。
 | *[CancelIoEx](https://docs.microsoft.com/windows/desktop/FileIO/cancelioex-func)                                               | 不存在时，调用CancelIo（会把此句柄的所有IO操作取消掉！）。
 | *[QueryWorkingSetEx](https://docs.microsoft.com/windows/desktop/api/Psapi/nf-psapi-getwschangesex)                             | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
+| [SHGetKnownFolderPath](https://docs.microsoft.com/windows/win32/api/shlobj_core/nf-shlobj_core-shgetknownfolderpath)           | 不存在时，调用SHGetFolderPathW。
+| [SHSetKnownFolderPath](https://docs.microsoft.com/windows/win32/api/shlobj_core/nf-shlobj_core-shsetknownfolderpath)           | 不存在时，调用SHSetFolderPathW。
+| [SHGetKnownFolderIDList](https://docs.microsoft.com/windows/win32/api/shlobj_core/nf-shlobj_core-shgetknownfolderidlist)       | 不存在时，调用SHGetFolderLocation。
 
 
 ## Changes
@@ -263,7 +266,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加QueryWorkingSetEx
 
 
-### 1.0.1.16 - 优化实现 (2019-09-04 19:00) 
+### 1.0.1.17 - 优化实现 (2019-09-06 21:00) 
 * 解决Bug，VS2010无法使用问题（感谢 柒零）。
 * 改进 SRWLock 以及 One-Time Initialization调整为KeyedEvent实现。
 * 添加WSAPoll
@@ -281,3 +284,6 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加WaitOnAddress
 * 添加WakeByAddressSingle
 * 添加WakeByAddressAll
+* 添加SHGetKnownFolderPath
+* 添加SHSetKnownFolderPath
+* 添加SHGetKnownFolderIDList

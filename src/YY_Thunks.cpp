@@ -10,7 +10,8 @@
     _APPLY(version,                                      "version"                                     ) \
 	_APPLY(advapi32,                                     "advapi32"                                    ) \
     _APPLY(user32,                                       "user32"                                      ) \
-    _APPLY(ws2_32,                                       "ws2_32"                                      )
+    _APPLY(ws2_32,                                       "ws2_32"                                      ) \
+    _APPLY(shell32,                                      "shell32"                                     ) 
 
 
 //全局可能使用到的函数
@@ -54,6 +55,7 @@
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "version.lib")
+#pragma comment(lib, "ole32.lib")
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
