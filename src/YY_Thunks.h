@@ -8,15 +8,15 @@
 
 
 #if defined(_M_IX86)
-	#define _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(f,prefixed) _CRT_CONCATENATE(_CRT_CONCATENATE(_imp__, f), prefixed)
+	#define _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(_FUNCTION, _SIZE) _CRT_CONCATENATE(_CRT_CONCATENATE(_imp__, _FUNCTION), _CRT_CONCATENATE(_, _SIZE))
 #elif defined(_M_AMD64)
-	#define _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(f,prefixed) _CRT_CONCATENATE(__imp_, f)
+	#define _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(_FUNCTION, _SIZE) _CRT_CONCATENATE(__imp_, _FUNCTION)
 #else
 	 #error "不支持此体系"
 #endif
 
-#define _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION,prefixed)                                                           \
-    extern "C" __declspec(selectany) void const* const _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(_FUNCTION, prefixed) \
+#define _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION, _SIZE)                                                          \
+    extern "C" __declspec(selectany) void const* const _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(_FUNCTION, _SIZE) \
         = reinterpret_cast<void const*>(_FUNCTION)
 
 
