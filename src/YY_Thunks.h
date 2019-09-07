@@ -49,25 +49,6 @@ else
 */
 EXTERN_C const DWORD __YY_Thunks_Installed = YY_Thunks_Support_Version;
 
-/*
-导出一个外部弱符号，指示当前是否处于强行卸载模式。
-
-EXTERN_C BOOL __YY_Thunks_Process_Terminating;
-
-BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
-{
-	swtich(dwReason)
-	{
-		case DLL_PROCESS_DETACH:
-		//我们可以通过 lpReserved != NULL 判断，当前是否处于强行卸载模式。
-		__YY_Thunks_Process_Terminating = lpReserved != NULL;
-
-		……
-		break;
-	……
-*/
-EXTERN_C extern BOOL __YY_Thunks_Process_Terminating;
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 static HANDLE _GlobalKeyedEventHandle;
 #endif
@@ -201,6 +182,8 @@ static __forceinline T* __fastcall __crt_interlocked_read_pointer(T* const volat
 #if defined(_X86_) || defined(_M_IX86)
 static decltype(RtlWow64EnableFsRedirectionEx)* pRtlWow64EnableFsRedirectionEx;
 #endif
+
+static decltype(RtlDllShutdownInProgress)* pRtlDllShutdownInProgress;
 
 static bool bSupportSafe;
 
@@ -412,7 +395,7 @@ static void* __fastcall try_get_function(
 static void __cdecl __YY_uninitialize_winapi_thunks()
 {
 	//当DLL被强行卸载时，我们什么都不做。
-	if (__YY_Thunks_Process_Terminating)
+	if (pRtlDllShutdownInProgress && pRtlDllShutdownInProgress())
 		return;
 
 	for (HMODULE& module : module_handles)
@@ -490,12 +473,14 @@ static int __cdecl _YY_initialize_winapi_thunks()
 
 	InitOnceExecuteOnceDownlevel(&InitOnce, [](PINIT_ONCE InitOnce, PVOID Parameter, PVOID *Context) -> BOOL
 		{
-#if defined(_X86_) || defined(_M_IX86)
 			if (auto hNtdll = GetModuleHandleW(L"ntdll"))
 			{
+#if defined(_X86_) || defined(_M_IX86)
 				pRtlWow64EnableFsRedirectionEx = (decltype(RtlWow64EnableFsRedirectionEx)*)GetProcAddress(hNtdll, "RtlWow64EnableFsRedirectionEx");
-			}
 #endif
+				pRtlDllShutdownInProgress = (decltype(RtlDllShutdownInProgress)*)GetProcAddress(hNtdll,"RtlDllShutdownInProgress");
+			}
+
 			if (auto hKernel32 = GetModuleHandleW(L"kernel32"))
 			{
 				bSupportSafe = GetProcAddress(hKernel32, "AddDllDirectory") != nullptr;

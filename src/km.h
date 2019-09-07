@@ -5019,6 +5019,13 @@ NtReleaseKeyedEvent(
 	IN PLARGE_INTEGER       Timeout OPTIONAL
 	);
 
+//指示进程是否正在进行退出。
+EXTERN_C
+NTSYSAPI
+BOOLEAN
+NTAPI
+RtlDllShutdownInProgress();
+
 #if defined __cplusplus && !defined _Disallow_YY_KM_Namespace
 } //namespace YY
 #endif
