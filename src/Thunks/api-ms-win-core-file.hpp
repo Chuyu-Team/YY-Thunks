@@ -820,8 +820,12 @@ CreateFile2(
 			SetLastError(ERROR_INVALID_PARAMETER);
 			return INVALID_HANDLE_VALUE;
 		}
+		
+		dwFlagsAndAttributes = pCreateExParams->dwFileAttributes | pCreateExParams->dwFileFlags;
 
-		dwFlagsAndAttributes = pCreateExParams->dwFileAttributes | pCreateExParams->dwFileFlags | pCreateExParams->dwSecurityQosFlags;
+		if (pCreateExParams->dwSecurityQosFlags != 0)
+			dwFlagsAndAttributes |= SECURITY_SQOS_PRESENT | pCreateExParams->dwSecurityQosFlags;
+
 		lpSecurityAttributes = pCreateExParams->lpSecurityAttributes;
 		hTemplateFile        = pCreateExParams->hTemplateFile;
 	}

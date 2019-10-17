@@ -145,6 +145,14 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [SHGetKnownFolderPath](https://docs.microsoft.com/windows/win32/api/shlobj_core/nf-shlobj_core-shgetknownfolderpath)           | 不存在时，调用SHGetFolderPathW。
 | [SHSetKnownFolderPath](https://docs.microsoft.com/windows/win32/api/shlobj_core/nf-shlobj_core-shsetknownfolderpath)           | 不存在时，调用SHSetFolderPathW。
 | [SHGetKnownFolderIDList](https://docs.microsoft.com/windows/win32/api/shlobj_core/nf-shlobj_core-shgetknownfolderidlist)       | 不存在时，调用SHGetFolderLocation。
+| [SHBindToFolderIDListParent](https://docs.microsoft.com/windows/win32/api/shlobj_core/nf-shlobj_core-shbindtofolderidlistparent)      | 不存在时，调用IShellFolder。
+| [SHBindToFolderIDListParentEx](https://docs.microsoft.com//windows/win32/api/shlobj_core/nf-shlobj_core-shbindtofolderidlistparentex) | 不存在时，调用IShellFolder。
+| [SHBindToObject](https://docs.microsoft.com/windows/win32/api/shlobj_core/nf-shlobj_core-shbindtoobject)                        | 不存在时，调用IShellFolder。
+| [SHCreateItemFromIDList](https://docs.microsoft.com/windows/win32/api/shobjidl_core/nf-shobjidl_core-shcreateitemfromidlist)    | 不存在时，调用IShellItem。
+| [SHCreateItemWithParent](https://docs.microsoft.com/windows/win32/api/shobjidl_core/nf-shobjidl_core-shcreateitemwithparent)    | 不存在时，调用IShellItem。
+| [SHCreateItemFromRelativeName](https://docs.microsoft.com/windows/win32/api/shobjidl_core/nf-shobjidl_core-shcreateitemfromrelativename) | 不存在时，调用IShellItem。
+| [SHGetNameFromIDList](https://docs.microsoft.com/windows/win32/api/shobjidl_core/nf-shobjidl_core-shgetnamefromidlist)          | 不存在时，调用IShellItem。
+| [SHCreateShellItem](https://docs.microsoft.com/windows/win32/api/shlobj_core/nf-shlobj_core-shcreateshellitem)                  | 不存在时，调用IShellItem。
 
 
 ## Changes
@@ -287,3 +295,16 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加SHGetKnownFolderPath
 * 添加SHSetKnownFolderPath
 * 添加SHGetKnownFolderIDList
+
+
+### 1.0.1.18 - 优化实现（2019-10-17 18:00）
+* 解决 Bug，CreateFile2 dwSecurityQosFlags成员可能无法发挥作用问题（感谢 賈可）。
+* 解决 Bug，KnownFoldersIdsMap缺少 FOLDERID_ProgramFilesCommonX86问题（感谢 賈可）。
+* 添加 SHBindToFolderIDListParent（感谢 賈可）
+* 添加 SHBindToFolderIDListParentEx（感谢 賈可）
+* 添加 SHBindToObject（感谢 賈可）
+* 添加 SHCreateItemFromIDList（感谢 賈可）
+* 添加 SHCreateItemWithParent（感谢 賈可）
+* 添加 SHCreateItemFromRelativeName（感谢 賈可）
+* 添加 SHGetNameFromIDList（感谢 賈可）
+* 添加 SHCreateShellItem

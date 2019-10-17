@@ -16,7 +16,7 @@ namespace YY
 			};
 
 #define YY_CSIDL_CHECK_WOW64 0x80000000
-#define YY_CSIDL_MARK        0x000000FF
+#define YY_CSIDL_MASK        0x000000FF
 			static int __fastcall KnownFoldersIdToCSIDL(const GUID& rfid)
 			{
 
@@ -28,6 +28,7 @@ namespace YY
 					{ FOLDERID_CDBurning, CSIDL_CDBURN_AREA },
 					{ FOLDERID_CommonStartMenu, CSIDL_COMMON_STARTMENU },
 					{ FOLDERID_Videos, CSIDL_MYVIDEO },
+					{ FOLDERID_ProgramFilesCommonX86, CSIDL_PROGRAM_FILES_COMMONX86 },
 					{ FOLDERID_ConnectionsFolder, CSIDL_CONNECTIONS },
 					{ FOLDERID_PrintersFolder, CSIDL_PRINTERS },
 					{ FOLDERID_Pictures, CSIDL_MYPICTURES },
@@ -157,7 +158,7 @@ namespace YY
 							}
 						}
 #endif
-						return KnownFoldersId.csidl & YY_CSIDL_MARK;
+						return KnownFoldersId.csidl & YY_CSIDL_MASK;
 					}
 					if (testIndex < 0)
 						top = middle - 1;
@@ -167,6 +168,260 @@ namespace YY
 
 				return -1;
 			}
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+			static __forceinline PIDLIST_RELATIVE __fastcall ILCloneParent(LPCITEMIDLIST pidl)
+			{
+				auto pClone = ILClone(pidl);
+				if (pClone)
+					ILRemoveLastID(pClone);
+
+				return pClone;
+			}
+
+			static __forceinline HRESULT __fastcall SHILCloneParent(PCUIDLIST_RELATIVE pidl, PUIDLIST_RELATIVE* pidl_new)
+			{
+				auto Clone =  ILCloneParent(pidl);
+				*pidl_new = Clone;
+				return Clone ? S_OK : E_OUTOFMEMORY;
+			}
+
+			static
+			HRESULT
+			STDAPICALLTYPE
+			SHBindToObject(
+				_In_opt_ IShellFolder *psf,
+				_In_ PCUIDLIST_RELATIVE pidl,
+				_In_opt_ IBindCtx *pbc,
+				_In_ REFIID riid,
+				_Outptr_ void **ppv
+				)
+			{
+				*ppv = nullptr;
+
+				IShellFolder *ppshf;
+
+				auto hr = psf ? psf->QueryInterface(&ppshf) : SHGetDesktopFolder(&ppshf);
+
+				if (SUCCEEDED(hr))
+				{
+					if (ILIsEmpty(pidl))
+					{
+						hr = ppshf->QueryInterface(riid, ppv);
+					}
+					else
+					{
+						hr = ppshf->BindToObject(pidl, pbc, riid, ppv);
+					}
+
+					if (SUCCEEDED(hr) && *ppv == nullptr)
+						hr = E_FAIL;
+
+					ppshf->Release();
+				}
+
+
+				return hr;
+			}
+
+			static
+			HRESULT
+			STDAPICALLTYPE
+			SHBindToFolderIDListParentEx(
+				_In_opt_ IShellFolder *psfRoot,
+				_In_ PCUIDLIST_RELATIVE pidl,
+				_In_opt_ IBindCtx *ppbc,
+				_In_ REFIID riid,
+				_Outptr_ void **ppv,
+				_Outptr_opt_ PCUITEMID_CHILD *ppidlLast
+				)
+			{
+				*ppv = nullptr;
+				if (ppidlLast)
+					*ppidlLast = nullptr;
+
+				HRESULT hr;
+
+				if (pidl != nullptr)
+				{
+					if (psfRoot && ILIsChild(pidl))
+					{
+						hr = psfRoot->QueryInterface(riid, ppv);
+					}
+					else
+					{
+						PUIDLIST_RELATIVE pidl_new;
+
+						hr = SHILCloneParent(pidl, &pidl_new);
+
+						if (FAILED(hr))
+							return hr;
+
+						hr = internal::SHBindToObject(psfRoot, pidl_new, ppbc, riid, ppv);
+
+						ILFree(pidl_new);
+					}
+
+					if (SUCCEEDED(hr) && ppidlLast)
+						*ppidlLast = ILFindLastID(pidl);
+				}
+				else
+				{
+					hr = E_INVALIDARG;
+				}
+
+				return hr;
+			}
+
+			static HRESULT __fastcall CShellItem_CreateInstance(PCWSTR pszCLSID,const IID& riid, void **ppv)
+			{
+				*ppv = nullptr;
+
+				IShellItem* psi;
+
+				auto hr = SHCoCreateInstance(nullptr, &CLSID_ShellItem, nullptr, __uuidof(IShellItem), (void**)&psi);
+
+				if (SUCCEEDED(hr))
+				{
+					hr = psi->QueryInterface(riid, ppv);
+
+					psi->Release();
+				}
+
+				return hr;
+
+			}
+
+			static
+			HRESULT
+			STDAPICALLTYPE
+			SHCreateItemFromIDList(
+				_In_ PCIDLIST_ABSOLUTE pidl,
+				_In_ REFIID riid,
+				_Outptr_ void **ppv
+				)
+			{
+				*ppv = nullptr;
+
+				IPersistIDList *ppidl;
+
+				auto hr = CShellItem_CreateInstance(nullptr, __uuidof(IPersistIDList), (void**)&ppidl);
+
+				if (SUCCEEDED(hr))
+				{
+					hr = ppidl->SetIDList(pidl);
+
+					if (SUCCEEDED(hr))
+					{
+						hr = ppidl->QueryInterface(riid, ppv);
+					}
+
+					ppidl->Release();
+				}
+
+				return hr;
+			}
+
+			__forceinline
+			HRESULT
+			ParseDisplayNameChild(
+				IShellFolder* pShellFolder,
+				/* [unique][in] */ __RPC__in_opt HWND hwnd,
+				/* [unique][in] */ __RPC__in_opt IBindCtx *pbc,
+				/* [string][in] */ __RPC__in_string LPWSTR pszDisplayName,
+				/* [annotation][unique][out][in] */
+				_Reserved_  ULONG *pchEaten,
+				/* [out] */ __RPC__deref_out_opt PIDLIST_RELATIVE* ppidl,
+				/* [unique][out][in] */ __RPC__inout_opt ULONG *pdwAttributes
+				)
+			{
+				*ppidl = nullptr;
+
+				PIDLIST_RELATIVE pidl;
+
+				auto hr = pShellFolder->ParseDisplayName(hwnd, pbc, pszDisplayName, pchEaten, &pidl, pdwAttributes);
+
+				if (SUCCEEDED(hr))
+				{
+					*ppidl = pidl;
+				}
+
+				return hr;
+			}
+
+
+			static
+			HRESULT
+			STDAPICALLTYPE
+			SHCreateItemWithParent(
+				_In_opt_ PCIDLIST_ABSOLUTE pidlParent,
+				_In_opt_ IShellFolder *psfParent,
+				_In_ PCUITEMID_CHILD pidl,
+				_In_ REFIID riid,
+				_Outptr_ void **ppvItem
+				)
+			{
+				*ppvItem = nullptr;
+
+				IParentAndItem *ppai;
+				auto hr = CShellItem_CreateInstance(nullptr, __uuidof(IParentAndItem), (void**)&ppai);
+
+				if (SUCCEEDED(hr))
+				{
+					hr = ppai->SetParentAndItem(pidlParent, psfParent, pidl);
+
+					if (SUCCEEDED(hr))
+					{
+						hr = ppai->QueryInterface(riid, ppvItem);
+					}
+
+					ppai->Release();
+				}
+
+				return hr;
+			}
+
+			static
+			HRESULT
+			STDAPICALLTYPE
+			SHCreateItemFromRelativeName(
+				_In_ IShellItem *psiParent,
+				_In_ PCWSTR pszName,
+				_In_opt_ IBindCtx* pbc,
+				_In_ REFIID riid,
+				_Outptr_ void **ppv
+				)
+			{
+				*ppv = nullptr;
+
+				IShellFolder* pShellFolder;
+
+				auto hr = psiParent->BindToHandler(nullptr, BHID_SFObject, __uuidof(pShellFolder), (void**)&pShellFolder);
+
+				if (SUCCEEDED(hr))
+				{
+					PIDLIST_RELATIVE pidl;
+
+					hr = internal::ParseDisplayNameChild(pShellFolder, nullptr, pbc, (LPWSTR)pszName, nullptr, &pidl, nullptr);
+
+
+					if (SUCCEEDED(hr))
+					{
+						hr = internal::SHCreateItemWithParent(nullptr, pShellFolder, pidl, riid, ppv);
+
+						ILFree(pidl);
+					}
+
+
+					pShellFolder->Release();
+
+				}
+
+				return hr;
+			}
+
+#endif
 		}
 #endif
 
@@ -186,7 +441,7 @@ SHGetKnownFolderPath(
 	_Outptr_ PWSTR* ppszPath
 	)
 #ifdef YY_Thunks_Defined
-	;
+;
 #else
 {
 	if (const auto pSHGetKnownFolderPath = try_get_SHGetKnownFolderPath())
@@ -295,6 +550,297 @@ SHGetKnownFolderIDList(
 #endif
 
 __YY_Thunks_Expand_Function(shell32, SHGetKnownFolderIDList, 16);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+EXTERN_C
+HRESULT
+STDAPICALLTYPE
+SHBindToFolderIDListParent(
+	_In_opt_ IShellFolder *psfRoot,
+	_In_ PCUIDLIST_RELATIVE pidl,
+	_In_ REFIID riid,
+	_Outptr_ void **ppv,
+	_Outptr_opt_ PCUITEMID_CHILD *ppidlLast
+	)
+#ifdef YY_Thunks_Defined
+;
+#else
+{
+	if (const auto pSHBindToFolderIDListParent = try_get_SHBindToFolderIDListParent())
+	{
+		return pSHBindToFolderIDListParent(psfRoot, pidl, riid, ppv, ppidlLast);
+	}
+
+	return internal::SHBindToFolderIDListParentEx(psfRoot, pidl, nullptr, riid, ppv, ppidlLast);
+}
+#endif
+
+__YY_Thunks_Expand_Function(shell32, SHBindToFolderIDListParent, 20);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+EXTERN_C
+HRESULT
+STDAPICALLTYPE
+SHBindToFolderIDListParentEx(
+	_In_opt_ IShellFolder *psfRoot,
+	_In_ PCUIDLIST_RELATIVE pidl,
+	_In_opt_ IBindCtx *ppbc,
+	_In_ REFIID riid,
+	_Outptr_ void **ppv,
+	_Outptr_opt_ PCUITEMID_CHILD *ppidlLast
+	)
+#ifdef YY_Thunks_Defined
+;
+#else
+{
+	if (const auto pSHBindToFolderIDListParentEx = try_get_SHBindToFolderIDListParentEx())
+	{
+		return pSHBindToFolderIDListParentEx(psfRoot, pidl, ppbc, riid, ppv, ppidlLast);
+	}
+
+	return internal::SHBindToFolderIDListParentEx(psfRoot, pidl, ppbc, riid, ppv, ppidlLast);
+}
+#endif
+
+__YY_Thunks_Expand_Function(shell32, SHBindToFolderIDListParentEx, 24);
+
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+EXTERN_C
+HRESULT
+STDAPICALLTYPE
+SHBindToObject(
+	_In_opt_ IShellFolder *psf,
+	_In_ PCUIDLIST_RELATIVE pidl,
+	_In_opt_ IBindCtx *pbc,
+	_In_ REFIID riid,
+	_Outptr_ void **ppv
+	)
+#ifdef YY_Thunks_Defined
+;
+#else
+{
+	if (const auto pSHBindToObject = try_get_SHBindToObject())
+	{
+		return pSHBindToObject(psf, pidl, pbc, riid, ppv);
+	}
+
+	return internal::SHBindToObject(psf, pidl, pbc, riid, ppv);
+}
+#endif
+
+__YY_Thunks_Expand_Function(shell32, SHBindToObject, 20);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+EXTERN_C
+HRESULT
+STDAPICALLTYPE
+SHCreateItemFromIDList(
+	_In_ PCIDLIST_ABSOLUTE pidl,
+	_In_ REFIID riid,
+	_Outptr_ void **ppv
+	)
+#ifdef YY_Thunks_Defined
+;
+#else
+{
+	if (const auto pSHCreateItemFromIDList = try_get_SHCreateItemFromIDList())
+	{
+		return pSHCreateItemFromIDList(pidl, riid, ppv);
+	}
+
+	
+	return internal::SHCreateItemFromIDList(pidl, riid, ppv);
+}
+#endif
+
+__YY_Thunks_Expand_Function(shell32, SHCreateItemFromIDList, 12);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+EXTERN_C
+HRESULT
+STDAPICALLTYPE
+SHCreateItemWithParent(
+	_In_opt_ PCIDLIST_ABSOLUTE pidlParent,
+	_In_opt_ IShellFolder *psfParent,
+	_In_ PCUITEMID_CHILD pidl,
+	_In_ REFIID riid,
+	_Outptr_ void **ppvItem
+	)
+#ifdef YY_Thunks_Defined
+;
+#else
+{
+	if (const auto pSHCreateItemWithParent = try_get_SHCreateItemWithParent())
+	{
+		return pSHCreateItemWithParent(pidlParent, psfParent, pidl, riid, ppvItem);
+	}
+
+	return internal::SHCreateItemWithParent(pidlParent, psfParent, pidl, riid, ppvItem);
+}
+
+#endif
+
+__YY_Thunks_Expand_Function(shell32, SHCreateItemWithParent, 20);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+EXTERN_C
+HRESULT
+STDAPICALLTYPE
+SHCreateItemFromRelativeName(
+	_In_ IShellItem *psiParent,
+	_In_ PCWSTR pszName,
+	_In_opt_ IBindCtx* pbc,
+	_In_ REFIID riid,
+	_Outptr_ void **ppv
+	)
+#ifdef YY_Thunks_Defined
+;
+#else
+{
+	if (const auto pSHCreateItemFromRelativeName = try_get_SHCreateItemFromRelativeName())
+	{
+		return pSHCreateItemFromRelativeName(psiParent, pszName, pbc, riid, ppv);
+	}
+
+	*ppv = nullptr;
+
+	IShellFolder* pShellFolder;
+
+	auto hr = psiParent->BindToHandler(nullptr, BHID_SFObject, __uuidof(pShellFolder), (void**)&pShellFolder);
+
+	if (SUCCEEDED(hr))
+	{
+		PIDLIST_RELATIVE pidl;
+
+		hr = internal::ParseDisplayNameChild(pShellFolder, nullptr, pbc, (LPWSTR)pszName, nullptr, &pidl, nullptr);
+
+
+		if (SUCCEEDED(hr))
+		{
+			hr = internal::SHCreateItemWithParent(nullptr, pShellFolder, pidl, riid, ppv);
+			ILFree(pidl);
+		}
+
+		pShellFolder->Release();
+	}
+
+	return hr;
+}
+#endif
+
+__YY_Thunks_Expand_Function(shell32, SHCreateItemFromRelativeName, 20);
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+EXTERN_C
+HRESULT
+STDAPICALLTYPE
+SHGetNameFromIDList(
+	_In_ PCIDLIST_ABSOLUTE pidl,
+	_In_ SIGDN sigdnName,
+	_Outptr_ PWSTR *ppszName
+	)
+#ifdef YY_Thunks_Defined
+;
+#else
+{
+	if (const auto pSHGetNameFromIDList = try_get_SHGetNameFromIDList())
+	{
+		return pSHGetNameFromIDList(pidl, sigdnName, ppszName);
+	}
+
+	*ppszName = L'\0';
+
+	IShellItem* ppsi;
+
+	
+	auto hr = internal::SHCreateItemFromIDList(pidl, __uuidof(ppsi), (void**)&ppsi);
+
+	if (SUCCEEDED(hr))
+	{
+		hr = ppsi->GetDisplayName(sigdnName, ppszName);
+
+		ppsi->Release();
+	}
+
+	return hr;
+}
+#endif
+
+__YY_Thunks_Expand_Function(shell32, SHGetNameFromIDList, 12);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WINXPSP1)
+//Windows XP with SP1 [desktop apps only] 
+//Windows Server 2003 [desktop apps only]
+
+EXTERN_C
+HRESULT
+STDAPICALLTYPE
+SHCreateShellItem(
+	_In_opt_ PCIDLIST_ABSOLUTE pidlParent,
+	_In_opt_ IShellFolder *psfParent,
+	_In_ PCUITEMID_CHILD pidl,
+	_Outptr_ IShellItem **ppsi
+	)
+#ifdef YY_Thunks_Defined
+;
+#else
+{
+	if (const auto pSHCreateShellItem = try_get_SHCreateShellItem())
+	{
+		return pSHCreateShellItem(pidlParent, psfParent, pidl, ppsi);
+	}
+	
+	*ppsi = nullptr;
+
+	if (pidlParent || psfParent)
+		return internal::SHCreateItemWithParent(pidlParent, psfParent, pidl, __uuidof(IShellItem), (void**)ppsi);
+	else
+		return internal::SHCreateItemFromIDList(pidl, __uuidof(IShellItem), (void**)ppsi);
+}
+#endif
+
+__YY_Thunks_Expand_Function(shell32, SHCreateShellItem, 20);
 
 #endif
 
