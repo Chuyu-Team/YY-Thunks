@@ -9,14 +9,13 @@ namespace YY
 #ifndef YY_Thunks_Defined
 		namespace internal
 		{
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
 			struct KnownFoldersIdKey
 			{
 				GUID rfid;
 				DWORD csidl;
 			};
 
-#define YY_CSIDL_CHECK_WOW64 0x80000000
-#define YY_CSIDL_MASK        0x000000FF
 			static int __fastcall KnownFoldersIdToCSIDL(const GUID& rfid)
 			{
 
@@ -51,7 +50,9 @@ namespace YY
 					{ FOLDERID_InternetFolder, CSIDL_INTERNET },
 					{ FOLDERID_System, CSIDL_SYSTEM },
 					{ FOLDERID_Programs, CSIDL_PROGRAMS },
-					{ FOLDERID_ProgramFilesX64, CSIDL_PROGRAM_FILES | YY_CSIDL_CHECK_WOW64 }, //兼容下，反正 x64路径 跟 普通的是一样的。
+#ifdef _AMD64_
+					{ FOLDERID_ProgramFilesX64, CSIDL_PROGRAM_FILES }, //兼容下，反正 x64路径 跟 普通的是一样的。
+#endif
 					{ FOLDERID_ComputerFolder, CSIDL_DRIVES },
 					{ FOLDERID_CommonAdminTools, CSIDL_COMMON_ADMINTOOLS },
 					{ FOLDERID_Recent, CSIDL_RECENT },
@@ -62,7 +63,9 @@ namespace YY
 					{ FOLDERID_Profile, CSIDL_PROFILE },
 					{ FOLDERID_SampleVideos, CSIDL_COMMON_VIDEO }, //做个兼容处理吧，反正都是放视频的
 					{ FOLDERID_LocalAppDataLow, CSIDL_LOCAL_APPDATA }, //兼容下，直接用AppData
-					{ FOLDERID_ProgramFilesCommonX64, CSIDL_PROGRAM_FILES_COMMON | YY_CSIDL_CHECK_WOW64 }, //兼容下，反正 x64路径 跟 普通的是一样的。
+#ifdef _AMD64_
+					{ FOLDERID_ProgramFilesCommonX64, CSIDL_PROGRAM_FILES_COMMON }, //兼容下，反正 x64路径 跟 普通的是一样的。
+#endif
 					{ FOLDERID_PublicDocuments, CSIDL_COMMON_DOCUMENTS },
 					{ FOLDERID_SystemX86, CSIDL_SYSTEMX86 },
 					{ FOLDERID_PublicMusic, CSIDL_COMMON_MUSIC },
@@ -146,19 +149,7 @@ namespace YY
 
 					if (testIndex == 0)
 					{
-#ifdef _X86_
-						if (KnownFoldersId.csidl & YY_CSIDL_CHECK_WOW64)
-						{
-							SYSTEM_INFO SystemInfo;
-							GetNativeSystemInfo(&SystemInfo);
-
-							if (SystemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
-							{
-								return -1;
-							}
-						}
-#endif
-						return KnownFoldersId.csidl & YY_CSIDL_MASK;
+						return KnownFoldersId.csidl;
 					}
 					if (testIndex < 0)
 						top = middle - 1;
@@ -169,8 +160,6 @@ namespace YY
 				return -1;
 			}
 
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
 			static __forceinline PIDLIST_RELATIVE __fastcall ILCloneParent(LPCITEMIDLIST pidl)
 			{
 				auto pClone = ILClone(pidl);
@@ -453,7 +442,7 @@ SHGetKnownFolderPath(
 
 	if (csidl == -1)
 	{
-		return E_INVALIDARG;
+		return __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 	}
 
 	auto pPathBuffer = (wchar_t*)CoTaskMemAlloc(MAX_PATH * sizeof(wchar_t));
@@ -504,7 +493,7 @@ SHSetKnownFolderPath(
 
 	if (csidl == -1)
 	{
-		return E_INVALIDARG;
+		return __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 	}
 
 	return SHSetFolderPathW(csidl, hToken, dwFlags, pszPath);
@@ -542,7 +531,7 @@ SHGetKnownFolderIDList(
 
 	if (csidl == -1)
 	{
-		return E_INVALIDARG;
+		return __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 	}
 
 	return SHGetFolderLocation(nullptr, csidl, hToken, dwFlags, ppidl);
