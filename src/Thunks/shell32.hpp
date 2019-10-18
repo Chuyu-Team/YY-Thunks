@@ -16,6 +16,7 @@ namespace YY
 				DWORD csidl;
 			};
 
+			//Vista以后的Shell32.dll 有个 kfapi::GetFolderIdByCSIDL，我们可以根据它可以反推出出 下面的KnownFoldersIdToCSIDL
 			static int __fastcall KnownFoldersIdToCSIDL(const GUID& rfid)
 			{
 
@@ -32,9 +33,9 @@ namespace YY
 					{ FOLDERID_PrintersFolder, CSIDL_PRINTERS },
 					{ FOLDERID_Pictures, CSIDL_MYPICTURES },
 					{ FOLDERID_ResourceDir, CSIDL_RESOURCES },
-					{ FOLDERID_CommonStartup, CSIDL_COMMON_STARTUP },
+					{ FOLDERID_CommonStartup, CSIDL_COMMON_STARTUP /*等价CSIDL_COMMON_ALTSTARTUP*/},
 					{ FOLDERID_PublicVideos, CSIDL_COMMON_VIDEO },
-					{ FOLDERID_Desktop, CSIDL_DESKTOP },
+					{ FOLDERID_Desktop, CSIDL_DESKTOP /*等价CSIDL_DESKTOPDIRECTORY*/},
 					{ FOLDERID_History, CSIDL_HISTORY },
 					{ FOLDERID_SamplePictures, CSIDL_COMMON_PICTURES }, //做个兼容处理吧，反正都是放图片的
 					{ FOLDERID_RecycleBinFolder, CSIDL_BITBUCKET },
@@ -42,7 +43,7 @@ namespace YY
 					{ FOLDERID_NetHood, CSIDL_NETHOOD },
 					{ FOLDERID_Cookies, CSIDL_COOKIES },
 					{ FOLDERID_LocalizedResourcesDir, CSIDL_RESOURCES_LOCALIZED },
-					{ FOLDERID_Favorites, CSIDL_FAVORITES },
+					{ FOLDERID_Favorites, CSIDL_FAVORITES /*等价于CSIDL_COMMON_FAVORITES*/},
 					{ FOLDERID_SampleMusic, CSIDL_COMMON_MUSIC }, //做个兼容处理吧，反正都是放音乐的
 					{ FOLDERID_SendTo, CSIDL_SENDTO },
 					{ FOLDERID_AdminTools, CSIDL_ADMINTOOLS },
@@ -71,9 +72,9 @@ namespace YY
 					{ FOLDERID_PublicMusic, CSIDL_COMMON_MUSIC },
 					{ FOLDERID_ProgramFiles, CSIDL_PROGRAM_FILES },
 					{ FOLDERID_Fonts, CSIDL_FONTS },
-					{ FOLDERID_Startup, CSIDL_STARTUP },
+					{ FOLDERID_Startup, CSIDL_STARTUP /*等效CSIDL_ALTSTARTUP*/},
 					{ FOLDERID_StartMenu, CSIDL_STARTMENU },
-					{ FOLDERID_NetworkFolder, CSIDL_NETWORK },
+					{ FOLDERID_NetworkFolder, CSIDL_NETWORK /*等效CSIDL_COMPUTERSNEARME*/},
 					{ FOLDERID_Documents, CSIDL_MYDOCUMENTS },
 					{ FOLDERID_CommonOEMLinks, CSIDL_COMMON_OEM_LINKS },
 					{ FOLDERID_RoamingAppData, CSIDL_APPDATA },
