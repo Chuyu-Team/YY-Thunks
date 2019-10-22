@@ -12,15 +12,15 @@ namespace YY
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 			struct KnownFoldersIdKey
 			{
-				GUID rfid;
-				DWORD csidl;
+				const GUID& rfid;
+				const int csidl;
 			};
 
 			//Vista以后的Shell32.dll 有个 kfapi::GetFolderIdByCSIDL，我们可以根据它可以反推出出 下面的KnownFoldersIdToCSIDL
 			static int __fastcall KnownFoldersIdToCSIDL(const GUID& rfid)
 			{
 
-				static const KnownFoldersIdKey KnownFoldersIdsMap[] =
+				constexpr static const KnownFoldersIdKey KnownFoldersIdsMap[] =
 				{
 					{ FOLDERID_Windows, CSIDL_WINDOWS },
 					{ FOLDERID_ProgramFilesCommon, CSIDL_PROGRAM_FILES_COMMON },

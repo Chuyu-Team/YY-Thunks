@@ -297,9 +297,10 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加SHGetKnownFolderIDList
 
 
-### 1.0.1.18 - 优化实现（2019-10-17 18:00）
+### 1.0.1.19 - 优化实现（2019-10-22 18:00）
 * 解决 Bug，CreateFile2 dwSecurityQosFlags成员可能无法发挥作用问题（感谢 賈可）。
 * 解决 Bug，KnownFoldersIdsMap缺少 FOLDERID_ProgramFilesCommonX86问题（感谢 賈可）。
+* 解决 Bug，KnownFoldersIdsMap会生static静态对象初始化代码问题（感谢 Joe）。
 * 添加 SHBindToFolderIDListParent（感谢 賈可）
 * 添加 SHBindToFolderIDListParentEx（感谢 賈可）
 * 添加 SHBindToObject（感谢 賈可）
