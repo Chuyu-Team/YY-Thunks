@@ -837,6 +837,149 @@ CreateFile2(
 __YY_Thunks_Expand_Function(kernel32, CreateFile2, 20);
 
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+#ifdef YY_Thunks_Defined
+
+enum _FILE_ID_TYPE_win7
+{
+	FileIdType,
+	ObjectIdType,
+	MaximumFileIdType
+};
+
+struct FILE_ID_DESCRIPTOR_win7
+{
+    DWORD dwSize;  // Size of the struct
+    FILE_ID_TYPE Type; // Describes the type of identifier passed in.
+    union {
+        LARGE_INTEGER FileId;
+        GUID ObjectId;
+    } DUMMYUNIONNAME;
+};
+
+#endif
+
+EXTERN_C
+HANDLE
+WINAPI
+OpenFileById(
+    _In_     HANDLE hVolumeHint,
+    _In_     LPFILE_ID_DESCRIPTOR lpFileId,
+    _In_     DWORD dwDesiredAccess,
+    _In_     DWORD dwShareMode,
+    _In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+    _In_     DWORD dwFlagsAndAttributes
+    )
+#ifdef YY_Thunks_Defined
+;
+#else
+{
+	if (auto pOpenFileById = try_get_OpenFileById())
+	{
+		return pOpenFileById(hVolumeHint, lpFileId, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlagsAndAttributes);
+	}
+
+	if (lpFileId == nullptr || lpFileId->dwSize < sizeof(FILE_ID_DESCRIPTOR_win7) || lpFileId->Type >= _FILE_ID_TYPE_win7::MaximumFileIdType)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	const auto pNtCreateFile = try_get_NtCreateFile();
+	if (!pNtCreateFile)
+	{
+		SetLastError(ERROR_FUNCTION_FAILED);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	UNICODE_STRING ObjectName;
+
+	if (FileIdType == lpFileId->Type)
+	{
+		ObjectName.Buffer = (PWSTR)(&lpFileId->FileId);
+		ObjectName.Length = ObjectName.MaximumLength = sizeof(lpFileId->FileId);
+	}
+	else
+	{
+		ObjectName.Buffer = (PWSTR)(&lpFileId->ObjectId);
+		ObjectName.Length = ObjectName.MaximumLength = sizeof(lpFileId->ObjectId);
+	}
+
+	OBJECT_ATTRIBUTES ObjectAttributes = {sizeof(ObjectAttributes), hVolumeHint, &ObjectName,  OBJ_CASE_INSENSITIVE };
+	
+	ULONG CreateOptions = FILE_OPEN_BY_FILE_ID;
+
+	if (FILE_FLAG_WRITE_THROUGH & dwFlagsAndAttributes)
+	{
+		CreateOptions |= FILE_WRITE_THROUGH;
+	}
+
+	if (FILE_FLAG_NO_BUFFERING & dwFlagsAndAttributes)
+	{
+		CreateOptions |= FILE_NO_INTERMEDIATE_BUFFERING;
+	}
+
+	if (FILE_FLAG_SEQUENTIAL_SCAN & dwFlagsAndAttributes)
+	{
+		CreateOptions |= FILE_SEQUENTIAL_ONLY;
+	}
+	
+	if (FILE_FLAG_RANDOM_ACCESS & dwFlagsAndAttributes)
+	{
+		CreateOptions |= FILE_RANDOM_ACCESS;
+	}
+
+	if (FILE_FLAG_BACKUP_SEMANTICS & dwFlagsAndAttributes)
+	{
+		CreateOptions |= FILE_OPEN_FOR_BACKUP_INTENT;
+	}
+
+	if ((FILE_FLAG_OVERLAPPED & dwFlagsAndAttributes) == 0)
+	{
+		CreateOptions |= FILE_SYNCHRONOUS_IO_NONALERT;
+	}
+
+	if (FILE_FLAG_DELETE_ON_CLOSE & dwFlagsAndAttributes)
+	{
+		CreateOptions |= FILE_DELETE_ON_CLOSE;
+		dwDesiredAccess |= DELETE;
+	}
+
+	if (FILE_FLAG_OPEN_REPARSE_POINT & dwFlagsAndAttributes)
+	{
+		CreateOptions |= FILE_OPEN_REPARSE_POINT;
+	}
+
+	if (FILE_FLAG_OPEN_NO_RECALL & dwFlagsAndAttributes)
+	{
+		CreateOptions |= FILE_OPEN_NO_RECALL;
+	}
+
+	HANDLE hFile;
+
+	IO_STATUS_BLOCK IoStatusBlock;
+
+	auto Status = pNtCreateFile(&hFile, dwDesiredAccess, &ObjectAttributes, &IoStatusBlock, nullptr, 0, dwShareMode, FILE_OPEN, CreateOptions, nullptr, 0);
+
+	if (Status < 0)
+	{
+		hFile = INVALID_HANDLE_VALUE;
+		internal::BaseSetLastNTError(Status);
+	}
+
+	return hFile;
+}
+#endif
+
+__YY_Thunks_Expand_Function(kernel32, OpenFileById, 24);
+
+#endif
+
 	}//namespace Thunks
 
 } //namespace YY

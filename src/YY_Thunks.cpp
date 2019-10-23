@@ -16,6 +16,7 @@
 
 //全局可能使用到的函数
 #define _YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)                                                        \
+    _APPLY(NtCreateFile,                                 ntdll                                         ) \
     _APPLY(NtQueryDirectoryFile,                         ntdll                                         ) \
     _APPLY(NtQueryInformationFile,                       ntdll                                         ) \
     _APPLY(NtSetInformationFile,                         ntdll                                         ) \

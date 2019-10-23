@@ -153,6 +153,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [SHCreateItemFromRelativeName](https://docs.microsoft.com/windows/win32/api/shobjidl_core/nf-shobjidl_core-shcreateitemfromrelativename) | 不存在时，调用IShellItem。
 | [SHGetNameFromIDList](https://docs.microsoft.com/windows/win32/api/shobjidl_core/nf-shobjidl_core-shgetnamefromidlist)          | 不存在时，调用IShellItem。
 | [SHCreateShellItem](https://docs.microsoft.com/windows/win32/api/shlobj_core/nf-shlobj_core-shcreateshellitem)                  | 不存在时，调用IShellItem。
+| [OpenFileById](https://docs.microsoft.com/windows/win32/api/winbase/nf-winbase-openfilebyid)                                    | 不存在时，调用NtCreateFile。
 
 
 ## Changes
@@ -297,7 +298,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加SHGetKnownFolderIDList
 
 
-### 1.0.1.19 - 优化实现（2019-10-22 18:00）
+### 1.0.1.20 - 优化实现（2019-10-23 16:00）
 * 解决 Bug，CreateFile2 dwSecurityQosFlags成员可能无法发挥作用问题（感谢 賈可）。
 * 解决 Bug，KnownFoldersIdsMap缺少 FOLDERID_ProgramFilesCommonX86问题（感谢 賈可）。
 * 解决 Bug，KnownFoldersIdsMap会生static静态对象初始化代码问题（感谢 Joe）。
@@ -309,3 +310,4 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加 SHCreateItemFromRelativeName（感谢 賈可）
 * 添加 SHGetNameFromIDList（感谢 賈可）
 * 添加 SHCreateShellItem
+* 添加 OpenFileById
