@@ -747,6 +747,64 @@ RegGetValueA(
 __YY_Thunks_Expand_Function(advapi32, RegGetValueA, 28);
 #endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+EXTERN_C
+LSTATUS
+APIENTRY
+RegCopyTreeW(
+    _In_ HKEY hKeySrc,
+    _In_opt_ LPCWSTR lpSubKey,
+    _In_ HKEY hKeyDest
+    )
+#ifdef YY_Thunks_Defined
+	;
+#else
+{
+	if (auto const pRegCopyTreeW = try_get_RegCopyTreeW())
+	{
+		return pRegCopyTreeW(hKeySrc, lpSubKey, hKeyDest);
+	}
+
+	return SHCopyKeyW(hKeySrc, lpSubKey, hKeyDest, 0);
+}
+#endif
+
+__YY_Thunks_Expand_Function(advapi32, RegCopyTreeW, 12);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008 [desktop apps only]
+
+LSTATUS
+APIENTRY
+RegCopyTreeA(
+    _In_        HKEY     hKeySrc,
+    _In_opt_    LPCSTR  lpSubKey,
+    _In_        HKEY     hKeyDest
+    )
+#ifdef YY_Thunks_Defined
+	;
+#else
+{
+	if (auto const pRegCopyTreeA = try_get_RegCopyTreeA())
+	{
+		return pRegCopyTreeA(hKeySrc, lpSubKey, hKeyDest);
+	}
+
+	return SHCopyKeyA(hKeySrc, lpSubKey, hKeyDest, 0);
+}
+#endif
+
+__YY_Thunks_Expand_Function(advapi32, RegCopyTreeA, 12);
+
+#endif
+
 	}//namespace Thunks
 
 } //namespace YY

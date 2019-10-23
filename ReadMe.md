@@ -3,7 +3,7 @@
 
 
 ## 1. 关于YY-Thunks
-总众所周知Windows XP每个SP都会新增大量API，而Windows 10每次更新又会新增大量API，这使得兼容不同版本的Windows需要大量的判断。
+众所周知Windows XP每个SP都会新增大量API，而Windows 10每次更新又会新增大量API，这使得兼容不同版本的Windows需要大量的判断。
 
 甚至大量开源代码已经不再兼容一些早期的Windows XP版本，比如 Windows XP RTM。难道就没有一种快速高效的方案解决无法定位程序输入点的问题吗？
 
@@ -51,6 +51,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [RegDeleteKeyValueW(A)](https://msdn.microsoft.com/library/ms724848.aspx)                                                      | 调用RegOpenKeyExW(A)以及RegDeleteValueW(A)。
 | [RegDeleteTreeW(A)](https://msdn.microsoft.com/library/aa379776.aspx)                                                          | 调用SHDeleteKeyW(A)。
 | [RegGetValueW(A)](https://msdn.microsoft.com/library/aa379776.aspx)                                                            | 不存在时，调用RegQueryValueExW(A)。
+| [RegCopyTreeW(A)](https://docs.microsoft.com/windows/win32/api/winreg/nf-winreg-regcopytreew)                                  | 不存在时，调用SHCopyKeyW(A)。
 | [IsWow64Process2](https://msdn.microsoft.com/library/windows/desktop/mt804318.aspx)                                            | 不存在时，调用IsWow64Process。
 | [IsWow64GuestMachineSupported](https://msdn.microsoft.com/library/windows/desktop/mt804321.aspx)                               | 不存在时，调用GetNativeSystemInfo。
 | [GetTickCount64](https://msdn.microsoft.com/library/windows/desktop/ms724411.aspx)                                             | 不存在时，调用GetTickCount。
@@ -298,7 +299,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加SHGetKnownFolderIDList
 
 
-### 1.0.1.20 - 优化实现（2019-10-23 16:00）
+### 1.0.1.21 - 优化实现（2019-10-23 16:00）
 * 解决 Bug，CreateFile2 dwSecurityQosFlags成员可能无法发挥作用问题（感谢 賈可）。
 * 解决 Bug，KnownFoldersIdsMap缺少 FOLDERID_ProgramFilesCommonX86问题（感谢 賈可）。
 * 解决 Bug，KnownFoldersIdsMap会生static静态对象初始化代码问题（感谢 Joe）。
@@ -311,3 +312,4 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加 SHGetNameFromIDList（感谢 賈可）
 * 添加 SHCreateShellItem
 * 添加 OpenFileById
+* 添加 RegCopyTreeW(A)（感谢 賈可）
