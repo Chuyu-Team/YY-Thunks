@@ -192,7 +192,7 @@ namespace YY
 
 				IShellFolder *ppshf;
 
-				auto hr = psf ? psf->QueryInterface(&ppshf) : SHGetDesktopFolder(&ppshf);
+				auto hr = psf ? psf->QueryInterface(__uuidof(IShellFolder), (void**)&ppshf) : SHGetDesktopFolder(&ppshf);
 
 				if (SUCCEEDED(hr))
 				{
@@ -314,6 +314,7 @@ namespace YY
 			}
 
 			__forceinline
+			static
 			HRESULT
 			ParseDisplayNameChild(
 				IShellFolder* pShellFolder,
