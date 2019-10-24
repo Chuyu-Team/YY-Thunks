@@ -756,8 +756,9 @@ GetFinalPathNameByHandleA(
 		else
 		{
 			//²Ù×÷³É¹¦£¡
+			const UINT CodePage = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 
-			auto cchReturnANSI = WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, szFilePathUnicode, cchReturn, nullptr, 0, nullptr, nullptr);
+			auto cchReturnANSI = WideCharToMultiByte(CodePage, WC_NO_BEST_FIT_CHARS, szFilePathUnicode, cchReturn, nullptr, 0, nullptr, nullptr);
 
 			if (0 == cchReturnANSI)
 			{
@@ -770,7 +771,7 @@ GetFinalPathNameByHandleA(
 			}
 			else
 			{
-				WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, szFilePathUnicode, cchReturn, lpszFilePath, cchFilePath, nullptr, nullptr);
+				WideCharToMultiByte(CodePage, WC_NO_BEST_FIT_CHARS, szFilePathUnicode, cchReturn, lpszFilePath, cchFilePath, nullptr, nullptr);
 				lpszFilePath[cchReturnANSI] = '\0';
 			}
 
