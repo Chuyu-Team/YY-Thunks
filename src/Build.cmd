@@ -1,4 +1,4 @@
-
+@echo off
 setlocal
 
 ::需要设置LibMaker.exe路径到环境变量Path。
@@ -8,6 +8,7 @@ pushd "%~dp0.."
 
 if "%Platform%"=="" set Platform=x86
 
+md "objs\\%Platform%"
 
 call:Build%Platform%
 
