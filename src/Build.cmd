@@ -1,8 +1,10 @@
 
 setlocal
+>nul 2>&1 chcp 65001
 
-::ÐèÒªÉèÖÃLibMaker.exeÂ·¾¶µ½»·¾³±äÁ¿Path¡£
-::Èç¹ûÄãÐèÒªLibMaker.exe£¬Çë×ÔÐÐµ½ ³õÓê¿ªÔ´ÏîÄ¿½»Á÷QQÈº£¨633710173£©ÈºÎÄ¼þÖÐÏÂÔØ¡£
+@REM éœ€è¦è®¾ç½®LibMaker.exeè·¯å¾„åˆ°çŽ¯å¢ƒå˜é‡Pathã€‚
+
+@REM å¦‚æžœä½ éœ€è¦LibMaker.exeï¼Œè¯·è‡ªè¡Œåˆ° åˆé›¨å¼€æºé¡¹ç›®äº¤æµQQç¾¤ï¼ˆ633710173ï¼‰ç¾¤æ–‡ä»¶ä¸­ä¸‹è½½ã€‚
 
 pushd "%~dp0.."
 
@@ -16,11 +18,14 @@ popd
 
 goto:eof
 
-:: BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6
+@REM BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6
+
 :BuildObj
+>nul 2>&1 md "objs\\%Platform%\\"
 cl /O1 /Os /Oi /GS- /arch:IA32 /Z7 /MT /Fo"objs\\%Platform%\\%1" /Zl /c /D "NDEBUG" /D "YY_Thunks_Support_Version=%2" "%~dp0YY_Thunks.cpp"
 
-::½øÐÐº¯ÊýÃû³Æ½øÐÐÐÞÕý __imp__%s_%u -> __imp__%s@%u
+@REM è¿›è¡Œå‡½æ•°åç§°è¿›è¡Œä¿®æ­£ __imp__%s_%u -> __imp__%s@%u
+
 LibMaker.exe FixObj "%~dp0..\\objs\\%Platform%\\%1"
 
 LibMaker.exe AppendWeak /MACHINE:%Platform% /DEF:"%~dp0def\\%Platform%\\PSAPI2Kernel32.def" /OUT:"%~dp0..\\objs\\%Platform%\\%1"
