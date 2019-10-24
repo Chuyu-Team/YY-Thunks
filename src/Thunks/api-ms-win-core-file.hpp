@@ -898,6 +898,8 @@ OpenFileById(
 		return INVALID_HANDLE_VALUE;
 	}
 
+	dwDesiredAccess |= SYNCHRONIZE | FILE_READ_ATTRIBUTES;
+
 	UNICODE_STRING ObjectName;
 
 	if (FileIdType == lpFileId->Type)
