@@ -17,10 +17,13 @@
 //全局可能使用到的函数
 #define _YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)                                                        \
     _APPLY(NtCreateFile,                                 ntdll                                         ) \
+    _APPLY(NtClose,                                      ntdll                                         ) \
     _APPLY(NtQueryDirectoryFile,                         ntdll                                         ) \
     _APPLY(NtQueryInformationFile,                       ntdll                                         ) \
     _APPLY(NtSetInformationFile,                         ntdll                                         ) \
     _APPLY(RtlNtStatusToDosError,                        ntdll                                         ) \
+    _APPLY(RtlDetermineDosPathNameType_U,                ntdll                                         ) \
+    _APPLY(RtlDosPathNameToNtPathName_U,                 ntdll                                         ) \
     _APPLY(RtlDosPathNameToNtPathName_U_WithStatus,      ntdll                                         ) \
     _APPLY(RtlFreeUnicodeString,                         ntdll                                         ) \
     _APPLY(NtQueryObject,                                ntdll                                         ) \
@@ -28,7 +31,8 @@
     _APPLY(NtQueryInformationProcess,                    ntdll                                         ) \
     _APPLY(NtOpenKeyedEvent,                             ntdll                                         ) \
     _APPLY(NtWaitForKeyedEvent,                          ntdll                                         ) \
-    _APPLY(NtReleaseKeyedEvent,                          ntdll                                         ) 
+    _APPLY(NtReleaseKeyedEvent,                          ntdll                                         ) \
+    _APPLY(RtlAdjustPrivilege,                           ntdll                                         ) 
 
 
 
@@ -131,6 +135,21 @@ namespace YY
 				Timeout->QuadPart = -10000ll * dwMilliseconds;
 
 				return Timeout;
+			}
+
+			static LSTATUS __fastcall Basep8BitStringToDynamicUnicodeString(UNICODE_STRING* pDst, LPCSTR Src)
+			{
+				const UINT CodePage = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
+
+				auto cchDst = MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, Src, -1, pDst->Buffer, pDst->MaximumLength / sizeof(wchar_t));
+				if (cchDst == 0)
+				{
+					return GetLastError();
+				}
+
+				pDst->Length = cchDst * sizeof(wchar_t);
+
+				return ERROR_SUCCESS;
 			}
 
 		}

@@ -2311,22 +2311,22 @@ NtQueryDirectoryFile (
 	EXTERN_C
 	NTSYSAPI
 	NTSTATUS
-		NTAPI
-		NtCreateDirectoryObject(
-			OUT PHANDLE DirectoryHandle,
-			IN ACCESS_MASK DesiredAccess,
-			IN POBJECT_ATTRIBUTES ObjectAttributes
-			);
+	NTAPI
+	NtCreateDirectoryObject(
+		OUT PHANDLE DirectoryHandle,
+		IN ACCESS_MASK DesiredAccess,
+		IN POBJECT_ATTRIBUTES ObjectAttributes
+		);
 
 	EXTERN_C
 	NTSYSAPI
 	NTSTATUS
-		NTAPI
-		NtOpenDirectoryObject(
-			OUT PHANDLE DirectoryHandle,
-			IN ACCESS_MASK DesiredAccess,
-			IN POBJECT_ATTRIBUTES ObjectAttributes
-			);
+	NTAPI
+	NtOpenDirectoryObject(
+		OUT PHANDLE DirectoryHandle,
+		IN ACCESS_MASK DesiredAccess,
+		IN POBJECT_ATTRIBUTES ObjectAttributes
+		);
 
 	typedef struct _OBJECT_DIRECTORY_INFORMATION
 	{
@@ -2337,200 +2337,230 @@ NtQueryDirectoryFile (
 	EXTERN_C
 	NTSYSAPI
 	NTSTATUS
-		NTAPI
-		NtQueryDirectoryObject(
-			HANDLE DirectoryHandle,
-			PVOID Buffer,
-			ULONG Length,
-			BOOLEAN ReturnSingleEntry,
-			BOOLEAN RestartScan,
-			PULONG Context,
-			PULONG ReturnLength
-			);
+	NTAPI
+	NtQueryDirectoryObject(
+		HANDLE DirectoryHandle,
+		PVOID Buffer,
+		ULONG Length,
+		BOOLEAN ReturnSingleEntry,
+		BOOLEAN RestartScan,
+		PULONG Context,
+		PULONG ReturnLength
+		);
 
 
 	EXTERN_C
 	NTSYSAPI
 	VOID
-		NTAPI
-		RtlInitAnsiString(
-			PANSI_STRING DestinationString,
-			PCSTR SourceString
-			);
-
-	EXTERN_C
-	NTSYSAPI
-	NTSTATUS
-		NTAPI
-		RtlAnsiStringToUnicodeString(
-		IN OUT PUNICODE_STRING DestinationString,
-		IN PCANSI_STRING SourceString,
-		IN BOOLEAN AllocateDestinationString
+	NTAPI
+	RtlInitAnsiString(
+		PANSI_STRING DestinationString,
+		PCSTR SourceString
 		);
 
 	EXTERN_C
 	NTSYSAPI
 	NTSTATUS
-		NTAPI
-		RtlDestroyProcessParameters(
-			IN PPROCESS_PARAMETERS_VISTA ProcessParameters
-			);
-
-	EXTERN_C
-	NTSYSAPI
-		BOOLEAN
-		NTAPI
-		RtlDosPathNameToNtPathName_U(
-			IN PCWSTR DosName,
-			OUT PUNICODE_STRING NtName,
-			OUT PCWSTR *DosFilePath OPTIONAL,
-			OUT PUNICODE_STRING NtFilePath OPTIONAL
-			);
-	
-	EXTERN_C
-	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		RtlDosPathNameToNtPathName_U_WithStatus(
-			IN PCWSTR DosName,
-			OUT PUNICODE_STRING NtName,
-			OUT PCWSTR *DosFilePath OPTIONAL,
-			OUT PUNICODE_STRING NtFilePath OPTIONAL
-			);
-
-	EXTERN_C
-	NTSYSAPI
-		BOOLEAN
-		NTAPI
-		RtlDosPathNameToRelativeNtPathName_U(
-			IN PCWSTR DosName,
-			OUT PUNICODE_STRING NtName,
-			OUT PCWSTR *DosFilePath OPTIONAL,
-			OUT PUNICODE_STRING NtFilePath OPTIONAL
-			);
-
-	EXTERN_C
-	NTSYSAPI NTSTATUS NTAPI RtlDosPathNameToRelativeNtPathName_U_WithStatus(IN PCWSTR DosName,
-		OUT PUNICODE_STRING NtName,
-		OUT PCWSTR *DosFilePath OPTIONAL,
-		OUT PUNICODE_STRING NtFilePath OPTIONAL
-	);
-
-	EXTERN_C
-	NTSYSAPI NTSTATUS NTAPI RtlInitUnicodeStringEx(OUT PUNICODE_STRING DestinationString, IN PCWSTR SourceString OPTIONAL);
-
-	EXTERN_C
-	NTSYSAPI
-		VOID
-		NTAPI
-		RtlFreeUnicodeString(
-			PUNICODE_STRING UnicodeString
-			);
-
-	EXTERN_C
-	NTSYSAPI
-		PIMAGE_NT_HEADERS
-		NTAPI
-		RtlImageNtHeader(
-			__in PVOID baseAddress
-			);
-
-	EXTERN_C
-	NTSYSAPI
-		PVOID
-		NTAPI
-		RtlImageDirectoryEntryToData(
-			__in PVOID pBaseAddress,
-			__in BOOLEAN bImageLoaded,
-			__in ULONG dwDirectory,
-			__out PULONG pSize
-			);
-
-	EXTERN_C
-	NTSYSAPI
-		PVOID
-		NTAPI
-		RtlImageDirectoryEntryToDataEx(
-			__in PVOID pBaseAddress,
-			__in BOOLEAN bImageLoaded,
-			__in ULONG dwDirectory,
-			__out PULONG pSize,
-			__out_opt PIMAGE_SECTION_HEADER pSection
-			);
+	NTAPI
+	RtlAnsiStringToUnicodeString(
+	IN OUT PUNICODE_STRING DestinationString,
+	IN PCANSI_STRING SourceString,
+	IN BOOLEAN AllocateDestinationString
+		);
 
 	EXTERN_C
 	NTSYSAPI
 	NTSTATUS
-		NTAPI
-		NtCreateProcess(
-			OUT PHANDLE ProcessHandle,
-			IN ACCESS_MASK DesiredAccess,
-			IN POBJECT_ATTRIBUTES ObjectAttributes,
-			IN HANDLE InheritFromProcessHandle,
-			IN BOOLEAN InheritHandles,
-			IN HANDLE SectionHandle OPTIONAL,
-			IN HANDLE DebugPort OPTIONAL,
-			IN HANDLE ExceptionPort OPTIONAL
-			);
+	NTAPI
+	RtlDestroyProcessParameters(
+		IN PPROCESS_PARAMETERS_VISTA ProcessParameters
+		);
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		NtCreatePort(
-			OUT PHANDLE PortHandle,
-			IN POBJECT_ATTRIBUTES ObjectAttributes,
-			IN ULONG MaxDataSize,
-			IN ULONG MaxMessageSize,
-			IN ULONG Reserved
-			);
+	BOOLEAN
+	NTAPI
+	RtlDosPathNameToNtPathName_U(
+		IN PCWSTR DosName,
+		OUT PUNICODE_STRING NtName,
+		OUT PCWSTR *DosFilePath OPTIONAL,
+		OUT PUNICODE_STRING NtFilePath OPTIONAL
+		);
+	
+	EXTERN_C
+	NTSYSAPI
+	NTSTATUS
+	NTAPI
+	RtlDosPathNameToNtPathName_U_WithStatus(
+		IN PCWSTR DosName,
+		OUT PUNICODE_STRING NtName,
+		OUT PCWSTR *DosFilePath OPTIONAL,
+		OUT PUNICODE_STRING NtFilePath OPTIONAL
+		);
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		NtCreateWaitablePort(
-			OUT PHANDLE PortHandle,
-			IN POBJECT_ATTRIBUTES ObjectAttributes,
-			IN ULONG MaxDataSize,
-			IN ULONG MaxMessageSize,
-			IN ULONG Reserved
-			);
+	BOOLEAN
+	NTAPI
+	RtlDosPathNameToRelativeNtPathName_U(
+		IN PCWSTR DosName,
+		OUT PUNICODE_STRING NtName,
+		OUT PCWSTR *DosFilePath OPTIONAL,
+		OUT PUNICODE_STRING NtFilePath OPTIONAL
+		);
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		NtReplyWaitReceivePort(
-			IN HANDLE PortHandle,
-			OUT PULONG PortIdentifier OPTIONAL,
-			IN PPORT_MESSAGE ReplyMessage OPTIONAL,
-			OUT PPORT_MESSAGE Message
-			);
+	NTSTATUS
+	NTAPI
+	RtlDosPathNameToRelativeNtPathName_U_WithStatus(
+		IN PCWSTR DosName,
+		OUT PUNICODE_STRING NtName,
+		OUT PCWSTR *DosFilePath OPTIONAL,
+		OUT PUNICODE_STRING NtFilePath OPTIONAL
+		);
+
+	enum RTL_PATH_TYPE
+	{
+		RtlPathTypeUnknown,
+		RtlPathTypeUncAbsolute,
+		RtlPathTypeDriveAbsolute,
+		RtlPathTypeDriveRelative,
+		RtlPathTypeRooted,
+		RtlPathTypeRelative,
+		RtlPathTypeLocalDevice,
+		RtlPathTypeRootLocalDevice,
+	};
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		NtReplyPort(
-			IN HANDLE PortHandle,
-			IN PPORT_MESSAGE ReplyMessage
-			);
+	ULONG
+	NTAPI
+	RtlDetermineDosPathNameType_U(
+		IN PCWSTR Path
+		);
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		NtCreateThread(
-			OUT PHANDLE ThreadHandle,
-			IN ACCESS_MASK DesiredAccess,
-			IN POBJECT_ATTRIBUTES ObjectAttributes,
-			IN HANDLE ProcessHandle,
-			OUT PCLIENT_ID ClientId,
-			IN PCONTEXT ThreadContext,
-			IN PINITIAL_TEB UserStack,
-			IN BOOLEAN CreateSuspended
-			);
+	NTSTATUS
+	NTAPI
+	RtlInitUnicodeStringEx(
+		OUT PUNICODE_STRING DestinationString,
+		IN PCWSTR SourceString OPTIONAL
+		);
+
+	EXTERN_C
+	NTSYSAPI
+	VOID
+	NTAPI
+	RtlFreeUnicodeString(
+		PUNICODE_STRING UnicodeString
+		);
+
+	EXTERN_C
+	NTSYSAPI
+	PIMAGE_NT_HEADERS
+	NTAPI
+	RtlImageNtHeader(
+		__in PVOID baseAddress
+		);
+
+	EXTERN_C
+	NTSYSAPI
+	PVOID
+	NTAPI
+	RtlImageDirectoryEntryToData(
+		__in PVOID pBaseAddress,
+		__in BOOLEAN bImageLoaded,
+		__in ULONG dwDirectory,
+		__out PULONG pSize
+		);
+
+	EXTERN_C
+	NTSYSAPI
+	PVOID
+	NTAPI
+	RtlImageDirectoryEntryToDataEx(
+		__in PVOID pBaseAddress,
+		__in BOOLEAN bImageLoaded,
+		__in ULONG dwDirectory,
+		__out PULONG pSize,
+		__out_opt PIMAGE_SECTION_HEADER pSection
+		);
+
+	EXTERN_C
+	NTSYSAPI
+	NTSTATUS
+	NTAPI
+	NtCreateProcess(
+		OUT PHANDLE ProcessHandle,
+		IN ACCESS_MASK DesiredAccess,
+		IN POBJECT_ATTRIBUTES ObjectAttributes,
+		IN HANDLE InheritFromProcessHandle,
+		IN BOOLEAN InheritHandles,
+		IN HANDLE SectionHandle OPTIONAL,
+		IN HANDLE DebugPort OPTIONAL,
+		IN HANDLE ExceptionPort OPTIONAL
+		);
+
+	EXTERN_C
+	NTSYSAPI
+	NTSTATUS
+	NTAPI
+	NtCreatePort(
+		OUT PHANDLE PortHandle,
+		IN POBJECT_ATTRIBUTES ObjectAttributes,
+		IN ULONG MaxDataSize,
+		IN ULONG MaxMessageSize,
+		IN ULONG Reserved
+		);
+
+	EXTERN_C
+	NTSYSAPI
+	NTSTATUS
+	NTAPI
+	NtCreateWaitablePort(
+		OUT PHANDLE PortHandle,
+		IN POBJECT_ATTRIBUTES ObjectAttributes,
+		IN ULONG MaxDataSize,
+		IN ULONG MaxMessageSize,
+		IN ULONG Reserved
+		);
+
+	EXTERN_C
+	NTSYSAPI
+	NTSTATUS
+	NTAPI
+	NtReplyWaitReceivePort(
+		IN HANDLE PortHandle,
+		OUT PULONG PortIdentifier OPTIONAL,
+		IN PPORT_MESSAGE ReplyMessage OPTIONAL,
+		OUT PPORT_MESSAGE Message
+		);
+
+	EXTERN_C
+	NTSYSAPI
+	NTSTATUS
+	NTAPI
+	NtReplyPort(
+		IN HANDLE PortHandle,
+		IN PPORT_MESSAGE ReplyMessage
+		);
+
+	EXTERN_C
+	NTSYSAPI
+	NTSTATUS
+	NTAPI
+	NtCreateThread(
+		OUT PHANDLE ThreadHandle,
+		IN ACCESS_MASK DesiredAccess,
+		IN POBJECT_ATTRIBUTES ObjectAttributes,
+		IN HANDLE ProcessHandle,
+		OUT PCLIENT_ID ClientId,
+		IN PCONTEXT ThreadContext,
+		IN PINITIAL_TEB UserStack,
+		IN BOOLEAN CreateSuspended
+		);
 
 	typedef enum _SECTION_INHERIT {
 		ViewShare = 1,
@@ -2539,96 +2569,96 @@ NtQueryDirectoryFile (
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		NtCreateSection(
-			__out PHANDLE SectionHandle,
-			__in ACCESS_MASK DesiredAccess,
-			__in_opt POBJECT_ATTRIBUTES ObjectAttributes,
-			__in_opt PLARGE_INTEGER MaximumSize,
-			__in ULONG SectionPageProtection,
-			__in ULONG AllocationAttributes,
-			__in_opt HANDLE FileHandle
-			);
+	NTSTATUS
+	NTAPI
+	NtCreateSection(
+		__out PHANDLE SectionHandle,
+		__in ACCESS_MASK DesiredAccess,
+		__in_opt POBJECT_ATTRIBUTES ObjectAttributes,
+		__in_opt PLARGE_INTEGER MaximumSize,
+		__in ULONG SectionPageProtection,
+		__in ULONG AllocationAttributes,
+		__in_opt HANDLE FileHandle
+		);
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		NtOpenSection(
-			__out PHANDLE SectionHandle,
-			__in ACCESS_MASK DesiredAccess,
-			__in POBJECT_ATTRIBUTES ObjectAttributes
-			);
+	NTSTATUS
+	NTAPI
+	NtOpenSection(
+		__out PHANDLE SectionHandle,
+		__in ACCESS_MASK DesiredAccess,
+		__in POBJECT_ATTRIBUTES ObjectAttributes
+		);
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		NtMapViewOfSection(
-			__in HANDLE SectionHandle,
-			__in HANDLE ProcessHandle,
-			__inout PVOID *BaseAddress,
-			__in ULONG_PTR ZeroBits,
-			__in SIZE_T CommitSize,
-			__inout_opt PLARGE_INTEGER SectionOffset,
-			__inout PSIZE_T ViewSize,
-			__in SECTION_INHERIT InheritDisposition,
-			__in ULONG AllocationType,
-			__in ULONG Win32Protect
-			);
+	NTSTATUS
+	NTAPI
+	NtMapViewOfSection(
+		__in HANDLE SectionHandle,
+		__in HANDLE ProcessHandle,
+		__inout PVOID *BaseAddress,
+		__in ULONG_PTR ZeroBits,
+		__in SIZE_T CommitSize,
+		__inout_opt PLARGE_INTEGER SectionOffset,
+		__inout PSIZE_T ViewSize,
+		__in SECTION_INHERIT InheritDisposition,
+		__in ULONG AllocationType,
+		__in ULONG Win32Protect
+		);
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		NtUnmapViewOfSection(
-			__in HANDLE ProcessHandle,
-			__in_opt PVOID BaseAddress
-			);
+	NTSTATUS
+	NTAPI
+	NtUnmapViewOfSection(
+		__in HANDLE ProcessHandle,
+		__in_opt PVOID BaseAddress
+		);
 
 	
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		LdrLoadDll(
-			IN PWCHAR SearchPath OPTIONAL,
-			IN PULONG Flags OPTIONAL,
-			IN PUNICODE_STRING ModuleFileName,
-			OUT HMODULE *ModuleHandle
-			);
+	NTSTATUS
+	NTAPI
+	LdrLoadDll(
+		IN PWCHAR SearchPath OPTIONAL,
+		IN PULONG Flags OPTIONAL,
+		IN PUNICODE_STRING ModuleFileName,
+		OUT HMODULE *ModuleHandle
+		);
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		LdrUnloadDll(
-			IN HANDLE ModuleHandle
-			);
+	NTSTATUS
+	NTAPI
+	LdrUnloadDll(
+		IN HANDLE ModuleHandle
+		);
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		LdrGetLoadDll(
-			IN PWCHAR SearchPath OPTIONAL,
-			IN PULONG Flags OPTIONAL,
-			IN PUNICODE_STRING ModuleFileName,
-			OUT HMODULE *ModuleHandle
-			);
+	NTSTATUS
+	NTAPI
+	LdrGetLoadDll(
+		IN PWCHAR SearchPath OPTIONAL,
+		IN PULONG Flags OPTIONAL,
+		IN PUNICODE_STRING ModuleFileName,
+		OUT HMODULE *ModuleHandle
+		);
 
 	EXTERN_C
 	NTSYSAPI
-		NTSTATUS
-		NTAPI
-		LdrGetProcedureAddress(
-			IN HMODULE ModuleHandle,
-			IN PANSI_STRING FunctionName OPTIONAL,
-			IN WORD Oridinal OPTIONAL,
-			OUT PVOID *FunctionAddress
-			);
+	NTSTATUS
+	NTAPI
+	LdrGetProcedureAddress(
+		IN HMODULE ModuleHandle,
+		IN PANSI_STRING FunctionName OPTIONAL,
+		IN WORD Oridinal OPTIONAL,
+		OUT PVOID *FunctionAddress
+		);
 
 	typedef struct _PROCESS_WINDOW_INFORMATION
 	{

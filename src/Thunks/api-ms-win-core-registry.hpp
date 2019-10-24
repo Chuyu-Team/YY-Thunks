@@ -781,6 +781,7 @@ __YY_Thunks_Expand_Function(advapi32, RegCopyTreeW, 12);
 //Windows Vista [desktop apps only]
 //Windows Server 2008 [desktop apps only]
 
+EXTERN_C
 LSTATUS
 APIENTRY
 RegCopyTreeA(

@@ -879,7 +879,7 @@ OpenFileById(
 ;
 #else
 {
-	if (auto pOpenFileById = try_get_OpenFileById())
+	if (const auto pOpenFileById = try_get_OpenFileById())
 	{
 		return pOpenFileById(hVolumeHint, lpFileId, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlagsAndAttributes);
 	}
@@ -980,6 +980,535 @@ __YY_Thunks_Expand_Function(kernel32, OpenFileById, 24);
 
 #endif
 
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008[desktop apps only]
+
+#ifndef SYMLINK_FLAG_RELATIVE
+#define SYMLINK_FLAG_RELATIVE  1
+#endif
+
+#ifndef YY_Thunks_Defined
+
+namespace internal
+{
+	typedef struct _REPARSE_DATA_BUFFER {
+		ULONG  ReparseTag;
+		USHORT ReparseDataLength;
+		USHORT Reserved;
+		union {
+			struct {
+				USHORT SubstituteNameOffset;
+				USHORT SubstituteNameLength;
+				USHORT PrintNameOffset;
+				USHORT PrintNameLength;
+				ULONG Flags;
+				WCHAR PathBuffer[1];
+			} SymbolicLinkReparseBuffer;
+			struct {
+				USHORT SubstituteNameOffset;
+				USHORT SubstituteNameLength;
+				USHORT PrintNameOffset;
+				USHORT PrintNameLength;
+				WCHAR PathBuffer[1];
+			} MountPointReparseBuffer;
+			struct {
+				UCHAR  DataBuffer[1];
+			} GenericReparseBuffer;
+		} DUMMYUNIONNAME;
+	} REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
+
+	static
+	BOOLEAN
+	APIENTRY
+	CreateSymbolicLinkW_Downlevel(
+		_In_ LPCWSTR lpSymlinkFileName,
+		_In_ LPCWSTR lpTargetFileName,
+		_In_ DWORD dwFlags
+		)
+	{
+		if (lpSymlinkFileName == nullptr || lpTargetFileName == nullptr || (dwFlags&SYMBOLIC_LINK_FLAG_DIRECTORY) != dwFlags)
+		{
+			//参数错误
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return FALSE;
+		}
+
+		const auto pRtlAdjustPrivilege = try_get_RtlAdjustPrivilege();
+		const auto pNtCreateFile = try_get_NtCreateFile();
+		const auto pNtClose = try_get_NtClose();
+		const auto pRtlDetermineDosPathNameType_U = try_get_RtlDetermineDosPathNameType_U();
+		const auto pRtlDosPathNameToNtPathName_U = try_get_RtlDosPathNameToNtPathName_U();
+		const auto pRtlFreeUnicodeString = try_get_RtlFreeUnicodeString();
+		const auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
+		const auto pNtSetInformationFile = try_get_NtSetInformationFile();
+
+		if (pRtlAdjustPrivilege == nullptr || pNtCreateFile == nullptr || pNtClose == nullptr
+			|| pRtlDetermineDosPathNameType_U == nullptr || pRtlDosPathNameToNtPathName_U == nullptr
+			|| pRtlFreeUnicodeString == nullptr || pRtlNtStatusToDosError == nullptr || pNtSetInformationFile == nullptr)
+		{
+			SetLastError(ERROR_FUNCTION_FAILED);
+			return FALSE;
+		}
+
+		if (!ImpersonateSelf(SecurityImpersonation))
+			return FALSE;
+
+
+		LSTATUS lStatus = ERROR_SUCCESS;
+
+		const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+		wchar_t* lpFullTargetFileName = nullptr;
+		REPARSE_DATA_BUFFER* pReparseData = nullptr;
+
+		do
+		{
+			BOOLEAN Enabled = FALSE;
+
+			auto Status = pRtlAdjustPrivilege(SE_CREATE_SYMBOLIC_LINK_PRIVILEGE, TRUE, TRUE, &Enabled);
+			if (Status)
+			{
+				lStatus = pRtlNtStatusToDosError(Status);
+				break;
+			}
+
+			UNICODE_STRING NtName = {};
+			bool bRelative = false;
+
+			auto PathType = pRtlDetermineDosPathNameType_U(lpTargetFileName);
+
+			if (PathType == RtlPathTypeUnknown || PathType == RtlPathTypeRooted || PathType == RtlPathTypeRelative)
+			{
+				bRelative = true;
+				NtName.Buffer = (wchar_t*)lpTargetFileName;
+				NtName.Length = NtName.MaximumLength = wcslen(lpTargetFileName) * sizeof(wchar_t);
+			}
+			else if (PathType == RtlPathTypeDriveRelative)
+			{
+				LPWSTR FilePart = nullptr;
+				auto cchFull = GetFullPathNameW(lpTargetFileName, 0, 0, &FilePart);
+				if (cchFull == 0)
+				{
+					lStatus = GetLastError();
+					break;
+				}
+
+				lpFullTargetFileName = (wchar_t*)HeapAlloc(ProcessHeap, 0, cchFull * sizeof(wchar_t));
+				if (!lpFullTargetFileName)
+				{
+					lStatus = ERROR_NOT_ENOUGH_MEMORY;
+					break;
+				}
+
+				if (GetFullPathNameW(lpTargetFileName, cchFull, lpFullTargetFileName, &FilePart) == 0)
+				{
+					lStatus = GetLastError();
+					break;
+				}
+
+				lpTargetFileName = lpFullTargetFileName;
+			}
+			else
+			{
+				if (!pRtlDosPathNameToNtPathName_U(lpTargetFileName, &NtName, nullptr, nullptr))
+				{
+					lStatus = ERROR_INVALID_PARAMETER;
+					break;
+				}
+			}
+
+			do
+			{
+				auto cbTargetFileName = wcslen(lpTargetFileName) * sizeof(wchar_t);
+
+				auto cBuffer = NtName.Length + cbTargetFileName + UFIELD_OFFSET(REPARSE_DATA_BUFFER, SymbolicLinkReparseBuffer.PathBuffer);
+
+
+				pReparseData = (REPARSE_DATA_BUFFER*)HeapAlloc(ProcessHeap, HEAP_ZERO_MEMORY, cBuffer);
+
+				if (!pReparseData)
+				{
+					lStatus = ERROR_NOT_ENOUGH_MEMORY;
+					break;
+				}
+
+
+				if (bRelative)
+					pReparseData->SymbolicLinkReparseBuffer.Flags |= SYMLINK_FLAG_RELATIVE;
+
+
+				pReparseData->ReparseTag = IO_REPARSE_TAG_SYMLINK;
+
+				pReparseData->ReparseDataLength = cBuffer - UFIELD_OFFSET(REPARSE_DATA_BUFFER, GenericReparseBuffer);
+
+				auto& SymbolicLinkReparseBuffer = pReparseData->SymbolicLinkReparseBuffer;
+
+
+				SymbolicLinkReparseBuffer.SubstituteNameOffset = SymbolicLinkReparseBuffer.PrintNameLength = wcslen(lpTargetFileName) * sizeof(wchar_t);
+				SymbolicLinkReparseBuffer.SubstituteNameLength = NtName.Length;
+
+				memcpy(SymbolicLinkReparseBuffer.PathBuffer, lpTargetFileName, SymbolicLinkReparseBuffer.PrintNameLength);
+				memcpy((byte*)(SymbolicLinkReparseBuffer.PathBuffer) + SymbolicLinkReparseBuffer.PrintNameLength, NtName.Buffer, NtName.Length);
+
+
+				UNICODE_STRING NtSymlinkFileName = {};
+
+				if (!pRtlDosPathNameToNtPathName_U(lpSymlinkFileName, &NtSymlinkFileName, nullptr, nullptr))
+				{
+					lStatus = ERROR_INVALID_PARAMETER;
+					break;
+				}
+
+
+				HANDLE hFile;
+
+				OBJECT_ATTRIBUTES ObjectAttributes = { sizeof(OBJECT_ATTRIBUTES), nullptr, &NtSymlinkFileName, OBJ_CASE_INSENSITIVE };
+				IO_STATUS_BLOCK IoStatusBlock;
+
+				Status = pNtCreateFile(
+					&hFile,
+					FILE_WRITE_ATTRIBUTES | SYNCHRONIZE | DELETE,
+					&ObjectAttributes,
+					&IoStatusBlock,
+					nullptr,
+					FILE_ATTRIBUTE_NORMAL,
+					0,
+					FILE_CREATE,
+					(dwFlags&SYMBOLIC_LINK_FLAG_DIRECTORY) ? FILE_OPEN_REPARSE_POINT | FILE_SYNCHRONOUS_IO_NONALERT | FILE_DIRECTORY_FILE : FILE_OPEN_REPARSE_POINT | FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
+					nullptr,
+					0);
+			
+			
+				if (Status < 0)
+				{
+					lStatus = pRtlNtStatusToDosError(Status);
+				}
+				else
+				{
+					DWORD cRet;
+
+					if (!DeviceIoControl(hFile, FSCTL_SET_REPARSE_POINT, pReparseData, cBuffer, NULL, NULL, &cRet, NULL))
+					{
+						lStatus = GetLastError();
+
+						if (lStatus == ERROR_SUCCESS)
+							lStatus = ERROR_INVALID_FUNCTION;
+
+						//设置失败则删除创建的文件
+						FILE_DISPOSITION_INFORMATION DispositionInformation;
+						DispositionInformation.NeedDeleteFile = TRUE;
+						pNtSetInformationFile(hFile, &IoStatusBlock, &DispositionInformation, sizeof(DispositionInformation), FileDispositionInformation);
+					}
+
+
+					pNtClose(hFile);
+				}
+
+				pRtlFreeUnicodeString(&NtSymlinkFileName);
+			} while (false);
+
+
+			if (!bRelative)
+				pRtlFreeUnicodeString(&NtName);
+
+
+		} while (false);
+
+		if (pReparseData)
+			HeapFree(ProcessHeap, 0, pReparseData);
+
+		if(lpFullTargetFileName)
+			HeapFree(ProcessHeap, 0, lpFullTargetFileName);
+
+		RevertToSelf();
+
+		if (lStatus)
+		{
+			SetLastError(lStatus);
+			return FALSE;
+		}
+		else
+		{
+			return TRUE;
+		}
+	}
+}
+
+#endif
+
+EXTERN_C
+BOOLEAN
+APIENTRY
+CreateSymbolicLinkW(
+    _In_ LPCWSTR lpSymlinkFileName,
+    _In_ LPCWSTR lpTargetFileName,
+    _In_ DWORD dwFlags
+    )
+#ifdef YY_Thunks_Defined
+	;
+#else
+{
+	if (const auto pCreateSymbolicLinkW = try_get_CreateSymbolicLinkW())
+	{
+		return pCreateSymbolicLinkW(lpSymlinkFileName, lpTargetFileName, dwFlags);
+	}
+
+	return internal::CreateSymbolicLinkW_Downlevel(lpSymlinkFileName, lpTargetFileName, dwFlags);
+}
+#endif
+
+__YY_Thunks_Expand_Function(kernel32, CreateSymbolicLinkW, 12);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+//Windows Vista [desktop apps only]
+//Windows Server 2008[desktop apps only]
+
+EXTERN_C
+BOOLEAN
+APIENTRY
+CreateSymbolicLinkA(
+    _In_ LPCSTR lpSymlinkFileName,
+    _In_ LPCSTR lpTargetFileName,
+    _In_ DWORD dwFlags
+    )
+#ifdef YY_Thunks_Defined
+	;
+#else
+{
+	if (const auto pCreateSymbolicLinkA = try_get_CreateSymbolicLinkA())
+	{
+		return pCreateSymbolicLinkA(lpSymlinkFileName, lpTargetFileName, dwFlags);
+	}
+
+	LSTATUS lStatus;
+	
+	do
+	{
+		if (lpSymlinkFileName == nullptr || lpTargetFileName == nullptr)
+		{
+			//参数错误
+			lStatus = ERROR_INVALID_PARAMETER;
+			break;
+		}
+
+		wchar_t SymlinkFileNameBuffer[1024];
+
+		UNICODE_STRING SymlinkFileName = { 0, sizeof(SymlinkFileNameBuffer), SymlinkFileNameBuffer };
+
+		lStatus = internal::Basep8BitStringToDynamicUnicodeString(&SymlinkFileName, lpSymlinkFileName);
+
+		if (lStatus != ERROR_SUCCESS)
+		{
+			break;
+		}
+
+		wchar_t TargetFileNameBuffer[1024];
+		UNICODE_STRING TargetFileName = { 0, sizeof(TargetFileNameBuffer), TargetFileNameBuffer };
+
+		lStatus = internal::Basep8BitStringToDynamicUnicodeString(&TargetFileName, lpTargetFileName);
+
+		if (lStatus != ERROR_SUCCESS)
+		{
+			break;
+		}
+
+		return internal::CreateSymbolicLinkW_Downlevel(SymlinkFileName.Buffer, TargetFileName.Buffer, dwFlags);
+
+	} while (false);
+
+
+	SetLastError(lStatus);
+
+	return FALSE;
+}
+#endif
+
+__YY_Thunks_Expand_Function(kernel32, CreateSymbolicLinkA, 12);
+
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
+//Windows Vista [desktop apps only]
+//Windows Server 2003 [desktop apps only]
+
+EXTERN_C
+HANDLE
+WINAPI
+ReOpenFile(
+    _In_ HANDLE  hOriginalFile,
+    _In_ DWORD   dwDesiredAccess,
+    _In_ DWORD   dwShareMode,
+    _In_ DWORD   dwFlagsAndAttributes
+    )
+#ifdef YY_Thunks_Defined
+	;
+#else
+{
+	if (const auto pReOpenFile = try_get_ReOpenFile())
+	{
+		return pReOpenFile(hOriginalFile, dwDesiredAccess, dwShareMode, dwFlagsAndAttributes);
+	}
+
+	NTSTATUS Status;
+
+	do
+	{
+		const auto pNtCreateFile = try_get_NtCreateFile();
+		if (!pNtCreateFile)
+		{
+			Status = STATUS_INVALID_INFO_CLASS;
+			break;
+		}
+
+
+		if (size_t(hOriginalFile) & 0x10000003 == 3)
+		{
+			Status = STATUS_INVALID_HANDLE;
+			break;
+		}
+
+		if (dwFlagsAndAttributes & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_TEMPORARY | FILE_ATTRIBUTE_SPARSE_FILE | FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_COMPRESSED | FILE_ATTRIBUTE_OFFLINE | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_ENCRYPTED))
+		{
+			Status = STATUS_INVALID_PARAMETER;
+			break;
+		}
+
+		ULONG CreateOptions = FILE_NON_DIRECTORY_FILE;
+
+		if (FILE_FLAG_WRITE_THROUGH & dwFlagsAndAttributes)
+		{
+			CreateOptions |= FILE_WRITE_THROUGH;
+		}
+
+		if (FILE_FLAG_NO_BUFFERING & dwFlagsAndAttributes)
+		{
+			CreateOptions |= FILE_NO_INTERMEDIATE_BUFFERING;
+		}
+
+		if (FILE_FLAG_SEQUENTIAL_SCAN & dwFlagsAndAttributes)
+		{
+			CreateOptions |= FILE_SEQUENTIAL_ONLY;
+		}
+
+		if (FILE_FLAG_RANDOM_ACCESS & dwFlagsAndAttributes)
+		{
+			CreateOptions |= FILE_RANDOM_ACCESS;
+		}
+		
+		if (FILE_FLAG_BACKUP_SEMANTICS & dwFlagsAndAttributes)
+		{
+			CreateOptions |= FILE_OPEN_FOR_BACKUP_INTENT;
+		}
+		
+		if ((FILE_FLAG_OVERLAPPED & dwFlagsAndAttributes) == 0)
+		{
+			CreateOptions |= FILE_SYNCHRONOUS_IO_NONALERT;
+		}
+
+		if (FILE_FLAG_OPEN_NO_RECALL & dwFlagsAndAttributes)
+		{
+			CreateOptions |= FILE_OPEN_NO_RECALL;
+		}
+
+		if (FILE_FLAG_OPEN_REPARSE_POINT & dwFlagsAndAttributes)
+		{
+			CreateOptions |= FILE_OPEN_REPARSE_POINT;
+		}
+
+		if (FILE_FLAG_DELETE_ON_CLOSE & dwFlagsAndAttributes)
+		{
+			CreateOptions |= FILE_DELETE_ON_CLOSE;
+			dwDesiredAccess |= DELETE;
+		}
+
+		dwDesiredAccess |= SYNCHRONIZE | FILE_READ_ATTRIBUTES;
+
+		UNICODE_STRING ObjectName = { 0, 2, (PWSTR)L"" };
+		SECURITY_QUALITY_OF_SERVICE SecurityQualityOfService;
+
+		SecurityQualityOfService.Length = sizeof(SecurityQualityOfService);
+
+		if (FILE_FLAG_OPEN_NO_RECALL & dwFlagsAndAttributes)
+		{
+			SecurityQualityOfService.ImpersonationLevel = SECURITY_IMPERSONATION_LEVEL((dwFlagsAndAttributes >> 16) & 0x3);
+
+			if (FILE_FLAG_OPEN_REQUIRING_OPLOCK & dwFlagsAndAttributes)
+			{
+				SecurityQualityOfService.ContextTrackingMode = TRUE;
+			}
+			else
+			{
+				SecurityQualityOfService.ContextTrackingMode = FALSE;
+			}
+
+
+			if (FILE_FLAG_FIRST_PIPE_INSTANCE & dwFlagsAndAttributes)
+			{
+				SecurityQualityOfService.EffectiveOnly = TRUE;
+			}
+			else
+			{
+				SecurityQualityOfService.EffectiveOnly = FALSE;
+			}
+		}
+		else
+		{
+			SecurityQualityOfService.ImpersonationLevel = SecurityImpersonation;
+			SecurityQualityOfService.ContextTrackingMode = TRUE;
+			SecurityQualityOfService.EffectiveOnly = TRUE;
+		}
+
+		OBJECT_ATTRIBUTES ObjectAttributes =
+		{
+			sizeof(ObjectAttributes),
+			hOriginalFile,
+			&ObjectName,
+			FILE_FLAG_POSIX_SEMANTICS & dwFlagsAndAttributes ? 0ul : OBJ_CASE_INSENSITIVE,
+			nullptr,
+			&SecurityQualityOfService
+		};
+
+
+		IO_STATUS_BLOCK IoStatusBlock;
+
+		HANDLE hFile;
+
+		Status = pNtCreateFile(
+			&hFile,
+			dwDesiredAccess,
+			&ObjectAttributes,
+			&IoStatusBlock,
+			nullptr,
+			0,
+			dwShareMode,
+			FILE_OPEN,
+			CreateOptions,
+			nullptr,
+			0);
+
+		if (Status >= 0)
+		{
+			return hFile;
+		}
+
+
+	} while (false);
+
+
+	internal::BaseSetLastNTError(Status);
+
+	return INVALID_HANDLE_VALUE;
+}
+#endif
+
+__YY_Thunks_Expand_Function(kernel32, ReOpenFile, 16);
+
+#endif
 	}//namespace Thunks
 
 } //namespace YY
