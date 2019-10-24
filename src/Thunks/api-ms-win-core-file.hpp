@@ -1300,7 +1300,7 @@ CreateSymbolicLinkA(
 
 		UNICODE_STRING SymlinkFileName = { 0, sizeof(SymlinkFileNameBuffer), SymlinkFileNameBuffer };
 
-		lStatus = internal::Basep8BitStringToDynamicUnicodeString(&SymlinkFileName, lpSymlinkFileName);
+		lStatus = internal::Basep8BitStringToStaticUnicodeString(&SymlinkFileName, lpSymlinkFileName);
 
 		if (lStatus != ERROR_SUCCESS)
 		{
@@ -1310,7 +1310,7 @@ CreateSymbolicLinkA(
 		wchar_t TargetFileNameBuffer[1024];
 		UNICODE_STRING TargetFileName = { 0, sizeof(TargetFileNameBuffer), TargetFileNameBuffer };
 
-		lStatus = internal::Basep8BitStringToDynamicUnicodeString(&TargetFileName, lpTargetFileName);
+		lStatus = internal::Basep8BitStringToStaticUnicodeString(&TargetFileName, lpTargetFileName);
 
 		if (lStatus != ERROR_SUCCESS)
 		{

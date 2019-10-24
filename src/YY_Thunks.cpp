@@ -137,7 +137,7 @@ namespace YY
 				return Timeout;
 			}
 
-			static LSTATUS __fastcall Basep8BitStringToDynamicUnicodeString(UNICODE_STRING* pDst, LPCSTR Src)
+			static LSTATUS __fastcall Basep8BitStringToStaticUnicodeString(UNICODE_STRING* pDst, LPCSTR Src)
 			{
 				const UINT CodePage = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 
