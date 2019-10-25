@@ -830,44 +830,92 @@ EnumCalendarInfoExEx(
 		return pEnumCalendarInfoExEx(pCalInfoEnumProcExEx, lpLocaleName, Calendar, lpReserved, CalType, lParam);
 	}
 
-	if (pCalInfoEnumProcExEx == nullptr)
+	LSTATUS lStatus;
+
+	do
 	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
-	}
+		if (pCalInfoEnumProcExEx == nullptr)
+		{
+			lStatus = ERROR_INVALID_PARAMETER;
+			break;
+		}
 
-	auto Locale = LocaleNameToLCID(lpLocaleName, 0);
+		auto Locale = LocaleNameToLCID(lpLocaleName, 0);
 
-	if (Locale == 0)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
-	}
+		if (Locale == 0)
+		{
+			lStatus = ERROR_INVALID_PARAMETER;
+			break;
+		}
 
-	//保存上下文
-	auto pContext = internal::BaseGetThreadContext();
+#if defined(_X86_)
+		constexpr const auto lParamOffset = 1;
+		constexpr const auto pCallBackOffset = 16;
 
-	auto pCalInfoEnumProcExExTmp = pContext->pCalInfoEnumProcExEx;
-	pContext->pCalInfoEnumProcExEx = pCalInfoEnumProcExEx;
+		static constexpr const byte ThunkData[] =
+		{
+			//lpCalendarInfoString = 0Ch + 4h
+			//Calendar             = 08h + 8h
+			0x68, 0x00, 0x00, 0x00, 0x00,       // push    lParam                              ; lParam
+			0x6A, 0x00,                         // push    0                                   ; lpReserved
+			0xFF, 0x74, 0x24, 0x10,             // push    dword ptr Calendar[esp]             ; Calendar
+			0xFF, 0x74, 0x24, 0x10,             // push    dword ptr lpCalendarInfoString[esp] ; lpCalendarInfoString
 
-	auto lParamTmp = pContext->lParam;
-	pContext->lParam = lParam;
+			0xB8, 0x00, 0x00, 0x00, 0x00,       // mov     eax, pCalInfoEnumProcExEx
+			0xFF, 0xD0,                         // call    eax
+			0xC2, 0x08, 0x00,                   // retn    8
+		};
+#elif defined(_AMD64_)
+		constexpr const auto lParamOffset = 2;
+		constexpr const auto pCallBackOffset = 15;
 
-	auto bSuccess = EnumCalendarInfoExW(
-			[](LPWSTR lpCalendarInfoString, CALID Calendar)->BOOL
-			{
-				auto pContext = internal::BaseGetThreadContext();
-				return pContext->pCalInfoEnumProcExEx(lpCalendarInfoString, Calendar, nullptr, pContext->lParam);
-			},
+		static constexpr const byte ThunkData[] =
+		{
+			//lpCalendarInfoString = rcx
+			//Calendar             = edx
+			0x49, 0xB9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     r9, lParam
+			0x45, 0x33, 0xC0,                                           // xor     r8d, r8d                 ; lpReserved
+
+			0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     rax, pCalInfoEnumProcExEx
+			0xFF, 0xE0,                                                 // jmp     rax
+		};
+#endif
+
+		auto pFun = (byte*)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
+
+		if (!pFun)
+		{
+			lStatus = ERROR_NOT_ENOUGH_MEMORY;
+			break;
+		}
+
+		memcpy(pFun, ThunkData, sizeof(ThunkData));
+		*(size_t*)(pFun + lParamOffset) = lParam;
+		*(size_t*)(pFun + pCallBackOffset) = (size_t)pCalInfoEnumProcExEx;
+
+		DWORD flOldProtect;
+		VirtualProtect(pFun, sizeof(ThunkData), PAGE_EXECUTE_READ, &flOldProtect);
+
+		auto bSuccess = EnumCalendarInfoExW(
+			(CALINFO_ENUMPROCEXW)pFun,
 			Locale,
 			Calendar,
 			CalType);
 
-	//恢复上下文
-	pContext->pCalInfoEnumProcExEx = pCalInfoEnumProcExExTmp;
-	pContext->lParam = lParamTmp;
+		lStatus = bSuccess ? ERROR_SUCCESS : GetLastError();
 
-	return bSuccess;
+		VirtualFree(pFun, 0, MEM_RELEASE);
+	} while (false);
+
+	if (lStatus == ERROR_SUCCESS)
+	{
+		return TRUE;
+	}
+	else
+	{
+		SetLastError(lStatus);
+		return FALSE;
+	}
 }
 #endif
 
@@ -897,44 +945,89 @@ EnumDateFormatsExEx(
 		return pEnumDateFormatsExEx(lpDateFmtEnumProcExEx, lpLocaleName, dwFlags, lParam);
 	}
 
-	if (lpDateFmtEnumProcExEx == nullptr)
+	LSTATUS lStatus;
+
+	do
 	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
-	}
+		if (lpDateFmtEnumProcExEx == nullptr)
+		{
+			lStatus = ERROR_INVALID_PARAMETER;
+			break;
+		}
 
-	auto Locale = LocaleNameToLCID(lpLocaleName, 0);
+		auto Locale = LocaleNameToLCID(lpLocaleName, 0);
 
-	if (Locale == 0)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
-	}
+		if (Locale == 0)
+		{
+			lStatus = ERROR_INVALID_PARAMETER;
+			break;
+		}
 
-	//保存上下文
-	auto pContext = internal::BaseGetThreadContext();
+#if defined(_X86_)
+		constexpr const auto lParamOffset = 1;
+		constexpr const auto pCallBackOffset = 14;
 
-	auto lpDateFmtEnumProcExExTmp = pContext->lpDateFmtEnumProcExEx;
-	pContext->lpDateFmtEnumProcExEx = lpDateFmtEnumProcExEx;
+		static constexpr const byte ThunkData[] =
+		{
+			//lpDateFormatString = 08h + 4h
+			//CalendarID         = 04h + 8h
+			0x68, 0x00, 0x00, 0x00, 0x00,       // push    lParam                              ; lParam
+			0xFF, 0x74, 0x24, 0x0C,             // push    dword ptr CalendarID[esp]           ; CalendarID
+			0xFF, 0x74, 0x24, 0x0C,             // push    dword ptr lpDateFormatString[esp]   ; lpDateFormatString
 
-	auto lParamTmp = pContext->lParam;
-	pContext->lParam = lParam;
+			0xB8, 0x00, 0x00, 0x00, 0x00,       // mov     eax, lpDateFmtEnumProcExEx
+			0xFF, 0xD0,                         // call    eax
+			0xC2, 0x08, 0x00,                   // retn    8
+		};
+#elif defined(_AMD64_)
+		constexpr const auto lParamOffset = 2;
+		constexpr const auto pCallBackOffset = 12;
 
-	auto pSuccess = EnumDateFormatsExW(
-			[](LPWSTR lpDateFormatString, CALID CalendarID)->BOOL
-			{
-				auto pContext = internal::BaseGetThreadContext();
-				return pContext->lpDateFmtEnumProcExEx(lpDateFormatString, CalendarID, pContext->lParam);
-			},
+		static constexpr const byte ThunkData[] =
+		{
+			//lpDateFormatString = rcx
+			//CalendarID         = edx
+			0x49, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     r8, lParam
+
+			0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     rax, lpDateFmtEnumProcExEx
+			0xFF, 0xE0,                                                 // jmp     rax
+		};
+#endif
+
+		auto pFun = (byte*)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
+
+		if (!pFun)
+		{
+			lStatus = ERROR_NOT_ENOUGH_MEMORY;
+			break;
+		}
+
+		memcpy(pFun, ThunkData, sizeof(ThunkData));
+		*(size_t*)(pFun + lParamOffset) = lParam;
+		*(size_t*)(pFun + pCallBackOffset) = (size_t)lpDateFmtEnumProcExEx;
+
+		DWORD flOldProtect;
+		VirtualProtect(pFun, sizeof(ThunkData), PAGE_EXECUTE_READ, &flOldProtect);
+
+		auto bSuccess = EnumDateFormatsExW(
+			(DATEFMT_ENUMPROCEXW)pFun,
 			Locale,
 			dwFlags);
 
+		lStatus = bSuccess ? ERROR_SUCCESS : GetLastError();
 
-	//恢复上下文
-	pContext->lpDateFmtEnumProcExEx = lpDateFmtEnumProcExExTmp;
-	pContext->lParam = lParamTmp;
+		VirtualFree(pFun, 0, MEM_RELEASE);
+	} while (false);
 
-	return pSuccess;
+	if (lStatus == ERROR_SUCCESS)
+	{
+		return TRUE;
+	}
+	else
+	{
+		SetLastError(lStatus);
+		return FALSE;
+	}
 }
 #endif
 

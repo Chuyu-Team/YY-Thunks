@@ -104,24 +104,6 @@ namespace YY
 				return lStatus;
 			}
 
-			EXTERN_C typedef struct _ThreadContext
-			{
-				union
-				{
-					CALINFO_ENUMPROCEXEX pCalInfoEnumProcExEx;
-					DATEFMT_ENUMPROCEXEX lpDateFmtEnumProcExEx;
-				};
-
-				LPARAM lParam;
-			} ThreadContext;
-
-			static ThreadContext* __fastcall BaseGetThreadContext()
-			{
-				static thread_local ThreadContext ThreadContext = {};
-
-				return &ThreadContext;
-			}
-
 			static void __fastcall RaiseStatus(NTSTATUS Status)
 			{
 				RaiseException(Status, EXCEPTION_NONCONTINUABLE, 0, NULL);
