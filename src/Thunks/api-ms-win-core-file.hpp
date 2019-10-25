@@ -1369,7 +1369,7 @@ ReOpenFile(
 		}
 
 
-		if (size_t(hOriginalFile) & 0x10000003 == 3)
+		if ((size_t(hOriginalFile) & 0x10000003) == 3)
 		{
 			Status = STATUS_INVALID_HANDLE;
 			break;
