@@ -1298,7 +1298,7 @@ CreateSymbolicLinkA(
 			break;
 		}
 
-		wchar_t SymlinkFileNameBuffer[1024];
+		wchar_t SymlinkFileNameBuffer[512];
 
 		UNICODE_STRING SymlinkFileName = { 0, sizeof(SymlinkFileNameBuffer), SymlinkFileNameBuffer };
 
@@ -1309,7 +1309,7 @@ CreateSymbolicLinkA(
 			break;
 		}
 
-		wchar_t TargetFileNameBuffer[1024];
+		wchar_t TargetFileNameBuffer[512];
 		UNICODE_STRING TargetFileName = { 0, sizeof(TargetFileNameBuffer), TargetFileNameBuffer };
 
 		lStatus = internal::Basep8BitStringToStaticUnicodeString(&TargetFileName, lpTargetFileName);
