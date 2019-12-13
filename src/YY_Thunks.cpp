@@ -61,6 +61,7 @@
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "version.lib")
 #pragma comment(lib, "ole32.lib")
+#pragma comment(lib, "shell32.lib")
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
