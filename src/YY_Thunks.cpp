@@ -36,12 +36,18 @@
 
 
 
+#include <sdkddkver.h>
+
 #ifndef YY_Thunks_Support_Version
 #define YY_Thunks_Support_Version WDK_NTDDI_VERSION
 #endif
 
 #define _WINSOCKAPI_
 #define PSAPI_VERSION 1
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#define INITKNOWNFOLDERS
+#endif
 
 #define _Disallow_YY_KM_Namespace
 #include "km.h"
