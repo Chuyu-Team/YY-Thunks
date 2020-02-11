@@ -779,7 +779,7 @@ SHGetNameFromIDList(
 		return pSHGetNameFromIDList(pidl, sigdnName, ppszName);
 	}
 
-	*ppszName = L'\0';
+	*ppszName = NULL;
 
 	IShellItem* ppsi;
 
