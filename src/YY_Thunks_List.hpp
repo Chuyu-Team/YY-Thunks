@@ -19,6 +19,9 @@
 #include "Thunks/api-ms-win-core-version.hpp"
 #include "Thunks/api-ms-win-core-interlocked.hpp"
 #include "Thunks/api-ms-win-core-io.hpp"
+#include "Thunks/api-ms-win-core-string.hpp"
+#include "Thunks/api-ms-win-core-winrt.hpp"
+#include "Thunks/api-ms-win-core-winrt-string.hpp"
 
 
 

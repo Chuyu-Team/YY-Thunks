@@ -157,6 +157,8 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [OpenFileById](https://docs.microsoft.com/windows/win32/api/winbase/nf-winbase-openfilebyid)                                    | 不存在时，调用NtCreateFile。
 | [CreateSymbolicLinkW(A)](https://docs.microsoft.com/windows/win32/api/winbase/nf-winbase-createsymboliclinkw)                   | 不存在时，调用DeviceIoControl。
 | [ReOpenFile](https://docs.microsoft.com/windows/win32/api/winbase/nf-winbase-reopenfile)                                        | 不存在时，调用NtCreateFile。
+| [CompareStringEx](https://docs.microsoft.com/windows/win32/api/stringapiset/nf-stringapiset-comparestringex)                    | 不存在时，调用CompareStringW。
+| [CompareStringOrdinal](https://docs.microsoft.com/windows/win32/api/stringapiset/nf-stringapiset-comparestringordinal)          | 不存在时，使用内置UnicodeCaseTableData实现。
 
 
 ## Changes
@@ -318,3 +320,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加 RegCopyTreeW(A)（感谢 賈可）
 * 添加 CreateSymbolicLinkW(A)
 * 添加 ReOpenFile
+
+### 1.0.2.1 - 扩充实现（2020-02-11 19:30）
+* 添加 CompareStringEx
+* 添加 CompareStringOrdinal
