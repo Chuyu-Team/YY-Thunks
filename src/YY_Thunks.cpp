@@ -85,7 +85,8 @@
 		return reinterpret_cast<decltype(_FUNCTION)*>(try_get_function(                        \
 		&_CRT_CONCATENATE( pFun_ ,_FUNCTION),                                                  \
 		_CRT_STRINGIZE(_FUNCTION),                                                             \
-		_MODULE));                                                                             \
+        _CRT_CONCATENATE(try_get_module_, _MODULE)(),                                          \
+        _CRT_CONCATENATE(module_name_, _MODULE)));                                             \
 	}
 #include "YY_Thunks_List.hpp"
 

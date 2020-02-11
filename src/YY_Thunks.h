@@ -26,7 +26,7 @@
 
 #pragma comment(linker, "/merge:.YYThu=.data")
 
-
+__declspec(allocate(".YYThu$AAA")) static void* __YY_THUNKS_MODULE_START[] = { nullptr };
 __declspec(allocate(".YYThu$AAB")) static void* __YY_THUNKS_FUN_START[] = { nullptr }; //鸭船指针缓存开始位置
 __declspec(allocate(".YYThu$AAC")) static void* __YY_THUNKS_FUN_END[] = { nullptr };   //鸭船指针缓存结束位置
 
@@ -53,25 +53,11 @@ EXTERN_C const DWORD __YY_Thunks_Installed = YY_Thunks_Support_Version;
 static HANDLE _GlobalKeyedEventHandle;
 #endif
 
-enum module_id : unsigned
-{
-#define _APPLY(_SYMBOL, _NAME) _SYMBOL,
+
+#define _APPLY(_SYMBOL, _NAME) \
+    constexpr const wchar_t* _CRT_CONCATENATE(module_name_, _SYMBOL) = _CRT_WIDE(_NAME);
 	_YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)
 #undef _APPLY
-
-	module_id_count
-};
-
-
-static constexpr wchar_t const* const module_names[module_id_count] =
-{
-#define _APPLY(_SYMBOL, _NAME) _CRT_WIDE(_NAME),
-	_YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)
-#undef _APPLY
-};
-
-__declspec(allocate(".YYThu$AAA"))
-static HMODULE module_handles[module_id_count];
 
 #define _APPLY(_FUNCTION, _MODULES) \
     using _CRT_CONCATENATE(_FUNCTION, _pft) = decltype(_FUNCTION)*;
@@ -251,10 +237,10 @@ static HMODULE __fastcall try_load_library_from_system_directory(wchar_t const* 
 }
 
 
-static HMODULE __fastcall try_get_module(module_id const id) noexcept
+static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name) noexcept
 {
 	// First check to see if we've cached the module handle:
-	if (HMODULE const cached_handle = __crt_interlocked_read_pointer(module_handles + id))
+	if (HMODULE const cached_handle = __crt_interlocked_read_pointer(pModule))
 	{
 		if (cached_handle == INVALID_HANDLE_VALUE)
 		{
@@ -267,10 +253,10 @@ static HMODULE __fastcall try_get_module(module_id const id) noexcept
 	// If we haven't yet cached the module handle, try to load the library.  If
 	// this fails, cache the sentinel handle value INVALID_HANDLE_VALUE so that
 	// we don't attempt to load the module again:
-	HMODULE const new_handle = try_load_library_from_system_directory(module_names[id]);
+	HMODULE const new_handle = try_load_library_from_system_directory(module_name);
 	if (!new_handle)
 	{
-		if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(module_handles + id, INVALID_HANDLE_VALUE))
+		if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(pModule, INVALID_HANDLE_VALUE))
 		{
 			_ASSERTE(cached_handle == INVALID_HANDLE_VALUE);
 		}
@@ -282,7 +268,7 @@ static HMODULE __fastcall try_get_module(module_id const id) noexcept
 	// null handle, then some other thread loaded the module and cached the
 	// handle while we were doing the same.  In that case, we free the handle
 	// once to maintain the reference count:
-	if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(module_handles + id, new_handle))
+	if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(pModule, new_handle))
 	{
 		_ASSERTE(cached_handle == new_handle);
 		FreeLibrary(new_handle);
@@ -291,14 +277,23 @@ static HMODULE __fastcall try_get_module(module_id const id) noexcept
 	return new_handle;
 }
 
+#define _APPLY(_MODULE, _NAME)                                                                 \
+    static volatile HMODULE* __fastcall _CRT_CONCATENATE(try_get_module_, _MODULE)() noexcept  \
+    {                                                                                          \
+        __declspec(allocate(".YYThu$AAA")) static volatile HMODULE hModule;                    \
+        return &hModule;                                                                       \
+    }
+_YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)
+#undef _APPLY
 
 
 static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
-	char      const* const name,
-	module_id        const module_id
+	volatile HMODULE* pModule,
+	const wchar_t* module_name,
+	char      const* const name
 ) noexcept
 {
-	HMODULE const module_handle = try_get_module(module_id);
+	HMODULE const module_handle = try_get_module(pModule, module_name);
 	if (!module_handle)
 	{
 		return nullptr;
@@ -318,7 +313,8 @@ static int __cdecl _YY_initialize_winapi_thunks();
 static void* __fastcall try_get_function(
 	void**      ppFunAddress,
 	char      const* const name,
-	module_id        const module_id
+	volatile HMODULE* pModule,
+	const wchar_t* module_name
 ) noexcept
 {
 	//尝试初始化YY-Thunks，避免还未初始化问题。
@@ -343,7 +339,7 @@ static void* __fastcall try_get_function(
 	// If we haven't yet cached the function pointer, try to import it from any
 	// of the modules in which it might be defined.  If this fails, cache the
 	// sentinel pointer so that we don't attempt to load this function again:
-	void* const new_fp = try_get_proc_address_from_first_available_module(name, module_id);
+	void* const new_fp = try_get_proc_address_from_first_available_module(pModule, module_name, name);
 	if (!new_fp)
 	{
 		void* const cached_fp = __crt_fast_decode_pointer(
@@ -382,11 +378,12 @@ static void* __fastcall try_get_function(
 #define _APPLY(_FUNCTION, _MODULE)                                                                    \
     static _CRT_CONCATENATE(_FUNCTION, _pft) __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept \
     {                                                                                                 \
-        __declspec(allocate(".YYThu$AAB")) static void* _CRT_CONCATENATE( pFun_ ,_FUNCTION);            \
+        __declspec(allocate(".YYThu$AAB")) static void* _CRT_CONCATENATE( pFun_ ,_FUNCTION);          \
         return reinterpret_cast<_CRT_CONCATENATE(_FUNCTION, _pft)>(try_get_function(                  \
             &_CRT_CONCATENATE( pFun_ ,_FUNCTION),                                                     \
             _CRT_STRINGIZE(_FUNCTION),                                                                \
-            _MODULE));                                                                                \
+            _CRT_CONCATENATE(try_get_module_, _MODULE)(),                                             \
+            _CRT_CONCATENATE(module_name_, _MODULE)));                                                \
     }
 	_YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)
 #undef _APPLY
@@ -397,9 +394,12 @@ static void __cdecl __YY_uninitialize_winapi_thunks()
 	//当DLL被强行卸载时，我们什么都不做。
 	if (pRtlDllShutdownInProgress && pRtlDllShutdownInProgress())
 		return;
+	auto pModule = (HMODULE*)__YY_THUNKS_MODULE_START;
+	auto pModuleEnd = (HMODULE*)__YY_THUNKS_FUN_START;
 
-	for (HMODULE& module : module_handles)
+	for (; pModule != pModuleEnd; ++pModule)
 	{
+		auto& module = *pModule;
 		if (module)
 		{
 			if (module != INVALID_HANDLE_VALUE)
