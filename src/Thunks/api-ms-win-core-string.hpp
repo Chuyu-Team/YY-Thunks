@@ -1,11 +1,10 @@
 
-
+#include <strsafe.h>
 
 namespace YY
 {
 	namespace Thunks
 	{
-    #include <strsafe.h>
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 //Windows Vista [desktop apps | UWP apps]
