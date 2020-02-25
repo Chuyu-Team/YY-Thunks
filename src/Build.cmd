@@ -31,6 +31,7 @@ goto:eof
 
 :Buildx86
 set PointType=4
+call:BuildObj YY_Thunks_for_Win2K.obj NTDDI_WIN2K
 call:BuildObj YY_Thunks_for_WinXP.obj NTDDI_WINXP
 call:BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6
 

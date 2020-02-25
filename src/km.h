@@ -5056,6 +5056,15 @@ BOOLEAN
 NTAPI
 RtlDllShutdownInProgress();
 
+
+EXTERN_C
+NTSTATUS
+NTAPI
+LdrAddRefDll(
+	IN ULONG  Flags,
+	IN PVOID  BaseAddress
+	);
+
 #if defined __cplusplus && !defined _Disallow_YY_KM_Namespace
 } //namespace YY
 #endif

@@ -22,6 +22,7 @@
 #include "Thunks/api-ms-win-core-string.hpp"
 #include "Thunks/api-ms-win-core-winrt.hpp"
 #include "Thunks/api-ms-win-core-winrt-string.hpp"
+#include "Thunks/api-ms-win-core-libraryloader.hpp"
 
 
 
@@ -29,5 +30,7 @@
 #include "Thunks/WS2_32.hpp"
 #include "Thunks/psapi.hpp"
 #include "Thunks/shell32.hpp"
+#include "Thunks/shlwapi.hpp"
+#include "Thunks/kernel32.hpp"
 
 

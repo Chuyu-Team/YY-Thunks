@@ -1512,6 +1512,48 @@ ReOpenFile(
 __YY_Thunks_Expand_Function(kernel32, ReOpenFile, 16);
 
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WINXP)
+//Windows XP [desktop apps | UWP apps]
+//Windows Server 2003 [desktop apps | UWP apps]
+
+EXTERN_C
+BOOL
+WINAPI
+SetFilePointerEx(
+    _In_ HANDLE hFile,
+    _In_ LARGE_INTEGER liDistanceToMove,
+    _Out_opt_ PLARGE_INTEGER lpNewFilePointer,
+    _In_ DWORD dwMoveMethod
+    )
+#ifdef YY_Thunks_Defined
+	;
+#else
+{
+	if (const auto pSetFilePointerEx = try_get_SetFilePointerEx())
+	{
+		return pSetFilePointerEx(hFile, liDistanceToMove, lpNewFilePointer, dwMoveMethod);
+	}
+
+	liDistanceToMove.LowPart = SetFilePointer(hFile, liDistanceToMove.LowPart, &liDistanceToMove.HighPart, dwMoveMethod);
+
+	if (liDistanceToMove.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+	{
+		return FALSE;
+	}
+
+	if (lpNewFilePointer)
+		*lpNewFilePointer = liDistanceToMove;
+
+	return TRUE;
+}
+#endif
+
+__YY_Thunks_Expand_Function(kernel32, SetFilePointerEx, 20);
+
+#endif
+
 	}//namespace Thunks
 
 } //namespace YY
