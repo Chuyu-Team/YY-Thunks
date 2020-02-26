@@ -214,7 +214,7 @@ IsWow64GuestMachineSupported(
 		*MachineIsSupported = TRUE;
 #else
 		SYSTEM_INFO SystemInfo;
-		GetNativeSystemInfo(&SystemInfo);
+		YY::Thunks::GetNativeSystemInfo(&SystemInfo);
 
 		*MachineIsSupported = SystemInfo.wProcessorArchitecture != PROCESSOR_ARCHITECTURE_INTEL;
 #endif

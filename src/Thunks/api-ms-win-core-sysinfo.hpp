@@ -331,6 +331,37 @@ __YY_Thunks_Expand_Function(kernel32, GetLogicalProcessorInformationEx, 12);
 
 #endif
 
+
+#if (YY_Thunks_Support_Version < NTDDI_WINXP)
+//Windows XP [desktop apps | UWP apps]
+//Windows Server 2003 [desktop apps | UWP apps]
+
+VOID
+WINAPI
+GetNativeSystemInfo(
+    _Out_ LPSYSTEM_INFO lpSystemInfo
+    )
+#ifdef YY_Thunks_Defined
+	;
+#else
+{
+	if (const auto pGetNativeSystemInfo = try_get_GetNativeSystemInfo())
+	{
+		pGetNativeSystemInfo(lpSystemInfo);
+	}
+
+
+	GetSystemInfo(lpSystemInfo);
+}
+#endif
+
+__YY_Thunks_Expand_Function(kernel32, GetNativeSystemInfo, 4);
+#else
+
+using ::GetNativeSystemInfo;
+
+#endif
+
 	}//namespace Thunks
 
 } //namespace YY

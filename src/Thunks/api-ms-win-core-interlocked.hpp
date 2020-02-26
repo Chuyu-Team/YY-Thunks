@@ -32,6 +32,27 @@ __YY_Thunks_Expand_Function(kernel32, InterlockedCompareExchange64, 20);
 
 #endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WINXP)
+//Windows XP [desktop apps | UWP apps]
+//Windows Server 2003 [desktop apps | UWP apps]
+
+EXTERN_C
+VOID
+WINAPI
+InitializeSListHead(
+    _Out_ PSLIST_HEADER ListHead
+    )
+#ifdef YY_Thunks_Defined
+    ;
+#else
+{
+    ListHead->Alignment = 0;
+}
+#endif
+
+__YY_Thunks_Expand_Function(kernel32, InitializeSListHead, 4);
+
+#endif
 
 	}//namespace Thunks
 

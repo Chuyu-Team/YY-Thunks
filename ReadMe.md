@@ -321,10 +321,12 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加 CreateSymbolicLinkW(A)
 * 添加 ReOpenFile
 
-### 1.0.2.2 - 扩充实现（2020-02-25 21:30）
+### 1.0.2.3 - 扩充实现（2020-02-26 14:30）
 * 添加 CompareStringEx
 * 添加 CompareStringOrdinal
 * 添加 SetFilePointerEx（Windows 2000模式）
 * 添加 GetModuleHandleExW(A)（Windows 2000模式）
 * 添加 WTSGetActiveConsoleSessionId（Windows 2000模式）
 * 添加 StrToInt64ExW(A)（Windows 2000模式）
+* 添加 InitializeSListHead（Windows 2000模式）
+* 添加 GetNativeSystemInfo（Windows 2000模式）
