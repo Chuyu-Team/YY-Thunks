@@ -336,6 +336,7 @@ __YY_Thunks_Expand_Function(kernel32, GetLogicalProcessorInformationEx, 12);
 //Windows XP [desktop apps | UWP apps]
 //Windows Server 2003 [desktop apps | UWP apps]
 
+EXTERN_C
 VOID
 WINAPI
 GetNativeSystemInfo(
@@ -356,9 +357,6 @@ GetNativeSystemInfo(
 #endif
 
 __YY_Thunks_Expand_Function(kernel32, GetNativeSystemInfo, 4);
-#else
-
-using ::GetNativeSystemInfo;
 
 #endif
 
