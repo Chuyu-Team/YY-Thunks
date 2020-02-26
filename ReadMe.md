@@ -159,6 +159,16 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 | [ReOpenFile](https://docs.microsoft.com/windows/win32/api/winbase/nf-winbase-reopenfile)                                        | 不存在时，调用NtCreateFile。
 | [CompareStringEx](https://docs.microsoft.com/windows/win32/api/stringapiset/nf-stringapiset-comparestringex)                    | 不存在时，调用CompareStringW。
 | [CompareStringOrdinal](https://docs.microsoft.com/windows/win32/api/stringapiset/nf-stringapiset-comparestringordinal)          | 不存在时，使用内置UnicodeCaseTableData实现。
+| [SetFilePointerEx](https://docs.microsoft.com/windows/win32/api/fileapi/nf-fileapi-setfilepointerex)                            | 不存在时，调用SetFilePointer。
+| [GetModuleHandleExW(A)](https://docs.microsoft.com/windows/win32/api/libloaderapi/nf-libloaderapi-getmodulehandleexw)           | 不存在时，调用GetModuleHandleW(A)。
+| [WTSGetActiveConsoleSessionId](https://docs.microsoft.com/windows/win32/api/winbase/nf-winbase-wtsgetactiveconsolesessionid)    | 不存在时，直接返回 0。
+| [StrToInt64ExW(A)](https://docs.microsoft.com/windows/win32/api/shlwapi/nf-shlwapi-strtoint64exw)                               | 不存在时，手工解析字符串。
+| [GetNativeSystemInfo](https://docs.microsoft.com/windows/win32/api/sysinfoapi/nf-sysinfoapi-getnativesysteminfo)                | 不存在时，调用GetSystemInfo。
+| [InitializeSListHead](https://docs.microsoft.com/windows/win32/api/interlockedapi/nf-interlockedapi-initializeslisthead)        | 直接初始化为 0。
+| [InterlockedFlushSList](https://docs.microsoft.com/windows/win32/api/interlockedapi/nf-interlockedapi-interlockedflushslist)    | 不存在时，调用lock cmpxchg8b指令。
+| [QueryDepthSList](https://docs.microsoft.com/windows/win32/api/interlockedapi/nf-interlockedapi-querydepthslist)                | 不存在时，直接返回Depth。
+| [InterlockedPushEntrySList](https://docs.microsoft.com/windows/win32/api/interlockedapi/nf-interlockedapi-interlockedpushentryslist) | 不存在时，调用lock cmpxchg8b指令。
+| [InterlockedPopEntrySList](https://docs.microsoft.com/windows/win32/api/interlockedapi/nf-interlockedapi-interlockedpopentryslist) | 不存在时，调用lock cmpxchg8b指令。
 
 
 ## Changes
@@ -321,12 +331,16 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加 CreateSymbolicLinkW(A)
 * 添加 ReOpenFile
 
-### 1.0.2.3 - 扩充实现（2020-02-26 14:30）
+### 1.0.2.3 - 扩充实现（2020-02-26 22:00）
 * 添加 CompareStringEx
 * 添加 CompareStringOrdinal
 * 添加 SetFilePointerEx（Windows 2000模式）
 * 添加 GetModuleHandleExW(A)（Windows 2000模式）
 * 添加 WTSGetActiveConsoleSessionId（Windows 2000模式）
 * 添加 StrToInt64ExW(A)（Windows 2000模式）
-* 添加 InitializeSListHead（Windows 2000模式）
 * 添加 GetNativeSystemInfo（Windows 2000模式）
+* 添加 InitializeSListHead（Windows 2000模式）
+* 添加 InterlockedFlushSList（Windows 2000模式）
+* 添加 QueryDepthSList（Windows 2000模式）
+* 添加 InterlockedPushEntrySList（Windows 2000模式）
+* 添加 InterlockedPopEntrySList（Windows 2000模式）
