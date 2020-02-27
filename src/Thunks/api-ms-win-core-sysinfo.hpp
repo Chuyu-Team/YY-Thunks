@@ -86,8 +86,6 @@ GetLogicalProcessorInformation(
 
 __YY_Thunks_Expand_Function(kernel32, GetLogicalProcessorInformation, 8);
 
-#else
-using ::GetLogicalProcessorInformation;
 #endif
 
 
@@ -133,7 +131,7 @@ GetLogicalProcessorInformationEx(
 	DWORD cbLogicalProcessorInformation = 0;
 
 	
-	for (; YY::Thunks::GetLogicalProcessorInformation(pProcessorInfo, &cbLogicalProcessorInformation) == FALSE;)
+	for (; GetLogicalProcessorInformation(pProcessorInfo, &cbLogicalProcessorInformation) == FALSE;)
 	{
 		lStatus = GetLastError();
 
