@@ -49,12 +49,35 @@ else
 */
 EXTERN_C const DWORD __YY_Thunks_Installed = YY_Thunks_Support_Version;
 
+/*
+导出一个外部弱符号，指示当前是否处于强行卸载模式。
+
+EXTERN_C BOOL __YY_Thunks_Process_Terminating;
+
+BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
+{
+	swtich(dwReason)
+	{
+		case DLL_PROCESS_DETACH:
+		//我们可以通过 lpReserved != NULL 判断，当前是否处于强行卸载模式。
+		__YY_Thunks_Process_Terminating = lpReserved != NULL;
+
+		……
+		break;
+	……
+*/
+#if (YY_Thunks_Support_Version < NTDDI_WINXP)
+//Windows 2000不支持RtlDllShutdownInProgress，因此依然引入__YY_Thunks_Process_Terminating
+EXTERN_C extern BOOL __YY_Thunks_Process_Terminating;
+#endif
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 static HANDLE _GlobalKeyedEventHandle;
 #endif
 
+static uintptr_t __security_cookie_yy_thunks;
 
-#define _APPLY(_SYMBOL, _NAME) \
+#define _APPLY(_SYMBOL, _NAME, ...) \
     constexpr const wchar_t* _CRT_CONCATENATE(module_name_, _SYMBOL) = _CRT_WIDE(_NAME);
 	_YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)
 #undef _APPLY
@@ -110,8 +133,8 @@ static PVOID __fastcall __CRT_DecodePointer(
 {
 	return reinterpret_cast<PVOID>(
 		__crt_rotate_pointer_value(
-			reinterpret_cast<uintptr_t>(Ptr) ^ __security_cookie,
-			__security_cookie % __crt_maximum_pointer_shift
+			reinterpret_cast<uintptr_t>(Ptr) ^ __security_cookie_yy_thunks,
+			__security_cookie_yy_thunks % __crt_maximum_pointer_shift
 		)
 		);
 }
@@ -121,8 +144,8 @@ static PVOID __fastcall __CRT_EncodePointer(PVOID const Ptr)
 	return reinterpret_cast<PVOID>(
 		__crt_rotate_pointer_value(
 			reinterpret_cast<uintptr_t>(Ptr),
-			__crt_maximum_pointer_shift - (__security_cookie % __crt_maximum_pointer_shift)
-		) ^ __security_cookie
+			__crt_maximum_pointer_shift - (__security_cookie_yy_thunks % __crt_maximum_pointer_shift)
+		) ^ __security_cookie_yy_thunks
 		);
 }
 
@@ -237,6 +260,9 @@ static HMODULE __fastcall try_load_library_from_system_directory(wchar_t const* 
 }
 
 
+#define USING_UNSAFE_LOAD 0x00000001
+
+template<int Flags>
 static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name) noexcept
 {
 	// First check to see if we've cached the module handle:
@@ -253,7 +279,7 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
 	// If we haven't yet cached the module handle, try to load the library.  If
 	// this fails, cache the sentinel handle value INVALID_HANDLE_VALUE so that
 	// we don't attempt to load the module again:
-	HMODULE const new_handle = try_load_library_from_system_directory(module_name);
+	HMODULE const new_handle = (Flags & USING_UNSAFE_LOAD) ? LoadLibraryW(module_name) : try_load_library_from_system_directory(module_name);
 	if (!new_handle)
 	{
 		if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(pModule, INVALID_HANDLE_VALUE))
@@ -277,23 +303,23 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
 	return new_handle;
 }
 
-#define _APPLY(_MODULE, _NAME)                                                                 \
-    static volatile HMODULE* __fastcall _CRT_CONCATENATE(try_get_module_, _MODULE)() noexcept  \
+#define _APPLY(_MODULE, _NAME, _FLAGS)                                                         \
+    static volatile HMODULE __fastcall _CRT_CONCATENATE(try_get_module_, _MODULE)() noexcept   \
     {                                                                                          \
         __declspec(allocate(".YYThu$AAA")) static volatile HMODULE hModule;                    \
-        return &hModule;                                                                       \
+        return try_get_module<_FLAGS>(&hModule, _CRT_CONCATENATE(module_name_, _MODULE));      \
     }
 _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)
 #undef _APPLY
 
+typedef volatile HMODULE (__fastcall* try_get_module_fun)();
 
 static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
-	volatile HMODULE* pModule,
-	const wchar_t* module_name,
+	try_get_module_fun get_module,
 	char      const* const name
 ) noexcept
 {
-	HMODULE const module_handle = try_get_module(pModule, module_name);
+	HMODULE const module_handle = get_module();
 	if (!module_handle)
 	{
 		return nullptr;
@@ -308,18 +334,13 @@ static __forceinline void* __cdecl invalid_function_sentinel() noexcept
 	return reinterpret_cast<void*>(static_cast<uintptr_t>(-1));
 }
 
-static int __cdecl _YY_initialize_winapi_thunks();
 
 static void* __fastcall try_get_function(
 	void**      ppFunAddress,
 	char      const* const name,
-	volatile HMODULE* pModule,
-	const wchar_t* module_name
+	try_get_module_fun get_module
 ) noexcept
 {
-	//尝试初始化YY-Thunks，避免还未初始化问题。
-	_YY_initialize_winapi_thunks();
-
 	// First check to see if we've cached the function pointer:
 	{
 		void* const cached_fp = __crt_fast_decode_pointer(
@@ -339,7 +360,7 @@ static void* __fastcall try_get_function(
 	// If we haven't yet cached the function pointer, try to import it from any
 	// of the modules in which it might be defined.  If this fails, cache the
 	// sentinel pointer so that we don't attempt to load this function again:
-	void* const new_fp = try_get_proc_address_from_first_available_module(pModule, module_name, name);
+	void* const new_fp = try_get_proc_address_from_first_available_module(get_module, name);
 	if (!new_fp)
 	{
 		void* const cached_fp = __crt_fast_decode_pointer(
@@ -382,8 +403,7 @@ static void* __fastcall try_get_function(
         return reinterpret_cast<_CRT_CONCATENATE(_FUNCTION, _pft)>(try_get_function(                  \
             &_CRT_CONCATENATE( pFun_ ,_FUNCTION),                                                     \
             _CRT_STRINGIZE(_FUNCTION),                                                                \
-            _CRT_CONCATENATE(try_get_module_, _MODULE)(),                                             \
-            _CRT_CONCATENATE(module_name_, _MODULE)));                                                \
+            &_CRT_CONCATENATE(try_get_module_, _MODULE)));                                            \
     }
 	_YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)
 #undef _APPLY
@@ -392,8 +412,20 @@ static void* __fastcall try_get_function(
 static void __cdecl __YY_uninitialize_winapi_thunks()
 {
 	//当DLL被强行卸载时，我们什么都不做。
-	if (pRtlDllShutdownInProgress && pRtlDllShutdownInProgress())
-		return;
+	if (pRtlDllShutdownInProgress)
+	{
+		if(pRtlDllShutdownInProgress())
+			return;
+	}
+	__if_exists(__YY_Thunks_Process_Terminating)
+	{
+		else
+		{
+			if (__YY_Thunks_Process_Terminating)
+				return;
+		}
+	}
+
 	auto pModule = (HMODULE*)__YY_THUNKS_MODULE_START;
 	auto pModuleEnd = (HMODULE*)__YY_THUNKS_FUN_START;
 
@@ -468,33 +500,27 @@ InitOnceExecuteOnceDownlevel(
 
 static int __cdecl _YY_initialize_winapi_thunks()
 {
-	//为了防止多线程同时初始化，我们还是加个锁
-	static INIT_ONCE InitOnce;
-
-	InitOnceExecuteOnceDownlevel(&InitOnce, [](PINIT_ONCE InitOnce, PVOID Parameter, PVOID *Context) -> BOOL
-		{
-			if (auto hNtdll = GetModuleHandleW(L"ntdll"))
-			{
+	if (auto hNtdll = try_get_module_ntdll())
+	{
 #if defined(_X86_) || defined(_M_IX86)
-				pRtlWow64EnableFsRedirectionEx = (decltype(RtlWow64EnableFsRedirectionEx)*)GetProcAddress(hNtdll, "RtlWow64EnableFsRedirectionEx");
+		pRtlWow64EnableFsRedirectionEx = (decltype(RtlWow64EnableFsRedirectionEx)*)GetProcAddress(hNtdll, "RtlWow64EnableFsRedirectionEx");
 #endif
-				pRtlDllShutdownInProgress = (decltype(RtlDllShutdownInProgress)*)GetProcAddress(hNtdll,"RtlDllShutdownInProgress");
-			}
+		pRtlDllShutdownInProgress = (decltype(RtlDllShutdownInProgress)*)GetProcAddress(hNtdll, "RtlDllShutdownInProgress");
+	}
 
-			if (auto hKernel32 = GetModuleHandleW(L"kernel32"))
-			{
-				bSupportSafe = GetProcAddress(hKernel32, "AddDllDirectory") != nullptr;
-			}
+	if (auto hKernel32 =try_get_module_kernel32())
+	{
+		bSupportSafe = GetProcAddress(hKernel32, "AddDllDirectory") != nullptr;
+	}
 
-			void* const encoded_nullptr = __crt_fast_encode_pointer((void*)nullptr);
+	__security_cookie_yy_thunks = __security_cookie;
 
-			for (auto p = __YY_THUNKS_FUN_START; p != __YY_THUNKS_FUN_END; ++p)
-			{
-				*p = encoded_nullptr;
-			}
+	void* const encoded_nullptr = __crt_fast_encode_pointer((void*)nullptr);
 
-			return TRUE;
-		}, nullptr, nullptr);
+	for (auto p = __YY_THUNKS_FUN_START; p != __YY_THUNKS_FUN_END; ++p)
+	{
+		*p = encoded_nullptr;
+	}
 
 	return 0;
 }

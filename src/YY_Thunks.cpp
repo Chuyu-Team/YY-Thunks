@@ -3,18 +3,18 @@
 
 
 
-#define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                          \
-    _APPLY(ntdll,                                        "ntdll"                                       ) \
-    _APPLY(kernel32,                                     "kernel32"                                    ) \
-    _APPLY(psapi,                                        "psapi"                                       ) \
-    _APPLY(version,                                      "version"                                     ) \
-	_APPLY(advapi32,                                     "advapi32"                                    ) \
-    _APPLY(user32,                                       "user32"                                      ) \
-    _APPLY(ws2_32,                                       "ws2_32"                                      ) \
-    _APPLY(shell32,                                      "shell32"                                     ) \
-    _APPLY(shlwapi,                                      "shlwapi"                                     ) \
-    _APPLY(api_ms_win_core_winrt_l1_1_0,                 "api-ms-win-core-winrt-l1-1-0"                ) \
-    _APPLY(api_ms_win_core_winrt_string_l1_1_0,          "api-ms-win-core-winrt-string-l1-1-0"         ) 
+#define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                                     \
+    _APPLY(ntdll,                                        "ntdll"                              , USING_UNSAFE_LOAD ) \
+    _APPLY(kernel32,                                     "kernel32"                           , USING_UNSAFE_LOAD ) \
+    _APPLY(psapi,                                        "psapi"                              , 0                 ) \
+    _APPLY(version,                                      "version"                            , 0                 ) \
+	_APPLY(advapi32,                                     "advapi32"                           , 0                 ) \
+    _APPLY(user32,                                       "user32"                             , 0                 ) \
+    _APPLY(ws2_32,                                       "ws2_32"                             , 0                 ) \
+    _APPLY(shell32,                                      "shell32"                            , 0                 ) \
+    _APPLY(shlwapi,                                      "shlwapi"                            , 0                 ) \
+    _APPLY(api_ms_win_core_winrt_l1_1_0,                 "api-ms-win-core-winrt-l1-1-0"       , 0                 ) \
+    _APPLY(api_ms_win_core_winrt_string_l1_1_0,          "api-ms-win-core-winrt-string-l1-1-0", 0                 ) 
 
 
 //全局可能使用到的函数
@@ -90,8 +90,7 @@
 		return reinterpret_cast<decltype(_FUNCTION)*>(try_get_function(                        \
 		&_CRT_CONCATENATE( pFun_ ,_FUNCTION),                                                  \
 		_CRT_STRINGIZE(_FUNCTION),                                                             \
-        _CRT_CONCATENATE(try_get_module_, _MODULE)(),                                          \
-        _CRT_CONCATENATE(module_name_, _MODULE)));                                             \
+        &_CRT_CONCATENATE(try_get_module_, _MODULE)));                                         \
 	}
 #include "YY_Thunks_List.hpp"
 

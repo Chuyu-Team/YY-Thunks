@@ -331,7 +331,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加 CreateSymbolicLinkW(A)
 * 添加 ReOpenFile
 
-### 1.0.2.3 - 扩充实现（2020-02-26 22:00）
+### 1.0.2.4 - 扩充实现（2020-03-03 19:00）
 * 添加 CompareStringEx
 * 添加 CompareStringOrdinal
 * 添加 SetFilePointerEx（Windows 2000模式）
@@ -344,3 +344,4 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加 QueryDepthSList（Windows 2000模式）
 * 添加 InterlockedPushEntrySList（Windows 2000模式）
 * 添加 InterlockedPopEntrySList（Windows 2000模式）
+* 优化实现，改进YY-Thunks性能与体积
