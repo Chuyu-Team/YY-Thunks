@@ -22,9 +22,20 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 完全的开放代码，广泛的接受用户意见，希望大家能踊跃的 pull requests，为`鸭船`添砖加瓦。
 
 ## 2. 使用YY-Thunks
+大家可以在以下方案中任选一种，但是我们优先推荐NuGet方案。
+
+### 2.1. 通过NuGet（推荐）
+1. 项目右键 “管理 NuGet 程序包”。
+2. NuGet搜索框中输入：`YY-Thunks`，搜索后点击安装。
+3. 项目右键 - 属性 - YY-Thunks 中，自行调整YY-Thunks等级，允许Windows 2000、Windows XP以及Windows Vista（默认）。
+4. 重新编译代码
+
+### 2.2. 手工低效配置
 1. 下载[YY-Thunks-Binary](https://github.com/Chuyu-Team/YY-Thunks/releases)，然后解压到你的工程目录。<br/>
 2. 【链接器】-【输入】-【附加依赖项】，添加`objs\$(PlatformShortName)\YY_Thunks_for_WinXP.obj`。<br/>
 3. 重新编译代码。
+
+> 温馨提示：如果需要兼容Vista，请选择`objs\$(PlatformShortName)\YY_Thunks_for_Vista.obj`。
 
 ## 3. YY-Thunks兼容性
 ### 3.1. 支持的编译器
