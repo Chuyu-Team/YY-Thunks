@@ -188,75 +188,11 @@ static __forceinline T* __fastcall __crt_interlocked_read_pointer(T* const volat
 	return __crt_interlocked_compare_exchange_pointer(target, nullptr, nullptr);
 }
 
-#if defined(_X86_) || defined(_M_IX86)
-static decltype(RtlWow64EnableFsRedirectionEx)* pRtlWow64EnableFsRedirectionEx;
-#endif
-
-static decltype(RtlDllShutdownInProgress)* pRtlDllShutdownInProgress;
-
-static bool bSupportSafe;
 
 
 static HMODULE __fastcall try_load_library_from_system_directory(wchar_t const* const name) noexcept
 {
-	if(bSupportSafe)
-	{
-		//我们引入 bSupportSafe 变量是因为联想一键影音，会导致老系统 LoadLibraryExW 错误代码 变成 ERROR_ACCESS_DENIED，而不是预期的ERROR_INVALID_PARAMETER。
-		return LoadLibraryExW(name, nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-	}
-	else
-	{
-		//名字不可能为 空。
-		if (name == nullptr || *name == L'\0')
-			return nullptr;
-
-		wchar_t szDllFilePath[512];
-
-		auto cchResult = GetSystemDirectoryW(szDllFilePath, _countof(szDllFilePath));
-
-		if (cchResult == 0 || cchResult >= _countof(szDllFilePath))
-		{
-			//失败或者缓冲区不足则不处理（因为很显然 512 大小都不够？开玩笑……）
-			return nullptr;
-		}
-
-		szDllFilePath[cchResult++] = L'\\';
-		if (cchResult >= _countof(szDllFilePath))
-		{
-			return nullptr;
-		}
-
-		for (auto szName = name; *szName; ++szName)
-		{
-			szDllFilePath[cchResult++] = *szName;
-			if (cchResult >= _countof(szDllFilePath))
-			{
-				return nullptr;
-			}
-		}
-
-		// 将字符串 \0 截断
-		szDllFilePath[cchResult] = L'\0';
-
-
-#if defined(_X86_) || defined(_M_IX86)
-		PVOID OldFsRedirectionLevel;
-
-		/*
-		Windows 7 RTM以其以前版本 LoadLibrary内部默认不会关闭重定向。
-		为了防止某些线程在关闭重定向的情况下调用API，依然能正常加载相关dll，因此我们在此处恢复重定向。
-		*/
-		auto Status = pRtlWow64EnableFsRedirectionEx ? pRtlWow64EnableFsRedirectionEx(nullptr, &OldFsRedirectionLevel) : STATUS_INVALID_PARAMETER;
-#endif
-		auto hModule = LoadLibraryExW(szDllFilePath, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
-
-#if defined(_X86_) || defined(_M_IX86)
-		//将重定向恢复到以前的状态。
-		if (Status >= 0 && pRtlWow64EnableFsRedirectionEx)
-			pRtlWow64EnableFsRedirectionEx(OldFsRedirectionLevel, &OldFsRedirectionLevel);
-#endif
-		return hModule;
-	}
+	return LoadLibraryExW(name, nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
 }
 
 
@@ -412,7 +348,7 @@ static void* __fastcall try_get_function(
 static void __cdecl __YY_uninitialize_winapi_thunks()
 {
 	//当DLL被强行卸载时，我们什么都不做。
-	if (pRtlDllShutdownInProgress)
+	if (auto pRtlDllShutdownInProgress = (decltype(RtlDllShutdownInProgress)*)GetProcAddress(try_get_module_ntdll(), "RtlDllShutdownInProgress"))
 	{
 		if(pRtlDllShutdownInProgress())
 			return;
@@ -448,71 +384,8 @@ static void __cdecl __YY_uninitialize_winapi_thunks()
 }
 
 
-#if YY_Thunks_Support_Version < NTDDI_WIN6
-static
-BOOL
-WINAPI
-InitOnceExecuteOnceDownlevel(
-    _Inout_ PINIT_ONCE InitOnce,
-    _In_ __callback PINIT_ONCE_FN InitFn,
-    _Inout_opt_ PVOID Parameter,
-    _Outptr_opt_result_maybenull_ LPVOID* Context
-    )
-{
-	//目标系统不支持，切换到XP兼容模式
-	for (;;)
-	{
-		switch (InterlockedCompareExchange((volatile size_t*)InitOnce, 1, 0))
-		{
-		case 2:
-			//同步完成，并且其他线程已经操作成功
-			return TRUE;
-			break;
-		case 1:
-			//尚未完成，继续等待
-			Sleep(0);
-			break;
-		case 0:
-			//同步完成，确认是处，调用指定函数
-		{
-			BOOL bRet = InitFn(InitOnce, Parameter, Context) == TRUE;
-			//函数调用完成
-
-			if (InterlockedExchange((volatile size_t*)InitOnce, bRet ? 2 : 0) == 1)
-			{
-				return bRet;
-			}
-
-		}
-		default:
-			//同步完成，但是发生错误
-			SetLastError(ERROR_INVALID_DATA);
-			return FALSE;
-			break;
-		}
-	}
-}
-#else
-#define InitOnceExecuteOnceDownlevel InitOnceExecuteOnce
-#endif
-
-
-
 static int __cdecl _YY_initialize_winapi_thunks()
 {
-	if (auto hNtdll = try_get_module_ntdll())
-	{
-#if defined(_X86_) || defined(_M_IX86)
-		pRtlWow64EnableFsRedirectionEx = (decltype(RtlWow64EnableFsRedirectionEx)*)GetProcAddress(hNtdll, "RtlWow64EnableFsRedirectionEx");
-#endif
-		pRtlDllShutdownInProgress = (decltype(RtlDllShutdownInProgress)*)GetProcAddress(hNtdll, "RtlDllShutdownInProgress");
-	}
-
-	if (auto hKernel32 =try_get_module_kernel32())
-	{
-		bSupportSafe = GetProcAddress(hKernel32, "AddDllDirectory") != nullptr;
-	}
-
 	__security_cookie_yy_thunks = __security_cookie;
 
 	void* const encoded_nullptr = __crt_fast_encode_pointer((void*)nullptr);
