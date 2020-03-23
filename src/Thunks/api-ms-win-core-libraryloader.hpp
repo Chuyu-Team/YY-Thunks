@@ -324,7 +324,9 @@ LoadLibraryExW(
 			break;
 		}
 
-		const auto PathType = RtlDetermineDosPathNameType_U(lpLibFileName);
+		const auto pRtlDetermineDosPathNameType_U = try_get_RtlDetermineDosPathNameType_U();
+
+		const auto PathType = pRtlDetermineDosPathNameType_U ? pRtlDetermineDosPathNameType_U(lpLibFileName) : RtlPathTypeUnknown;
 
 		if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR)
 		{
