@@ -37,7 +37,11 @@
     _APPLY(NtReleaseKeyedEvent,                          ntdll                                         ) \
     _APPLY(RtlAdjustPrivilege,                           ntdll                                         ) \
     _APPLY(RtlPcToFileHeader,                            ntdll                                         ) \
-    _APPLY(LdrAddRefDll,                                 ntdll                                         )
+    _APPLY(LdrAddRefDll,                                 ntdll                                         ) \
+    _APPLY(RtlWow64EnableFsRedirectionEx,                ntdll                                         ) \
+    _APPLY(LdrLoadDll,                                   ntdll                                         ) \
+    _APPLY(RtlDllShutdownInProgress,                     ntdll                                         ) \
+    _APPLY(AddDllDirectory,                              kernel32                                      )
 
 
 
