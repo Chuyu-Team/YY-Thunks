@@ -308,8 +308,9 @@ namespace YY
 						New = shareCount <= 1 ? (size_t(pBolck) | 0x3) : (size_t(pBolck) | 0xB);
 					}
 
+					//清泠 发现的Bug，我们应该返回 TRUE，减少必要的内核等待。
 					if (InterlockedCompareExchange((volatile size_t*)SRWLock, New, Current) == Current)
-						break;
+						return TRUE;
 
 					//RtlBackoff(&v7);
 					YieldProcessor();
@@ -525,7 +526,7 @@ namespace YY
 										{
 											auto back = size_t(pWaitBlock->back);
 
-											New = back == 0 ? back : (back ^ (New ^ back)) & 0xF;
+											New = back == 0 ? back : back ^ ((New ^ back) & 0xF);
 
 											Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, New, Current);
 
