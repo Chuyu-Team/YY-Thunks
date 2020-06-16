@@ -272,7 +272,7 @@ namespace YY
 				{
 					auto Current = *(volatile size_t*)SRWLock;
 
-					if (Current & 0x1)
+					if ((Current & 0x1) == 0)
 						break;
 
 
@@ -621,7 +621,7 @@ namespace YY
 
 				if ((Current & (RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC)) == RTL_RUN_ONCE_ASYNC)
 				{
-					InterlockedExchange((volatile size_t *)lpInitOnce, 0);
+					InterlockedExchange((volatile size_t *)lpInitOnce, dwFlags);
 
 					if (lpContext)
 						*lpContext = (LPVOID)(Current & ~size_t(RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC));
