@@ -1,6 +1,11 @@
 ﻿#pragma once
 
 
+#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+
+//YY-Thunks保证STDIO新老模式兼容
+#define _CRT_STDIO_ARBITRARY_WIDE_SPECIFIERS
+
 #include <Windows.h>
 #include <crtdbg.h>
 #include <intrin.h>
