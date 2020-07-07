@@ -342,7 +342,7 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加 CreateSymbolicLinkW(A)
 * 添加 ReOpenFile
 
-### 1.0.2.6 - 扩充实现（2020-06-06 12:00）
+### 1.0.2.7 - 扩充实现（2020-07-07 18:00）
 * 添加 CompareStringEx
 * 添加 CompareStringOrdinal
 * 添加 SetFilePointerEx（Windows 2000模式）
@@ -358,3 +358,5 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加 LoadLibraryExW(A) LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR、LOAD_LIBRARY_SEARCH_APPLICATION_DIR、LOAD_LIBRARY_SEARCH_SYSTEM32支持
 * 优化实现，改进YY-Thunks性能与体积
 * 解决Bug，修复RtlpQueueWaitBlockToSRWLock与RtlpWakeSingle错误（感谢 清泠）
+* 解决Bug，CLSID_ShellItem符号可能冲突问题（感谢 星期四）
+* 解决Bug，与现代化stdio模式触发FAILIFMISMATCH链接错误。

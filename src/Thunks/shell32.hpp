@@ -264,7 +264,7 @@ namespace YY
 				return hr;
 			}
 
-			EXTERN_C const CLSID CLSID_ShellItem = __uuidof(ShellItem);
+			EXTERN_C __declspec(selectany) const CLSID CLSID_ShellItem = __uuidof(ShellItem);
 
 			static HRESULT __fastcall CShellItem_CreateInstance(PCWSTR pszCLSID,const IID& riid, void **ppv)
 			{
