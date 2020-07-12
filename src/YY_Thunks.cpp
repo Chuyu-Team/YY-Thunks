@@ -13,6 +13,7 @@
     _APPLY(ws2_32,                                       "ws2_32"                             , 0                 ) \
     _APPLY(shell32,                                      "shell32"                            , 0                 ) \
     _APPLY(shlwapi,                                      "shlwapi"                            , 0                 ) \
+    _APPLY(setupapi,                                     "setupapi"                           , 0                 ) \
     _APPLY(api_ms_win_core_winrt_l1_1_0,                 "api-ms-win-core-winrt-l1-1-0"       , 0                 ) \
     _APPLY(api_ms_win_core_winrt_string_l1_1_0,          "api-ms-win-core-winrt-string-l1-1-0", 0                 ) 
 

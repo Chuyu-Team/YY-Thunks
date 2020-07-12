@@ -32,5 +32,6 @@
 #include "Thunks/shell32.hpp"
 #include "Thunks/shlwapi.hpp"
 #include "Thunks/kernel32.hpp"
+#include "Thunks/SetupAPI.hpp"
 
 
