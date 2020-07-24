@@ -366,4 +366,9 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 * 添加 InterlockedPushEntrySList（Windows 2000模式）
 * 添加 InterlockedPopEntrySList（Windows 2000模式）
 * 添加 LoadLibraryExW(A) LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR、LOAD_LIBRARY_SEARCH_APPLICATION_DIR、LOAD_LIBRARY_SEARCH_SYSTEM32支持
-* 添加 SetupDiGetDevicePropertyW、SetupDiSetDevicePropertyW、SetupDiGetClassPropertyW、SetupDiGetClassPropertyExW、SetupDiSetClassPropertyW、SetupDiSetClassPropertyExW
+* 添加 SetupDiGetDevicePropertyW
+* 添加 SetupDiSetDevicePropertyW
+* 添加 SetupDiGetClassPropertyW
+* 添加 SetupDiGetClassPropertyExW
+* 添加 SetupDiSetClassPropertyW
+* 添加 SetupDiSetClassPropertyExW
