@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>YY-Thunks</id>
+    <version>$version$</version>
+    <title>YY-Thunks</title>
+    <authors>YY</authors>
+    <owners>初雨团队</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <projectUrl>https://github.com/Chuyu-Team/YY-Thunks/</projectUrl>
+    <description>功能 —— 让兼容Windows更轻松
+- 简洁优雅，一个obj解决找不到指定入口点问题。</description>
+    <summary>优雅的解决Windows XP RTM无法定位程序输入点 DecodePointer、EncodePointer、RegDeleteKeyEx等，让你兼容Windows更轻松。</summary>
+    <releaseNotes>
+      * 优化实现，改进YY-Thunks性能与体积
+      * 解决Bug，修复RtlpQueueWaitBlockToSRWLock与RtlpWakeSingle错误（感谢 清泠）
+      * 解决Bug，CLSID_ShellItem符号可能冲突问题（感谢 星期四）
+      * 解决Bug，与现代化stdio模式触发FAILIFMISMATCH链接错误。
+      * 添加 CompareStringEx
+      * 添加 CompareStringOrdinal
+      * 添加 SetFilePointerEx（Windows 2000模式）
+      * 添加 GetModuleHandleExW(A)（Windows 2000模式）
+      * 添加 WTSGetActiveConsoleSessionId（Windows 2000模式）
+      * 添加 StrToInt64ExW(A)（Windows 2000模式）
+      * 添加 GetNativeSystemInfo（Windows 2000模式）
+      * 添加 InitializeSListHead（Windows 2000模式）
+      * 添加 InterlockedFlushSList（Windows 2000模式）
+      * 添加 QueryDepthSList（Windows 2000模式）
+      * 添加 InterlockedPushEntrySList（Windows 2000模式）
+      * 添加 InterlockedPopEntrySList（Windows 2000模式）
+      * 添加 LoadLibraryExW(A) LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR、LOAD_LIBRARY_SEARCH_APPLICATION_DIR、LOAD_LIBRARY_SEARCH_SYSTEM32支持
+      * 添加 SetupDiGetDevicePropertyW
+      * 添加 SetupDiSetDevicePropertyW
+      * 添加 SetupDiGetClassPropertyW
+      * 添加 SetupDiGetClassPropertyExW
+      * 添加 SetupDiSetClassPropertyW
+      * 添加 SetupDiSetClassPropertyExW
+    </releaseNotes>
+    <copyright>Copyright 2020</copyright>
+    <tags>Chuyu YY-Thunks native nativepackage</tags>
+    <repository type="git" url="https://github.com/Chuyu-Team/YY-Thunks.git" branch="master" commit="$commit$" />
+  </metadata>
+  <files>
+    <file src=".\objs\**" target="build\native\objs" />
+    <file src=".\Bin\MinimumRequiredVersionHelper.exe" target="build\native\Bin\MinimumRequiredVersionHelper.exe" />
+    <file src=".\YY-Thunks.targets" target="build\native\YY-Thunks.targets" />
+    <file src=".\YY-Thunks_ui_D5D733D3-8829-4509-9C74-021E5685ED18.xml" target="build\native\YY-Thunks_ui_D5D733D3-8829-4509-9C74-021E5685ED18.xml" />
+  </files>
+</package>

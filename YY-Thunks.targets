@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros" Condition="('$(PlatformShortName)'=='x86') Or ('$(PlatformShortName)'=='x64')">
+    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And (('$(SupportWinXP)'=='true') Or ($(PlatformToolset.IndexOf('_xp')) != -1))">YY_Thunks_for_WinXP.obj</YY_Thunks_File>
+    <YY_Thunks_File Condition="'$(YY_Thunks_File)'==''">YY_Thunks_for_Vista.obj</YY_Thunks_File>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup Condition="'$(YY_Thunks_File)'!='' and Exists('$(MSBuildThisFileDirectory)objs\$(PlatformShortName)\$(YY_Thunks_File)')">
+    <Link>
+      <MinimumRequiredVersion Condition=" '%(Link.MinimumRequiredVersion)' == '' and '$(PlatformShortName)'=='x86' and '$(YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' ">5.01</MinimumRequiredVersion>
+      <MinimumRequiredVersion Condition=" '%(Link.MinimumRequiredVersion)' == '' and '$(PlatformShortName)'=='x64' and '$(YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' ">5.02</MinimumRequiredVersion>
+      <AdditionalDependencies>$(MSBuildThisFileDirectory)objs\$(PlatformShortName)\$(YY_Thunks_File);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <!-- 属性页配置 -->
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)YY-Thunks_ui_D5D733D3-8829-4509-9C74-021E5685ED18.xml" />
+  </ItemGroup>
+  
+  <!--如果需要支持Windows 2000，那么需要额外更新最小版本-->
+  <Target Name="YY_Thunks_Update_MinimumRequiredVersion" Condition="'$(YY_Thunks_File)'=='YY_Thunks_for_Win2K.obj' and Exists('$(MSBuildThisFileDirectory)objs\$(PlatformShortName)\$(YY_Thunks_File)') and ('$(ConfigurationType)' == 'Application' Or '$(ConfigurationType)' == 'DynamicLibrary') " AfterTargets="AfterLink">
+    <Exec Command="%22$(MSBuildThisFileDirectory)Bin\MinimumRequiredVersionHelper.exe%22 %22$(TargetPath)%22 /MinimumRequiredVersion:5.0"/>
+  </Target>
+</Project>

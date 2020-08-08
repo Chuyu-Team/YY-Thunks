@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ProjectSchemaDefinitions
+  xmlns="http://schemas.microsoft.com/build/2009/properties"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" >
+  <Rule Name="CuyuTeam_D5D733D3-8829-4509-9C74-021E5685ED18"
+        PageTemplate="tool"
+        DisplayName="初雨团队">
+    <Rule.Categories>
+      <Category Name="YY_Thunks" DisplayName="YY-Thunks" />
+    </Rule.Categories>
+
+    <Rule.DataSource>
+      <DataSource Persistence="ProjectFile"
+                  ItemType=""
+                  Label="Configuration"
+                  HasConfigurationCondition="true"/>
+    </Rule.DataSource>
+
+    <EnumProperty
+      Name="YY_Thunks_File"
+      Category="YY_Thunks"
+      DisplayName="YY-Thunks等级"
+      Description="为我的代码兼容到低版本 Windows ，默认兼容到Windows Vista。">
+      <EnumValue
+        Name="false"
+        DisplayName="禁用YY-Thunks。"/>
+
+      <EnumValue
+        Name="YY_Thunks_for_Win2K.obj"
+        DisplayName="为我的代码自动修正到Windows 2000兼容，谢谢。"/>
+      
+      <EnumValue
+        Name="YY_Thunks_for_WinXP.obj"
+        DisplayName="为我的代码自动修正到Windows XP兼容，谢谢。"/>
+      <EnumValue
+        Name="YY_Thunks_for_Vista.obj"
+        DisplayName="为我的代码自动修正到Windows Vista兼容，谢谢。"/>
+    </EnumProperty>
+  </Rule>
+</ProjectSchemaDefinitions>
