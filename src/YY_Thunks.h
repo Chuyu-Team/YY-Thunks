@@ -29,12 +29,20 @@
 #pragma section(".YYThu$AAB",    long, read, write) //鸭船函数缓存节点
 #pragma section(".YYThu$AAC",    long, read, write) //保留，暂时用于边界结束
 
+#pragma section(".YYThr$AAA",    long, read)        //鸭船函数缓存初始化函数
+#pragma section(".YYThr$AAB",    long, read)        //保留，暂时用于边界结束
+
 #pragma comment(linker, "/merge:.YYThu=.data")
+#pragma comment(linker, "/merge:.YYThr=.rdata")
 
 __declspec(allocate(".YYThu$AAA")) static void* __YY_THUNKS_MODULE_START[] = { nullptr };
 __declspec(allocate(".YYThu$AAB")) static void* __YY_THUNKS_FUN_START[] = { nullptr }; //鸭船指针缓存开始位置
 __declspec(allocate(".YYThu$AAC")) static void* __YY_THUNKS_FUN_END[] = { nullptr };   //鸭船指针缓存结束位置
 
+__declspec(allocate(".YYThr$AAA")) static void* __YY_THUNKS_INIT_FUN_START[] = { nullptr }; //鸭船指针缓存结束位置
+__declspec(allocate(".YYThr$AAB")) static void* __YY_THUNKS_INIT_FUN_END[] = { nullptr };   //鸭船指针缓存结束位置
+
+typedef void* (__cdecl* InitFunType)();
 
 #pragma detect_mismatch("YY-Thunks-Mode", "ver:" _CRT_STRINGIZE(YY_Thunks_Support_Version))
 
@@ -131,6 +139,13 @@ static __forceinline unsigned __int64 __fastcall __crt_rotate_pointer_value(unsi
 {
 	return RotateRight64(value, shift);
 }
+
+#ifdef _WIN64
+#define __foreinclude(p) _bittest64(reinterpret_cast<LONG_PTR*>(&p), 0)
+#else
+#define __foreinclude(p) _bittest(reinterpret_cast<LONG_PTR*>(&p), 0)
+#endif
+
 
 static PVOID __fastcall __CRT_DecodePointer(
 		PVOID Ptr
@@ -340,9 +355,13 @@ static void* __fastcall try_get_function(
 #define _APPLY(_FUNCTION, _MODULE)                                                                    \
     static _CRT_CONCATENATE(_FUNCTION, _pft) __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept \
     {                                                                                                 \
+        __declspec(allocate(".YYThr$AAA")) static void* _CRT_CONCATENATE(pInit_ ,_FUNCTION) =         \
+              reinterpret_cast<void*>(&_CRT_CONCATENATE(try_get_, _FUNCTION));                        \
+        /*为了避免编译器将 YYThr$AAA 节优化掉*/                                                       \
+        __foreinclude(_CRT_CONCATENATE(pInit_ ,_FUNCTION));                                           \
         __declspec(allocate(".YYThu$AAB")) static void* _CRT_CONCATENATE( pFun_ ,_FUNCTION);          \
         return reinterpret_cast<_CRT_CONCATENATE(_FUNCTION, _pft)>(try_get_function(                  \
-            &_CRT_CONCATENATE( pFun_ ,_FUNCTION),                                                     \
+            &_CRT_CONCATENATE(pFun_ ,_FUNCTION),                                                      \
             _CRT_STRINGIZE(_FUNCTION),                                                                \
             &_CRT_CONCATENATE(try_get_module_, _MODULE)));                                            \
     }
@@ -398,6 +417,16 @@ static int __cdecl _YY_initialize_winapi_thunks()
 	for (auto p = __YY_THUNKS_FUN_START; p != __YY_THUNKS_FUN_END; ++p)
 	{
 		*p = encoded_nullptr;
+	}
+
+	/*
+	 * https://github.com/Chuyu-Team/YY-Thunks/issues/7
+	 * 为了避免 try_get 系列函数竞争 DLL load锁，因此我们将所有被Thunk的API都预先加载完毕。
+	 */
+	for (auto p = (InitFunType*)__YY_THUNKS_INIT_FUN_START; p != (InitFunType*)__YY_THUNKS_INIT_FUN_END; ++p)
+	{
+		if (auto pInitFun = *p)
+			pInitFun();
 	}
 
 	return 0;
