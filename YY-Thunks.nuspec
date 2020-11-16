@@ -14,29 +14,7 @@
 - 简洁优雅，一个obj解决找不到指定入口点问题。</description>
     <summary>优雅的解决Windows XP RTM无法定位程序输入点 DecodePointer、EncodePointer、RegDeleteKeyEx等，让你兼容Windows更轻松。</summary>
     <releaseNotes>
-      * 优化实现，改进YY-Thunks性能与体积
-      * 解决Bug，修复RtlpQueueWaitBlockToSRWLock与RtlpWakeSingle错误（感谢 清泠）
-      * 解决Bug，CLSID_ShellItem符号可能冲突问题（感谢 星期四）
-      * 解决Bug，与现代化stdio模式触发FAILIFMISMATCH链接错误。
-      * 添加 CompareStringEx
-      * 添加 CompareStringOrdinal
-      * 添加 SetFilePointerEx（Windows 2000模式）
-      * 添加 GetModuleHandleExW(A)（Windows 2000模式）
-      * 添加 WTSGetActiveConsoleSessionId（Windows 2000模式）
-      * 添加 StrToInt64ExW(A)（Windows 2000模式）
-      * 添加 GetNativeSystemInfo（Windows 2000模式）
-      * 添加 InitializeSListHead（Windows 2000模式）
-      * 添加 InterlockedFlushSList（Windows 2000模式）
-      * 添加 QueryDepthSList（Windows 2000模式）
-      * 添加 InterlockedPushEntrySList（Windows 2000模式）
-      * 添加 InterlockedPopEntrySList（Windows 2000模式）
-      * 添加 LoadLibraryExW(A) LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR、LOAD_LIBRARY_SEARCH_APPLICATION_DIR、LOAD_LIBRARY_SEARCH_SYSTEM32支持
-      * 添加 SetupDiGetDevicePropertyW
-      * 添加 SetupDiSetDevicePropertyW
-      * 添加 SetupDiGetClassPropertyW
-      * 添加 SetupDiGetClassPropertyExW
-      * 添加 SetupDiSetClassPropertyW
-      * 添加 SetupDiSetClassPropertyExW
+      * 解决[Bug 7](https://github.com/Chuyu-Team/YY-Thunks/issues/7)，某些情况下导致死锁问题（感谢 冯立夫）
     </releaseNotes>
     <copyright>Copyright 2020</copyright>
     <tags>Chuyu YY-Thunks native nativepackage</tags>
