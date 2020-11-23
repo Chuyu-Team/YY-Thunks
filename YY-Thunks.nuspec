@@ -15,6 +15,8 @@
     <summary>优雅的解决Windows XP RTM无法定位程序输入点 DecodePointer、EncodePointer、RegDeleteKeyEx等，让你兼容Windows更轻松。</summary>
     <releaseNotes>
       * 解决[Bug 7](https://github.com/Chuyu-Team/YY-Thunks/issues/7)，某些情况下导致死锁问题（感谢 冯立夫）
+      * 添加 RoOriginateError
+      * 添加 RoOriginateErrorW
     </releaseNotes>
     <copyright>Copyright 2020</copyright>
     <tags>Chuyu YY-Thunks native nativepackage</tags>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{05B31B17-534E-427B-8E18-3DDDDF384A34}</ProjectGuid>
+    <RootNamespace>YYThunks</RootNamespace>
+    <WindowsTargetPlatformVersion>$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion('Windows', '10.0'))</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MinSpace</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>YY_Thunks_Support_Version=NTDDI_WIN2K;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ExceptionHandling>false</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MinSpace</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>YY_Thunks_Support_Version=NTDDI_WINXP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ExceptionHandling>false</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="Thunks\api-ms-win-core-datetime.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-errorhandling.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-file.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-interlocked.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-io.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-libraryloader.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-localization.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-processthreads.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-psapi.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-realtime.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-registry.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-string.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-synch.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-sysinfo.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-systemtopology.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-util.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-version.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-winrt-error.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-winrt-string.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-winrt.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-wow64.hpp" />
+    <ClInclude Include="Thunks\kernel32.hpp" />
+    <ClInclude Include="Thunks\psapi.hpp" />
+    <ClInclude Include="Thunks\SetupAPI.hpp" />
+    <ClInclude Include="Thunks\shell32.hpp" />
+    <ClInclude Include="Thunks\shlwapi.hpp" />
+    <ClInclude Include="Thunks\user32.hpp" />
+    <ClInclude Include="Thunks\WS2_32.hpp" />
+    <ClInclude Include="YY_Thunks.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="YY_Thunks_List.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\ReadMe.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="YY_Thunks.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="YY_Thunks_2.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
