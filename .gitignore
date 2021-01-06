@@ -348,3 +348,7 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+*.zip
+/src/WinXP
+/src/Windows2000
+/src/Thunks_2

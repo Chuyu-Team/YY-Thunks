@@ -108,6 +108,9 @@
     <ClInclude Include="Thunks\api-ms-win-core-winrt-error.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
+    <ClInclude Include="Thunks\shcore.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\ReadMe.md">

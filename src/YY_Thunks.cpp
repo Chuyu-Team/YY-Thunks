@@ -12,6 +12,7 @@
     _APPLY(user32,                                       "user32"                             , 0                 ) \
     _APPLY(ws2_32,                                       "ws2_32"                             , 0                 ) \
     _APPLY(shell32,                                      "shell32"                            , 0                 ) \
+    _APPLY(shcore,                                       "shcore"                             , 0                 ) \
     _APPLY(shlwapi,                                      "shlwapi"                            , 0                 ) \
     _APPLY(setupapi,                                     "setupapi"                           , 0                 ) \
     _APPLY(api_ms_win_core_winrt_l1_1_0,                 "api-ms-win-core-winrt-l1-1-0"       , 0                 ) \
@@ -85,7 +86,13 @@
 #pragma comment(lib, "psapi.lib")
 #endif
 
+#if (YY_Thunks_Support_Version >= NTDDI_WINBLUE)
+#pragma comment(lib, "Shcore.lib")
+#endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WINBLUE)
+#pragma comment(lib, "Gdi32.lib")
+#endif
 
 //展开函数的所有的 声明 以及 try_get_ 函数
 #define YY_Thunks_Defined

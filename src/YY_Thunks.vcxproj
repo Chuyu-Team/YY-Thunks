@@ -105,6 +105,7 @@
     <ClInclude Include="Thunks\kernel32.hpp" />
     <ClInclude Include="Thunks\psapi.hpp" />
     <ClInclude Include="Thunks\SetupAPI.hpp" />
+    <ClInclude Include="Thunks\shcore.hpp" />
     <ClInclude Include="Thunks\shell32.hpp" />
     <ClInclude Include="Thunks\shlwapi.hpp" />
     <ClInclude Include="Thunks\user32.hpp" />

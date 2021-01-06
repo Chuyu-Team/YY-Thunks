@@ -142,3 +142,12 @@
 | [SetupDiGetClassPropertyExW](https://docs.microsoft.com/windows/win32/api/setupapi/nf-setupapi-setupdigetclasspropertyexw)      | 不存在时，调用SetupDiGetClassRegistryPropertyW。
 | [SetupDiSetClassPropertyW](https://docs.microsoft.com/windows/win32/api/setupapi/nf-setupapi-setupdisetclasspropertyw)          | 不存在时，调用SetupDiSetClassRegistryPropertyW。
 | [SetupDiSetClassPropertyExW](https://docs.microsoft.com/windows/win32/api/setupapi/nf-setupapi-setupdisetclasspropertyexw)      | 不存在时，调用SetupDiSetClassRegistryPropertyW。
+| [GetDpiForMonitor](https://docs.microsoft.com/windows/win32/api/shellscalingapi/nf-shellscalingapi-getdpiformonitor)            | 不存在时，调用GetDeviceCaps。
+| [SetProcessDpiAwareness](https://docs.microsoft.com/windows/win32/api/shellscalingapi/nf-shellscalingapi-setprocessdpiawareness)| 不存在时，调用SetProcessDPIAware。
+| [SetProcessDPIAware](https://docs.microsoft.com/windows/win32/api/shellscalingapi/nf-shellscalingapi-setprocessdpiawareness)    | 不存在时，直接返回 TRUE。
+| [SetProcessDpiAwarenessContext](https://docs.microsoft.com/windows/win32/api/winuser/nf-winuser-setprocessdpiawarenesscontext)  | 不存在时，调用SetProcessDpiAwareness。
+| [GetDpiForSystem](https://docs.microsoft.com/windows/win32/api/winuser/nf-winuser-getdpiforsystem)                              | 不存在时，调用GetDeviceCaps。
+| [GetDpiForWindow](https://docs.microsoft.com/windows/win32/api/winuser/nf-winuser-getdpiforwindow)                              | 不存在时，调用GetDpiForMonitor。
+| [GetSystemMetricsForDpi](https://docs.microsoft.com/windows/win32/api/winuser/nf-winuser-getsystemmetricsfordpi)                | 不存在时，调用GetSystemMetrics。
+| [AdjustWindowRectExForDpi](https://docs.microsoft.com/windows/win32/api/winuser/nf-winuser-adjustwindowrectexfordpi)            | 不存在时，调用AdjustWindowRectEx。
+| [SystemParametersInfoForDpi](https://docs.microsoft.com/windows/win32/api/winuser/nf-winuser-systemparametersinfofordpi)        | 不存在时，调用SystemParametersInfoW。
