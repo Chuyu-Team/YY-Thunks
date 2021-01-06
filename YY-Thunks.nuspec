@@ -17,6 +17,16 @@
       * 解决[Bug 7](https://github.com/Chuyu-Team/YY-Thunks/issues/7)，某些情况下导致死锁问题（感谢 冯立夫）
       * 添加 RoOriginateError
       * 添加 RoOriginateErrorW
+      * 新增[Fea 8](https://github.com/Chuyu-Team/YY-Thunks/issues/8)，添加对Win10引入的DPI函数的支持。
+         - 添加 GetDpiForMonitor
+         - 添加 SetProcessDpiAwareness
+         - 添加 SetProcessDPIAware
+         - 添加 SetProcessDpiAwarenessContext
+         - 添加 GetDpiForSystem
+         - 添加 GetDpiForWindow
+         - 添加 GetSystemMetricsForDpi
+         - 添加 AdjustWindowRectExForDpi
+         - 添加 SystemParametersInfoForDpi
     </releaseNotes>
     <copyright>Copyright 2020</copyright>
     <tags>Chuyu YY-Thunks native nativepackage</tags>
