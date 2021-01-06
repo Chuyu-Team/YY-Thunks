@@ -13,6 +13,13 @@ namespace YY
 			__fastcall
 			GetDpiForSystemDownlevel()
 			{
+				static int nDPICache = 0;
+
+				if (nDPICache)
+				{
+					return nDPICache;
+				}
+
 				int nDpiX = USER_DEFAULT_SCREEN_DPI;
 
 				if (HDC hdc = GetDC(NULL))
@@ -21,7 +28,7 @@ namespace YY
 					ReleaseDC(NULL, hdc);
 				}
 
-				return nDpiX;
+				return nDPICache = nDpiX;
 			}
 		}
 #endif
