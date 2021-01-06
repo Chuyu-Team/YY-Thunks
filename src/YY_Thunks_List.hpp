@@ -34,5 +34,6 @@
 #include "Thunks/shlwapi.hpp"
 #include "Thunks/kernel32.hpp"
 #include "Thunks/SetupAPI.hpp"
+#include "Thunks/shcore.hpp"
 
 
