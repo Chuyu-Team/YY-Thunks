@@ -621,7 +621,8 @@ namespace YY
 
 				if ((Current & (RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC)) == RTL_RUN_ONCE_ASYNC)
 				{
-					InterlockedExchange((volatile size_t *)lpInitOnce, dwFlags);
+					//没有想明白这样做的意图，修改lpInitOnce本身有什么意义？ nop？
+					InterlockedExchange((volatile size_t *)&lpInitOnce, dwFlags);
 
 					if (lpContext)
 						*lpContext = (LPVOID)(Current & ~size_t(RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC));
