@@ -220,22 +220,21 @@ SetFileInformationByHandle(
 
 			if (pRenameInfo->FileNameLength < sizeof(wchar_t) || pRenameInfo->FileName[0] != L':')
 			{
-				auto pRtlDosPathNameToNtPathName_U_WithStatus = try_get_RtlDosPathNameToNtPathName_U_WithStatus();
+				auto pRtlDosPathNameToNtPathName_U = try_get_RtlDosPathNameToNtPathName_U();
 				auto pRtlFreeUnicodeString = try_get_RtlFreeUnicodeString();
 
-				if (pRtlDosPathNameToNtPathName_U_WithStatus == nullptr || pRtlFreeUnicodeString ==nullptr)
+				if (pRtlDosPathNameToNtPathName_U == nullptr || pRtlFreeUnicodeString ==nullptr)
 				{
 					SetLastError(ERROR_INVALID_FUNCTION);
 					return FALSE;
 				}
 
-				UNICODE_STRING NtName;
+				UNICODE_STRING NtName = {};
 
-				auto Status = pRtlDosPathNameToNtPathName_U_WithStatus(pRenameInfo->FileName, &NtName, nullptr, nullptr);
 
-				if (Status < STATUS_SUCCESS)
+				if (!pRtlDosPathNameToNtPathName_U(pRenameInfo->FileName, &NtName, nullptr, nullptr))
 				{
-					internal::BaseSetLastNTError(Status);
+					SetLastError(ERROR_INVALID_PARAMETER);
 
 					return FALSE;
 				}
