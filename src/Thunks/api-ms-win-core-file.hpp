@@ -443,9 +443,7 @@ GetFinalPathNameByHandleW(
 		}
 		else if (Status < 0)
 		{
-			auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
-
-			lStatus = pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status;
+			lStatus = internal::NtStatusToDosError(Status);
 
 			goto __Exit;
 		}
@@ -491,9 +489,7 @@ GetFinalPathNameByHandleW(
 		}
 		else if (Status < 0)
 		{
-			auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
-
-			lStatus = pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status;
+			lStatus = internal::NtStatusToDosError(Status);
 
 			goto __Exit;
 		}
@@ -1044,12 +1040,11 @@ namespace internal
 		const auto pRtlDetermineDosPathNameType_U = try_get_RtlDetermineDosPathNameType_U();
 		const auto pRtlDosPathNameToNtPathName_U = try_get_RtlDosPathNameToNtPathName_U();
 		const auto pRtlFreeUnicodeString = try_get_RtlFreeUnicodeString();
-		const auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
 		const auto pNtSetInformationFile = try_get_NtSetInformationFile();
 
 		if (pRtlAdjustPrivilege == nullptr || pNtCreateFile == nullptr || pNtClose == nullptr
 			|| pRtlDetermineDosPathNameType_U == nullptr || pRtlDosPathNameToNtPathName_U == nullptr
-			|| pRtlFreeUnicodeString == nullptr || pRtlNtStatusToDosError == nullptr || pNtSetInformationFile == nullptr)
+			|| pRtlFreeUnicodeString == nullptr || pNtSetInformationFile == nullptr)
 		{
 			SetLastError(ERROR_FUNCTION_FAILED);
 			return FALSE;
@@ -1072,7 +1067,7 @@ namespace internal
 			auto Status = pRtlAdjustPrivilege(SE_CREATE_SYMBOLIC_LINK_PRIVILEGE, TRUE, TRUE, &Enabled);
 			if (Status)
 			{
-				lStatus = pRtlNtStatusToDosError(Status);
+				lStatus = internal::NtStatusToDosError(Status);
 				break;
 			}
 
@@ -1185,7 +1180,7 @@ namespace internal
 			
 				if (Status < 0)
 				{
-					lStatus = pRtlNtStatusToDosError(Status);
+					lStatus = internal::NtStatusToDosError(Status);
 				}
 				else
 				{

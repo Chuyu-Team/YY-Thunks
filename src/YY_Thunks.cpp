@@ -121,14 +121,36 @@ namespace YY
 	{
 		namespace internal
 		{
+			static DWORD __fastcall NtStatusToDosError(
+				_In_ NTSTATUS Status
+				)
+			{
+				if (STATUS_TIMEOUT == Status)
+				{
+					/*
+					https://github.com/Chuyu-Team/YY-Thunks/issues/10
+
+					用户报告，Windows XP 无法转换 STATUS_TIMEOUT。实际结果也是rubin，因此，特殊处理一下。
+					*/
+					return ERROR_TIMEOUT;
+				}
+				else if (auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError())
+				{
+					return pRtlNtStatusToDosError(Status);
+				}
+				else
+				{
+					//如果没有RtlNtStatusToDosError就直接设置Status代码吧，反正至少比没有错误代码强
+					return Status;
+				}
+
+			}
+
 			static DWORD __fastcall BaseSetLastNTError(
 				_In_ NTSTATUS Status
 				)
 			{
-				auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
-
-				//如果没有RtlNtStatusToDosError就直接设置Status代码吧，反正至少比没有错误代码强
-				DWORD lStatus = pRtlNtStatusToDosError ? pRtlNtStatusToDosError(Status) : Status;
+				auto lStatus = NtStatusToDosError(Status);
 				SetLastError(lStatus);
 				return lStatus;
 			}
