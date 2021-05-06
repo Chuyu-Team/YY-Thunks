@@ -334,8 +334,8 @@ namespace YY
 				//v16
 				YY_CV_WAIT_BLOCK* notify = nullptr;
 
-				YY_CV_WAIT_BLOCK* Unknow1 = nullptr;
-				YY_CV_WAIT_BLOCK* Unknow2 = (YY_CV_WAIT_BLOCK*)&Unknow1;
+				YY_CV_WAIT_BLOCK* pWake = nullptr;
+				YY_CV_WAIT_BLOCK** ppInsert = &pWake;
 
 				size_t Count = 0;
 
@@ -347,7 +347,7 @@ namespace YY
 					{
 						ConditionVariableStatus = InterlockedExchange((volatile size_t*)ConditionVariable, 0);
 
-						Unknow2->back = YY_CV_GET_BLOCK(ConditionVariableStatus);
+						*ppInsert = YY_CV_GET_BLOCK(ConditionVariableStatus);
 
 						break;
 					}
@@ -381,7 +381,7 @@ namespace YY
 						for (; MaxWakeCount > Count && notify->next;)
 						{
 							++Count;
-							Unknow2->back = notify;
+							*ppInsert = notify;
 							notify->back = nullptr;
 
 							auto next = notify->next;
@@ -389,7 +389,7 @@ namespace YY
 							pWaitBlock->notify = next;
 							next->back = nullptr;
 
-							Unknow2 = notify;
+							ppInsert = &notify->back;
 
 							notify = next;
 
@@ -413,7 +413,7 @@ namespace YY
 
 							if (LastStatus == ConditionVariableStatus)
 							{
-								Unknow2->back = notify;
+								*ppInsert = notify;
 								notify->back = 0;
 
 								break;
@@ -424,19 +424,19 @@ namespace YY
 					}
 				}
 
-				for (; Unknow1;)
+				for (; pWake;)
 				{
-					auto back = Unknow1->back;
+					auto back = pWake->back;
 
-					if (!InterlockedBitTestAndReset((volatile LONG*)&Unknow1->flag, 1))
+					if (!InterlockedBitTestAndReset((volatile LONG*)&pWake->flag, 1))
 					{
-						if (Unknow1->SRWLock == nullptr || RtlpQueueWaitBlockToSRWLock(Unknow1, Unknow1->SRWLock, (Unknow1->flag >> 2) & 0x1) == FALSE)
+						if (pWake->SRWLock == nullptr || RtlpQueueWaitBlockToSRWLock(pWake, pWake->SRWLock, (pWake->flag >> 2) & 0x1) == FALSE)
 						{
-							pNtReleaseKeyedEvent(GlobalKeyedEventHandle, Unknow1, 0, nullptr);
+							pNtReleaseKeyedEvent(GlobalKeyedEventHandle, pWake, 0, nullptr);
 						}
 					}
 
-					Unknow1 = back;
+					pWake = back;
 				}
 
 				return;
@@ -502,7 +502,7 @@ namespace YY
 							BOOL bRet = FALSE;
 
 							auto pWaitBlock = YY_CV_GET_BLOCK(Current);
-							auto pUnkonw2 = pWaitBlock;
+							auto pSuccessor = pWaitBlock;
 
 							if (pWaitBlock)
 							{
@@ -543,7 +543,7 @@ namespace YY
 												Current = Last;
 											}
 
-											pUnkonw2 = pWaitBlock = YY_CV_GET_BLOCK(Current);
+											pSuccessor = pWaitBlock = YY_CV_GET_BLOCK(Current);
 											notify = nullptr;
 										}
 									}
@@ -555,8 +555,8 @@ namespace YY
 									}
 								}
 
-								if (pUnkonw2)
-									pUnkonw2->notify = notify;
+								if (pSuccessor)
+									pSuccessor->notify = notify;
 							}
 
 							RtlpWakeConditionVariable(ConditionVariable, Current, 0);
