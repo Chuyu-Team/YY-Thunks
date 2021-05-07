@@ -122,7 +122,7 @@
 | [SHGetNameFromIDList](https://docs.microsoft.com/windows/win32/api/shobjidl_core/nf-shobjidl_core-shgetnamefromidlist)          | 不存在时，调用IShellItem。
 | [SHCreateShellItem](https://docs.microsoft.com/windows/win32/api/shlobj_core/nf-shlobj_core-shcreateshellitem)                  | 不存在时，调用IShellItem。
 | [OpenFileById](https://docs.microsoft.com/windows/win32/api/winbase/nf-winbase-openfilebyid)                                    | 不存在时，调用NtCreateFile。
-| [CreateSymbolicLinkW(A)](https://docs.microsoft.com/windows/win32/api/winbase/nf-winbase-createsymboliclinkw)                   | 不存在时，调用DeviceIoControl。
+| [CreateSymbolicLinkW(A)](https://docs.microsoft.com/windows/win32/api/winbase/nf-winbase-createsymboliclinkw)                   | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
 | [ReOpenFile](https://docs.microsoft.com/windows/win32/api/winbase/nf-winbase-reopenfile)                                        | 不存在时，调用NtCreateFile。
 | [CompareStringEx](https://docs.microsoft.com/windows/win32/api/stringapiset/nf-stringapiset-comparestringex)                    | 不存在时，调用CompareStringW。
 | [CompareStringOrdinal](https://docs.microsoft.com/windows/win32/api/stringapiset/nf-stringapiset-comparestringordinal)          | 不存在时，使用内置UnicodeCaseTableData实现。
