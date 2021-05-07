@@ -27,6 +27,15 @@
          - 添加 GetSystemMetricsForDpi
          - 添加 AdjustWindowRectExForDpi
          - 添加 SystemParametersInfoForDpi
+
+      * 代码优化
+         - 减少 GetDpiForSystemDownlevel 函数中 GetDeviceCaps 的调用次数（感谢 毛利）。
+         - 合并[RP 11](https://github.com/Chuyu-Team/YY-Thunks/pull/11), 填充自旋锁中那些Unknow变量的语义（感谢 zeroclear）
+
+      * 解决[Bug 10](https://github.com/Chuyu-Team/YY-Thunks/issues/10), XP下BaseSetLastNTError转换STATUS_TIMEOUT会报错。
+      * 解决[Bug 12](https://github.com/Chuyu-Team/YY-Thunks/issues/12), XP不支持SetFileInformationByHandle传入FileRenameInfo。
+      * 解决[Bug 13](https://github.com/Chuyu-Team/YY-Thunks/issues/13)，RtlRunOnceBeginInitialize一处lpInitOnce参数处理错误。
+      * 解决[Bug 14](https://github.com/Chuyu-Team/YY-Thunks/issues/14), 移除CreateSymbolicLink downlevel，因为Windows XP完全不支持SymbolicLink。
     </releaseNotes>
     <copyright>Copyright 2020</copyright>
     <tags>Chuyu YY-Thunks native nativepackage</tags>
