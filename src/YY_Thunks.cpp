@@ -185,6 +185,57 @@ namespace YY
 				return ERROR_SUCCESS;
 			}
 
+			static BOOL __fastcall BasepGetVolumeGUIDFromNTName(const UNICODE_STRING* NtName, wchar_t szVolumeGUID[MAX_PATH])
+			{
+#define __szVolumeMountPointPrefix__ L"\\\\?\\GLOBALROOT"
+
+				//一个设备名称 512 长度够多了吧？
+				wchar_t szVolumeMountPoint[512];
+				
+				//检查缓冲区是否充足
+				auto cbBufferNeed = sizeof(__szVolumeMountPointPrefix__) + NtName->Length;
+
+				if (cbBufferNeed > sizeof(szVolumeMountPoint))
+				{
+					SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+					return FALSE;
+				}
+				
+				memcpy(szVolumeMountPoint, __szVolumeMountPointPrefix__, sizeof(__szVolumeMountPointPrefix__) - sizeof(__szVolumeMountPointPrefix__[0]));
+				memcpy((char*)szVolumeMountPoint + sizeof(__szVolumeMountPointPrefix__) - sizeof(__szVolumeMountPointPrefix__[0]), NtName->Buffer, NtName->Length);
+
+				szVolumeMountPoint[cbBufferNeed / 2 - 1] = L'\0';
+
+
+				return GetVolumeNameForVolumeMountPointW(szVolumeMountPoint, szVolumeGUID, MAX_PATH);
+
+#undef __szVolumeMountPointPrefix__
+			}
+
+			static BOOL __fastcall BasepGetVolumeDosLetterNameFromNTName(const UNICODE_STRING* NtName, wchar_t szVolumeDosLetter[MAX_PATH])
+			{
+				wchar_t szVolumeName[MAX_PATH];
+
+				if (!BasepGetVolumeGUIDFromNTName(NtName, szVolumeName))
+				{
+					return FALSE;
+				}
+
+				DWORD cchVolumePathName = 0;
+
+				if (!GetVolumePathNamesForVolumeNameW(szVolumeName, szVolumeDosLetter + 4, MAX_PATH - 4, &cchVolumePathName))
+				{
+					return FALSE;
+				}
+
+				szVolumeDosLetter[0] = L'\\';
+				szVolumeDosLetter[1] = L'\\';
+				szVolumeDosLetter[2] = L'?';
+				szVolumeDosLetter[3] = L'\\';
+
+				return TRUE;
+			}
+
 		}
 	}//namespace Thunks
 

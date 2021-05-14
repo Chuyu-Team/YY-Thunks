@@ -398,6 +398,18 @@ GetFinalPathNameByHandleW(
 		return 0;
 	}
 
+	UNICODE_STRING VolumeNtName = {};
+
+	wchar_t szVolumeRoot[MAX_PATH];
+	szVolumeRoot[0] = L'\0';
+
+	wchar_t* szLongPathNameBuffer = nullptr;
+	
+	//目标所需的分区名称，不包含最后的 '\\'
+	UNICODE_STRING TargetVolumeName = {};
+	//目标所需的文件名，开始包含 '\\'
+	UNICODE_STRING TargetFileName = {};
+
 	const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
 	LSTATUS lStatus = ERROR_SUCCESS;
 	DWORD   cchReturn = 0;
@@ -512,153 +524,148 @@ GetFinalPathNameByHandleW(
 		goto __Exit;
 	}
 
-	//低于Vista平台无法支持 FILE_NAME_OPENED，因此忽略
+	VolumeNtName.Buffer = pObjectName->Name.Buffer;
+	VolumeNtName.Length = VolumeNtName.MaximumLength = pObjectName->Name.Length - pFileNameInfo->FileNameLength + sizeof(wchar_t);
+
 
 	if (VOLUME_NAME_NT & dwFlags)
 	{
 		//返回NT路径
-		cchReturn = pObjectName->Name.Length / sizeof(lpszFilePath[0]);
-
-		if (cchFilePath <= cchReturn)
-		{
-			//长度不足……
-
-			cchReturn += 1;
-		}
-		else
-		{
-			memcpy(lpszFilePath, pObjectName->Name.Buffer, cchReturn * sizeof(lpszFilePath[0]));
-
-			lpszFilePath[cchReturn] = L'\0';
-		}
+		TargetVolumeName.Buffer = VolumeNtName.Buffer;
+		TargetVolumeName.Length = TargetVolumeName.MaximumLength = VolumeNtName.Length - sizeof(wchar_t);
 	}
 	else if (VOLUME_NAME_NONE & dwFlags)
 	{
 		//仅返回文件名
-		cchReturn = pFileNameInfo->FileNameLength / sizeof(lpszFilePath[0]);
-
-		if (cchFilePath <= cchReturn)
-		{
-			//长度不足……
-
-			cchReturn += 1;
-		}
-		else
-		{
-			memcpy(lpszFilePath, pFileNameInfo->FileName, cchReturn * sizeof(lpszFilePath[0]));
-			lpszFilePath[cchReturn] = L'\0';
-		}
 	}
 	else
 	{
-		const wchar_t szGobal[] = L"\\\\?\\GLOBALROOT";
-
-		const DWORD cbVolumeName = pObjectName->Name.Length - pFileNameInfo->FileNameLength + sizeof(lpszFilePath[0]);
-
-		auto szVolumeMountPoint = (wchar_t*)HeapAlloc(ProcessHeap, 0, cbVolumeName + sizeof(szGobal));
-		if (!szVolumeMountPoint)
-		{
-			lStatus = ERROR_NOT_ENOUGH_MEMORY;
-			goto __Exit;
-		}
-
-		DWORD cbVolumeMountPoint = sizeof(szGobal) - sizeof(szGobal[0]);
-
-		memcpy(szVolumeMountPoint, szGobal, cbVolumeMountPoint);
-
-		memcpy((byte*)szVolumeMountPoint + cbVolumeMountPoint, pObjectName->Name.Buffer, cbVolumeName);
-		cbVolumeMountPoint += cbVolumeName;
-
-		szVolumeMountPoint[cbVolumeMountPoint / sizeof(szVolumeMountPoint[0])] = L'\0';
-
-		wchar_t szVolumeName[MAX_PATH];
-
-		if (!GetVolumeNameForVolumeMountPointW(szVolumeMountPoint, szVolumeName, _countof(szVolumeName)))
-		{
-			lStatus = GetLastError();
-			HeapFree(ProcessHeap, 0, szVolumeMountPoint);
-
-			goto __Exit;
-		}
-
-		HeapFree(ProcessHeap, 0, szVolumeMountPoint);
-
-
 		if (VOLUME_NAME_GUID & dwFlags)
 		{
 			//返回分区GUID名称
-
-			auto cchVolumeName = wcslen(szVolumeName);
-
-			if (cchVolumeName == 0)
+			if (!internal::BasepGetVolumeGUIDFromNTName(&VolumeNtName, szVolumeRoot))
 			{
-				//逗我？
-				lStatus = ERROR_INVALID_FUNCTION;
+				lStatus = GetLastError();
 				goto __Exit;
-			}
-
-			--cchVolumeName;
-
-			cchReturn = cchVolumeName + pFileNameInfo->FileNameLength / sizeof(pFileNameInfo->FileName[0]);
-
-			if (cchFilePath <= cchReturn)
-			{
-				cchReturn += 1;
-			}
-			else
-			{
-				//复制VolumeName
-				memcpy(lpszFilePath, szVolumeName, cchVolumeName * sizeof(szVolumeName[0]));
-
-				//复制文件名
-				memcpy(lpszFilePath + cchVolumeName, pFileNameInfo->FileName, pFileNameInfo->FileNameLength);
-
-				//NULL边界
-				lpszFilePath[cchReturn] = L'\0';
 			}
 		}
 		else
 		{
 			//返回Dos路径
-			DWORD cchVolumePathName = 0;
-
-			wchar_t VolumePathName[MAX_PATH + 4] = L"\\\\?\\";
-
-			if (!GetVolumePathNamesForVolumeNameW(szVolumeName, VolumePathName + 4, MAX_PATH, &cchVolumePathName))
+			if (!internal::BasepGetVolumeDosLetterNameFromNTName(&VolumeNtName, szVolumeRoot))
 			{
 				lStatus = GetLastError();
 				goto __Exit;
 			}
+		}
 
-			cchVolumePathName = wcslen(VolumePathName);
+		TargetVolumeName.Buffer = szVolumeRoot;
+		TargetVolumeName.Length = TargetVolumeName.MaximumLength = (wcslen(szVolumeRoot) - 1) * sizeof(szVolumeRoot[0]);
+	}
 
-			if (cchVolumePathName == 0)
+	//将路径进行规范化
+	if ((FILE_NAME_OPENED & dwFlags) == 0)
+	{
+		//由于 Windows XP不支持 FileNormalizedNameInformation，所以我们直接调用 GetLongPathNameW 获取完整路径。
+
+		DWORD cbszVolumeRoot = TargetVolumeName.Length;
+
+		if (szVolumeRoot[0] == L'\0')
+		{
+			//转换分区信息
+
+			if (!internal::BasepGetVolumeDosLetterNameFromNTName(&VolumeNtName, szVolumeRoot))
 			{
-				//逗我？
-				lStatus = ERROR_INVALID_FUNCTION;
-				goto __Exit;
+				lStatus = GetLastError();
+
+				if(lStatus == ERROR_NOT_ENOUGH_MEMORY)
+					goto __Exit;
+
+				if (!internal::BasepGetVolumeGUIDFromNTName(&VolumeNtName, szVolumeRoot))
+				{
+					lStatus = GetLastError();
+					goto __Exit;
+				}
 			}
 
-			--cchVolumePathName;
+			cbszVolumeRoot = (wcslen(szVolumeRoot) - 1) * sizeof(szVolumeRoot[0]);
+		}
 
-			cchReturn = cchVolumePathName + pFileNameInfo->FileNameLength / sizeof(pFileNameInfo->FileName[0]);
 
-			if (cchFilePath <= cchReturn)
+
+		auto cbLongPathNameBufferSize = cbszVolumeRoot + pFileNameInfo->FileNameLength + 1024;
+
+		szLongPathNameBuffer = (wchar_t*)HeapAlloc(ProcessHeap, 0, cbLongPathNameBufferSize);
+		if (!szLongPathNameBuffer)
+		{
+			lStatus = ERROR_NOT_ENOUGH_MEMORY;
+			goto __Exit;
+		}
+
+		auto cchLongPathNameBufferSize = cbLongPathNameBufferSize / sizeof(szLongPathNameBuffer[0]);
+
+		memcpy(szLongPathNameBuffer, szVolumeRoot, cbszVolumeRoot);
+		memcpy((char*)szLongPathNameBuffer + cbszVolumeRoot, pFileNameInfo->FileName, pFileNameInfo->FileNameLength);
+		szLongPathNameBuffer[(cbszVolumeRoot + pFileNameInfo->FileNameLength) / sizeof(wchar_t)] = L'\0';
+
+		for (;;)
+		{
+			auto result = GetLongPathNameW(szLongPathNameBuffer, szLongPathNameBuffer, cchLongPathNameBufferSize);
+
+			if (result == 0)
 			{
-				cchReturn += 1;
+				//失败
+				lStatus = GetLastError();
+				goto __Exit;
+			}
+			else if (result >= cchLongPathNameBufferSize)
+			{
+				cchLongPathNameBufferSize = result + 1;
+
+				auto pNewLongPathName = (wchar_t*)HeapReAlloc(ProcessHeap, 0, szLongPathNameBuffer, cchLongPathNameBufferSize * sizeof(wchar_t));
+				if (!pNewLongPathName)
+				{
+					lStatus = ERROR_NOT_ENOUGH_MEMORY;
+					goto __Exit;
+				}
+
+				szLongPathNameBuffer = pNewLongPathName;
+				
 			}
 			else
 			{
-				//复制VolumePathName 
-				memcpy(lpszFilePath, VolumePathName, cchVolumePathName * sizeof(VolumePathName[0]));
-
-				//复制文件名
-				memcpy(lpszFilePath + cchVolumePathName, pFileNameInfo->FileName, pFileNameInfo->FileNameLength);
-
-				//NULL边界
-				lpszFilePath[cchReturn] = L'\0';
+				//转换成功
+				TargetFileName.Buffer = (wchar_t*)((char*)szLongPathNameBuffer + cbszVolumeRoot);
+				TargetFileName.Length = TargetFileName.MaximumLength = result * sizeof(wchar_t) - cbszVolumeRoot;
+				break;
 			}
 		}
+	}
+	else
+	{
+		//直接返回原始路径
+		TargetFileName.Buffer = pFileNameInfo->FileName;
+		TargetFileName.Length = TargetFileName.MaximumLength = pFileNameInfo->FileNameLength;
+	}
+
+
+	//返回结果，根目录 + 文件名 的长度
+	cchReturn = (TargetVolumeName.Length + TargetFileName.Length) / sizeof(wchar_t);
+
+	if (cchFilePath <= cchReturn)
+	{
+		//长度不足……
+
+		cchReturn += 1;
+	}
+	else
+	{
+		//复制根目录
+		memcpy(lpszFilePath, TargetVolumeName.Buffer, TargetVolumeName.Length);
+		//复制文件名
+		memcpy((char*)lpszFilePath + TargetVolumeName.Length, TargetFileName.Buffer, TargetFileName.Length);
+		//保证字符串 '\0' 截断
+		lpszFilePath[cchReturn] = L'\0';
 	}
 
 __Exit:
@@ -666,6 +673,8 @@ __Exit:
 		HeapFree(ProcessHeap, 0, pFileNameInfo);
 	if (pObjectName)
 		HeapFree(ProcessHeap, 0, pObjectName);
+	if (szLongPathNameBuffer)
+		HeapFree(ProcessHeap, 0, szLongPathNameBuffer);
 
 	if (lStatus != ERROR_SUCCESS)
 	{
