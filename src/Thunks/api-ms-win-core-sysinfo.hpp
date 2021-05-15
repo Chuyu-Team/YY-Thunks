@@ -1,4 +1,4 @@
-
+ï»¿
 
 namespace YY {
 namespace Thunks {
@@ -181,7 +181,7 @@ BOOL WINAPI GetLogicalProcessorInformationEx(
                     break;
                 }
 
-                //²»Ö§³Ö´«Êä´ËÀàÐÍ
+                //ä¸æ”¯æŒä¼ è¾“æ­¤ç±»åž‹
                 if (0 == cbInfoNeed)
                     continue;
 
@@ -222,7 +222,7 @@ BOOL WINAPI GetLogicalProcessorInformationEx(
             }
         }
 
-        //´«Êä RelationGroup ÐÅÏ¢£¬ÕâÀïÖ»ÄÜ¼ÙÉèÖ»ÓÐÒ»×éCPU
+        //ä¼ è¾“ RelationGroup ä¿¡æ¯ï¼Œè¿™é‡Œåªèƒ½å‡è®¾åªæœ‰ä¸€ç»„CPU
         if (RelationshipType == LOGICAL_PROCESSOR_RELATIONSHIP::RelationAll ||
             RelationGroup == RelationshipType)
         {
@@ -294,7 +294,7 @@ BOOL WINAPI GetLogicalProcessorInformationEx(
 
         if (cbBufferUsed > cbBuffer)
         {
-            //»º³åÇø²»×ã
+            //ç¼“å†²åŒºä¸è¶³
             lStatus = ERROR_INSUFFICIENT_BUFFER;
         }
     }

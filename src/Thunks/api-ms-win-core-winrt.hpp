@@ -1,4 +1,4 @@
-
+﻿
 #include <roapi.h>
 
 namespace YY {

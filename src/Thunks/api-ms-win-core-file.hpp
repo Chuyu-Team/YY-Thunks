@@ -1,4 +1,4 @@
-
+ï»¿
 
 namespace YY {
 namespace Thunks {
@@ -105,7 +105,7 @@ BOOL WINAPI GetFileInformationByHandleEx(
         {
             if (WaitForSingleObjectEx(hFile, 0, FALSE) == WAIT_FAILED)
             {
-                // WaitForSingleObjectEx»áÉèÖÃLastError
+                // WaitForSingleObjectExä¼šè®¾ç½®LastError
                 return FALSE;
             }
 
@@ -274,7 +274,7 @@ BOOL WINAPI SetFileInformationByHandle(
         NtFileInformationClass = FileIoPriorityHintInformation;
         cbMinBufferSize = sizeof(FILE_IO_PRIORITY_HINT_INFO);
 
-        //³¤¶È¼ì²é£¬Î¢ÈíÔ­°æËÆºõÃ»ÓĞ¸Ã°²È«¼ì²é
+        //é•¿åº¦æ£€æŸ¥ï¼Œå¾®è½¯åŸç‰ˆä¼¼ä¹æ²¡æœ‰è¯¥å®‰å…¨æ£€æŸ¥
         if (cbMinBufferSize > dwBufferSize)
         {
             SetLastError(ERROR_BAD_LENGTH);
@@ -350,7 +350,7 @@ GetFinalPathNameByHandleW(
         return pGetFinalPathNameByHandleW(hFile, lpszFilePath, cchFilePath, dwFlags);
     }
 
-    //²ÎÊı¼ì²é
+    //å‚æ•°æ£€æŸ¥
     if (INVALID_HANDLE_VALUE == hFile)
     {
         SetLastError(ERROR_INVALID_HANDLE);
@@ -389,9 +389,9 @@ GetFinalPathNameByHandleW(
 
     wchar_t *szLongPathNameBuffer = nullptr;
 
-    //Ä¿±êËùĞèµÄ·ÖÇøÃû³Æ£¬²»°üº¬×îºóµÄ '\\'
+    //ç›®æ ‡æ‰€éœ€çš„åˆ†åŒºåç§°ï¼Œä¸åŒ…å«æœ€åçš„ '\\'
     UNICODE_STRING TargetVolumeName = {};
-    //Ä¿±êËùĞèµÄÎÄ¼şÃû£¬¿ªÊ¼°üº¬ '\\'
+    //ç›®æ ‡æ‰€éœ€çš„æ–‡ä»¶åï¼Œå¼€å§‹åŒ…å« '\\'
     UNICODE_STRING TargetFileName = {};
 
     const auto ProcessHeap = ((TEB *)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
@@ -425,7 +425,7 @@ GetFinalPathNameByHandleW(
 
             if (!pObjectName)
             {
-                //ÄÚ´æ²»×ã£¿
+                //å†…å­˜ä¸è¶³ï¼Ÿ
                 lStatus = ERROR_NOT_ENOUGH_MEMORY;
                 goto __Exit;
             }
@@ -470,7 +470,7 @@ GetFinalPathNameByHandleW(
 
             if (!pFileNameInfo)
             {
-                //ÄÚ´æ²»×ã£¿
+                //å†…å­˜ä¸è¶³ï¼Ÿ
                 lStatus = ERROR_NOT_ENOUGH_MEMORY;
                 goto __Exit;
             }
@@ -516,20 +516,20 @@ GetFinalPathNameByHandleW(
 
     if (VOLUME_NAME_NT & dwFlags)
     {
-        //·µ»ØNTÂ·¾¶
+        //è¿”å›NTè·¯å¾„
         TargetVolumeName.Buffer = VolumeNtName.Buffer;
         TargetVolumeName.Length = TargetVolumeName.MaximumLength =
             VolumeNtName.Length - sizeof(wchar_t);
     }
     else if (VOLUME_NAME_NONE & dwFlags)
     {
-        //½ö·µ»ØÎÄ¼şÃû
+        //ä»…è¿”å›æ–‡ä»¶å
     }
     else
     {
         if (VOLUME_NAME_GUID & dwFlags)
         {
-            //·µ»Ø·ÖÇøGUIDÃû³Æ
+            //è¿”å›åˆ†åŒºGUIDåç§°
             if (!internal::BasepGetVolumeGUIDFromNTName(&VolumeNtName, szVolumeRoot))
             {
                 lStatus = GetLastError();
@@ -538,7 +538,7 @@ GetFinalPathNameByHandleW(
         }
         else
         {
-            //·µ»ØDosÂ·¾¶
+            //è¿”å›Dosè·¯å¾„
             if (!internal::BasepGetVolumeDosLetterNameFromNTName(&VolumeNtName, szVolumeRoot))
             {
                 lStatus = GetLastError();
@@ -551,17 +551,17 @@ GetFinalPathNameByHandleW(
             (wcslen(szVolumeRoot) - 1) * sizeof(szVolumeRoot[0]);
     }
 
-    //½«Â·¾¶½øĞĞ¹æ·¶»¯
+    //å°†è·¯å¾„è¿›è¡Œè§„èŒƒåŒ–
     if ((FILE_NAME_OPENED & dwFlags) == 0)
     {
-        //ÓÉÓÚ Windows XP²»Ö§³Ö FileNormalizedNameInformation£¬ËùÒÔÎÒÃÇÖ±½Óµ÷ÓÃ GetLongPathNameW
-        //»ñÈ¡ÍêÕûÂ·¾¶¡£
+        //ç”±äº Windows XPä¸æ”¯æŒ FileNormalizedNameInformationï¼Œæ‰€ä»¥æˆ‘ä»¬ç›´æ¥è°ƒç”¨ GetLongPathNameW
+        //è·å–å®Œæ•´è·¯å¾„ã€‚
 
         DWORD cbszVolumeRoot = TargetVolumeName.Length;
 
         if (szVolumeRoot[0] == L'\0')
         {
-            //×ª»»·ÖÇøĞÅÏ¢
+            //è½¬æ¢åˆ†åŒºä¿¡æ¯
 
             if (!internal::BasepGetVolumeDosLetterNameFromNTName(&VolumeNtName, szVolumeRoot))
             {
@@ -606,7 +606,7 @@ GetFinalPathNameByHandleW(
 
             if (result == 0)
             {
-                //Ê§°Ü
+                //å¤±è´¥
                 lStatus = GetLastError();
                 goto __Exit;
             }
@@ -629,7 +629,7 @@ GetFinalPathNameByHandleW(
             }
             else
             {
-                //×ª»»³É¹¦
+                //è½¬æ¢æˆåŠŸ
                 TargetFileName.Buffer = (wchar_t *)((char *)szLongPathNameBuffer + cbszVolumeRoot);
                 TargetFileName.Length = TargetFileName.MaximumLength =
                     result * sizeof(wchar_t) - cbszVolumeRoot;
@@ -639,30 +639,30 @@ GetFinalPathNameByHandleW(
     }
     else
     {
-        //Ö±½Ó·µ»ØÔ­Ê¼Â·¾¶
+        //ç›´æ¥è¿”å›åŸå§‹è·¯å¾„
         TargetFileName.Buffer = pFileNameInfo->FileName;
         TargetFileName.Length = TargetFileName.MaximumLength = pFileNameInfo->FileNameLength;
     }
 
-    //·µ»Ø½á¹û£¬¸ùÄ¿Â¼ + ÎÄ¼şÃû µÄ³¤¶È
+    //è¿”å›ç»“æœï¼Œæ ¹ç›®å½• + æ–‡ä»¶å çš„é•¿åº¦
     cchReturn = (TargetVolumeName.Length + TargetFileName.Length) / sizeof(wchar_t);
 
     if (cchFilePath <= cchReturn)
     {
-        //³¤¶È²»×ã¡­¡­
+        //é•¿åº¦ä¸è¶³â€¦â€¦
 
         cchReturn += 1;
     }
     else
     {
-        //¸´ÖÆ¸ùÄ¿Â¼
+        //å¤åˆ¶æ ¹ç›®å½•
         memcpy(lpszFilePath, TargetVolumeName.Buffer, TargetVolumeName.Length);
-        //¸´ÖÆÎÄ¼şÃû
+        //å¤åˆ¶æ–‡ä»¶å
         memcpy(
             (char *)lpszFilePath + TargetVolumeName.Length,
             TargetFileName.Buffer,
             TargetFileName.Length);
-        //±£Ö¤×Ö·û´® '\0' ½Ø¶Ï
+        //ä¿è¯å­—ç¬¦ä¸² '\0' æˆªæ–­
         lpszFilePath[cchReturn] = L'\0';
     }
 
@@ -753,13 +753,13 @@ GetFinalPathNameByHandleA(
         }
         else if (cchReturn > cchszFilePathUnicode)
         {
-            //»º³åÇø²»×ã
+            //ç¼“å†²åŒºä¸è¶³
             cchszFilePathUnicode = cchReturn;
             continue;
         }
         else
         {
-            //²Ù×÷³É¹¦£¡
+            //æ“ä½œæˆåŠŸï¼
             const UINT CodePage = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 
             auto cchReturnANSI = WideCharToMultiByte(
@@ -778,7 +778,7 @@ GetFinalPathNameByHandleA(
             }
             else if (cchReturnANSI >= cchFilePath)
             {
-                //³¤¶È²»×ã
+                //é•¿åº¦ä¸è¶³
                 ++cchReturnANSI;
             }
             else

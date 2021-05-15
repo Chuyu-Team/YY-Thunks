@@ -1,4 +1,4 @@
-
+ï»¿
 
 #define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                    \
     _APPLY(ntdll, "ntdll", USING_UNSAFE_LOAD)                                                      \
@@ -16,7 +16,7 @@
     _APPLY(api_ms_win_core_winrt_string_l1_1_0, "api-ms-win-core-winrt-string-l1-1-0", 0)          \
     _APPLY(api_ms_win_core_winrt_error_l1_1_0, "api-ms-win-core-winrt-error-l1-1-0", 0)
 
-//È«¾Ö¿ÉÄÜÊ¹ÓÃµ½µÄº¯Êý
+//å…¨å±€å¯èƒ½ä½¿ç”¨åˆ°çš„å‡½æ•°
 #define _YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)                                                  \
     _APPLY(NtCreateFile, ntdll)                                                                    \
     _APPLY(NtClose, ntdll)                                                                         \
@@ -89,7 +89,7 @@
 #pragma comment(lib, "Gdi32.lib")
 #endif
 
-//Õ¹¿ªº¯ÊýµÄËùÓÐµÄ ÉùÃ÷ ÒÔ¼° try_get_ º¯Êý
+//å±•å¼€å‡½æ•°çš„æ‰€æœ‰çš„ å£°æ˜Ž ä»¥åŠ try_get_ å‡½æ•°
 #define YY_Thunks_Defined
 #define __YY_Thunks_Expand_Function(_MODULE, _FUNCTION, _SIZE)                                     \
     static decltype(_FUNCTION) *__cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept           \
@@ -119,7 +119,7 @@ static DWORD __fastcall NtStatusToDosError(_In_ NTSTATUS Status)
         /*
         https://github.com/Chuyu-Team/YY-Thunks/issues/10
 
-        ÓÃ»§±¨¸æ£¬Windows XP ÎÞ·¨×ª»» STATUS_TIMEOUT¡£Êµ¼Ê½á¹ûÒ²ÊÇrubin£¬Òò´Ë£¬ÌØÊâ´¦ÀíÒ»ÏÂ¡£
+        ç”¨æˆ·æŠ¥å‘Šï¼ŒWindows XP æ— æ³•è½¬æ¢ STATUS_TIMEOUTã€‚å®žé™…ç»“æžœä¹Ÿæ˜¯rubinï¼Œå› æ­¤ï¼Œç‰¹æ®Šå¤„ç†ä¸€ä¸‹ã€‚
         */
         return ERROR_TIMEOUT;
     }
@@ -129,7 +129,7 @@ static DWORD __fastcall NtStatusToDosError(_In_ NTSTATUS Status)
     }
     else
     {
-        //Èç¹ûÃ»ÓÐRtlNtStatusToDosError¾ÍÖ±½ÓÉèÖÃStatus´úÂë°É£¬·´ÕýÖÁÉÙ±ÈÃ»ÓÐ´íÎó´úÂëÇ¿
+        //å¦‚æžœæ²¡æœ‰RtlNtStatusToDosErrorå°±ç›´æŽ¥è®¾ç½®Statusä»£ç å§ï¼Œåæ­£è‡³å°‘æ¯”æ²¡æœ‰é”™è¯¯ä»£ç å¼º
         return Status;
     }
 }
@@ -183,10 +183,10 @@ static BOOL __fastcall BasepGetVolumeGUIDFromNTName(
 {
 #define __szVolumeMountPointPrefix__ L"\\\\?\\GLOBALROOT"
 
-    //Ò»¸öÉè±¸Ãû³Æ 512 ³¤¶È¹»¶àÁË°É£¿
+    //ä¸€ä¸ªè®¾å¤‡åç§° 512 é•¿åº¦å¤Ÿå¤šäº†å§ï¼Ÿ
     wchar_t szVolumeMountPoint[512];
 
-    //¼ì²é»º³åÇøÊÇ·ñ³ä×ã
+    //æ£€æŸ¥ç¼“å†²åŒºæ˜¯å¦å……è¶³
     auto cbBufferNeed = sizeof(__szVolumeMountPointPrefix__) + NtName->Length;
 
     if (cbBufferNeed > sizeof(szVolumeMountPoint))
@@ -244,7 +244,7 @@ static BOOL __fastcall BasepGetVolumeDosLetterNameFromNTName(
 
 } // namespace YY
 
-//µ¼ÈëÊµ¼ÊµÄÊµÏÖ
+//å¯¼å…¥å®žé™…çš„å®žçŽ°
 #define __YY_Thunks_Expand_Function(_MODULE, _FUNCTION, _SIZE)                                     \
     _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION, _SIZE)
 #include "YY_Thunks_List.hpp"

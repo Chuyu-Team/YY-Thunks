@@ -1,4 +1,4 @@
-
+ï»¿
 
 namespace YY {
 namespace Thunks {
@@ -95,7 +95,7 @@ BOOL WINAPI GetWsChangesEx(
             }
         }
 
-        //È·¶¨Êµ¼Ê¸öÊı
+        //ç¡®å®šå®é™…ä¸ªæ•°
         const auto pWatchInfoMax = (PPSAPI_WS_WATCH_INFORMATION)((byte *)pWatchInfo + cbWatchInfo);
         auto pWatchInfoTerminated = pWatchInfo;
         for (; pWatchInfoTerminated < pWatchInfoMax && pWatchInfoTerminated->FaultingPc != nullptr;
@@ -115,7 +115,7 @@ BOOL WINAPI GetWsChangesEx(
             break;
         }
 
-        //¸´ÖÆµ½ĞÂ»º³åÇø
+        //å¤åˆ¶åˆ°æ–°ç¼“å†²åŒº
         for (int i = 0; i != ccWatchInfo; ++i)
         {
             lpWatchInfoEx[i].BasicInfo = pWatchInfo[i];
@@ -123,7 +123,7 @@ BOOL WINAPI GetWsChangesEx(
             lpWatchInfoEx[i].Flags = 0;
         }
 
-        //²åÈëÖÕÖ¹±ê¼Ç
+        //æ’å…¥ç»ˆæ­¢æ ‡è®°
         lpWatchInfoEx[ccWatchInfo] = PSAPI_WS_WATCH_INFORMATION_EX{};
 
         lStatus = ERROR_SUCCESS;

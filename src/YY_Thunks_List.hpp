@@ -1,4 +1,4 @@
-
+﻿
 
 #include "Thunks/api-ms-win-core-datetime.hpp"
 #include "Thunks/api-ms-win-core-errorhandling.hpp"

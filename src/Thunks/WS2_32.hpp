@@ -1,4 +1,4 @@
-
+Ôªø
 
 namespace YY {
 namespace Thunks {
@@ -45,13 +45,13 @@ INT WINAPI inet_pton(
             {
                 auto &Ch = *Start;
 
-                //±ÿ–Î «0~9 ˝◊÷
+                //ÂøÖÈ°ªÊòØ0~9Êï∞Â≠ó
                 if (Ch >= Char('0') && Ch <= Char('9'))
                 {
                     auto NewNum = IPNum * 10ul + (Ch & 0x0Ful);
                     if (NewNum > 0xFF)
                     {
-                        //≤ªƒ‹¥Û”⁄255
+                        //‰∏çËÉΩÂ§ß‰∫é255
                         return 0;
                     }
 
@@ -75,7 +75,7 @@ INT WINAPI inet_pton(
                 ++pszAddrString;
         }
 
-        //Œ¥’˝≥£Ωÿ∂œ
+        //Êú™Ê≠£Â∏∏Êà™Êñ≠
         if (i != _countof(IPAddress) || *pszAddrString != Char('\0'))
             return 0;
 
@@ -96,7 +96,7 @@ INT WINAPI inet_pton(
         {
             if (pszAddrString[0] == Char(':') && pszAddrString[1] == Char(':'))
             {
-                //ÀıΩ¯÷ªƒ‹”–“ª¥Œ
+                //Áº©ËøõÂè™ËÉΩÊúâ‰∏ÄÊ¨°
                 if (InsertIndex != -1)
                     return 0;
 
@@ -116,7 +116,7 @@ INT WINAPI inet_pton(
 
                 unsigned int NewNum;
 
-                // 0~9 ˝◊÷
+                // 0~9Êï∞Â≠ó
                 if (Ch >= Char('0') && Ch <= Char('9'))
                 {
                     NewNum = Ch & 0x0Ful;
@@ -131,7 +131,7 @@ INT WINAPI inet_pton(
                 }
                 else
                 {
-                    //Œﬁ∑® ∂±
+                    //Êó†Ê≥ïËØÜÂà´
                     return 0;
                 }
 
@@ -139,14 +139,14 @@ INT WINAPI inet_pton(
 
                 if (NewNum > 0xFFFF)
                 {
-                    //≤ªƒ‹¥Û”⁄255
+                    //‰∏çËÉΩÂ§ß‰∫é255
                     return 0;
                 }
 
                 IPNum = NewNum;
             }
 
-            //Ωÿ∂œ¥ÌŒÛ
+            //Êà™Êñ≠ÈîôËØØ
             if (Start == pszAddrString)
             {
                 return 0;
@@ -169,7 +169,7 @@ INT WINAPI inet_pton(
             }
         }
 
-        //Œ¥’˝≥£Ωÿ∂œ
+        //Êú™Ê≠£Â∏∏Êà™Êñ≠
         if (*pszAddrString != Char('\0'))
         {
             return 0;
@@ -186,7 +186,7 @@ INT WINAPI inet_pton(
             }
             else
             {
-                //œ»∏¥÷∆Õ∑
+                //ÂÖàÂ§çÂà∂Â§¥
 
                 auto j = 0;
                 for (; j != InsertIndex; ++j)
@@ -194,13 +194,13 @@ INT WINAPI inet_pton(
                     ((IN6_ADDR *)pAddrBuf)->u.Word[j] = IPAddress.u.Word[j];
                 }
 
-                //≤π≥‰÷–º‰ 0
+                //Ë°•ÂÖÖ‰∏≠Èó¥ 0
                 for (const auto Count = _countof(IPAddress.u.Word) - i + j; j != Count; ++j)
                 {
                     ((IN6_ADDR *)pAddrBuf)->u.Word[j] = 0;
                 }
 
-                //∏¥÷∆–°Œ≤∞Õ
+                //Â§çÂà∂Â∞èÂ∞æÂ∑¥
                 for (; j != _countof(IPAddress.u.Word); ++j, ++InsertIndex)
                 {
                     ((IN6_ADDR *)pAddrBuf)->u.Word[j] = IPAddress.u.Word[InsertIndex];
@@ -263,13 +263,13 @@ INT WINAPI InetPtonW(
             {
                 auto &Ch = *Start;
 
-                //±ÿ–Î «0~9 ˝◊÷
+                //ÂøÖÈ°ªÊòØ0~9Êï∞Â≠ó
                 if (Ch >= Char('0') && Ch <= Char('9'))
                 {
                     auto NewNum = IPNum * 10ul + (Ch & 0x0Ful);
                     if (NewNum > 0xFF)
                     {
-                        //≤ªƒ‹¥Û”⁄255
+                        //‰∏çËÉΩÂ§ß‰∫é255
                         return 0;
                     }
 
@@ -293,7 +293,7 @@ INT WINAPI InetPtonW(
                 ++pszAddrString;
         }
 
-        //Œ¥’˝≥£Ωÿ∂œ
+        //Êú™Ê≠£Â∏∏Êà™Êñ≠
         if (i != _countof(IPAddress) || *pszAddrString != Char('\0'))
             return 0;
 
@@ -314,7 +314,7 @@ INT WINAPI InetPtonW(
         {
             if (pszAddrString[0] == Char(':') && pszAddrString[1] == Char(':'))
             {
-                //ÀıΩ¯÷ªƒ‹”–“ª¥Œ
+                //Áº©ËøõÂè™ËÉΩÊúâ‰∏ÄÊ¨°
                 if (InsertIndex != -1)
                     return 0;
 
@@ -334,7 +334,7 @@ INT WINAPI InetPtonW(
 
                 unsigned int NewNum;
 
-                // 0~9 ˝◊÷
+                // 0~9Êï∞Â≠ó
                 if (Ch >= Char('0') && Ch <= Char('9'))
                 {
                     NewNum = Ch & 0x0Ful;
@@ -349,7 +349,7 @@ INT WINAPI InetPtonW(
                 }
                 else
                 {
-                    //Œﬁ∑® ∂±
+                    //Êó†Ê≥ïËØÜÂà´
                     return 0;
                 }
 
@@ -357,14 +357,14 @@ INT WINAPI InetPtonW(
 
                 if (NewNum > 0xFFFF)
                 {
-                    //≤ªƒ‹¥Û”⁄255
+                    //‰∏çËÉΩÂ§ß‰∫é255
                     return 0;
                 }
 
                 IPNum = NewNum;
             }
 
-            //Ωÿ∂œ¥ÌŒÛ
+            //Êà™Êñ≠ÈîôËØØ
             if (Start == pszAddrString)
             {
                 return 0;
@@ -387,7 +387,7 @@ INT WINAPI InetPtonW(
             }
         }
 
-        //Œ¥’˝≥£Ωÿ∂œ
+        //Êú™Ê≠£Â∏∏Êà™Êñ≠
         if (*pszAddrString != Char('\0'))
         {
             return 0;
@@ -404,7 +404,7 @@ INT WINAPI InetPtonW(
             }
             else
             {
-                //œ»∏¥÷∆Õ∑
+                //ÂÖàÂ§çÂà∂Â§¥
 
                 auto j = 0;
                 for (; j != InsertIndex; ++j)
@@ -412,13 +412,13 @@ INT WINAPI InetPtonW(
                     ((IN6_ADDR *)pAddrBuf)->u.Word[j] = IPAddress.u.Word[j];
                 }
 
-                //≤π≥‰÷–º‰ 0
+                //Ë°•ÂÖÖ‰∏≠Èó¥ 0
                 for (const auto Count = _countof(IPAddress.u.Word) - i + j; j != Count; ++j)
                 {
                     ((IN6_ADDR *)pAddrBuf)->u.Word[j] = 0;
                 }
 
-                //∏¥÷∆–°Œ≤∞Õ
+                //Â§çÂà∂Â∞èÂ∞æÂ∑¥
                 for (; j != _countof(IPAddress.u.Word); ++j, ++InsertIndex)
                 {
                     ((IN6_ADDR *)pAddrBuf)->u.Word[j] = IPAddress.u.Word[InsertIndex];
@@ -489,18 +489,18 @@ inet_ntop(
                 auto Num = IPv4[i];
                 if (Num < 10)
                 {
-                    // 1 Œª
+                    // 1 ‰Ωç
                     szString[cchString++] = Hex[Num];
                 }
                 else if (Num < 100)
                 {
-                    // 2 Œª
+                    // 2 ‰Ωç
                     szString[cchString++] = Hex[Num / 10];
                     szString[cchString++] = Hex[Num % 10];
                 }
                 else
                 {
-                    // 3 Œª
+                    // 3 ‰Ωç
                     szString[cchString++] = Hex[Num / 100];
                     szString[cchString++] = Hex[(Num / 10) % 10];
                     szString[cchString++] = Hex[Num % 10];
@@ -524,7 +524,7 @@ inet_ntop(
             int ZeroIndex = -1;
             int ZeroCount = 1;
 
-            //Õ≥º∆ ¡¨–¯ 0∏ˆ ˝◊Ó∂‡µƒ«Èøˆ
+            //ÁªüËÆ° ËøûÁª≠ 0‰∏™Êï∞ÊúÄÂ§öÁöÑÊÉÖÂÜµ
             for (int i = 0; i != _countof(IPv6);)
             {
                 auto j = i;
@@ -568,18 +568,18 @@ inet_ntop(
 
                     if (Num <= 0xF)
                     {
-                        // 1 Œª
+                        // 1 ‰Ωç
                         szString[cchString++] = Hex[Num];
                     }
                     else if (Num <= 0xFF)
                     {
-                        // 2 Œª
+                        // 2 ‰Ωç
                         szString[cchString++] = Hex[Num >> 4];
                         szString[cchString++] = Hex[Num & 0x0F];
                     }
                     else if (Num <= 0xFFF)
                     {
-                        // 3 Œª
+                        // 3 ‰Ωç
                         szString[cchString++] = Hex[(Num >> 8)];
 
                         szString[cchString++] = Hex[(Num >> 4) & 0x0F];
@@ -587,7 +587,7 @@ inet_ntop(
                     }
                     else
                     {
-                        // 4Œª
+                        // 4‰Ωç
                         szString[cchString++] = Hex[(Num >> 12)];
                         szString[cchString++] = Hex[(Num >> 8) & 0x0F];
 
@@ -615,7 +615,7 @@ inet_ntop(
             {
                 if (szString != BufferTemp)
                 {
-                    //ª∫≥Â«¯≤ª◊„
+                    //ÁºìÂÜ≤Âå∫‰∏çË∂≥
 
                     memcpy(pStringBuf, szString, sizeof(szString[0]) * cchString);
                 }
@@ -686,18 +686,18 @@ InetNtopW(
                 auto Num = IPv4[i];
                 if (Num < 10)
                 {
-                    // 1 Œª
+                    // 1 ‰Ωç
                     szString[cchString++] = Hex[Num];
                 }
                 else if (Num < 100)
                 {
-                    // 2 Œª
+                    // 2 ‰Ωç
                     szString[cchString++] = Hex[Num / 10];
                     szString[cchString++] = Hex[Num % 10];
                 }
                 else
                 {
-                    // 3 Œª
+                    // 3 ‰Ωç
                     szString[cchString++] = Hex[Num / 100];
                     szString[cchString++] = Hex[(Num / 10) % 10];
                     szString[cchString++] = Hex[Num % 10];
@@ -721,7 +721,7 @@ InetNtopW(
             int ZeroIndex = -1;
             int ZeroCount = 1;
 
-            //Õ≥º∆ ¡¨–¯ 0∏ˆ ˝◊Ó∂‡µƒ«Èøˆ
+            //ÁªüËÆ° ËøûÁª≠ 0‰∏™Êï∞ÊúÄÂ§öÁöÑÊÉÖÂÜµ
             for (int i = 0; i != _countof(IPv6);)
             {
                 auto j = i;
@@ -765,18 +765,18 @@ InetNtopW(
 
                     if (Num <= 0xF)
                     {
-                        // 1 Œª
+                        // 1 ‰Ωç
                         szString[cchString++] = Hex[Num];
                     }
                     else if (Num <= 0xFF)
                     {
-                        // 2 Œª
+                        // 2 ‰Ωç
                         szString[cchString++] = Hex[Num >> 4];
                         szString[cchString++] = Hex[Num & 0x0F];
                     }
                     else if (Num <= 0xFFF)
                     {
-                        // 3 Œª
+                        // 3 ‰Ωç
                         szString[cchString++] = Hex[(Num >> 8)];
 
                         szString[cchString++] = Hex[(Num >> 4) & 0x0F];
@@ -784,7 +784,7 @@ InetNtopW(
                     }
                     else
                     {
-                        // 4Œª
+                        // 4‰Ωç
                         szString[cchString++] = Hex[(Num >> 12)];
                         szString[cchString++] = Hex[(Num >> 8) & 0x0F];
 
@@ -812,7 +812,7 @@ InetNtopW(
             {
                 if (szString != BufferTemp)
                 {
-                    //ª∫≥Â«¯≤ª◊„
+                    //ÁºìÂÜ≤Âå∫‰∏çË∂≥
 
                     memcpy(pStringBuf, szString, sizeof(szString[0]) * cchString);
                 }
@@ -837,7 +837,7 @@ __YY_Thunks_Expand_Function(ws2_32, InetNtopW, 16);
 // Windows 8.1, Windows Vista [desktop apps | UWP apps]
 // Windows Server 2008 [desktop apps | UWP apps]
 
-//≤Œøº https://blog.csdn.net/liangzhao_jay/article/details/53261684  µœ÷
+//ÂèÇËÄÉ https://blog.csdn.net/liangzhao_jay/article/details/53261684 ÂÆûÁé∞
 EXTERN_C
 int WSAAPI WSAPoll(_Inout_ LPWSAPOLLFD fdArray, _In_ ULONG fds, _In_ INT timeout)
 #ifdef YY_Thunks_Defined
@@ -873,7 +873,7 @@ int WSAAPI WSAPoll(_Inout_ LPWSAPOLLFD fdArray, _In_ ULONG fds, _In_ INT timeout
             FD_SET(fd.fd, &writefds);
         }
 
-        //“Ï≥£
+        //ÂºÇÂ∏∏
         if (fd.events & (POLLERR | POLLHUP | POLLNVAL))
         {
             FD_SET(fd.fd, &exceptfds);
@@ -881,9 +881,9 @@ int WSAAPI WSAPoll(_Inout_ LPWSAPOLLFD fdArray, _In_ ULONG fds, _In_ INT timeout
     }
 
     /*
-    timeout  < 0 £¨Œﬁœﬁµ»¥˝
-    timeout == 0 £¨¬Ì…œªÿ¿¥
-    timeout  >0  £¨◊Ó≥§µ»’‚∏ˆ ±º‰
+    timeout  < 0 ÔºåÊó†ÈôêÁ≠âÂæÖ
+    timeout == 0 ÔºåÈ©¨‰∏äÂõûÊù•
+    timeout  >0  ÔºåÊúÄÈïøÁ≠âËøô‰∏™Êó∂Èó¥
     */
     timeval *__ptimeout = nullptr;
 

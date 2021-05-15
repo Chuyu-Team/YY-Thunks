@@ -1,4 +1,4 @@
-
+﻿
 namespace YY {
 namespace Thunks {
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)

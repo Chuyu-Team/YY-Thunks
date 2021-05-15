@@ -1,4 +1,4 @@
-
+ï»¿
 
 namespace YY {
 namespace Thunks {
@@ -18,7 +18,7 @@ BOOL WINAPI QueryThreadCycleTime(_In_ HANDLE ThreadHandle, _Out_ PULONG64 CycleT
         return pQueryThreadCycleTime(ThreadHandle, CycleTime);
     }
 
-    // GetThreadTimes´ÕºÏÓÃ°É¡­¡­
+    // GetThreadTimeså‡‘åˆç”¨å§â€¦â€¦
     FILETIME CreationTime;
     FILETIME ExitTime;
     FILETIME KernelTime;
@@ -55,7 +55,7 @@ BOOL WINAPI QueryProcessCycleTime(_In_ HANDLE ProcessHandle, _Out_ PULONG64 Cycl
         return pQueryProcessCycleTime(ProcessHandle, CycleTime);
     }
 
-    // GetProcessTimes´ÕºÏÓÃ°É¡­¡­
+    // GetProcessTimeså‡‘åˆç”¨å§â€¦â€¦
     FILETIME CreationTime;
     FILETIME ExitTime;
     FILETIME KernelTime;

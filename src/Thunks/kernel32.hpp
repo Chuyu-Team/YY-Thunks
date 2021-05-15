@@ -1,4 +1,4 @@
-
+ï»¿
 
 namespace YY {
 namespace Thunks {
@@ -16,7 +16,7 @@ WTSGetActiveConsoleSessionId(VOID)
         return pWTSGetActiveConsoleSessionId();
     }
 
-    //ÒòÎªWindows 2000Ã»ÓĞ»á»°¸ôÀë£¬ËùÓĞµÄ½ø³ÌÊ¼ÖÕÔÚ 0 »á»°ÖĞÔËĞĞ£¬Òò´ËÖ±½Ó·µ»Ø 0 ¼´¿É¡£
+    //å› ä¸ºWindows 2000æ²¡æœ‰ä¼šè¯éš”ç¦»ï¼Œæ‰€æœ‰çš„è¿›ç¨‹å§‹ç»ˆåœ¨ 0 ä¼šè¯ä¸­è¿è¡Œï¼Œå› æ­¤ç›´æ¥è¿”å› 0 å³å¯ã€‚
     return 0;
 }
 #endif

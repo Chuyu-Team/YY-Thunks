@@ -1,4 +1,4 @@
-
+ï»¿
 
 namespace YY {
 namespace Thunks {
@@ -18,7 +18,7 @@ BOOL WINAPI GetNumaNodeProcessorMask(_In_ UCHAR Node, _Out_ PULONGLONG Processor
     }
     else
     {
-        //²»Ö§³Ö´Ë½Ó¿Ú
+        //ä¸æ”¯æŒæ­¤æ¥å£
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
@@ -50,7 +50,7 @@ BOOL WINAPI GetNumaNodeProcessorMaskEx(_In_ USHORT Node, _Out_ PGROUP_AFFINITY P
         if (bRet)
         {
             ProcessorMask->Mask = ullProcessorMask;
-            //¼Ù¶¨Ö»ÓĞÒ»×éCPU
+            //å‡å®šåªæœ‰ä¸€ç»„CPU
             ProcessorMask->Group = 0;
             ProcessorMask->Reserved[0] = 0;
             ProcessorMask->Reserved[1] = 0;
@@ -122,7 +122,7 @@ BOOL WINAPI GetNumaHighestNodeNumber(_Out_ PULONG HighestNodeNumber)
         return pGetNumaHighestNodeNumber(HighestNodeNumber);
     }
 
-    //²»Ö§³ÖÊ±Ê¼ÖÕ¼Ù¶¨Ö»ÓĞÒ»¸öNUMA½Úµã
+    //ä¸æ”¯æŒæ—¶å§‹ç»ˆå‡å®šåªæœ‰ä¸€ä¸ªNUMAèŠ‚ç‚¹
     *HighestNodeNumber = 0;
 
     return TRUE;

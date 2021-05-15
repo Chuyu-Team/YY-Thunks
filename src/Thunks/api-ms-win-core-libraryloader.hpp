@@ -1,4 +1,4 @@
-
+﻿
 namespace YY {
 namespace Thunks {
 #ifndef YY_Thunks_Defined
@@ -231,8 +231,8 @@ __YY_Thunks_Expand_Function(kernel32, GetModuleHandleExW, 12);
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//��Ȼ���������ˣ�����ֻ��Windows 8�Լ�����KB2533623������ϵͳ��֧�� LOAD_LIBRARY_SEARCH_SYSTEM32
-//������
+//虽然这个早就有了，但是只有Windows 8以及打了KB2533623补丁的系统才支持 LOAD_LIBRARY_SEARCH_SYSTEM32
+//等特性
 
 EXTERN_C
 _Ret_maybenull_ HMODULE WINAPI
@@ -251,15 +251,15 @@ LoadLibraryExW(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD d
 
     if (try_get_AddDllDirectory() != nullptr)
     {
-        //����AddDllDirectory˵��֧�� LOAD_LIBRARY_SEARCH_SYSTEM32
-        //�ȹ��ܣ�ֱ�ӵ���pLoadLibraryExW���ɡ�
+        //存在AddDllDirectory说明支持 LOAD_LIBRARY_SEARCH_SYSTEM32
+        //等功能，直接调用pLoadLibraryExW即可。
 
         return pLoadLibraryExW(lpLibFileName, hFile, dwFlags);
     }
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-    // Windows Vista��ʼ��֧�� LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE |
-    // LOAD_LIBRARY_AS_IMAGE_RESOURCE�����ڲ�֧�ֵ�ϵͳ����ֻ��Fallblack�� LOAD_LIBRARY_AS_DATAFILE
+    // Windows Vista开始才支持 LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE |
+    // LOAD_LIBRARY_AS_IMAGE_RESOURCE，对于不支持的系统我们只能Fallblack到 LOAD_LIBRARY_AS_DATAFILE
     if (dwFlags & (LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE))
     {
         auto pPeb = ((TEB *)NtCurrentTeb())->ProcessEnvironmentBlock;
@@ -285,9 +285,9 @@ LoadLibraryExW(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD d
         if (((LOAD_WITH_ALTERED_SEARCH_PATH | 0xFFFFE000 | 0x00000004) & dwFlags) ||
             lpLibFileName == nullptr || hFile)
         {
-            // LOAD_WITH_ALTERED_SEARCH_PATH ��ǲ�����������������ʹ��
-            // 0xFFFFE000 Ϊ ������֧�ֵ���ֵ
-            // LOAD_PACKAGED_LIBRARY: 0x00000004 Windows 8����ƽ̨��֧��
+            // LOAD_WITH_ALTERED_SEARCH_PATH 标记不允许跟其他标记组合使用
+            // 0xFFFFE000 为 其他不支持的数值
+            // LOAD_PACKAGED_LIBRARY: 0x00000004 Windows 8以上平台才支持
             SetLastError(ERROR_INVALID_PARAMETER);
             return nullptr;
         }
@@ -295,7 +295,7 @@ LoadLibraryExW(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD d
         dwFlags &= 0xFF;
 
         // LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS |
-        // LOAD_LIBRARY_SEARCH_SYSTEM32 �ȼ��� LOAD_LIBRARY_SEARCH_DEFAULT_DIRS���
+        // LOAD_LIBRARY_SEARCH_SYSTEM32 等价于 LOAD_LIBRARY_SEARCH_DEFAULT_DIRS标记
         if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)
             dwLoadLibrarySearchFlags =
                 (dwLoadLibrarySearchFlags & ~LOAD_LIBRARY_SEARCH_DEFAULT_DIRS) |
@@ -306,7 +306,7 @@ LoadLibraryExW(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD d
             (LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS |
              LOAD_LIBRARY_SEARCH_SYSTEM32))
         {
-            //���ȷ���ǵ���Ĭ����ϵ����ֱ�ӵ���ԭʼ LoadLibraryExW
+            //如果确定是调用默认体系，则直接调用原始 LoadLibraryExW
 
             break;
         }
@@ -319,7 +319,7 @@ LoadLibraryExW(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD d
 
         if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR)
         {
-            //������һ������·����
+            //必须是一个完整路径！
             if (PathType == RtlPathTypeUnknown || PathType == RtlPathTypeDriveRelative ||
                 PathType == RtlPathTypeRelative)
             {
@@ -331,9 +331,9 @@ LoadLibraryExW(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD d
                 (LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_APPLICATION_DIR |
                  LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32))
             {
-                // LOAD_WITH_ALTERED_SEARCH_PATH������ģ�� LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR |
+                // LOAD_WITH_ALTERED_SEARCH_PATH参数能模拟 LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR |
                 // LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS |
-                // LOAD_LIBRARY_SEARCH_SYSTEM32 ���Ч����
+                // LOAD_LIBRARY_SEARCH_SYSTEM32 组合效果。
                 dwFlags |= LOAD_WITH_ALTERED_SEARCH_PATH;
                 break;
             }
@@ -341,7 +341,7 @@ LoadLibraryExW(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD d
 
         if (LOAD_LIBRARY_SEARCH_USER_DIRS & dwLoadLibrarySearchFlags)
         {
-            // LOAD_LIBRARY_SEARCH_USER_DIRS �޷�˳��ʵ�֣�������Ч��������
+            // LOAD_LIBRARY_SEARCH_USER_DIRS 无法顺利实现，索性无效参数处理
             SetLastError(ERROR_INVALID_PARAMETER);
             return nullptr;
         }
@@ -349,14 +349,14 @@ LoadLibraryExW(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD d
         if (dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE |
                        LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE))
         {
-            //����Դ��ʽ����
+            //以资源方式加载
 
-            //�ж�·����һ������·������һ�����·��������Ǿ���·������ô����ֱ������
-            //LOAD_LIBRARY_SEARCH_ ϵ�в�����
+            //判断路径是一个绝对路径还是一个相对路径，如果是绝对路径，那么可以直接无视
+            // LOAD_LIBRARY_SEARCH_ 系列参数。
             if ((PathType == RtlPathTypeUnknown || PathType == RtlPathTypeDriveRelative ||
                  PathType == RtlPathTypeRelative) == false)
             {
-                //��һ������·��������ֱ�Ӵ��ݸ� pLoadLibraryExW ����
+                //是一个绝对路径，我们直接传递给 pLoadLibraryExW 即可
 
                 break;
             }
@@ -453,7 +453,7 @@ LoadLibraryExW(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD d
             return nullptr;
         }
 
-        //��ģ�鷽ʽ����
+        //以模块方式加载
 
         const auto pLdrLoadDll = try_get_LdrLoadDll();
         if (!pLdrLoadDll)
@@ -484,7 +484,7 @@ LoadLibraryExW(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD d
             }
 
             --nSize;
-            //�����޳��ļ���
+            //反向剔除文件名
             for (;;)
             {
                 if (szFilePathBuffer[nSize] == L'\\' || szFilePathBuffer[nSize] == L'/')
@@ -587,8 +587,8 @@ LoadLibraryExW(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD d
         }
 
 #if defined(_X86_) || defined(_M_IX86)
-        //�����ȹر��ض����ټ���DLL��Windows 7
-        //SP1��ǰ��ϵͳ����ر��ض��򣬶�����ĳЩ�̹߳ر��ض����DLL�������⡣
+        //我们先关闭重定向，再加载DLL，Windows 7
+        // SP1以前的系统不会关闭重定向，而导致某些线程关闭重定向后DLL加载问题。
         PVOID OldFsRedirectionLevel;
 
         auto pRtlWow64EnableFsRedirectionEx = try_get_RtlWow64EnableFsRedirectionEx();
@@ -612,8 +612,8 @@ LoadLibraryExW(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD d
     } while (false);
 
 #if defined(_X86_) || defined(_M_IX86)
-    //�����ȹر��ض����ټ���DLL��Windows 7
-    //SP1��ǰ��ϵͳ����ر��ض��򣬶�����ĳЩ�̹߳ر��ض����DLL�������⡣
+    //我们先关闭重定向，再加载DLL，Windows 7
+    // SP1以前的系统不会关闭重定向，而导致某些线程关闭重定向后DLL加载问题。
     PVOID OldFsRedirectionLevel;
 
     auto pRtlWow64EnableFsRedirectionEx = try_get_RtlWow64EnableFsRedirectionEx();
@@ -641,8 +641,8 @@ __YY_Thunks_Expand_Function(kernel32, LoadLibraryExW, 12);
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//��Ȼ���������ˣ�����ֻ��Windows 8�Լ�����KB2533623������ϵͳ��֧�� LOAD_LIBRARY_SEARCH_SYSTEM32
-//������
+//虽然这个早就有了，但是只有Windows 8以及打了KB2533623补丁的系统才支持 LOAD_LIBRARY_SEARCH_SYSTEM32
+//等特性
 
 EXTERN_C
 _Ret_maybenull_ HMODULE WINAPI
@@ -661,8 +661,8 @@ LoadLibraryExA(_In_ LPCSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD dw
 
     if (try_get_AddDllDirectory() != nullptr)
     {
-        //����AddDllDirectory˵��֧�� LOAD_LIBRARY_SEARCH_SYSTEM32
-        //�ȹ��ܣ�ֱ�ӵ���pLoadLibraryExW���ɡ�
+        //存在AddDllDirectory说明支持 LOAD_LIBRARY_SEARCH_SYSTEM32
+        //等功能，直接调用pLoadLibraryExW即可。
 
         return pLoadLibraryExA(lpLibFileName, hFile, dwFlags);
     }

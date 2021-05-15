@@ -1,4 +1,4 @@
-
+ï»¿
 
 namespace YY {
 namespace Thunks {
@@ -20,7 +20,7 @@ GetCurrentProcessorNumber(VOID)
     }
     else
     {
-        //Èç¹û²»Ö§³Ö´Ë½Ó¿Ú£¬ÄÇÃ´¼Ù¶¨ÊÇµ¥ºË
+        //å¦‚æœä¸æ”¯æŒæ­¤æ¥å£ï¼Œé‚£ä¹ˆå‡å®šæ˜¯å•æ ¸
         return 0;
     }
 }
@@ -45,7 +45,7 @@ VOID WINAPI GetCurrentProcessorNumberEx(_Out_ PPROCESSOR_NUMBER ProcNumber)
     }
     else
     {
-        //²»Ö§³ÖGetCurrentProcessorNumberExÊ±¼Ù¶¨ÓÃ»§Ö»ÓĞÒ»×éCPU
+        //ä¸æ”¯æŒGetCurrentProcessorNumberExæ—¶å‡å®šç”¨æˆ·åªæœ‰ä¸€ç»„CPU
         ProcNumber->Group = 0;
         ProcNumber->Number = GetCurrentProcessorNumber();
         ProcNumber->Reserved = 0;
@@ -61,7 +61,7 @@ __YY_Thunks_Expand_Function(kernel32, GetCurrentProcessorNumberEx, 4);
 // Windows Vista [desktop apps | UWP apps]
 // Windows Server 2003 [desktop apps | UWP apps]
 
-//¸ĞĞ» ¹ı¿Í Ìá¹©
+//æ„Ÿè°¢ è¿‡å®¢ æä¾›
 EXTERN_C
 DWORD
 WINAPI

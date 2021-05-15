@@ -4,6 +4,12 @@
 namespace YY {
 namespace Thunks {
 
+#ifndef YY_Thunks_Defined
+namespace internal {
+static UINT __fastcall GetDpiForSystemDownlevel();
+}
+#endif
+
 #if (YY_Thunks_Support_Version < NTDDI_WINBLUE)
 // Windows 8.1 [desktop apps only]
 // Windows Server 2012 R2 [desktop apps only]

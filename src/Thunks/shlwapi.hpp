@@ -1,4 +1,4 @@
-namespace YY {
+Ôªønamespace YY {
 namespace Thunks {
 
 #ifndef YY_Thunks_Defined
@@ -37,7 +37,7 @@ StrToInt64ExT(_In_ const Char *pszString, STIF_FLAGS dwFlags, _Out_ LONGLONG *pl
 
     if (dwFlags & STIF_SUPPORT_HEX)
     {
-        //∂˛÷÷–Œ Ω0x????, 0X?????
+        //‰∫åÁßçÂΩ¢Âºè0x????, 0X?????
         if (*pszString == Char('0') && (pszString[1] == Char('x') || pszString[1] == Char('X')))
         {
             pszString += 2;
@@ -111,7 +111,7 @@ StrToInt64ExT(_In_ const Char *pszString, STIF_FLAGS dwFlags, _Out_ LONGLONG *pl
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
 // Windows 2000 Professional, Windows XP [desktop apps only]
 // Windows 2000 Server [desktop apps only]
-// À‰»ªWindows 2000÷ß≥÷£¨µ´ «‘⁄IE6¿Ô√Ê∂¯IE6≤ª“ª∂®À˘”–Windows 2000∂º”–£¨“Ú¥ÀµÕ”⁄5.1Œ“√«æÕæ≤Ã¨“˝»Î°£
+// ËôΩÁÑ∂Windows 2000ÊîØÊåÅÔºå‰ΩÜÊòØÂú®IE6ÈáåÈù¢ËÄåIE6‰∏ç‰∏ÄÂÆöÊâÄÊúâWindows 2000ÈÉΩÊúâÔºåÂõ†Ê≠§‰Ωé‰∫é5.1Êàë‰ª¨Â∞±ÈùôÊÄÅÂºïÂÖ•„ÄÇ
 
 EXTERN_C
 BOOL WINAPI StrToInt64ExA(_In_ PCSTR pszString, STIF_FLAGS dwFlags, _Out_ LONGLONG *pllRet)
@@ -135,7 +135,7 @@ __YY_Thunks_Expand_Function(shlwapi, StrToInt64ExA, 12);
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
 // Windows 2000 Professional, Windows XP [desktop apps only]
 // Windows 2000 Server [desktop apps only]
-// À‰»ªWindows 2000÷ß≥÷£¨µ´ «‘⁄IE6¿Ô√Ê∂¯IE6≤ª“ª∂®À˘”–Windows 2000∂º”–£¨“Ú¥ÀµÕ”⁄5.1Œ“√«æÕæ≤Ã¨“˝»Î°£
+// ËôΩÁÑ∂Windows 2000ÊîØÊåÅÔºå‰ΩÜÊòØÂú®IE6ÈáåÈù¢ËÄåIE6‰∏ç‰∏ÄÂÆöÊâÄÊúâWindows 2000ÈÉΩÊúâÔºåÂõ†Ê≠§‰Ωé‰∫é5.1Êàë‰ª¨Â∞±ÈùôÊÄÅÂºïÂÖ•„ÄÇ
 
 EXTERN_C
 BOOL WINAPI StrToInt64ExW(_In_ PCWSTR pszString, STIF_FLAGS dwFlags, _Out_ LONGLONG *pllRet)

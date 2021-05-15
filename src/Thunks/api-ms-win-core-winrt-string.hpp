@@ -1,4 +1,4 @@
-#include <winstring.h>
+﻿#include <winstring.h>
 
 namespace YY {
 namespace Thunks {
