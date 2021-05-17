@@ -873,9 +873,9 @@ __YY_Thunks_Expand_Function(kernel32, CreateFile2, 20);
 
 enum _FILE_ID_TYPE_win7
 {
-    FileIdType,
-    ObjectIdType,
-    MaximumFileIdType
+    FileIdType_win7,
+    ObjectIdType_win7,
+    MaximumFileIdType_win7
 };
 
 struct FILE_ID_DESCRIPTOR_win7
@@ -917,7 +917,7 @@ OpenFileById(
     }
 
     if (lpFileId == nullptr || lpFileId->dwSize < sizeof(FILE_ID_DESCRIPTOR_win7) ||
-        lpFileId->Type >= _FILE_ID_TYPE_win7::MaximumFileIdType)
+        lpFileId->Type >= _FILE_ID_TYPE_win7::MaximumFileIdType_win7)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return INVALID_HANDLE_VALUE;
