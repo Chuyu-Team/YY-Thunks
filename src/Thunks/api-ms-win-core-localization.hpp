@@ -44,7 +44,7 @@ LocaleNameToLCID(
 		LANGID          lcid;
 	};
 
-
+	// clang-format off
 	// Map of locale name to an index in LcidToLocaleNameTable, for Windows XP.
 	// Data in this table has been obtained from National Language Support (NLS) API Reference at
 	// http://msdn.microsoft.com/en-us/goglobal/bb896001.aspx
@@ -280,6 +280,7 @@ LocaleNameToLCID(
 		{ L"zh-TW"      , 0x0404 },
 		{ L"zu-ZA"      , 0x0435 }
 	};
+	// clang-format on
 
 
 
@@ -349,6 +350,7 @@ LCIDToLocaleName(
 		const wchar_t*  localeName;
 	};
 
+	// clang-format off
 	// Map of LCID to locale name for Windows XP.
 	// Data in this table has been obtained from National Language Support (NLS) API Reference at
 	// http://msdn.microsoft.com/en-us/goglobal/bb896001.aspx
@@ -584,6 +586,7 @@ LCIDToLocaleName(
 		{ 0x7C04, L"zh-CHT"     },
 		{ 0x7C1A, L"sr"         }
 	};
+	// clang-format on
 
 	int bottom = 0;
 	int top = _countof(LcidToLocaleNameTable) - 1;
@@ -848,6 +851,7 @@ EnumCalendarInfoExEx(
 			break;
 		}
 
+		// clang-format off
 #if defined(_X86_)
 		constexpr const auto lParamOffset = 1;
 		constexpr const auto pCallBackOffset = 16;
@@ -880,6 +884,7 @@ EnumCalendarInfoExEx(
 			0xFF, 0xE0,                                                 // jmp     rax
 		};
 #endif
+		// clang-format on
 
 		auto pFun = (byte*)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
 
@@ -963,6 +968,7 @@ EnumDateFormatsExEx(
 			break;
 		}
 
+		// clang-format off
 #if defined(_X86_)
 		constexpr const auto lParamOffset = 1;
 		constexpr const auto pCallBackOffset = 14;
@@ -993,6 +999,7 @@ EnumDateFormatsExEx(
 			0xFF, 0xE0,                                                 // jmp     rax
 		};
 #endif
+		// clang-format on
 
 		auto pFun = (byte*)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
 
