@@ -1,0 +1,12 @@
+{
+  "editor.tabSize": 4,
+  "editor.insertSpaces": false,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
+  "C_Cpp.autoAddFileAssociations": false,
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
+  "files.autoGuessEncoding": true,
+  "C_Cpp.formatting": "clangFormat"
+}
