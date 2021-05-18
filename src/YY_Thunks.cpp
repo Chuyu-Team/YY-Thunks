@@ -68,6 +68,7 @@
 #include <ws2tcpip.h>
 #include <psapi.h>
 #include <winnls.h>
+
 #include "YY_Thunks.h"
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
