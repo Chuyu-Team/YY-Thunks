@@ -59,6 +59,7 @@
 #include "km.h"
 #include <Shlwapi.h>
 #include <WinSock2.h>
+#include <hstring.h>
 #include <psapi.h>
 #include <winnls.h>
 #include <ws2tcpip.h>

@@ -112,7 +112,7 @@ BOOL WINAPI SetProcessDpiAwarenessContext(_In_ DPI_AWARENESS_CONTEXT value)
         return FALSE;
     }
 
-    return SetProcessDpiAwareness(DpiAwareness);
+    return YY::Thunks::SetProcessDpiAwareness(DpiAwareness);
 }
 #endif
 
@@ -159,7 +159,7 @@ UINT WINAPI GetDpiForWindow(_In_ HWND hwnd)
     if (HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY))
     {
         UINT nDpiX, nDpiY;
-        if (SUCCEEDED(GetDpiForMonitor(hMonitor, MDT_EFFECTIVE_DPI, &nDpiX, &nDpiY)))
+        if (SUCCEEDED(YY::Thunks::GetDpiForMonitor(hMonitor, MDT_EFFECTIVE_DPI, &nDpiX, &nDpiY)))
         {
             return nDpiX;
         }

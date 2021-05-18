@@ -114,7 +114,8 @@ BOOL WINAPI GetLogicalProcessorInformationEx(
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION *pProcessorInfo = nullptr;
     DWORD cbLogicalProcessorInformation = 0;
 
-    for (; GetLogicalProcessorInformation(pProcessorInfo, &cbLogicalProcessorInformation) == FALSE;)
+    for (; YY::Thunks::GetLogicalProcessorInformation(
+               pProcessorInfo, &cbLogicalProcessorInformation) == FALSE;)
     {
         lStatus = GetLastError();
 
