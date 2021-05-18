@@ -1,50 +1,43 @@
 
 
-
-namespace YY
-{
-	namespace Thunks
-	{
+namespace YY {
+namespace Thunks {
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista,  Windows Server 2008
+// Windows Vista,  Windows Server 2008
 
 EXTERN_C
-LCID
-WINAPI
-LocaleNameToLCID(
-	_In_ LPCWSTR lpName,
-	_In_ DWORD dwFlags
-	)
+LCID WINAPI LocaleNameToLCID(_In_ LPCWSTR lpName, _In_ DWORD dwFlags)
 #ifdef YY_Thunks_Defined
-	;
+    ;
 #else
 {
-	if (auto pLocaleNameToLCID = try_get_LocaleNameToLCID())
-	{
-		return pLocaleNameToLCID(lpName, dwFlags);
-	}
+    if (auto pLocaleNameToLCID = try_get_LocaleNameToLCID())
+    {
+        return pLocaleNameToLCID(lpName, dwFlags);
+    }
 
-	//UNREFRENCED_PARAMETER(dwFlags);
+    // UNREFRENCED_PARAMETER(dwFlags);
 
-	if (lpName == nullptr)
-	{
-		return GetUserDefaultLCID();
-	}
-	else if (__wcsnicmp_ascii(lpName, LOCALE_NAME_SYSTEM_DEFAULT, _countof(LOCALE_NAME_SYSTEM_DEFAULT)) == 0)
-	{
-		return GetSystemDefaultLCID();
-	}
+    if (lpName == nullptr)
+    {
+        return GetUserDefaultLCID();
+    }
+    else if (
+        __wcsnicmp_ascii(
+            lpName, LOCALE_NAME_SYSTEM_DEFAULT, _countof(LOCALE_NAME_SYSTEM_DEFAULT)) == 0)
+    {
+        return GetSystemDefaultLCID();
+    }
 
+    // Map of locale name to LCID.
+    struct LocaleNameToLcid
+    {
+        const wchar_t *localeName;
+        LANGID lcid;
+    };
 
-	// Map of locale name to LCID.
-	struct LocaleNameToLcid
-	{
-		const wchar_t*  localeName;
-		LANGID          lcid;
-	};
-
-	// clang-format off
+    // clang-format off
 	// Map of locale name to an index in LcidToLocaleNameTable, for Windows XP.
 	// Data in this table has been obtained from National Language Support (NLS) API Reference at
 	// http://msdn.microsoft.com/en-us/goglobal/bb896001.aspx
@@ -280,29 +273,28 @@ LocaleNameToLCID(
 		{ L"zh-TW"      , 0x0404 },
 		{ L"zu-ZA"      , 0x0435 }
 	};
-	// clang-format on
+    // clang-format on
 
+    int bottom = 0;
+    int top = _countof(LocaleNameToLcidTable) - 1;
 
+    while (bottom <= top)
+    {
+        int middle = (bottom + top) / 2;
+        int testIndex = __wcsnicmp_ascii(
+            lpName, LocaleNameToLcidTable[middle].localeName, LOCALE_NAME_MAX_LENGTH);
 
-	int bottom = 0;
-	int top = _countof(LocaleNameToLcidTable) - 1;
+        if (testIndex == 0)
+            return LocaleNameToLcidTable[middle].lcid;
 
-	while (bottom <= top)
-	{
-		int middle = (bottom + top) / 2;
-		int testIndex = __wcsnicmp_ascii(lpName, LocaleNameToLcidTable[middle].localeName, LOCALE_NAME_MAX_LENGTH);
+        if (testIndex < 0)
+            top = middle - 1;
+        else
+            bottom = middle + 1;
+    }
 
-		if (testIndex == 0)
-			return LocaleNameToLcidTable[middle].lcid;
-
-		if (testIndex < 0)
-			top = middle - 1;
-		else
-			bottom = middle + 1;
-	}
-
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return 0;
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return 0;
 }
 #endif
 
@@ -310,47 +302,43 @@ __YY_Thunks_Expand_Function(kernel32, LocaleNameToLCID, 8);
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista,  Windows Server 2008
+// Windows Vista,  Windows Server 2008
 
 EXTERN_C
-int
-WINAPI
-LCIDToLocaleName(
-	_In_ LCID     Locale,
-	_Out_writes_opt_(cchName) LPWSTR  lpName,
-	_In_ int      cchName,
-	_In_ DWORD    dwFlags
-	)
+int WINAPI LCIDToLocaleName(
+    _In_ LCID Locale,
+    _Out_writes_opt_(cchName) LPWSTR lpName,
+    _In_ int cchName,
+    _In_ DWORD dwFlags)
 #ifdef YY_Thunks_Defined
-	;
+    ;
 #else
 {
-	if (auto pLCIDToLocaleName = try_get_LCIDToLocaleName())
-	{
-		return pLCIDToLocaleName(Locale, lpName, cchName, dwFlags);
-	}
+    if (auto pLCIDToLocaleName = try_get_LCIDToLocaleName())
+    {
+        return pLCIDToLocaleName(Locale, lpName, cchName, dwFlags);
+    }
 
-	if (Locale == 0 || (lpName == nullptr && cchName > 0) || cchName < 0)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return 0;
-	}
+    if (Locale == 0 || (lpName == nullptr && cchName > 0) || cchName < 0)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
 
-	if (Locale == LOCALE_USER_DEFAULT)
-		Locale = GetUserDefaultLCID();
-	else if (Locale == LOCALE_SYSTEM_DEFAULT)
-		Locale = GetSystemDefaultLCID();
+    if (Locale == LOCALE_USER_DEFAULT)
+        Locale = GetUserDefaultLCID();
+    else if (Locale == LOCALE_SYSTEM_DEFAULT)
+        Locale = GetSystemDefaultLCID();
 
-	// Map of LCID to locale name.
-	struct LcidToLocaleName
-	{
-		LANGID          lcid;
-		const wchar_t*  localeName;
-	};
+    // Map of LCID to locale name.
+    struct LcidToLocaleName
+    {
+        LANGID lcid;
+        const wchar_t *localeName;
+    };
 
-	// clang-format off
+    // clang-format off
 	// Map of LCID to locale name for Windows XP.
 	// Data in this table has been obtained from National Language Support (NLS) API Reference at
 	// http://msdn.microsoft.com/en-us/goglobal/bb896001.aspx
@@ -586,45 +574,45 @@ LCIDToLocaleName(
 		{ 0x7C04, L"zh-CHT"     },
 		{ 0x7C1A, L"sr"         }
 	};
-	// clang-format on
+    // clang-format on
 
-	int bottom = 0;
-	int top = _countof(LcidToLocaleNameTable) - 1;
+    int bottom = 0;
+    int top = _countof(LcidToLocaleNameTable) - 1;
 
-	while (bottom <= top)
-	{
-		int middle = (bottom + top) / 2;
-		int testIndex = Locale - LcidToLocaleNameTable[middle].lcid;
+    while (bottom <= top)
+    {
+        int middle = (bottom + top) / 2;
+        int testIndex = Locale - LcidToLocaleNameTable[middle].lcid;
 
-		if (testIndex == 0)
-		{
-			auto buffer = LcidToLocaleNameTable[middle].localeName;
-			auto count = wcslen(buffer);
+        if (testIndex == 0)
+        {
+            auto buffer = LcidToLocaleNameTable[middle].localeName;
+            auto count = wcslen(buffer);
 
-			if (cchName > 0)
-			{
-				if ((int)count >= cchName)
-				{
-					SetLastError(ERROR_INSUFFICIENT_BUFFER);
-					return 0;
-				}
+            if (cchName > 0)
+            {
+                if ((int)count >= cchName)
+                {
+                    SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                    return 0;
+                }
 
-				memcpy(lpName, buffer, count * sizeof(*buffer));
+                memcpy(lpName, buffer, count * sizeof(*buffer));
 
-				lpName[count] = L'\0';
-			}
+                lpName[count] = L'\0';
+            }
 
-			return (int)count + 1;
-		}
+            return (int)count + 1;
+        }
 
-		if (testIndex < 0)
-			top = middle - 1;
-		else
-			bottom = middle + 1;
-	}
+        if (testIndex < 0)
+            top = middle - 1;
+        else
+            bottom = middle + 1;
+    }
 
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return 0;
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return 0;
 }
 #endif
 
@@ -632,36 +620,32 @@ __YY_Thunks_Expand_Function(kernel32, LCIDToLocaleName, 16);
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista,  Windows Server 2008
+// Windows Vista,  Windows Server 2008
 
 EXTERN_C
-int
-WINAPI
-GetLocaleInfoEx(
-	_In_opt_ LPCWSTR lpLocaleName,
-	_In_ LCTYPE LCType,
-	_Out_writes_to_opt_(cchData, return) LPWSTR lpLCData,
-	_In_ int cchData
-	)
+int WINAPI GetLocaleInfoEx(
+    _In_opt_ LPCWSTR lpLocaleName,
+    _In_ LCTYPE LCType,
+    _Out_writes_to_opt_(cchData, return ) LPWSTR lpLCData,
+    _In_ int cchData)
 #ifdef YY_Thunks_Defined
-	;
+    ;
 #else
 {
-	if (auto pGetLocaleInfoEx = try_get_GetLocaleInfoEx())
-	{
-		return pGetLocaleInfoEx(lpLocaleName, LCType, lpLCData, cchData);
-	}
+    if (auto pGetLocaleInfoEx = try_get_GetLocaleInfoEx())
+    {
+        return pGetLocaleInfoEx(lpLocaleName, LCType, lpLCData, cchData);
+    }
 
-	auto Locale = LocaleNameToLCID(lpLocaleName, 0);
+    auto Locale = LocaleNameToLCID(lpLocaleName, 0);
 
-	if (Locale == 0)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return 0;
-	}
-	return GetLocaleInfoW(Locale, LCType, lpLCData, cchData);
+    if (Locale == 0)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+    return GetLocaleInfoW(Locale, LCType, lpLCData, cchData);
 }
 #endif
 
@@ -669,40 +653,35 @@ __YY_Thunks_Expand_Function(kernel32, GetLocaleInfoEx, 16);
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista,  Windows Server 2008
+// Windows Vista,  Windows Server 2008
 
 EXTERN_C
-int
-WINAPI
-GetNumberFormatEx(
-	_In_opt_ LPCWSTR lpLocaleName,
-	_In_ DWORD dwFlags,
-	_In_ LPCWSTR lpValue,
-	_In_opt_ CONST NUMBERFMTW *lpFormat,
-	_Out_writes_opt_(cchNumber) LPWSTR lpNumberStr,
-	_In_ int cchNumber
-	)
+int WINAPI GetNumberFormatEx(
+    _In_opt_ LPCWSTR lpLocaleName,
+    _In_ DWORD dwFlags,
+    _In_ LPCWSTR lpValue,
+    _In_opt_ CONST NUMBERFMTW *lpFormat,
+    _Out_writes_opt_(cchNumber) LPWSTR lpNumberStr,
+    _In_ int cchNumber)
 #ifdef YY_Thunks_Defined
-	;
+    ;
 #else
 {
-	if (auto pGetNumberFormatEx = try_get_GetNumberFormatEx())
-	{
-		return pGetNumberFormatEx(lpLocaleName, dwFlags, lpValue, lpFormat, lpNumberStr, cchNumber);
-	}
+    if (auto pGetNumberFormatEx = try_get_GetNumberFormatEx())
+    {
+        return pGetNumberFormatEx(lpLocaleName, dwFlags, lpValue, lpFormat, lpNumberStr, cchNumber);
+    }
 
+    auto Locale = LocaleNameToLCID(lpLocaleName, 0);
 
-	auto Locale = LocaleNameToLCID(lpLocaleName, 0);
+    if (Locale == 0)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
 
-	if (Locale == 0)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return 0;
-	}
-
-	return GetNumberFormatW(Locale, dwFlags, lpValue, lpFormat, lpNumberStr, cchNumber);
+    return GetNumberFormatW(Locale, dwFlags, lpValue, lpFormat, lpNumberStr, cchNumber);
 }
 #endif
 
@@ -710,40 +689,36 @@ __YY_Thunks_Expand_Function(kernel32, GetNumberFormatEx, 24);
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista,  Windows Server 2008
+// Windows Vista,  Windows Server 2008
 
 EXTERN_C
-int
-WINAPI
-GetCurrencyFormatEx(
-	_In_opt_ LPCWSTR lpLocaleName,
-	_In_ DWORD dwFlags,
-	_In_ LPCWSTR lpValue,
-	_In_opt_ CONST CURRENCYFMTW *lpFormat,
-	_Out_writes_opt_(cchCurrency) LPWSTR lpCurrencyStr,
-	_In_ int cchCurrency
-	)
+int WINAPI GetCurrencyFormatEx(
+    _In_opt_ LPCWSTR lpLocaleName,
+    _In_ DWORD dwFlags,
+    _In_ LPCWSTR lpValue,
+    _In_opt_ CONST CURRENCYFMTW *lpFormat,
+    _Out_writes_opt_(cchCurrency) LPWSTR lpCurrencyStr,
+    _In_ int cchCurrency)
 #ifdef YY_Thunks_Defined
-	;
+    ;
 #else
 {
-	if (auto pGetCurrencyFormatEx = try_get_GetCurrencyFormatEx())
-	{
-		return pGetCurrencyFormatEx(lpLocaleName, dwFlags, lpValue, lpFormat, lpCurrencyStr, cchCurrency);
-	}
+    if (auto pGetCurrencyFormatEx = try_get_GetCurrencyFormatEx())
+    {
+        return pGetCurrencyFormatEx(
+            lpLocaleName, dwFlags, lpValue, lpFormat, lpCurrencyStr, cchCurrency);
+    }
 
+    auto Locale = LocaleNameToLCID(lpLocaleName, 0);
 
-	auto Locale = LocaleNameToLCID(lpLocaleName, 0);
+    if (Locale == 0)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
 
-	if (Locale == 0)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return 0;
-	}
-
-	return GetCurrencyFormatW(Locale, dwFlags, lpValue, lpFormat, lpCurrencyStr, cchCurrency);
+    return GetCurrencyFormatW(Locale, dwFlags, lpValue, lpFormat, lpCurrencyStr, cchCurrency);
 }
 #endif
 
@@ -751,28 +726,22 @@ __YY_Thunks_Expand_Function(kernel32, GetCurrencyFormatEx, 24);
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista,  Windows Server 2008
+// Windows Vista,  Windows Server 2008
 
 EXTERN_C
-int
-WINAPI
-GetUserDefaultLocaleName(
-	_Out_writes_(cchLocaleName) LPWSTR lpLocaleName,
-	_In_ int cchLocaleName
-	)
+int WINAPI
+GetUserDefaultLocaleName(_Out_writes_(cchLocaleName) LPWSTR lpLocaleName, _In_ int cchLocaleName)
 #ifdef YY_Thunks_Defined
-	;
+    ;
 #else
 {
-	if (auto pGetUserDefaultLocaleName = try_get_GetUserDefaultLocaleName())
-	{
-		return pGetUserDefaultLocaleName(lpLocaleName, cchLocaleName);
-	}
+    if (auto pGetUserDefaultLocaleName = try_get_GetUserDefaultLocaleName())
+    {
+        return pGetUserDefaultLocaleName(lpLocaleName, cchLocaleName);
+    }
 
-
-	return LCIDToLocaleName(LOCALE_USER_DEFAULT, lpLocaleName, cchLocaleName, 0);
+    return LCIDToLocaleName(LOCALE_USER_DEFAULT, lpLocaleName, cchLocaleName, 0);
 }
 #endif
 
@@ -780,28 +749,22 @@ __YY_Thunks_Expand_Function(kernel32, GetUserDefaultLocaleName, 8);
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista,  Windows Server 2008
+// Windows Vista,  Windows Server 2008
 
 EXTERN_C
-int
-WINAPI
-GetSystemDefaultLocaleName(
-	_Out_writes_(cchLocaleName) LPWSTR lpLocaleName,
-	_In_ int cchLocaleName
-	)
+int WINAPI
+GetSystemDefaultLocaleName(_Out_writes_(cchLocaleName) LPWSTR lpLocaleName, _In_ int cchLocaleName)
 #ifdef YY_Thunks_Defined
-	;
+    ;
 #else
 {
-	if (auto pGetSystemDefaultLocaleName = try_get_GetSystemDefaultLocaleName())
-	{
-		return pGetSystemDefaultLocaleName(lpLocaleName, cchLocaleName);
-	}
+    if (auto pGetSystemDefaultLocaleName = try_get_GetSystemDefaultLocaleName())
+    {
+        return pGetSystemDefaultLocaleName(lpLocaleName, cchLocaleName);
+    }
 
-
-	return LCIDToLocaleName(LOCALE_SYSTEM_DEFAULT, lpLocaleName, cchLocaleName, 0);
+    return LCIDToLocaleName(LOCALE_SYSTEM_DEFAULT, lpLocaleName, cchLocaleName, 0);
 }
 #endif
 
@@ -809,49 +772,46 @@ __YY_Thunks_Expand_Function(kernel32, GetSystemDefaultLocaleName, 8);
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista,  Windows Server 2008
+// Windows Vista,  Windows Server 2008
 
 EXTERN_C
-BOOL
-WINAPI
-EnumCalendarInfoExEx(
-	_In_ CALINFO_ENUMPROCEXEX pCalInfoEnumProcExEx,
-	_In_opt_ LPCWSTR lpLocaleName,
-	_In_ CALID Calendar,
-	_In_opt_ LPCWSTR lpReserved,
-	_In_ CALTYPE CalType,
-	_In_ LPARAM lParam
-	)
+BOOL WINAPI EnumCalendarInfoExEx(
+    _In_ CALINFO_ENUMPROCEXEX pCalInfoEnumProcExEx,
+    _In_opt_ LPCWSTR lpLocaleName,
+    _In_ CALID Calendar,
+    _In_opt_ LPCWSTR lpReserved,
+    _In_ CALTYPE CalType,
+    _In_ LPARAM lParam)
 #ifdef YY_Thunks_Defined
-	;
+    ;
 #else
 {
-	if (auto pEnumCalendarInfoExEx = try_get_EnumCalendarInfoExEx())
-	{
-		return pEnumCalendarInfoExEx(pCalInfoEnumProcExEx, lpLocaleName, Calendar, lpReserved, CalType, lParam);
-	}
+    if (auto pEnumCalendarInfoExEx = try_get_EnumCalendarInfoExEx())
+    {
+        return pEnumCalendarInfoExEx(
+            pCalInfoEnumProcExEx, lpLocaleName, Calendar, lpReserved, CalType, lParam);
+    }
 
-	LSTATUS lStatus;
+    LSTATUS lStatus;
 
-	do
-	{
-		if (pCalInfoEnumProcExEx == nullptr)
-		{
-			lStatus = ERROR_INVALID_PARAMETER;
-			break;
-		}
+    do
+    {
+        if (pCalInfoEnumProcExEx == nullptr)
+        {
+            lStatus = ERROR_INVALID_PARAMETER;
+            break;
+        }
 
-		auto Locale = LocaleNameToLCID(lpLocaleName, 0);
+        auto Locale = LocaleNameToLCID(lpLocaleName, 0);
 
-		if (Locale == 0)
-		{
-			lStatus = ERROR_INVALID_PARAMETER;
-			break;
-		}
+        if (Locale == 0)
+        {
+            lStatus = ERROR_INVALID_PARAMETER;
+            break;
+        }
 
-		// clang-format off
+        // clang-format off
 #if defined(_X86_)
 		constexpr const auto lParamOffset = 1;
 		constexpr const auto pCallBackOffset = 16;
@@ -884,43 +844,39 @@ EnumCalendarInfoExEx(
 			0xFF, 0xE0,                                                 // jmp     rax
 		};
 #endif
-		// clang-format on
+        // clang-format on
 
-		auto pFun = (byte*)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
+        auto pFun = (byte *)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
 
-		if (!pFun)
-		{
-			lStatus = ERROR_NOT_ENOUGH_MEMORY;
-			break;
-		}
+        if (!pFun)
+        {
+            lStatus = ERROR_NOT_ENOUGH_MEMORY;
+            break;
+        }
 
-		memcpy(pFun, ThunkData, sizeof(ThunkData));
-		*(size_t*)(pFun + lParamOffset) = lParam;
-		*(size_t*)(pFun + pCallBackOffset) = (size_t)pCalInfoEnumProcExEx;
+        memcpy(pFun, ThunkData, sizeof(ThunkData));
+        *(size_t *)(pFun + lParamOffset) = lParam;
+        *(size_t *)(pFun + pCallBackOffset) = (size_t)pCalInfoEnumProcExEx;
 
-		DWORD flOldProtect;
-		VirtualProtect(pFun, sizeof(ThunkData), PAGE_EXECUTE_READ, &flOldProtect);
+        DWORD flOldProtect;
+        VirtualProtect(pFun, sizeof(ThunkData), PAGE_EXECUTE_READ, &flOldProtect);
 
-		auto bSuccess = EnumCalendarInfoExW(
-			(CALINFO_ENUMPROCEXW)pFun,
-			Locale,
-			Calendar,
-			CalType);
+        auto bSuccess = EnumCalendarInfoExW((CALINFO_ENUMPROCEXW)pFun, Locale, Calendar, CalType);
 
-		lStatus = bSuccess ? ERROR_SUCCESS : GetLastError();
+        lStatus = bSuccess ? ERROR_SUCCESS : GetLastError();
 
-		VirtualFree(pFun, 0, MEM_RELEASE);
-	} while (false);
+        VirtualFree(pFun, 0, MEM_RELEASE);
+    } while (false);
 
-	if (lStatus == ERROR_SUCCESS)
-	{
-		return TRUE;
-	}
-	else
-	{
-		SetLastError(lStatus);
-		return FALSE;
-	}
+    if (lStatus == ERROR_SUCCESS)
+    {
+        return TRUE;
+    }
+    else
+    {
+        SetLastError(lStatus);
+        return FALSE;
+    }
 }
 #endif
 
@@ -928,47 +884,43 @@ __YY_Thunks_Expand_Function(kernel32, EnumCalendarInfoExEx, 24);
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista,  Windows Server 2008
+// Windows Vista,  Windows Server 2008
 
 EXTERN_C
-BOOL
-WINAPI
-EnumDateFormatsExEx(
+BOOL WINAPI EnumDateFormatsExEx(
     _In_ DATEFMT_ENUMPROCEXEX lpDateFmtEnumProcExEx,
     _In_opt_ LPCWSTR lpLocaleName,
     _In_ DWORD dwFlags,
-    _In_ LPARAM lParam
-	)
+    _In_ LPARAM lParam)
 #ifdef YY_Thunks_Defined
-	;
+    ;
 #else
 {
-	if (auto pEnumDateFormatsExEx = try_get_EnumDateFormatsExEx())
-	{
-		return pEnumDateFormatsExEx(lpDateFmtEnumProcExEx, lpLocaleName, dwFlags, lParam);
-	}
+    if (auto pEnumDateFormatsExEx = try_get_EnumDateFormatsExEx())
+    {
+        return pEnumDateFormatsExEx(lpDateFmtEnumProcExEx, lpLocaleName, dwFlags, lParam);
+    }
 
-	LSTATUS lStatus;
+    LSTATUS lStatus;
 
-	do
-	{
-		if (lpDateFmtEnumProcExEx == nullptr)
-		{
-			lStatus = ERROR_INVALID_PARAMETER;
-			break;
-		}
+    do
+    {
+        if (lpDateFmtEnumProcExEx == nullptr)
+        {
+            lStatus = ERROR_INVALID_PARAMETER;
+            break;
+        }
 
-		auto Locale = LocaleNameToLCID(lpLocaleName, 0);
+        auto Locale = LocaleNameToLCID(lpLocaleName, 0);
 
-		if (Locale == 0)
-		{
-			lStatus = ERROR_INVALID_PARAMETER;
-			break;
-		}
+        if (Locale == 0)
+        {
+            lStatus = ERROR_INVALID_PARAMETER;
+            break;
+        }
 
-		// clang-format off
+        // clang-format off
 #if defined(_X86_)
 		constexpr const auto lParamOffset = 1;
 		constexpr const auto pCallBackOffset = 14;
@@ -999,42 +951,39 @@ EnumDateFormatsExEx(
 			0xFF, 0xE0,                                                 // jmp     rax
 		};
 #endif
-		// clang-format on
+        // clang-format on
 
-		auto pFun = (byte*)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
+        auto pFun = (byte *)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
 
-		if (!pFun)
-		{
-			lStatus = ERROR_NOT_ENOUGH_MEMORY;
-			break;
-		}
+        if (!pFun)
+        {
+            lStatus = ERROR_NOT_ENOUGH_MEMORY;
+            break;
+        }
 
-		memcpy(pFun, ThunkData, sizeof(ThunkData));
-		*(size_t*)(pFun + lParamOffset) = lParam;
-		*(size_t*)(pFun + pCallBackOffset) = (size_t)lpDateFmtEnumProcExEx;
+        memcpy(pFun, ThunkData, sizeof(ThunkData));
+        *(size_t *)(pFun + lParamOffset) = lParam;
+        *(size_t *)(pFun + pCallBackOffset) = (size_t)lpDateFmtEnumProcExEx;
 
-		DWORD flOldProtect;
-		VirtualProtect(pFun, sizeof(ThunkData), PAGE_EXECUTE_READ, &flOldProtect);
+        DWORD flOldProtect;
+        VirtualProtect(pFun, sizeof(ThunkData), PAGE_EXECUTE_READ, &flOldProtect);
 
-		auto bSuccess = EnumDateFormatsExW(
-			(DATEFMT_ENUMPROCEXW)pFun,
-			Locale,
-			dwFlags);
+        auto bSuccess = EnumDateFormatsExW((DATEFMT_ENUMPROCEXW)pFun, Locale, dwFlags);
 
-		lStatus = bSuccess ? ERROR_SUCCESS : GetLastError();
+        lStatus = bSuccess ? ERROR_SUCCESS : GetLastError();
 
-		VirtualFree(pFun, 0, MEM_RELEASE);
-	} while (false);
+        VirtualFree(pFun, 0, MEM_RELEASE);
+    } while (false);
 
-	if (lStatus == ERROR_SUCCESS)
-	{
-		return TRUE;
-	}
-	else
-	{
-		SetLastError(lStatus);
-		return FALSE;
-	}
+    if (lStatus == ERROR_SUCCESS)
+    {
+        return TRUE;
+    }
+    else
+    {
+        SetLastError(lStatus);
+        return FALSE;
+    }
 }
 #endif
 
@@ -1042,7 +991,6 @@ __YY_Thunks_Expand_Function(kernel32, EnumDateFormatsExEx, 16);
 
 #endif
 
+} // namespace Thunks
 
-	}//namespace Thunks
-
-} //namespace YY
+} // namespace YY

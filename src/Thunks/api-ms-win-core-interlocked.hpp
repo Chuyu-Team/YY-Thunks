@@ -1,13 +1,11 @@
 
 
-namespace YY
-{
-	namespace Thunks
-	{
+namespace YY {
+namespace Thunks {
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2003 [desktop apps | UWP apps]
+// Windows Vista [desktop apps | UWP apps]
+// Windows Server 2003 [desktop apps | UWP apps]
 
 #pragma push_macro("InterlockedCompareExchange64")
 #undef InterlockedCompareExchange64
@@ -17,13 +15,12 @@ WINAPI
 InterlockedCompareExchange64(
     _Inout_ _Interlocked_operand_ LONG64 volatile *Destination,
     _In_ LONG64 ExChange,
-    _In_ LONG64 Comperand
-    )
+    _In_ LONG64 Comperand)
 #ifdef YY_Thunks_Defined
-	;
+    ;
 #else
 {
-	return _InterlockedCompareExchange64(Destination, ExChange, Comperand);
+    return _InterlockedCompareExchange64(Destination, ExChange, Comperand);
 }
 #endif
 
@@ -33,15 +30,11 @@ __YY_Thunks_Expand_Function(kernel32, InterlockedCompareExchange64, 20);
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
-//Windows XP [desktop apps | UWP apps]
-//Windows Server 2003 [desktop apps | UWP apps]
+// Windows XP [desktop apps | UWP apps]
+// Windows Server 2003 [desktop apps | UWP apps]
 
 EXTERN_C
-VOID
-WINAPI
-InitializeSListHead(
-    _Out_ PSLIST_HEADER ListHead
-    )
+VOID WINAPI InitializeSListHead(_Out_ PSLIST_HEADER ListHead)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -55,15 +48,13 @@ __YY_Thunks_Expand_Function(kernel32, InitializeSListHead, 4);
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
-//Windows XP [desktop apps | UWP apps]
-//Windows Server 2003 [desktop apps | UWP apps]
+// Windows XP [desktop apps | UWP apps]
+// Windows Server 2003 [desktop apps | UWP apps]
 
 EXTERN_C
 PSLIST_ENTRY
 WINAPI
-InterlockedFlushSList(
-    _Inout_ PSLIST_HEADER ListHead
-    )
+InterlockedFlushSList(_Inout_ PSLIST_HEADER ListHead)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -73,8 +64,7 @@ InterlockedFlushSList(
         return pInterlockedFlushSList(ListHead);
     }
 
-    __asm
-    {
+    __asm {
         mov     ebp, [ListHead]
         xor     ebx, ebx
         mov     edx, [ebp + 4]
@@ -99,15 +89,13 @@ __YY_Thunks_Expand_Function(kernel32, InterlockedFlushSList, 4);
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
-//Windows XP [desktop apps | UWP apps]
-//Windows Server 2003 [desktop apps | UWP apps]
+// Windows XP [desktop apps | UWP apps]
+// Windows Server 2003 [desktop apps | UWP apps]
 
 EXTERN_C
 USHORT
 WINAPI
-QueryDepthSList(
-    _In_ PSLIST_HEADER ListHead
-    )
+QueryDepthSList(_In_ PSLIST_HEADER ListHead)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -126,16 +114,15 @@ __YY_Thunks_Expand_Function(kernel32, QueryDepthSList, 4);
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
-//Windows XP [desktop apps | UWP apps]
-//Windows Server 2003 [desktop apps | UWP apps]
+// Windows XP [desktop apps | UWP apps]
+// Windows Server 2003 [desktop apps | UWP apps]
 
 EXTERN_C
 PSLIST_ENTRY
 WINAPI
 InterlockedPushEntrySList(
     _Inout_ PSLIST_HEADER ListHead,
-    _Inout_ __drv_aliasesMem PSLIST_ENTRY ListEntry
-    )
+    _Inout_ __drv_aliasesMem PSLIST_ENTRY ListEntry)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -145,8 +132,7 @@ InterlockedPushEntrySList(
         return pInterlockedPushEntrySList(ListHead, ListEntry);
     }
 
-    __asm
-    {
+    __asm {
         mov     ebx, [ListEntry]
         mov     ebp, [ListHead]
 
@@ -160,7 +146,7 @@ InterlockedPushEntrySList(
         jnz _Loop
     }
 
-    //asm会更新eax
+    // asm会更新eax
 }
 #endif
 
@@ -169,15 +155,13 @@ __YY_Thunks_Expand_Function(kernel32, InterlockedPushEntrySList, 8);
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
-//Windows XP [desktop apps | UWP apps]
-//Windows Server 2003 [desktop apps | UWP apps]
+// Windows XP [desktop apps | UWP apps]
+// Windows Server 2003 [desktop apps | UWP apps]
 
 EXTERN_C
 PSLIST_ENTRY
 WINAPI
-InterlockedPopEntrySList(
-    _Inout_ PSLIST_HEADER ListHead
-    )
+InterlockedPopEntrySList(_Inout_ PSLIST_HEADER ListHead)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -187,8 +171,7 @@ InterlockedPopEntrySList(
         return pInterlockedPopEntrySList(ListHead);
     }
 
-    __asm
-    {
+    __asm {
         mov     ebp, [ListHead]
         mov     edx, [ebp + 4]
         mov     eax, [ebp + 0]
@@ -203,7 +186,7 @@ InterlockedPopEntrySList(
 
     }
 
-    //asm 会修改eax
+    // asm 会修改eax
 }
 #endif
 
@@ -211,6 +194,6 @@ __YY_Thunks_Expand_Function(kernel32, InterlockedPopEntrySList, 4);
 
 #endif
 
-	}//namespace Thunks
+} // namespace Thunks
 
-} //namespace YY
+} // namespace YY

@@ -1,13 +1,11 @@
 #include <winstring.h>
 
-namespace YY
-{
-	namespace Thunks
-	{
+namespace YY {
+namespace Thunks {
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps | UWP apps]
-//Windows Server 2012 [desktop apps | UWP apps]
+// Windows 8 [desktop apps | UWP apps]
+// Windows Server 2012 [desktop apps | UWP apps]
 
 EXTERN_C
 HRESULT
@@ -15,8 +13,7 @@ STDAPICALLTYPE
 WindowsCreateString(
     _In_reads_opt_(length) PCNZWCH sourceString,
     UINT32 length,
-    _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING* string
-    )
+    _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING *string)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -34,10 +31,9 @@ __YY_Thunks_Expand_Function(api_ms_win_core_winrt_string_l1_1_0, WindowsCreateSt
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps | UWP apps]
-//Windows Server 2012 [desktop apps | UWP apps]
+// Windows 8 [desktop apps | UWP apps]
+// Windows Server 2012 [desktop apps | UWP apps]
 
 EXTERN_C
 HRESULT
@@ -45,9 +41,8 @@ STDAPICALLTYPE
 WindowsCreateStringReference(
     _In_reads_opt_(length + 1) PCWSTR sourceString,
     UINT32 length,
-    _Out_ HSTRING_HEADER* hstringHeader,
-    _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING* string
-    )
+    _Out_ HSTRING_HEADER *hstringHeader,
+    _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING *string)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -66,15 +61,13 @@ __YY_Thunks_Expand_Function(api_ms_win_core_winrt_string_l1_1_0, WindowsCreateSt
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps | UWP apps]
-//Windows Server 2012 [desktop apps | UWP apps]
+// Windows 8 [desktop apps | UWP apps]
+// Windows Server 2012 [desktop apps | UWP apps]
 
 EXTERN_C
 HRESULT
 STDAPICALLTYPE
-WindowsDeleteString(
-    _In_opt_ HSTRING string
-    )
+WindowsDeleteString(_In_opt_ HSTRING string)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -92,18 +85,16 @@ __YY_Thunks_Expand_Function(api_ms_win_core_winrt_string_l1_1_0, WindowsDeleteSt
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps | UWP apps]
-//Windows Server 2012 [desktop apps | UWP apps]
+// Windows 8 [desktop apps | UWP apps]
+// Windows Server 2012 [desktop apps | UWP apps]
 
 EXTERN_C
 HRESULT
 STDAPICALLTYPE
 WindowsDuplicateString(
     _In_opt_ HSTRING string,
-    _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING* newString
-    )
+    _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING *newString)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -122,15 +113,13 @@ __YY_Thunks_Expand_Function(api_ms_win_core_winrt_string_l1_1_0, WindowsDuplicat
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps | UWP apps]
-//Windows Server 2012 [desktop apps | UWP apps]
+// Windows 8 [desktop apps | UWP apps]
+// Windows Server 2012 [desktop apps | UWP apps]
 
 EXTERN_C
 UINT32
 STDAPICALLTYPE
-WindowsGetStringLen(
-    _In_opt_ HSTRING string
-    )
+WindowsGetStringLen(_In_opt_ HSTRING string)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -149,16 +138,13 @@ __YY_Thunks_Expand_Function(api_ms_win_core_winrt_string_l1_1_0, WindowsGetStrin
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps | UWP apps]
-//Windows Server 2012 [desktop apps | UWP apps]
+// Windows 8 [desktop apps | UWP apps]
+// Windows Server 2012 [desktop apps | UWP apps]
 
 EXTERN_C
 PCWSTR
 STDAPICALLTYPE
-WindowsGetStringRawBuffer(
-    _In_opt_ HSTRING string,
-    _Out_opt_ UINT32* length
-    )
+WindowsGetStringRawBuffer(_In_opt_ HSTRING string, _Out_opt_ UINT32 *length)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -176,17 +162,12 @@ __YY_Thunks_Expand_Function(api_ms_win_core_winrt_string_l1_1_0, WindowsGetStrin
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps | UWP apps]
-//Windows Server 2012 [desktop apps | UWP apps]
+// Windows 8 [desktop apps | UWP apps]
+// Windows Server 2012 [desktop apps | UWP apps]
 
 EXTERN_C
-BOOL
-STDAPICALLTYPE
-WindowsIsStringEmpty(
-    _In_opt_ HSTRING string
-    )
+BOOL STDAPICALLTYPE WindowsIsStringEmpty(_In_opt_ HSTRING string)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -204,18 +185,14 @@ __YY_Thunks_Expand_Function(api_ms_win_core_winrt_string_l1_1_0, WindowsIsString
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps | UWP apps]
-//Windows Server 2012 [desktop apps | UWP apps]
+// Windows 8 [desktop apps | UWP apps]
+// Windows Server 2012 [desktop apps | UWP apps]
 
 EXTERN_C
 HRESULT
 STDAPICALLTYPE
-WindowsStringHasEmbeddedNull(
-    _In_opt_ HSTRING string,
-    _Out_ BOOL* hasEmbedNull
-    )
+WindowsStringHasEmbeddedNull(_In_opt_ HSTRING string, _Out_ BOOL *hasEmbedNull)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -233,19 +210,14 @@ __YY_Thunks_Expand_Function(api_ms_win_core_winrt_string_l1_1_0, WindowsStringHa
 
 #endif
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps | UWP apps]
-//Windows Server 2012 [desktop apps | UWP apps]
+// Windows 8 [desktop apps | UWP apps]
+// Windows Server 2012 [desktop apps | UWP apps]
 
 EXTERN_C
 HRESULT
 STDAPICALLTYPE
-WindowsCompareStringOrdinal(
-    _In_opt_ HSTRING string1,
-    _In_opt_ HSTRING string2,
-    _Out_ INT32* result
-    )
+WindowsCompareStringOrdinal(_In_opt_ HSTRING string1, _In_opt_ HSTRING string2, _Out_ INT32 *result)
 #ifdef YY_Thunks_Defined
     ;
 #else
@@ -263,5 +235,5 @@ __YY_Thunks_Expand_Function(api_ms_win_core_winrt_string_l1_1_0, WindowsCompareS
 
 #endif
 
-    }
-}
+} // namespace Thunks
+} // namespace YY
