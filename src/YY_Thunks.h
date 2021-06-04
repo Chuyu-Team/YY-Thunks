@@ -20,10 +20,17 @@
 	 #error "不支持此体系"
 #endif
 
+#if defined(_M_IX86)
+//x86的符号存在@ 我们使用 identifier 特性解决
+#define _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION, _SIZE)                                                                       \
+	__pragma(warning(suppress:4483))                                                                                    \
+	extern "C" __declspec(selectany) void const* const __identifier(_CRT_STRINGIZE_(_imp__ ## _FUNCTION ## @ ## _SIZE)) \
+        = reinterpret_cast<void const*>(_FUNCTION)
+#else
 #define _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION, _SIZE)                                                          \
     extern "C" __declspec(selectany) void const* const _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(_FUNCTION, _SIZE) \
         = reinterpret_cast<void const*>(_FUNCTION)
-
+#endif
 
 #pragma section(".YYThu$AAA",    long, read, write) //鸭船模块缓存节点
 #pragma section(".YYThu$AAB",    long, read, write) //鸭船函数缓存节点
