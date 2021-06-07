@@ -24,6 +24,7 @@
 #include "Thunks/api-ms-win-core-winrt-string.hpp"
 #include "Thunks/api-ms-win-core-libraryloader.hpp"
 #include "Thunks/api-ms-win-core-winrt-error.hpp"
+#include "Thunks/api-ms-win-core-path.hpp"
 
 
 

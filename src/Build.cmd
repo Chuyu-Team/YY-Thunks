@@ -6,6 +6,8 @@ setlocal
 
 pushd "%~dp0.."
 
+set "include=%~dp0..;%include%"
+
 if "%Platform%"=="" set Platform=x86
 
 md "objs\\%Platform%"

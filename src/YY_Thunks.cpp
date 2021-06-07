@@ -17,7 +17,8 @@
     _APPLY(setupapi,                                     "setupapi"                           , 0                 ) \
     _APPLY(api_ms_win_core_winrt_l1_1_0,                 "api-ms-win-core-winrt-l1-1-0"       , 0                 ) \
     _APPLY(api_ms_win_core_winrt_string_l1_1_0,          "api-ms-win-core-winrt-string-l1-1-0", 0                 ) \
-    _APPLY(api_ms_win_core_winrt_error_l1_1_0,           "api-ms-win-core-winrt-error-l1-1-0" , 0                 ) 
+    _APPLY(api_ms_win_core_winrt_error_l1_1_0,           "api-ms-win-core-winrt-error-l1-1-0" , 0                 ) \
+    _APPLY(api_ms_win_core_path_l1_1_0,                  "api-ms-win-core-path-l1-1-0"        , 0                 ) 
 
 
 //全局可能使用到的函数
@@ -109,7 +110,7 @@
 		_CRT_STRINGIZE(_FUNCTION),                                                             \
         &_CRT_CONCATENATE(try_get_module_, _MODULE)));                                         \
 	}
-#include "YY_Thunks_List.hpp"
+#include "src/YY_Thunks_List.hpp"
 
 #undef __YY_Thunks_Expand_Function
 #undef YY_Thunks_Defined
