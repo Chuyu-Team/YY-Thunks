@@ -1,4 +1,4 @@
-
+﻿
 
 namespace YY
 {
@@ -23,12 +23,24 @@ GetNumaNodeProcessorMask(
 	{
 		return pGetNumaNodeProcessorMask(Node, ProcessorMask);
 	}
-	else
+	
+	if (Node == 0)
 	{
-		//��֧�ִ˽ӿ�
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
+		//因为我们假定只有一个 Node，所以所有处理器必然在这个 Node 中。
+
+		SYSTEM_INFO SystemInfo;
+		GetSystemInfo(&SystemInfo);
+
+		*ProcessorMask = (1ull << SystemInfo.dwNumberOfProcessors) - 1;
+
+		return TRUE;
 	}
+
+
+	//不支持此接口
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+	
 }
 #endif
 
@@ -63,7 +75,7 @@ GetNumaNodeProcessorMaskEx(
 		if (bRet)
 		{
 			ProcessorMask->Mask = ullProcessorMask;
-			//�ٶ�ֻ��һ��CPU
+			//假定只有一组CPU
 			ProcessorMask->Group = 0;
 			ProcessorMask->Reserved[0] = 0;
 			ProcessorMask->Reserved[1] = 0;
@@ -145,7 +157,7 @@ GetNumaHighestNodeNumber(
 		return pGetNumaHighestNodeNumber(HighestNodeNumber);
 	}
 
-	//��֧��ʱʼ�ռٶ�ֻ��һ��NUMA�ڵ�
+	//不支持时始终假定只有一个NUMA节点
 	*HighestNodeNumber = 0;
 
 	return TRUE;
