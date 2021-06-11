@@ -105,7 +105,7 @@
 | [WakeByAddressAll](https://docs.microsoft.com/windows/win32/api/synchapi/nf-synchapi-wakebyaddressall)                         | 不存在时，调用NtReleaseKeyedEvent。警告，此函数请勿跨模块使用！！！
 | *[GetCurrentProcessorNumber](https://msdn.microsoft.com/library/windows/desktop/ms683181.aspx)                                 | 不存在时，返回0。
 | *[GetCurrentProcessorNumberEx](https://msdn.microsoft.com/library/windows/desktop/dd405487.aspx)                               | 不存在时，调用GetCurrentProcessorNumber。
-| *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/library/windows/desktop/ms683204.aspx)                                  | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_PARAMETER。
+| *[GetNumaNodeProcessorMask](https://msdn.microsoft.com/library/windows/desktop/ms683204.aspx)                                  | 不存在时，假定所有CPU都在当前Numa。
 | *[GetNumaNodeProcessorMaskEx](https://msdn.microsoft.com/library/windows/desktop/dd405493.aspx)                                | 不存在时，调用GetNumaNodeProcessorMask。
 | *[SetThreadGroupAffinity](https://msdn.microsoft.com/library/windows/desktop/dd405516.aspx)                                    | 不存在时，调用SetThreadAffinityMask。
 | *[CancelIoEx](https://docs.microsoft.com/windows/desktop/FileIO/cancelioex-func)                                               | 不存在时，调用CancelIo（会把此句柄的所有IO操作取消掉！）。
@@ -173,3 +173,28 @@
 | [PathCchStripPrefix](https://docs.microsoft.com/windows/win32/api/pathcch/nf-pathcch-pathcchstripprefix)                        | 内部实现。
 | [PathAllocCombine](https://docs.microsoft.com/windows/win32/api/pathcch/nf-pathcch-pathalloccombine)                            | 不存在时，调用PathCchCombineEx。
 | [PathAllocCanonicalize](https://docs.microsoft.com/windows/win32/api/pathcch/nf-pathcch-pathalloccanonicalize)                  | 不存在时，调用PathCchCanonicalizeEx。
+| [GetNumaProximityNodeEx](https://docs.microsoft.com/en-us/windows/win32/api/systemtopologyapi/nf-systemtopologyapi-getnumaproximitynodeex)                  | 不存在时，调用GetNumaProximityNode。
+| [GetNumaProcessorNode](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getnumaprocessornode)                  | 不存在时，假定所有CPU都在节点 0。
+| [GetNumaNodeNumberFromHandle](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getnumanodenumberfromhandle)                  | 不存在时，假定所有CPU都在节点 0。
+| [GetNumaProcessorNodeEx](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getnumaprocessornodeex)                  | 不存在时，调用 GetNumaProcessorNode 。
+| [GetNumaAvailableMemoryNode](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getnumaavailablememorynode)            | 不存在时，假定所有内存都属于节点0 。
+| [GetNumaAvailableMemoryNodeEx](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getnumaavailablememorynodeex)            | 不存在时，调用 GetNumaAvailableMemoryNode 。
+| [GetNumaProximityNode](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getnumaproximitynode)            | 不存在时，假定都是节点0 。
+| [MapViewOfFileExNuma](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-mapviewoffileexnuma)            | 不存在时，调用 MapViewOfFileEx。
+| [AllocateUserPhysicalPagesNuma](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-allocateuserphysicalpagesnuma)            | 不存在时，调用 AllocateUserPhysicalPages 。
+| [VirtualAllocExNuma](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualallocexnuma)            | 不存在时，调用 VirtualAllocEx 。
+| [CreateFileMappingNumaW(A)](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-createfilemappingnumaw)            | 不存在时，调用 CreateFileMappingW(A) 。
+| [GetMaximumProcessorCount](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getmaximumprocessorcount)            | 不存在时，调用 GetSystemInfo 。
+| [GetActiveProcessorCount](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getactiveprocessorcount)            | 不存在时，调用 GetSystemInfo 。
+| [GetActiveProcessorGroupCount](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getactiveprocessorgroupcount)            | 不存在时，假定为1 。
+| [GetMaximumProcessorGroupCount](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getmaximumprocessorgroupcount)            | 不存在时，假定为1 。
+| [GetMemoryErrorHandlingCapabilities](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-getmemoryerrorhandlingcapabilities)            | 不存在时，直接报告不支持任何特性。
+| [VirtualAllocFromApp](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualallocfromapp)            | 不存在时，调用 VirtualAlloc 。
+| [VirtualAlloc2](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualalloc2)            | 不存在时，调用 VirtualAllocExNuma 以及 VirtualAllocEx 。
+| [VirtualAlloc2FromApp](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualalloc2fromapp)            | 不存在时，调用 VirtualAllocExNuma 以及 VirtualAllocEx 。
+| [CreateFileMappingFromApp](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-createfilemappingfromapp)            | 不存在时，调用 CreateFileMappingW 。
+| [CreateFileMapping2](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-createfilemapping2)            | 不存在时，调用 CreateFileMappingNumaW 以及 CreateFileMappingW 。
+| [MapViewOfFileFromApp](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-mapviewoffilefromapp)            | 不存在时，调用 MapViewOfFile 。
+| [UnmapViewOfFileEx](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-unmapviewoffileex)            | 不存在时，调用 UnmapViewOfFile 。
+| [VirtualProtectFromApp](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualprotectfromapp)            | 不存在时，调用 VirtualProtect 。
+| [OpenFileMappingFromApp](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-openfilemappingfromapp)            | 不存在时，调用 OpenFileMappingW 。

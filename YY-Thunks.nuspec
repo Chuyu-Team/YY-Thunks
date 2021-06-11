@@ -14,29 +14,57 @@
 - 简洁优雅，一个obj解决找不到指定入口点问题。</description>
     <summary>优雅的解决Windows XP RTM无法定位程序输入点 DecodePointer、EncodePointer、RegDeleteKeyEx等，让你兼容Windows更轻松。</summary>
     <releaseNotes>
-      * 解决[Bug 7](https://github.com/Chuyu-Team/YY-Thunks/issues/7)，某些情况下导致死锁问题（感谢 冯立夫）
-      * 添加 RoOriginateError
-      * 添加 RoOriginateErrorW
-      * 新增[Fea 8](https://github.com/Chuyu-Team/YY-Thunks/issues/8)，添加对Win10引入的DPI函数的支持。
-         - 添加 GetDpiForMonitor
-         - 添加 SetProcessDpiAwareness
-         - 添加 SetProcessDPIAware
-         - 添加 SetProcessDpiAwarenessContext
-         - 添加 GetDpiForSystem
-         - 添加 GetDpiForWindow
-         - 添加 GetSystemMetricsForDpi
-         - 添加 AdjustWindowRectExForDpi
-         - 添加 SystemParametersInfoForDpi
-
-      * 代码优化
-         - 减少 GetDpiForSystemDownlevel 函数中 GetDeviceCaps 的调用次数（感谢 毛利）。
-         - 合并[RP 11](https://github.com/Chuyu-Team/YY-Thunks/pull/11), 填充自旋锁中那些Unknow变量的语义（感谢 zeroclear）
-         - GetFinalPathNameByHandleW添加FILE_NAME_NORMALIZED支持（感谢 清泠）
-         
-      * 解决[Bug 10](https://github.com/Chuyu-Team/YY-Thunks/issues/10), XP下BaseSetLastNTError转换STATUS_TIMEOUT会报错。
-      * 解决[Bug 12](https://github.com/Chuyu-Team/YY-Thunks/issues/12), XP不支持SetFileInformationByHandle传入FileRenameInfo。
-      * 解决[Bug 13](https://github.com/Chuyu-Team/YY-Thunks/issues/13)，RtlRunOnceBeginInitialize一处lpInitOnce参数处理错误。
-      * 解决[Bug 14](https://github.com/Chuyu-Team/YY-Thunks/issues/14), 移除CreateSymbolicLink downlevel，因为Windows XP完全不支持SymbolicLink。
+      * 新增[Fea 21](https://github.com/Chuyu-Team/YY-Thunks/issues/21), 添加 Pathcch API Thunks。
+        - 添加 PathIsUNCEx
+        - 添加 PathCchIsRoot
+        - 添加 PathCchAddBackslashEx
+        - 添加 PathCchAddBackslash
+        - 添加 PathCchRemoveBackslashEx
+        - 添加 PathCchRemoveBackslash
+        - 添加 PathCchSkipRoot
+        - 添加 PathCchStripToRoot
+        - 添加 PathCchRemoveFileSpec
+        - 添加 PathCchFindExtension
+        - 添加 PathCchAddExtension
+        - 添加 PathCchRenameExtension
+        - 添加 PathCchRemoveExtension
+        - 添加 PathCchCanonicalizeEx
+        - 添加 PathCchCanonicalize
+        - 添加 PathCchCombineEx
+        - 添加 PathCchCombine
+        - 添加 PathCchAppendEx
+        - 添加 PathCchAppend
+        - 添加 PathCchStripPrefix
+        - 添加 PathAllocCombine
+        - 添加 PathAllocCanonicalize
+      * 改进多线程支持
+        - 改进 GetNumaNodeProcessorMask Fallback逻辑的合理性。
+        - 添加 GetNumaProximityNodeEx
+        - 添加 GetNumaProcessorNode
+        - 添加 GetNumaNodeNumberFromHandle
+        - 添加 GetNumaProcessorNodeEx
+        - 添加 GetNumaAvailableMemoryNode
+        - 添加 GetNumaAvailableMemoryNodeEx
+        - 添加 GetNumaProximityNode
+        - 添加 MapViewOfFileExNuma
+        - 添加 AllocateUserPhysicalPagesNuma
+        - 添加 VirtualAllocExNuma
+        - 添加 CreateFileMappingNumaW
+        - 添加 GetMaximumProcessorCount
+        - 添加 GetActiveProcessorCount
+        - 添加 GetActiveProcessorGroupCount
+        - 添加 GetMaximumProcessorGroupCount
+      * 其他
+        - 添加 GetMemoryErrorHandlingCapabilities
+        - 添加 VirtualAllocFromApp
+        - 添加 VirtualAlloc2
+        - 添加 VirtualAlloc2FromApp
+        - 添加 CreateFileMappingFromApp
+        - 添加 CreateFileMapping2
+        - 添加 MapViewOfFileFromApp
+        - 添加 UnmapViewOfFileEx
+        - 添加 VirtualProtectFromApp
+        - 添加 OpenFileMappingFromApp
     </releaseNotes>
     <copyright>Copyright 2020</copyright>
     <tags>Chuyu YY-Thunks native nativepackage</tags>
