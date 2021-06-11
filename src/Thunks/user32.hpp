@@ -1,4 +1,4 @@
-
+﻿
 
 
 namespace YY
@@ -80,8 +80,8 @@ SetProcessDPIAware(
 	}
 
 	/*
-	 * ������������ڣ�˵�������һ��XP���߸��Ͱ汾����������ƽ̨��
-	 * DPI��֪��ֱ�Ӵ򿪵ģ���������ֱ�ӷ���TRUE ���ɡ�
+	 * 如果函数不存在，说明这个是一个XP或者更低版本，对于这种平台。
+	 * DPI感知是直接打开的，所以我们直接返回TRUE 即可。
 	 */
 	return TRUE;
 }

@@ -1,4 +1,4 @@
-
+ï»¿
 
 namespace YY
 {
@@ -129,7 +129,7 @@ __YY_Thunks_Expand_Function(kernel32, IsWow64Process, 8);
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN10_RS3) && (defined _X86_ || defined _AMD64_)
 //Windows 10, Version 1511
-//Î¢ÈíÎÄµµÓÐµãÎÊÌâ£¬Êµ¼Êx86ÒÔ¼°amd64ÏµÍ³ÖÐ£¬16299£¨RS3£©²Å¿ªÊ¼ÓÐ´ËAPI¡£
+//å¾®è½¯æ–‡æ¡£æœ‰ç‚¹é—®é¢˜ï¼Œå®žé™…x86ä»¥åŠamd64ç³»ç»Ÿä¸­ï¼Œ16299ï¼ˆRS3ï¼‰æ‰å¼€å§‹æœ‰æ­¤APIã€‚
 
 EXTERN_C
 BOOL
@@ -149,7 +149,7 @@ IsWow64Process2(
 	}
 
 
-	//ÅÐ¶ÏÊÇ·ñÔËÐÐÔÚWow6432ÐéÄâ»ú
+	//åˆ¤æ–­æ˜¯å¦è¿è¡Œåœ¨Wow6432è™šæ‹Ÿæœº
 	BOOL bWow64Process;
 	auto bRet = IsWow64Process(hProcess, &bWow64Process);
 
@@ -159,7 +159,7 @@ IsWow64Process2(
 		{
 			*pProcessMachine = IMAGE_FILE_MACHINE_I386;
 
-			//IA64ÒÑ¾­¿ÞÔÎÔÚ²ÞËù
+			//IA64å·²ç»å“­æ™•åœ¨åŽ•æ‰€
 			if (pNativeMachine)
 				*pNativeMachine = IMAGE_FILE_MACHINE_AMD64;
 		}
@@ -174,7 +174,7 @@ IsWow64Process2(
 			if (pNativeMachine)
 				*pNativeMachine = IMAGE_FILE_MACHINE_AMD64;
 #else
-#error ²»Ö§³Ö´ËÌåÏµ
+#error ä¸æ”¯æŒæ­¤ä½“ç³»
 #endif
 		}
 	}

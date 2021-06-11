@@ -1,17 +1,17 @@
-
+ï»¿
 
 #ifndef YY_Thunks_Defined
 
-//¶ÁĞ´Ëø²Î¿¼ÁËhttps://blog.csdn.net/yichigo/article/details/36898561
+//è¯»å†™é”å‚è€ƒäº†https://blog.csdn.net/yichigo/article/details/36898561
 #define YY_SRWLOCK_OWNED_BIT           0
 #define YY_SRWLOCK_CONTENDED_BIT       1
 #define YY_SRWLOCK_SHARED_BIT          2
 #define YY_SRWLOCK_CONTENTION_LOCK_BIT 3
-//ÒÑ¾­ÓĞÈË»ñµÃÕâ¸öËø
+//å·²ç»æœ‰äººè·å¾—è¿™ä¸ªé”
 #define YY_SRWLOCK_OWNED               0x00000001ul
-//ÓĞÈËÕıÔÚµÈ´ıËø
+//æœ‰äººæ­£åœ¨ç­‰å¾…é”
 #define YY_SRWLOCK_CONTENDED           0x00000002ul
-//ÓĞÈËÕıÔÚÓÅ»¯Ëø
+//æœ‰äººæ­£åœ¨ä¼˜åŒ–é”
 #define YY_SRWLOCK_SHARED              0x00000004ul
 //
 #define YY_SRWLOCK_CONTENTION_LOCK     0x00000008ul
@@ -19,7 +19,7 @@
 #define YY_SRWLOCK_BITS    4
 #define YY_SRWLOCK_GET_BLOCK(SRWLock) ((YY_SRWLOCK_WAIT_BLOCK*)(SRWLock & (~YY_SRWLOCK_MASK)))
 
-//SRWLock×ÔĞı´ÎÊı
+//SRWLockè‡ªæ—‹æ¬¡æ•°
 #define SRWLockSpinCount 1024
 
 
@@ -33,7 +33,7 @@ typedef struct __declspec(align(16)) _YY_SRWLOCK_WAIT_BLOCK
 } YY_SRWLOCK_WAIT_BLOCK;
 
 
-//ÕıÔÚÓÅ»¯Ëø
+//æ­£åœ¨ä¼˜åŒ–é”
 #define YY_CV_OPTIMIZE_LOCK 0x00000008ul
 #define YY_CV_MASK size_t(0x0000000F)
 #define YY_CV_GET_BLOCK(CV) ((YY_CV_WAIT_BLOCK*)(CV & (~YY_CV_MASK)))
@@ -53,13 +53,13 @@ typedef struct __declspec(align(16)) _YY_CV_WAIT_BLOCK
 
 #define YY_ADDRESS_GET_BLOCK(AW) ((YY_ADDRESS_WAIT_BLOCK*)(size_t(AW) & (~size_t(0x3))))
 
-//WaitOnAddress×ÔĞı´ÎÊı
+//WaitOnAddressè‡ªæ—‹æ¬¡æ•°
 #define RtlpWaitOnAddressSpinCount 1024
 
 typedef struct __declspec(align(8)) _YY_ADDRESS_WAIT_BLOCK
 {
 	volatile void* Address;
-	//ÒòÎªWindows 8ÒÔ¼°¸ü¸ß°æ±¾²ÅÖ§³Ö ZwWaitForAlertByThreadId£¬ËùÒÔÎÒÃÇÖ±½Ó°Ñ ThreadId ¿³µôÁË£¬·´ÕıÃ»ÄñÓÃ
+	//å› ä¸ºWindows 8ä»¥åŠæ›´é«˜ç‰ˆæœ¬æ‰æ”¯æŒ ZwWaitForAlertByThreadIdï¼Œæ‰€ä»¥æˆ‘ä»¬ç›´æ¥æŠŠ ThreadId ç æ‰äº†ï¼Œåæ­£æ²¡é¸Ÿç”¨
 	//ULONG_PTR            ThreadId;
 
 	_YY_ADDRESS_WAIT_BLOCK* back;
@@ -70,7 +70,7 @@ typedef struct __declspec(align(8)) _YY_ADDRESS_WAIT_BLOCK
 } YY_ADDRESS_WAIT_BLOCK;
 
 
-//YY-ThunksÖĞBarrier²ÉÓÃÁËWindows 8ÊµÏÖ
+//YY-Thunksä¸­Barrieré‡‡ç”¨äº†Windows 8å®ç°
 typedef struct _YY_BARRIER {
 	volatile LONG  lRemainderThreads;
 	volatile LONG  lTotalThreads;
@@ -79,7 +79,7 @@ typedef struct _YY_BARRIER {
 	DWORD          dwSpinCount;
 } YY_BARRIER;
 
-static_assert(sizeof(SYNCHRONIZATION_BARRIER) >= sizeof(YY_BARRIER), "±ØĞë¸úÏµÍ³ABI¼æÈİ£¡£¡£¡£¡");
+static_assert(sizeof(SYNCHRONIZATION_BARRIER) >= sizeof(YY_BARRIER), "å¿…é¡»è·Ÿç³»ç»ŸABIå…¼å®¹ï¼ï¼ï¼ï¼");
 
 #endif
 
@@ -95,7 +95,7 @@ namespace YY
 			static HANDLE __fastcall GetGlobalKeyedEventHandle()
 			{
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-				//Windows XPµÈÆ½Ì¨Ôò Ê¹ÓÃÏµÍ³×ÔÉíµÄ CritSecOutOfMemoryEvent£¬Vista»òÕß¸ü¸ßÆ½Ì¨ ÎÒÃÇÖ±½Ó·µ»Ø nullptr ¼´¿É¡£
+				//Windows XPç­‰å¹³å°åˆ™ ä½¿ç”¨ç³»ç»Ÿè‡ªèº«çš„ CritSecOutOfMemoryEventï¼ŒVistaæˆ–è€…æ›´é«˜å¹³å° æˆ‘ä»¬ç›´æ¥è¿”å› nullptr å³å¯ã€‚
 				if (NtCurrentTeb()->ProcessEnvironmentBlock->OSMajorVersion < 6)
 				{
 					if (_GlobalKeyedEventHandle == nullptr)
@@ -126,7 +126,7 @@ namespace YY
 					return _GlobalKeyedEventHandle;
 				}
 #endif
-				//VistaÒÔÉÏÆ½Ì¨Ö§³Ö¸ø KeyedEventÖ±½Ó´« nullptr
+				//Vistaä»¥ä¸Šå¹³å°æ”¯æŒç»™ KeyedEventç›´æ¥ä¼  nullptr
 				return nullptr;
 			}
 
@@ -146,7 +146,7 @@ namespace YY
 				{
 					if ((Status & YY_SRWLOCK_OWNED) == 0)
 					{
-						//Î¢Èí¾Í²»ÅĞ¶ÏÏÂ¿ÕÖ¸Õë£¿Èç´Ë×ÔĞÅ£¿
+						//å¾®è½¯å°±ä¸åˆ¤æ–­ä¸‹ç©ºæŒ‡é’ˆï¼Ÿå¦‚æ­¤è‡ªä¿¡ï¼Ÿ
 						auto pWatiBlock = YY_SRWLOCK_GET_BLOCK(Status);
 						
 						YY_SRWLOCK_WAIT_BLOCK* notify;
@@ -162,7 +162,7 @@ namespace YY
 						pWatiBlock->notify = notify;
 
 
-						//ÅĞ¶ÏÊÇ·ñÊÇÒ»¸ö¶ÀÕ¼Á´
+						//åˆ¤æ–­æ˜¯å¦æ˜¯ä¸€ä¸ªç‹¬å é“¾
 						if (notify->next && (notify->flag & 1))
 						{
 							pWatiBlock->notify = notify->next;
@@ -176,7 +176,7 @@ namespace YY
 #endif
 							if (!InterlockedBitTestAndReset((volatile LONG*)&notify->flag, 1))
 							{
-								//¿é´¦ÓÚµÈ´ı×´Ì¬£¬ÎÒÃÇ½øĞĞÏß³Ì»½ĞÑ
+								//å—å¤„äºç­‰å¾…çŠ¶æ€ï¼Œæˆ‘ä»¬è¿›è¡Œçº¿ç¨‹å”¤é†’
 
 								//if(!RtlpWaitCouldDeadlock())
 								
@@ -187,12 +187,12 @@ namespace YY
 						}
 						else
 						{
-							//µÈ´ıµÄÊÇÒ»¸ö¹²ÏíËø£¬ÄÇÃ´»½ĞÑËùÓĞµÈ´ıµÄ¹²ÏíËø¡£
+							//ç­‰å¾…çš„æ˜¯ä¸€ä¸ªå…±äº«é”ï¼Œé‚£ä¹ˆå”¤é†’æ‰€æœ‰ç­‰å¾…çš„å…±äº«é”ã€‚
 							auto NewStatus = InterlockedCompareExchange((volatile size_t *)SRWLock, 0, Status);
 
 							if (NewStatus == Status)
 							{
-								//¸üĞÂ³É¹¦£¡
+								//æ›´æ–°æˆåŠŸï¼
 								for (; notify;)
 								{
 									auto next = notify->next;
@@ -200,7 +200,7 @@ namespace YY
 
 									if (!InterlockedBitTestAndReset((volatile LONG*)&notify->flag, 1))
 									{
-										//¿é´¦ÓÚµÈ´ı×´Ì¬£¬ÎÒÃÇ½øĞĞÏß³Ì»½ĞÑ
+										//å—å¤„äºç­‰å¾…çŠ¶æ€ï¼Œæˆ‘ä»¬è¿›è¡Œçº¿ç¨‹å”¤é†’
 
 										//if(!RtlpWaitCouldDeadlock())
 
@@ -250,7 +250,7 @@ namespace YY
 							WatiBlock->notify = pBlock->notify;
 						}
 
-						//Î¢ÈíÎªÊ²Ã´ÓÃ Status - YY_SRWLOCK_SHARED£¬¶øÎªÊ²Ã´²»ÓÃ Status & ~YY_SRWLOCK_SHARED £¿
+						//å¾®è½¯ä¸ºä»€ä¹ˆç”¨ Status - YY_SRWLOCK_SHAREDï¼Œè€Œä¸ºä»€ä¹ˆä¸ç”¨ Status & ~YY_SRWLOCK_SHARED ï¼Ÿ
 						auto CurrentStatus = InterlockedCompareExchange((volatile size_t *)SRWLock, Status & ~YY_SRWLOCK_SHARED, Status);
 						if (CurrentStatus == Status)
 							break;
@@ -265,7 +265,7 @@ namespace YY
 				}
 			}
 
-			//½«µÈ´ı¿é²åÈë SRWLock ÖĞ
+			//å°†ç­‰å¾…å—æ’å…¥ SRWLock ä¸­
 			static BOOL __fastcall RtlpQueueWaitBlockToSRWLock(YY_CV_WAIT_BLOCK* pBolck, PSRWLOCK SRWLock, DWORD SRWLockMark)
 			{
 				for (;;)
@@ -294,7 +294,7 @@ namespace YY
 						pBolck->notify = nullptr;
 						pBolck->shareCount = 0;
 
-						//_YY_CV_WAIT_BLOCK ½á¹¹Ìå¸ú _YY_SRWLOCK_WAIT_BLOCK¼æÈİ£¬ËùÒÔÄÜÕâÑùÇ¿×ª
+						//_YY_CV_WAIT_BLOCK ç»“æ„ä½“è·Ÿ _YY_SRWLOCK_WAIT_BLOCKå…¼å®¹ï¼Œæ‰€ä»¥èƒ½è¿™æ ·å¼ºè½¬
 						pBolck->back = (_YY_CV_WAIT_BLOCK*)YY_SRWLOCK_GET_BLOCK(Current);
 
 						New = size_t(pBolck) | (Current & YY_CV_MASK);
@@ -308,7 +308,7 @@ namespace YY
 						New = shareCount <= 1 ? (size_t(pBolck) | 0x3) : (size_t(pBolck) | 0xB);
 					}
 
-					//Çåãö ·¢ÏÖµÄBug£¬ÎÒÃÇÓ¦¸Ã·µ»Ø TRUE£¬¼õÉÙ±ØÒªµÄÄÚºËµÈ´ı¡£
+					//æ¸…æ³  å‘ç°çš„Bugï¼Œæˆ‘ä»¬åº”è¯¥è¿”å› TRUEï¼Œå‡å°‘å¿…è¦çš„å†…æ ¸ç­‰å¾…ã€‚
 					if (InterlockedCompareExchange((volatile size_t*)SRWLock, New, Current) == Current)
 						return TRUE;
 
@@ -591,7 +591,7 @@ namespace YY
 					const auto Last = InterlockedCompareExchange((volatile size_t*)lpInitOnce, New, Old);
 					if (Last == Old)
 					{
-						//WinXPµÈÀÏÏµÍ³²»Ö§³Ö¿Õ¾ä±ú´«Èë£¬´ËĞĞÎª²»ÄÜÕÕ°áWindows 7
+						//WinXPç­‰è€ç³»ç»Ÿä¸æ”¯æŒç©ºå¥æŸ„ä¼ å…¥ï¼Œæ­¤è¡Œä¸ºä¸èƒ½ç…§æ¬Windows 7
 						pNtWaitForKeyedEvent(GlobalKeyedEventHandle, &Current, 0, nullptr);
 
 						Current = *(volatile size_t*)lpInitOnce;
@@ -611,7 +611,7 @@ namespace YY
 				_Outptr_opt_result_maybenull_ LPVOID* lpContext
 				)
 			{
-				//²ÎÊı¼ì²é
+				//å‚æ•°æ£€æŸ¥
 				if ((dwFlags & ~(RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC)) || ((dwFlags - 1) & dwFlags))
 				{
 					return STATUS_INVALID_PARAMETER_2;
@@ -621,7 +621,7 @@ namespace YY
 
 				if ((Current & (RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC)) == RTL_RUN_ONCE_ASYNC)
 				{
-					//Ã»ÓĞÏëÃ÷°×ÕâÑù×öµÄÒâÍ¼£¬ĞŞ¸ÄlpInitOnce±¾ÉíÓĞÊ²Ã´ÒâÒå£¿ nop£¿
+					//æ²¡æœ‰æƒ³æ˜ç™½è¿™æ ·åšçš„æ„å›¾ï¼Œä¿®æ”¹lpInitOnceæœ¬èº«æœ‰ä»€ä¹ˆæ„ä¹‰ï¼Ÿ nopï¼Ÿ
 					InterlockedExchange((volatile size_t *)&lpInitOnce, dwFlags);
 
 					if (lpContext)
@@ -659,7 +659,7 @@ namespace YY
 					}
 					else
 					{
-						//ÒÉ»ó£¿ÎªÊ²Ã´Î¢ÈíÒªÕâÑùÅĞ¶Ï¡­¡­
+						//ç–‘æƒ‘ï¼Ÿä¸ºä»€ä¹ˆå¾®è½¯è¦è¿™æ ·åˆ¤æ–­â€¦â€¦
 						if (Current != (RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC))
 						{
 							if (lpContext)
@@ -683,10 +683,10 @@ namespace YY
 
 				for (auto WakeAddress = (LPVOID)(*pWake & ~size_t(RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC)); WakeAddress; )
 				{
-					//·ÀÖ¹µØÖ·ÎŞĞ§£¬ÎÒÃÇÏÈ±£´æÏÂ
+					//é˜²æ­¢åœ°å€æ— æ•ˆï¼Œæˆ‘ä»¬å…ˆä¿å­˜ä¸‹
 					auto NextWakeAddress = *(LPVOID*)WakeAddress;
 
-					//WinXPµÈÀÏÏµÍ³²»Ö§³Ö¿Õ¾ä±ú´«Èë£¬´ËĞĞÎª²»ÄÜÕÕ°áWindows 7
+					//WinXPç­‰è€ç³»ç»Ÿä¸æ”¯æŒç©ºå¥æŸ„ä¼ å…¥ï¼Œæ­¤è¡Œä¸ºä¸èƒ½ç…§æ¬Windows 7
 					pNtReleaseKeyedEvent(GlobalKeyedEventHandle, WakeAddress, 0, nullptr);
 
 					WakeAddress = NextWakeAddress;
@@ -699,16 +699,16 @@ namespace YY
 				_In_opt_ LPVOID lpContext
 				)
 			{
-				//²ÎÊı¼ì²éÎŞĞ§  »òÕß Í¬Ê±Ê¹ÓÃÁË¶à¸ö±ê¼ÇÎ»
+				//å‚æ•°æ£€æŸ¥æ— æ•ˆ  æˆ–è€… åŒæ—¶ä½¿ç”¨äº†å¤šä¸ªæ ‡è®°ä½
 				if ((dwFlags & ~(RTL_RUN_ONCE_ASYNC | RTL_RUN_ONCE_INIT_FAILED)) || ((dwFlags - 1) & dwFlags))
 				{
 					return STATUS_INVALID_PARAMETER_2;
 				}
 
 				/*
-				dwFlags =   0, dwNewFlags = 0x3£¨RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNC£©
-				dwFlags = 0x2, dwNewFlags = 0x2£¨RTL_RUN_ONCE_ASYNC£©
-				dwFlags = 0x4, dwNewFlags = 0x5£¨RTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_INIT_FAILED£©
+				dwFlags =   0, dwNewFlags = 0x3ï¼ˆRTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_ASYNCï¼‰
+				dwFlags = 0x2, dwNewFlags = 0x2ï¼ˆRTL_RUN_ONCE_ASYNCï¼‰
+				dwFlags = 0x4, dwNewFlags = 0x5ï¼ˆRTL_RUN_ONCE_CHECK_ONLY | RTL_RUN_ONCE_INIT_FAILEDï¼‰
 				*/
 				const auto dwNewFlags = (dwFlags ^ ~(dwFlags >> 1)) & 3 ^ dwFlags;
 
@@ -857,7 +857,7 @@ namespace YY
 
 					if (Last == Current)
 					{
-						//0x2×´Ì¬·¢Éú±ä»¯ ²ÅĞèÒªÖØĞÂÓÅ»¯Ëø¡£
+						//0x2çŠ¶æ€å‘ç”Ÿå˜åŒ– æ‰éœ€è¦é‡æ–°ä¼˜åŒ–é”ã€‚
 						if ((Current ^ New) & 0x2)
 						{
 							RtlpOptimizeWaitOnAddressWaitList(ppFirstBlock);
@@ -906,7 +906,7 @@ namespace YY
 
 							bool bFind = false;
 
-							//Í¬²½³É¹¦£¡
+							//åŒæ­¥æˆåŠŸï¼
 							auto pBlock = YY_ADDRESS_GET_BLOCK(New);
 							auto pItem = pBlock;
 
@@ -1007,14 +1007,14 @@ namespace YY
 
 			static NTSTATUS __fastcall RtlpWaitOnAddressWithTimeout(YY_ADDRESS_WAIT_BLOCK* pWaitBlock, LARGE_INTEGER *TimeOut)
 			{
-				//µ¥ºË ÎÒÃÇÎŞĞè×ÔĞı£¬Ö±½Ó½øÈëµÈ´ı¹ı³Ì¼´¿É
+				//å•æ ¸ æˆ‘ä»¬æ— éœ€è‡ªæ—‹ï¼Œç›´æ¥è¿›å…¥ç­‰å¾…è¿‡ç¨‹å³å¯
 				if (NtCurrentTeb()->ProcessEnvironmentBlock->NumberOfProcessors > 1 && RtlpWaitOnAddressSpinCount)
 				{
 					for (DWORD SpinCount = 0; SpinCount < RtlpWaitOnAddressSpinCount;++SpinCount)
 					{
 						if ((pWaitBlock->flag & 1) == 0)
 						{
-							//×ÔĞı¹ı³ÌÖĞ£¬µÈµ½ÁËĞÅºÅ¸Ä±ä
+							//è‡ªæ—‹è¿‡ç¨‹ä¸­ï¼Œç­‰åˆ°äº†ä¿¡å·æ”¹å˜
 							return STATUS_SUCCESS;
 						}
 
@@ -1024,7 +1024,7 @@ namespace YY
 
 				if (!_interlockedbittestandreset((volatile long *)&pWaitBlock->flag, 0))
 				{
-					//±¾À´ÎÒÊÇ¾Ü¾øµÄ£¬µ«ÊÇÔËÆøºÃ£¬×´Ì¬ÒÑ¾­·¢ÉúÁË·´×ª
+					//æœ¬æ¥æˆ‘æ˜¯æ‹’ç»çš„ï¼Œä½†æ˜¯è¿æ°”å¥½ï¼ŒçŠ¶æ€å·²ç»å‘ç”Ÿäº†åè½¬
 					return STATUS_SUCCESS;
 				}
 
@@ -1052,7 +1052,7 @@ namespace YY
 
 #if defined(_X86_)
 			#define RtlpWakeByAddress(Address, bWakeAll) YY_RtlpWakeByAddress(0, bWakeAll, Address)
-			static void __fastcall YY_RtlpWakeByAddress(DWORD dwReserved/*ÓÃÓÚÆ½ºâÕ»ĞèÒª£¬ÀûÓÚ±àÒëÆ÷ÓÅ»¯³Éjmp*/, BOOL bWakeAll, LPVOID Address)
+			static void __fastcall YY_RtlpWakeByAddress(DWORD dwReserved/*ç”¨äºå¹³è¡¡æ ˆéœ€è¦ï¼Œåˆ©äºç¼–è¯‘å™¨ä¼˜åŒ–æˆjmp*/, BOOL bWakeAll, LPVOID Address)
 #else
 			static void __fastcall RtlpWakeByAddress(LPVOID Address, BOOL bWakeAll)
 #endif
@@ -1120,7 +1120,7 @@ namespace YY
 
 										if (Last != Current)
 										{
-											//»»¸ö×ËÊÆ£¬ÔÙÀ´Ò»´Î
+											//æ¢ä¸ªå§¿åŠ¿ï¼Œå†æ¥ä¸€æ¬¡
 											Current = Last;
 											goto __retry;
 										}
@@ -1176,10 +1176,10 @@ namespace YY
 
 							for (auto pItem = LastWake; pItem;)
 							{
-								//NtReleaseKeyedEvent µ÷ÓÃºó pItem ÄÚ´æ¿é¿ÉÄÜÎŞĞ§£¬Òò´Ë±ØĞëÏÈ±£´æÒ»·İ¡£
+								//NtReleaseKeyedEvent è°ƒç”¨å pItem å†…å­˜å—å¯èƒ½æ— æ•ˆï¼Œå› æ­¤å¿…é¡»å…ˆä¿å­˜ä¸€ä»½ã€‚
 								auto Tmp = pItem->back;
 
-								//»½ĞÑµÈ´ıµÄKey
+								//å”¤é†’ç­‰å¾…çš„Key
 								pNtReleaseKeyedEvent(GlobalKeyedEventHandle, pItem, FALSE, nullptr);
 
 								pItem = Tmp;
@@ -1187,7 +1187,7 @@ namespace YY
 
 							if (!bNoRemove)
 							{
-								//¸üĞÂ±êÍ·¿é
+								//æ›´æ–°æ ‡å¤´å—
 
 
 								for (auto Current = *ppFirstBlock;;)
@@ -1416,7 +1416,7 @@ InitOnceExecuteOnce(
 
 	} while (false);
 
-	//±ğÎÊÎÒÎªÊ²Ã´²»ÉèÖÃLastError¡­¡­£¬Windows 7µÄÕâ¸öº¯ÊıÒ²Ã»ÉèÖÃ LastError£¬¼ÈÈ»ÕâÑù£¬ÎÒÃÇ¶¼ÍµÀÁÏÂ°É£¬ĞĞÎª¸úÎ¢Èí±£³ÖÒ»ÖÂ¡£
+	//åˆ«é—®æˆ‘ä¸ºä»€ä¹ˆä¸è®¾ç½®LastErrorâ€¦â€¦ï¼ŒWindows 7çš„è¿™ä¸ªå‡½æ•°ä¹Ÿæ²¡è®¾ç½® LastErrorï¼Œæ—¢ç„¶è¿™æ ·ï¼Œæˆ‘ä»¬éƒ½å·æ‡’ä¸‹å§ï¼Œè¡Œä¸ºè·Ÿå¾®è½¯ä¿æŒä¸€è‡´ã€‚
 	return Status >= STATUS_SUCCESS;
 }
 #endif
@@ -1659,7 +1659,7 @@ AcquireSRWLockExclusive(
 	YY_SRWLOCK_WAIT_BLOCK StackWaitBlock;
 	bool bOptimize;
 
-	//³¢ÊÔ¼ÓËøÒ»´Î
+	//å°è¯•åŠ é”ä¸€æ¬¡
 #if defined(_WIN64)
 	auto OldBit = InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
 #else
@@ -1668,7 +1668,7 @@ AcquireSRWLockExclusive(
 
 	if(OldBit == false)
 	{
-		//³É¹¦Ëø¶¨
+		//æˆåŠŸé”å®š
 		return;
 	}
 
@@ -1691,7 +1691,7 @@ AcquireSRWLockExclusive(
 
 			if (YY_SRWLOCK_CONTENDED & SRWLockOld)
 			{
-				//ÓĞÈËÕıÔÚµÈ´ıÁ¬½Ó
+				//æœ‰äººæ­£åœ¨ç­‰å¾…è¿æ¥
 				StackWaitBlock.notify = nullptr;
 				StackWaitBlock.shareCount = 0;
 				StackWaitBlock.back = (YY_SRWLOCK_WAIT_BLOCK*)(SRWLockOld & (~YY_SRWLOCK_MASK));
@@ -1705,7 +1705,7 @@ AcquireSRWLockExclusive(
 			}
 			else
 			{
-				//Ã»ÓĞÆäËûÈËÃ»ÓĞµÈ´ı£¬ËùÒÔÎÒÃÇĞèÒª´´½¨Ò»¸ö
+				//æ²¡æœ‰å…¶ä»–äººæ²¡æœ‰ç­‰å¾…ï¼Œæ‰€ä»¥æˆ‘ä»¬éœ€è¦åˆ›å»ºä¸€ä¸ª
 				StackWaitBlock.notify = (YY_SRWLOCK_WAIT_BLOCK*)&StackWaitBlock;
 				StackWaitBlock.shareCount = (SRWLockOld >> YY_SRWLOCK_BITS);
 
@@ -1717,9 +1717,9 @@ AcquireSRWLockExclusive(
 
 			if (InterlockedCompareExchange((volatile size_t*)SRWLock, SRWLockNew, SRWLockOld) != SRWLockOld)
 			{
-				//¸üĞÂËø×´Ì¬Ê§°Ü£¬ÆäËûÏß³ÌÕıÔÚ´¦Àí¸ÄËø£¬Òª²»Õ¦ÃÇ»»¸ö×ËÊÆÔÙÀ´
+				//æ›´æ–°é”çŠ¶æ€å¤±è´¥ï¼Œå…¶ä»–çº¿ç¨‹æ­£åœ¨å¤„ç†æ”¹é”ï¼Œè¦ä¸å’‹ä»¬æ¢ä¸ªå§¿åŠ¿å†æ¥
 				
-				//RtlBackoff¾ÍÀÁµÃ×öÁË£¬·´ÕıÖ»ÊÇµÈ´ıÒ»»á¶øÒÑ£¬Ö±½ÓYieldProcessorÔÙÀ´Ò»´Î°É¡£
+				//RtlBackoffå°±æ‡’å¾—åšäº†ï¼Œåæ­£åªæ˜¯ç­‰å¾…ä¸€ä¼šè€Œå·²ï¼Œç›´æ¥YieldProcessorå†æ¥ä¸€æ¬¡å§ã€‚
 				//RtlBackoff(&nBackOff)
 
 				YieldProcessor();
@@ -1739,7 +1739,7 @@ AcquireSRWLockExclusive(
 				internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 			}
 
-			//×ÔĞı
+			//è‡ªæ—‹
 			for (DWORD SpinCount = SRWLockSpinCount; SpinCount; --SpinCount)
 			{
 				if ((StackWaitBlock.flag & 2) == 0)
@@ -1755,14 +1755,14 @@ AcquireSRWLockExclusive(
 		}
 		else
 		{
-			//³¢ÊÔ»ñÈ¡ËøµÄËùÓĞÈ¨
+			//å°è¯•è·å–é”çš„æ‰€æœ‰æƒ
 			if (InterlockedCompareExchange((volatile size_t*)SRWLock, SRWLockOld | YY_SRWLOCK_OWNED, SRWLockOld) == SRWLockOld)
 			{
-				//³É¹¦¼ÓËø
+				//æˆåŠŸåŠ é”
 				return;
 			}
 
-			//¿ÉÄÜ¶àÏß³Ì²¢·¢·ÃÎÊ£¬»»¸ö×ËÊÆÔÙÀ´Ò»´Î
+			//å¯èƒ½å¤šçº¿ç¨‹å¹¶å‘è®¿é—®ï¼Œæ¢ä¸ªå§¿åŠ¿å†æ¥ä¸€æ¬¡
 			YieldProcessor();
 		}
 	}
@@ -1871,10 +1871,10 @@ AcquireSRWLockShared(
 	YY_SRWLOCK_WAIT_BLOCK StackWaitBlock;
 	bool bOptimize;
 
-	//³¢ÊÔ¸øÈ«ĞÂµÄËø¼ÓËø	
+	//å°è¯•ç»™å…¨æ–°çš„é”åŠ é”	
 	auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, size_t(0x11), 0);
 
-	//³É¹¦
+	//æˆåŠŸ
 	if (OldSRWLock == size_t(0))
 	{
 		return;
@@ -1899,7 +1899,7 @@ AcquireSRWLockShared(
 
 			if (OldSRWLock & YY_SRWLOCK_CONTENDED)
 			{
-				//ÒÑ¾­ÓĞÈËµÈ´ı£¬ÎÒÃÇ²åÈëÒ»¸öĞÂµÄµÈ´ı¿é
+				//å·²ç»æœ‰äººç­‰å¾…ï¼Œæˆ‘ä»¬æ’å…¥ä¸€ä¸ªæ–°çš„ç­‰å¾…å—
 				StackWaitBlock.back = YY_SRWLOCK_GET_BLOCK(OldSRWLock);
 				StackWaitBlock.notify = nullptr;
 
@@ -1919,7 +1919,7 @@ AcquireSRWLockShared(
 
 			if (InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock) == OldSRWLock)
 			{
-				//¸üĞÂ³É¹¦£¡
+				//æ›´æ–°æˆåŠŸï¼
 
 				if (bOptimize)
 				{
@@ -1933,7 +1933,7 @@ AcquireSRWLockShared(
 					internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 				}
 
-				//×ÔĞı
+				//è‡ªæ—‹
 				for (DWORD SpinCount = SRWLockSpinCount; SpinCount; --SpinCount)
 				{
 					if ((StackWaitBlock.flag & 2) == 0)
@@ -1954,12 +1954,12 @@ AcquireSRWLockShared(
 		{
 			if (OldSRWLock & YY_SRWLOCK_CONTENDED)
 			{
-				//¼ÈÈ»ÓĞÈËÔÚµÈ´ıËø£¬ÄÇÃ´YY_SRWLOCK_OWNEDÓ¦¸ÃÖØĞÂ¼ÓÉÏ
+				//æ—¢ç„¶æœ‰äººåœ¨ç­‰å¾…é”ï¼Œé‚£ä¹ˆYY_SRWLOCK_OWNEDåº”è¯¥é‡æ–°åŠ ä¸Š
 				NewSRWLock = OldSRWLock | YY_SRWLOCK_OWNED;
 			}
 			else
 			{
-				//Ã»ÓĞÈËµÈ´ı£¬ÄÇÃ´µ¥´¿¼Ó¸ö 0x10¼´¿É
+				//æ²¡æœ‰äººç­‰å¾…ï¼Œé‚£ä¹ˆå•çº¯åŠ ä¸ª 0x10å³å¯
 				NewSRWLock = (OldSRWLock + 0x10) | YY_SRWLOCK_OWNED;
 			}
 
@@ -1967,7 +1967,7 @@ AcquireSRWLockShared(
 				return;
 		}
 
-		//ÍµÀÁÏÂ£¬Ö±½Ó YieldProcessor °É
+		//å·æ‡’ä¸‹ï¼Œç›´æ¥ YieldProcessor å§
 		//RtlBackoff(&nBackOff);
 		YieldProcessor();
 	}
@@ -1998,10 +1998,10 @@ TryAcquireSRWLockShared(
 		return pTryAcquireSRWLockShared(SRWLock);
 	}
 
-	//³¢ÊÔ¸øÈ«ĞÂµÄËø¼ÓËø
+	//å°è¯•ç»™å…¨æ–°çš„é”åŠ é”
 	auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, size_t(0x11), 0);
 
-	//³É¹¦
+	//æˆåŠŸ
 	if (OldSRWLock == size_t(0))
 	{
 		return TRUE;
@@ -2011,7 +2011,7 @@ TryAcquireSRWLockShared(
 	{
 		if ((OldSRWLock & YY_SRWLOCK_OWNED) && ((OldSRWLock & YY_SRWLOCK_CONTENDED) || YY_SRWLOCK_GET_BLOCK(OldSRWLock) == nullptr))
 		{
-			//ÕıÔÚ±»Ëø¶¨ÖĞ
+			//æ­£åœ¨è¢«é”å®šä¸­
 			return FALSE;
 		}
 		else
@@ -2025,7 +2025,7 @@ TryAcquireSRWLockShared(
 
 			if (InterlockedCompareExchange((volatile size_t*)SRWLock, NewSRWLock, OldSRWLock) == OldSRWLock)
 			{
-				//Ëø¶¨Íê³É
+				//é”å®šå®Œæˆ
 				return TRUE;
 			}
 
@@ -2061,11 +2061,11 @@ ReleaseSRWLockShared(
 		return pReleaseSRWLockShared(SRWLock);
 	}
 
-	//³¢ÊÔ½âËøÖ»¼ÓÒ»´Î¶ÁËøµÄÇé¿ö
+	//å°è¯•è§£é”åªåŠ ä¸€æ¬¡è¯»é”çš„æƒ…å†µ
 
 	auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, 0, size_t(0x11));
 
-	//½âËø³É¹¦
+	//è§£é”æˆåŠŸ
 	if (OldSRWLock == size_t(0x11))
 	{
 		return;
@@ -2087,10 +2087,10 @@ ReleaseSRWLockShared(
 				for (; pLastNode->notify == nullptr; pLastNode = pLastNode->back);
 
 				/* 
-				¼ÈÈ»ÊÇÔÚÊÍ·Å¹²ÏíËø£¬ËµÃ÷Ò»¶¨ÓĞÈË»ñÈ¡ÁË¹²ÏíËø
-				Èç¹ûÓĞÈË»ñÈ¡ÁË¹²ÏíËø£¬¾ÍÒ»¶¨Ã»ÓĞÈË»ñÈ¡¶Àµ½Õ¼Ëø
-				Ö»ĞèÒª°Ñ¹²Ïí´ÎÊı¼õ1
-				È¡³önotify½ÚµãµÄ¹²Ïí´ÎÊı±äÁ¿µÄµØÖ·, Ô­×Ó¼õ
+				æ—¢ç„¶æ˜¯åœ¨é‡Šæ”¾å…±äº«é”ï¼Œè¯´æ˜ä¸€å®šæœ‰äººè·å–äº†å…±äº«é”
+				å¦‚æœæœ‰äººè·å–äº†å…±äº«é”ï¼Œå°±ä¸€å®šæ²¡æœ‰äººè·å–ç‹¬åˆ°å é”
+				åªéœ€è¦æŠŠå…±äº«æ¬¡æ•°å‡1
+				å–å‡ºnotifyèŠ‚ç‚¹çš„å…±äº«æ¬¡æ•°å˜é‡çš„åœ°å€, åŸå­å‡
 				*/
 				if (InterlockedDecrement((volatile size_t *)&(pLastNode->notify->shareCount)) > 0)
 				{
@@ -2224,7 +2224,7 @@ SleepConditionVariableCS(
 
 	LeaveCriticalSection(CriticalSection);
 
-	//0x8 ±ê¼ÇĞÂÔöÊ±£¬²Å½øĞĞÓÅ»¯ ConditionVariableWaitList
+	//0x8 æ ‡è®°æ–°å¢æ—¶ï¼Œæ‰è¿›è¡Œä¼˜åŒ– ConditionVariableWaitList
 	if ((OldConditionVariable ^ NewConditionVariable) & 0x8)
 	{
 		internal::RtlpOptimizeConditionVariableWaitList(ConditionVariable, NewConditionVariable);
@@ -2238,7 +2238,7 @@ SleepConditionVariableCS(
 		internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 	}
 
-	//×ÔĞı
+	//è‡ªæ—‹
 	for (auto SpinCount = ConditionVariableSpinCount; SpinCount; --SpinCount)
 	{
 		if (!(StackWaitBlock.flag & 2))
@@ -2354,7 +2354,7 @@ SleepConditionVariableSRW(
 
 		if ((Current ^ New) & 0x8)
 		{
-			//ĞÂÔö0x8 ±ê¼ÇÎ»²Åµ÷ÓÃ RtlpOptimizeConditionVariableWaitList
+			//æ–°å¢0x8 æ ‡è®°ä½æ‰è°ƒç”¨ RtlpOptimizeConditionVariableWaitList
 			internal::RtlpOptimizeConditionVariableWaitList(ConditionVariable, New);
 		}
 
@@ -2365,7 +2365,7 @@ SleepConditionVariableSRW(
 			internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 		}
 
-		//×ÔĞı
+		//è‡ªæ—‹
 		for (auto SpinCount = ConditionVariableSpinCount; SpinCount; --SpinCount)
 		{
 			if (!(StackWaitBlock.flag & 2))
@@ -2618,11 +2618,11 @@ EnterSynchronizationBarrier(
 
 	if (dwRemainderThreads == 0)
 	{
-		//Ê£ÓàÊıÁ¿ÒÑ¾­±ä³É 0 ÁË£¬ÎÒÃÇĞèÒª»½ĞÑÖ®Ç°µÈ´ıµÄÏß³Ì£¬²¢ÇÒ·­×ª EventIndex
+		//å‰©ä½™æ•°é‡å·²ç»å˜æˆ 0 äº†ï¼Œæˆ‘ä»¬éœ€è¦å”¤é†’ä¹‹å‰ç­‰å¾…çš„çº¿ç¨‹ï¼Œå¹¶ä¸”ç¿»è½¬ EventIndex
 		const auto NewEventIndex = EventIndex ? 0 : 1;
 
 
-		//½«ÏÂ´ÎĞèÒªÊ¹ÓÃµÄÊÂ¼şÉèÖÃÎª ÎŞĞÅºÅ×´Ì¬
+		//å°†ä¸‹æ¬¡éœ€è¦ä½¿ç”¨çš„äº‹ä»¶è®¾ç½®ä¸º æ— ä¿¡å·çŠ¶æ€
 		auto NewEvent = pYYBarrier->hEvent[NewEventIndex];
 		if (size_t(NewEvent) & 0x1)
 		{
@@ -2632,10 +2632,10 @@ EnterSynchronizationBarrier(
 			ResetEvent(hEvent);
 		}
 
-		//°Éµ±Ç°µÄ GroupStatus ×´Ì¬ÖÃ·´£¬È»ºó×éºÏ³ÉĞÂµÄ RemainderThreads
+		//å§å½“å‰çš„ GroupStatus çŠ¶æ€ç½®åï¼Œç„¶åç»„åˆæˆæ–°çš„ RemainderThreads
 		auto NewRemainderThreads = pYYBarrier->lTotalThreads | (GroupStatus ^ 0x80000000);
 
-		//´Ë±ê¼Çºó½«×Ô¶¯É¾³ı Barrier£¬ºóĞøÒ²½«ÎŞ·¨ÔÙ´ÎÀûÓÃ Barrier
+		//æ­¤æ ‡è®°åå°†è‡ªåŠ¨åˆ é™¤ Barrierï¼Œåç»­ä¹Ÿå°†æ— æ³•å†æ¬¡åˆ©ç”¨ Barrier
 		if (dwRtlBarrierFlags & 0x10000)
 		{
 			pYYBarrier->lTotalThreads = 1;
@@ -2658,7 +2658,7 @@ EnterSynchronizationBarrier(
 		{
 			if ((pYYBarrier->lRemainderThreads & 0x80000000) != GroupStatus)
 			{
-				//×ÔĞıµÈ´ı³É¹¦
+				//è‡ªæ—‹ç­‰å¾…æˆåŠŸ
 				auto dwSpinCount = pYYBarrier->dwSpinCount;
 
 				if (dwSpinCount < 5000)
@@ -2669,7 +2669,7 @@ EnterSynchronizationBarrier(
 				goto __retrun;
 			}
 
-			//Ö¸¶¨ SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY ±êÊ¶Ê±»áÊ¼ÖÕ×ÔĞı£¬ËùÒÔÃ»ÓĞ´Ë±êÊ¶Ê±ÎÒÃÇÎŞĞè¸üĞÂµ±Ç°×ÔĞı´ÎÊı
+			//æŒ‡å®š SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY æ ‡è¯†æ—¶ä¼šå§‹ç»ˆè‡ªæ—‹ï¼Œæ‰€ä»¥æ²¡æœ‰æ­¤æ ‡è¯†æ—¶æˆ‘ä»¬æ— éœ€æ›´æ–°å½“å‰è‡ªæ—‹æ¬¡æ•°
 			if ((dwRtlBarrierFlags & SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY) == 0)
 			{
 				++CurrentSpinCount;
@@ -2692,7 +2692,7 @@ EnterSynchronizationBarrier(
 	}
 
 	{
-		//Èç¹ûÃ»ÓĞ 0x1±ê¼ÇÔòÌí¼ÓÒ»¸ö£¬À´Ö¸Ê¾ÒÑ¾­ WaitForSingleObject ÁË
+		//å¦‚æœæ²¡æœ‰ 0x1æ ‡è®°åˆ™æ·»åŠ ä¸€ä¸ªï¼Œæ¥æŒ‡ç¤ºå·²ç» WaitForSingleObject äº†
 		HANDLE hEnvet = pYYBarrier->hEvent[EventIndex];
 		if ((size_t(hEnvet) & 0x1) == 0)
 		{
@@ -2738,10 +2738,10 @@ DeleteSynchronizationBarrier(
 
 	auto pYYBarrier = (YY_BARRIER*)lpBarrier;
 
-	//×ÔĞıµÈ´ıËùÓĞ EnterSynchronizationBarrier ¶¼½øÈë¾ÍĞ÷
+	//è‡ªæ—‹ç­‰å¾…æ‰€æœ‰ EnterSynchronizationBarrier éƒ½è¿›å…¥å°±ç»ª
 	for (; pYYBarrier->lTotalThreads != (pYYBarrier->lRemainderThreads & 0x7FFFFFFF);)
 	{
-		//µÈ´ı16ºÁÃë
+		//ç­‰å¾…16æ¯«ç§’
 		Sleep(16);
 	}
 
@@ -2752,7 +2752,7 @@ DeleteSynchronizationBarrier(
 	if (auto hEnent = (HANDLE)(size_t(pYYBarrier->hEvent[1]) & ~size_t(0x1)))
 		CloseHandle(hEnent);
 
-	//Î¢ÈíÎÄµµËµµÄ£¬Õâ¸öº¯Êı×ÜÊÇ·µ»Ø TRUE£¬µ«ÊÇÎ¢ÈíWindows 8µÄÊµÏÖÂÔÓĞÎÊÌâ£¬Ö±½Ó×ª·¢ÁË RtlDeleteBarrier£¬·µ»ØÖµ²¢²»ÕıÈ·
+	//å¾®è½¯æ–‡æ¡£è¯´çš„ï¼Œè¿™ä¸ªå‡½æ•°æ€»æ˜¯è¿”å› TRUEï¼Œä½†æ˜¯å¾®è½¯Windows 8çš„å®ç°ç•¥æœ‰é—®é¢˜ï¼Œç›´æ¥è½¬å‘äº† RtlDeleteBarrierï¼Œè¿”å›å€¼å¹¶ä¸æ­£ç¡®
 	return TRUE;
 }
 #endif
@@ -2784,7 +2784,7 @@ WaitOnAddress(
 		return pWaitOnAddress(Address, CompareAddress, AddressSize, dwMilliseconds);
 	}
 
-	//²ÎÊı¼ì²é£¬AddressSize Ö»ÄÜ Îª 1,2,4,8
+	//å‚æ•°æ£€æŸ¥ï¼ŒAddressSize åªèƒ½ ä¸º 1,2,4,8
 	if (AddressSize > 8 || AddressSize == 0 || ((AddressSize - 1) & AddressSize) != 0)
 	{
 		//STATUS_INVALID_PARAMETER
@@ -2816,7 +2816,7 @@ WaitOnAddress(
 	default:
 	//case 8:
 #if _WIN64
-		//64Î»×ÔÉíÄÜ±£Ö¤²Ù×÷µÄÔ­×ÓĞÔ
+		//64ä½è‡ªèº«èƒ½ä¿è¯æ“ä½œçš„åŸå­æ€§
 		bSame = *(volatile unsigned long long*)Address == *(volatile unsigned long long*)CompareAddress;
 #else
 		bSame = InterlockedCompareExchange64((volatile long long*)Address, 0, 0) == *(volatile long long*)CompareAddress;
@@ -2827,7 +2827,7 @@ WaitOnAddress(
 
 	if (!bSame)
 	{
-		//½á¹û²»ÏàÍ¬£¬ÎÒÃÇ´ÓµÈ´ı¶ÓÁĞÒÆ³ı
+		//ç»“æœä¸ç›¸åŒï¼Œæˆ‘ä»¬ä»ç­‰å¾…é˜Ÿåˆ—ç§»é™¤
 		internal::RtlpWaitOnAddressRemoveWaitBlock(&WaitBlock);
 		return TRUE;
 	}

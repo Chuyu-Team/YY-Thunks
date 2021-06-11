@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "CppUnitTest.h"
 
 #include "src/Thunks/api-ms-win-core-path.hpp"
@@ -12,7 +12,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathIsUNCEx)
 	{
 	public:
-		TEST_METHOD(´«Í³UNCÂ·¾¶·Ö¸î)
+		TEST_METHOD(ä¼ ç»ŸUNCè·¯å¾„åˆ†å‰²)
 		{
 			PCWSTR pszServer;
 
@@ -21,7 +21,7 @@ namespace api_ms_win_core_path
 			Assert::AreEqual(pszServer, LR"(Test)");
 		}
 
-		TEST_METHOD(³¤ÃüÃûUNCÂ·¾¶·Ö¸î)
+		TEST_METHOD(é•¿å‘½åUNCè·¯å¾„åˆ†å‰²)
 		{
 			PCWSTR pszServer;
 
@@ -30,7 +30,7 @@ namespace api_ms_win_core_path
 			Assert::AreEqual(pszServer, LR"(Test)");
 		}
 
-		TEST_METHOD(DosÂ·¾¶Èİ´í)
+		TEST_METHOD(Dosè·¯å¾„å®¹é”™)
 		{
 			PCWSTR pszServer;
 			Assert::IsFalse(::PathIsUNCEx(LR"(C:\123)", &pszServer));
@@ -38,7 +38,7 @@ namespace api_ms_win_core_path
 			Assert::IsFalse(::PathIsUNCEx(LR"(\\?\C:\123)", &pszServer));
 		}
 
-		TEST_METHOD(¿ÕÖ¸Õë²âÊÔ)
+		TEST_METHOD(ç©ºæŒ‡é’ˆæµ‹è¯•)
 		{
 			Assert::IsTrue(::PathIsUNCEx(LR"(\\?\UNC\Test)", nullptr));
 
@@ -49,14 +49,14 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchIsRoot)
 	{
 	public:
-		TEST_METHOD(DosÂ·¾¶²âÊÔ)
+		TEST_METHOD(Dosè·¯å¾„æµ‹è¯•)
 		{
 
 			Assert::IsTrue(::PathCchIsRoot(LR"(c:\)"));
 			Assert::IsTrue(::PathCchIsRoot(LR"(C:\)"));
 			Assert::IsTrue(::PathCchIsRoot(LR"(A:\)"));
 			Assert::IsTrue(::PathCchIsRoot(LR"(Z:\)"));
-			Assert::IsFalse(::PathCchIsRoot(LR"(ÈË:\)"));
+			Assert::IsFalse(::PathCchIsRoot(LR"(äºº:\)"));
 
 
 			Assert::IsFalse(::PathCchIsRoot(LR"(c:)"));
@@ -70,7 +70,7 @@ namespace api_ms_win_core_path
 			Assert::IsTrue(::PathCchIsRoot(LR"(\\?\C:\)"));
 			Assert::IsTrue(::PathCchIsRoot(LR"(\\?\A:\)"));
 			Assert::IsTrue(::PathCchIsRoot(LR"(\\?\Z:\)"));
-			Assert::IsFalse(::PathCchIsRoot(LR"(\\?\ÈË:\)"));
+			Assert::IsFalse(::PathCchIsRoot(LR"(\\?\äºº:\)"));
 
 			Assert::IsFalse(::PathCchIsRoot(LR"(\\?\c:)"));
 
@@ -78,7 +78,7 @@ namespace api_ms_win_core_path
 
 		}
 
-		TEST_METHOD(UNCÂ·¾¶²âÊÔ)
+		TEST_METHOD(UNCè·¯å¾„æµ‹è¯•)
 		{
 			
 			Assert::IsTrue(::PathCchIsRoot(LR"(\\path1\path2)"));
@@ -105,7 +105,7 @@ namespace api_ms_win_core_path
 			Assert::IsFalse(::PathCchIsRoot(LR"(\\?\UNC\path1\)"));
 		}
 
-		TEST_METHOD(VolumeGUIDÂ·¾¶²âÊÔ)
+		TEST_METHOD(VolumeGUIDè·¯å¾„æµ‹è¯•)
 		{
 			Assert::IsTrue(::PathCchIsRoot(LR"(\\?\Volume{051aa677-8969-11e8-b1bf-000ec6fa25d4}\)"));
 			Assert::IsFalse(::PathCchIsRoot(LR"(\\?\Volume{051aa677-8969-11e8-b1bf-000ec6fa25d4})"));
@@ -113,13 +113,13 @@ namespace api_ms_win_core_path
 			Assert::IsFalse(::PathCchIsRoot(LR"(\\?\Volume{051aa677-8969-11e8-b1bf-000ec6fa25d4}\path1)"));
 		}
 
-		TEST_METHOD(Ïà¶ÔÂ·¾¶²âÊÔ)
+		TEST_METHOD(ç›¸å¯¹è·¯å¾„æµ‹è¯•)
 		{
 			Assert::IsFalse(::PathCchIsRoot(LR"(\path1)"));
 			Assert::IsFalse(::PathCchIsRoot(LR"(path1)"));
 		}
 
-		TEST_METHOD(ÌØÊâÖµ²âÊÔ)
+		TEST_METHOD(ç‰¹æ®Šå€¼æµ‹è¯•)
 		{
 			Assert::IsFalse(::PathCchIsRoot(NULL));
 			Assert::IsFalse(::PathCchIsRoot(L""));
@@ -129,7 +129,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchAddBackslashEx)
 	{
 	public:
-		TEST_METHOD(»ù´¡¹¦ÄÜ²âÊÔ)
+		TEST_METHOD(åŸºç¡€åŠŸèƒ½æµ‹è¯•)
 		{
 			{
 				wchar_t Src[MAX_PATH] = LR"(C:\123)";
@@ -166,7 +166,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(¿ÕÖ¸Õë²âÊÔ)
+		TEST_METHOD(ç©ºæŒ‡é’ˆæµ‹è¯•)
 		{
 			wchar_t Src[MAX_PATH] = LR"(C:\123)";
 			wchar_t Dst[] = LR"(C:\123\)";
@@ -183,7 +183,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchRemoveBackslashEx)
 	{
 	public:
-		TEST_METHOD(DosÂ·¾¶²âÊÔ)
+		TEST_METHOD(Dosè·¯å¾„æµ‹è¯•)
 		{
 			{
 				wchar_t Src[MAX_PATH] = LR"(C:\123)";
@@ -322,7 +322,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(UNCÂ·¾¶²âÊÔ)
+		TEST_METHOD(UNCè·¯å¾„æµ‹è¯•)
 		{
 			{
 				wchar_t Src[MAX_PATH] = LR"(\\path1\path2\path3\)";
@@ -515,7 +515,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(VolumeGUIDÂ·¾¶²âÊÔ)
+		TEST_METHOD(VolumeGUIDè·¯å¾„æµ‹è¯•)
 		{
 			{
 				wchar_t Src[MAX_PATH] = LR"(\\?\Volume{1fd5cead-d314-11e7-a347-000ec6fa25d4}\path2\)";
@@ -573,7 +573,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchSkipRoot)
 	{
 	public:
-		TEST_METHOD(DosÂ·¾¶)
+		TEST_METHOD(Dosè·¯å¾„)
 		{
 			{
 				LPCWSTR Src = LR"(C:\2125\21515)";
@@ -644,7 +644,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(UNCÄ¿Â¼²âÊÔ)
+		TEST_METHOD(UNCç›®å½•æµ‹è¯•)
 		{
 			{
 				LPCWSTR Src = LR"(\\Path1\Path2\xxxx\sfsf)";
@@ -780,7 +780,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(VolumeGUIDÄ¿Â¼²âÊÔ)
+		TEST_METHOD(VolumeGUIDç›®å½•æµ‹è¯•)
 		{
 			{
 				LPCWSTR Src = LR"(\\?\Volume{1fd5cead-d314-11e7-a347-000ec6fa25d4}\1213131\232424)";
@@ -816,7 +816,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(Ïà¶ÔÂ·¾¶Ä¿Â¼²âÊÔ)
+		TEST_METHOD(ç›¸å¯¹è·¯å¾„ç›®å½•æµ‹è¯•)
 		{
 			{
 				LPCWSTR Src = LR"(\path1\path2)";
@@ -846,7 +846,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchStripToRoot)
 	{
 	public:
-		TEST_METHOD(DosÂ·¾¶²âÊÔ)
+		TEST_METHOD(Dosè·¯å¾„æµ‹è¯•)
 		{
 			{
 				wchar_t Src[MAX_PATH] = LR"(C:\123\215)";
@@ -909,7 +909,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(UNCÂ·¾¶²âÊÔ)
+		TEST_METHOD(UNCè·¯å¾„æµ‹è¯•)
 		{
 			{
 				wchar_t Src[MAX_PATH] = LR"(\\path1\path2\path3)";
@@ -1034,7 +1034,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(VolumeGUIDÂ·¾¶²âÊÔ)
+		TEST_METHOD(VolumeGUIDè·¯å¾„æµ‹è¯•)
 		{
 			{
 				wchar_t Src[MAX_PATH] = LR"(\\?\Volume{1fd5cead-d314-11e7-a347-000ec6fa25d4}\path1\path2)";
@@ -1057,7 +1057,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(Ïà¶ÔÂ·¾¶²âÊÔ)
+		TEST_METHOD(ç›¸å¯¹è·¯å¾„æµ‹è¯•)
 		{
 			{
 				wchar_t Src[MAX_PATH] = LR"(\path1)";
@@ -1085,7 +1085,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchRemoveFileSpec)
 	{
 	public:
-		TEST_METHOD(DosÂ·¾¶²âÊÔ)
+		TEST_METHOD(Dosè·¯å¾„æµ‹è¯•)
 		{
 			{
 				wchar_t Src[MAX_PATH] = LR"(C:\path1\)";
@@ -1168,7 +1168,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(UNCÂ·¾¶²âÊÔ)
+		TEST_METHOD(UNCè·¯å¾„æµ‹è¯•)
 		{
 			{
 				wchar_t Src[MAX_PATH] = LR"(\\path1\path2\path3\)";
@@ -1311,7 +1311,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(VolumeGUIDÂ·¾¶²âÊÔ)
+		TEST_METHOD(VolumeGUIDè·¯å¾„æµ‹è¯•)
 		{
 			{
 				wchar_t Src[MAX_PATH] = LR"(\\?\Volume{1fd5cead-d314-11e7-a347-000ec6fa25d4}\path1\)";
@@ -1354,7 +1354,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(Ïà¶ÔÂ·¾¶Ä¿Â¼²âÊÔ)
+		TEST_METHOD(ç›¸å¯¹è·¯å¾„ç›®å½•æµ‹è¯•)
 		{
 			{
 				wchar_t Src[MAX_PATH] = LR"(\path1\path2\)";
@@ -1412,7 +1412,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchFindExtension)
 	{
 	public:
-		TEST_METHOD(³£¹æºó×ºÌáÈ¡)
+		TEST_METHOD(å¸¸è§„åç¼€æå–)
 		{
 			{
 				wchar_t Src[] = LR"(C:\path1\file.test)";
@@ -1448,7 +1448,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(ºó×º´ø¿Õ¸ñÇé¿öÌáÈ¡)
+		TEST_METHOD(åç¼€å¸¦ç©ºæ ¼æƒ…å†µæå–)
 		{
 			{
 				wchar_t Src[] = LR"(C:\path1\file. test)";
@@ -1462,7 +1462,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(²»´øÈÎºÎĞ±¸ÜÇé¿öÌáÈ¡)
+		TEST_METHOD(ä¸å¸¦ä»»ä½•æ–œæ æƒ…å†µæå–)
 		{
 			{
 				wchar_t Src[] = LR"(file.test)";
@@ -1493,7 +1493,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchAddExtension)
 	{
 	public:
-		TEST_METHOD(³£¹æµÄÌí¼Ó)
+		TEST_METHOD(å¸¸è§„çš„æ·»åŠ )
 		{
 			{
 				wchar_t Input[MAX_PATH] = LR"(C:\path1\file)";
@@ -1516,7 +1516,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(µ±ÎÄ¼şÃûÎª¿ÕÊ±Ìí¼Ó)
+		TEST_METHOD(å½“æ–‡ä»¶åä¸ºç©ºæ—¶æ·»åŠ )
 		{
 			{
 				wchar_t Input[MAX_PATH] = LR"(C:\path1\)";
@@ -1529,7 +1529,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(ÏòÒÑ¾­´æÔÚºó×ºµÄÂ·¾¶Ìí¼Ó)
+		TEST_METHOD(å‘å·²ç»å­˜åœ¨åç¼€çš„è·¯å¾„æ·»åŠ )
 		{
 			{
 				wchar_t Input[MAX_PATH] = LR"(C:\path1\file.test)";
@@ -1542,7 +1542,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(ºó×º±¾ÉíÊÇÒ»¸ö¿Õ×Ö·û´®)
+		TEST_METHOD(åç¼€æœ¬èº«æ˜¯ä¸€ä¸ªç©ºå­—ç¬¦ä¸²)
 		{
 			{
 				wchar_t Input[MAX_PATH] = LR"(C:\path1\file)";
@@ -1565,9 +1565,9 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(ºó×º¸ñÊ½´íÎóÑéÖ¤)
+		TEST_METHOD(åç¼€æ ¼å¼é”™è¯¯éªŒè¯)
 		{
-			//°üº¬¿Õ¸ñ
+			//åŒ…å«ç©ºæ ¼
 			{
 				wchar_t Input[MAX_PATH] = LR"(C:\path1\file)";
 				LPCWSTR Output = LR"(C:\path1\file)";
@@ -1587,7 +1587,7 @@ namespace api_ms_win_core_path
 				Assert::AreEqual(Input, Output, false);
 			}
 
-			//°üº¬Ğ±¸Ü
+			//åŒ…å«æ–œæ 
 			{
 				wchar_t Input[MAX_PATH] = LR"(C:\path1\file)";
 				LPCWSTR Output = LR"(C:\path1\file)";
@@ -1607,7 +1607,7 @@ namespace api_ms_win_core_path
 				Assert::AreEqual(Input, Output, false);
 			}
 
-			//ºó×ºÌ«³¤£¬±ß½çÑéÖ¤
+			//åç¼€å¤ªé•¿ï¼Œè¾¹ç•ŒéªŒè¯
 			{
 				wchar_t Input[512] = LR"(\\?\C:\path1\file)";
 
@@ -1666,7 +1666,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchRenameExtension)
 	{
 	public:
-		TEST_METHOD(Ìí¼Óºó×º)
+		TEST_METHOD(æ·»åŠ åç¼€)
 		{
 			{
 				wchar_t Input[MAX_PATH] = LR"(C:\path1\file)";
@@ -1690,7 +1690,7 @@ namespace api_ms_win_core_path
 		}
 
 
-		TEST_METHOD(ÖØÃüÃûºó×º)
+		TEST_METHOD(é‡å‘½ååç¼€)
 		{
 			{
 				wchar_t Input[MAX_PATH] = LR"(C:\path1\file.123)";
@@ -1713,7 +1713,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(É¾³ıºó×º)
+		TEST_METHOD(åˆ é™¤åç¼€)
 		{
 			{
 				wchar_t Input[MAX_PATH] = LR"(C:\path1\file.123)";
@@ -1741,7 +1741,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchRemoveExtension)
 	{
 	public:
-		TEST_METHOD(»ù´¡¹¦ÄÜÑéÖ¤)
+		TEST_METHOD(åŸºç¡€åŠŸèƒ½éªŒè¯)
 		{
 			{
 				wchar_t Input[MAX_PATH] = LR"(C:\path1\file.123)";
@@ -1770,7 +1770,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchCanonicalizeEx)
 	{
 	public:
-		TEST_METHOD(»ù´¡¹¦ÄÜÑéÖ¤)
+		TEST_METHOD(åŸºç¡€åŠŸèƒ½éªŒè¯)
 		{
 			{
 				wchar_t Input[MAX_PATH];
@@ -1803,7 +1803,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(Ä©Î²¶àÓàµãÉ¾³ıÑéÖ¤)
+		TEST_METHOD(æœ«å°¾å¤šä½™ç‚¹åˆ é™¤éªŒè¯)
 		{
 			{
 				wchar_t Input[MAX_PATH];
@@ -1817,7 +1817,7 @@ namespace api_ms_win_core_path
 		}
 
 
-		TEST_METHOD(¸ùÄ¿Â¼ÏòÉÏÌø×ªÑéÖ¤)
+		TEST_METHOD(æ ¹ç›®å½•å‘ä¸Šè·³è½¬éªŒè¯)
 		{
 			{
 				wchar_t Input[MAX_PATH];
@@ -1875,7 +1875,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchCombineEx)
 	{
 	public:
-		TEST_METHOD(»ù´¡¹¦ÄÜÑéÖ¤)
+		TEST_METHOD(åŸºç¡€åŠŸèƒ½éªŒè¯)
 		{
 			{
 				wchar_t Input[MAX_PATH];
@@ -1928,7 +1928,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(More²ÎÊıÒÔĞ±¸Ü¿ªÍ·)
+		TEST_METHOD(Moreå‚æ•°ä»¥æ–œæ å¼€å¤´)
 		{
 			{
 				wchar_t Input[MAX_PATH];
@@ -1941,7 +1941,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(More²ÎÊıÊÇÒ»¸öÍêÕûÂ·¾¶)
+		TEST_METHOD(Moreå‚æ•°æ˜¯ä¸€ä¸ªå®Œæ•´è·¯å¾„)
 		{
 			{
 				wchar_t Input[MAX_PATH];
@@ -1959,7 +1959,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchAppendEx)
 	{
 	public:
-		TEST_METHOD(»ù´¡¹¦ÄÜÑéÖ¤)
+		TEST_METHOD(åŸºç¡€åŠŸèƒ½éªŒè¯)
 		{
 			{
 				wchar_t Input[MAX_PATH] = LR"(D:\path1)";
@@ -2013,7 +2013,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(More²ÎÊıÊÇÒ»¸öÍêÕûÂ·¾¶)
+		TEST_METHOD(Moreå‚æ•°æ˜¯ä¸€ä¸ªå®Œæ•´è·¯å¾„)
 		{
 			{
 				wchar_t Input[MAX_PATH] = LR"(D:\path1\)";
@@ -2041,7 +2041,7 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchStripPrefix)
 	{
 	public:
-		TEST_METHOD(DosÂ·¾¶)
+		TEST_METHOD(Dosè·¯å¾„)
 		{
 			{
 				wchar_t Input[MAX_PATH] = LR"(\\?\C:\path1\)";
@@ -2064,7 +2064,7 @@ namespace api_ms_win_core_path
 			}
 		}
 
-		TEST_METHOD(UNCÂ·¾¶)
+		TEST_METHOD(UNCè·¯å¾„)
 		{
 			{
 				wchar_t Input[MAX_PATH] = LR"(\\?\UNC\path1\path2\path3)";

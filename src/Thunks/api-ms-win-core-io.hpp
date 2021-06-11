@@ -1,4 +1,4 @@
-
+ï»¿
 
 namespace YY
 {
@@ -25,7 +25,7 @@ CancelIoEx(
 		return pCancelIoEx(hFile, lpOverlapped);
 	}
 
-	//downlevelÂß¼­»á°Ñ¸ÃÎÄ¼şËùÓĞIO¶¯×÷¸øÈ¡Ïûµô£¡´ÕºÏÓÃ°É¡£
+	//downlevelé€»è¾‘ä¼šæŠŠè¯¥æ–‡ä»¶æ‰€æœ‰IOåŠ¨ä½œç»™å–æ¶ˆæ‰ï¼å‡‘åˆç”¨å§ã€‚
 	return CancelIo(hFile);
 }
 #endif

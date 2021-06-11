@@ -1,4 +1,4 @@
-
+ï»¿
 
 namespace YY
 {
@@ -27,7 +27,7 @@ QueryThreadCycleTime(
 	}
 	
 
-	//GetThreadTimes´ÕºÏÓÃ°É¡­¡­
+	//GetThreadTimeså‡‘åˆç”¨å§â€¦â€¦
 	FILETIME CreationTime;
 	FILETIME ExitTime;
 	FILETIME KernelTime;
@@ -70,7 +70,7 @@ QueryProcessCycleTime(
 		return pQueryProcessCycleTime(ProcessHandle, CycleTime);
 	}
 
-	//GetProcessTimes´ÕºÏÓÃ°É¡­¡­
+	//GetProcessTimeså‡‘åˆç”¨å§â€¦â€¦
 	FILETIME CreationTime;
 	FILETIME ExitTime;
 	FILETIME KernelTime;

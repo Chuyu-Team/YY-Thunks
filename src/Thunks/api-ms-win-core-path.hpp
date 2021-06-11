@@ -1,4 +1,4 @@
-
+ï»¿
 #define PATHCCH_NO_DEPRECATE
 #include <pathcch.h>
 
@@ -72,10 +72,10 @@ namespace YY
 			}
 
 			/*
-			ÒÔÏÂºó×ºÊÇÓĞĞ§µÄ
+			ä»¥ä¸‹åç¼€æ˜¯æœ‰æ•ˆçš„
 			""
-			ºó×ºÄÚÈİ×î¶à255¸ö×Ö·û
-			²»ÄÜ°üº¬ ' ' , '\' ÒÔ¼° '.'
+			åç¼€å†…å®¹æœ€å¤š255ä¸ªå­—ç¬¦
+			ä¸èƒ½åŒ…å« ' ' , '\' ä»¥åŠ '.'
 
 			*/
 			static bool __fastcall IsValidExtensionWorker(LPCWSTR pszExt)
@@ -90,12 +90,12 @@ namespace YY
 					++pszExt;
 
 
-				//¼ì²é³¤¶È ÒÔ¼°·Ç·¨×Ö·û¼ì²â
+				//æ£€æŸ¥é•¿åº¦ ä»¥åŠéæ³•å­—ç¬¦æ£€æµ‹
 				const auto pszExtMax = pszExt + 256;
 
 				for (;; ++pszExt)
 				{
-					//³¤¶È³¬¹ı 256
+					//é•¿åº¦è¶…è¿‡ 256
 					if (pszExt >= pszExtMax)
 					{
 						return false;
@@ -113,7 +113,7 @@ namespace YY
 				return true;
 			}
 
-			//³¤ÃüÃû£¿
+			//é•¿å‘½åï¼Ÿ
 			static bool __fastcall IsExtendedLengthDosDevicePath(LPCWSTR pszPath)
 			{
 				return pszPath[0] == L'\\'
@@ -180,7 +180,7 @@ namespace YY
 				}
 				else
 				{
-					//PathIsVolumeGUIDWorker ÅĞ¶ÏÊÇ¶àÓàµÄ£¬ÒòÎª "\\\\?\\Volume{GUID}" ÕâÑùµÄĞÎÊ½×ß²»µ½Õâ¸ö·ÖÖ§
+					//PathIsVolumeGUIDWorker åˆ¤æ–­æ˜¯å¤šä½™çš„ï¼Œå› ä¸º "\\\\?\\Volume{GUID}" è¿™æ ·çš„å½¢å¼èµ°ä¸åˆ°è¿™ä¸ªåˆ†æ”¯
 
 					pszPath += 2;
 				}
@@ -220,7 +220,7 @@ namespace YY
 				return FALSE;
 
 
-			// "C:\\" ĞÎÊ½
+			// "C:\\" å½¢å¼
 			if (((L'A' <= pszPath[0] && pszPath[0] <= L'Z') || (L'a' <= pszPath[0] && pszPath[0] <= L'z')) // iswalpha(pszPath[0])
 				&& pszPath[1] == L':'
 				&& pszPath[2] == L'\\'
@@ -229,7 +229,7 @@ namespace YY
 				return TRUE;
 			}
 
-			// "\\" ĞÎÊ½
+			// "\\" å½¢å¼
 			if (pszPath[0] == L'\\' && pszPath[1] == L'\0')
 			{
 				return TRUE;
@@ -337,7 +337,7 @@ namespace YY
 
 				if (nLength && pszPath[nLength - 1] != L'\\')
 				{
-					//Ä©Î²²»ÊÇ '\\' ËùÒÔÎÒÃÇÌí¼Ó Ò»¸ö '\\' Î¢ÈíÔ­°æÕâÀïÓÃÁË StringCchCopyExW£¬µ«ÊÇÎÒ¾õµÃÕâÃ»ÓĞ±ØÒª¡£
+					//æœ«å°¾ä¸æ˜¯ '\\' æ‰€ä»¥æˆ‘ä»¬æ·»åŠ  ä¸€ä¸ª '\\' å¾®è½¯åŸç‰ˆè¿™é‡Œç”¨äº† StringCchCopyExWï¼Œä½†æ˜¯æˆ‘è§‰å¾—è¿™æ²¡æœ‰å¿…è¦ã€‚
 
 					++nLength;
 					if (nLength >= cchPath)
@@ -508,7 +508,7 @@ namespace YY
 			PCWSTR szRootEnd;
 			if (PathIsUNCEx(pszPath, &szRootEnd))
 			{
-				//Èç¹ûÊÇUNCÂ·¾¶£¬Ôò³¢ÊÔÌø¹ı 2¸ö '\\'
+				//å¦‚æœæ˜¯UNCè·¯å¾„ï¼Œåˆ™å°è¯•è·³è¿‡ 2ä¸ª '\\'
 				DWORD nSeparate = 0;
 
 				for (; *szRootEnd && nSeparate < 2; ++szRootEnd)
@@ -521,7 +521,7 @@ namespace YY
 			}
 			else if (pszPath[0] == L'\\' && pszPath[1] != L'\\')
 			{
-				// "\\XXXXXX" Ò»¸öÏà¶ÔÂ·¾¶
+				// "\\XXXXXX" ä¸€ä¸ªç›¸å¯¹è·¯å¾„
 				szRootEnd = pszPath + 1;
 			}
 			else
@@ -658,7 +658,7 @@ namespace YY
 			if (pszRootEnd >= pszPathBufferEnd)
 				return E_INVALIDARG;
 
-			//ËÑË÷×îºóÒ»¸ö ¡®\\¡¯
+			//æœç´¢æœ€åä¸€ä¸ª â€˜\\â€™
 
 			LPWSTR szLast = pszRootEnd;
 
@@ -772,7 +772,7 @@ namespace YY
 			}
 
 
-			//¼ì²âUnicode Path£¬Èç¹û²»ÊÇ£¬ÄÇÃ´×î¶àÔÊĞí 260
+			//æ£€æµ‹Unicode Pathï¼Œå¦‚æœä¸æ˜¯ï¼Œé‚£ä¹ˆæœ€å¤šå…è®¸ 260
 			const auto bExtendedLengthDosDevicePath = internal::IsExtendedLengthDosDevicePath(pszPath);
 			if (!bExtendedLengthDosDevicePath)
 			{
@@ -790,7 +790,7 @@ namespace YY
 
 			if (*pszPathExt != L'\0')
 			{
-				//ÒÑ¾­´æÔÚºó×º£¬ËùÒÔÎÒÃÇÊ²Ã´Ò²²»×ö¡£
+				//å·²ç»å­˜åœ¨åç¼€ï¼Œæ‰€ä»¥æˆ‘ä»¬ä»€ä¹ˆä¹Ÿä¸åšã€‚
 				return S_FALSE;
 			}
 
@@ -798,7 +798,7 @@ namespace YY
 			if (*pszExt == L'.')
 				++pszExt;
 
-			//ºó×ºÊÇ ""
+			//åç¼€æ˜¯ ""
 			if (*pszExt == L'\0')
 			{
 				return S_OK;
@@ -872,7 +872,7 @@ namespace YY
 			if (pszPath == nullptr || cchPath == 0 || cchPath > PATHCCH_MAX_CCH || internal::IsValidExtensionWorker(pszExt) == false)
 				return E_INVALIDARG;
 
-			//¼ì²âUnicode Path£¬Èç¹û²»ÊÇ£¬ÄÇÃ´×î¶àÔÊĞí 260
+			//æ£€æµ‹Unicode Pathï¼Œå¦‚æœä¸æ˜¯ï¼Œé‚£ä¹ˆæœ€å¤šå…è®¸ 260
 			const auto bExtendedLengthDosDevicePath = internal::IsExtendedLengthDosDevicePath(pszPath);
 			if (!bExtendedLengthDosDevicePath)
 			{
@@ -891,15 +891,15 @@ namespace YY
 			if (*pszExt == L'.')
 				++pszExt;
 
-			//Èç¹ûµ÷ÓÃÕßÌá¹©µÄ ºó×ºÎª¿Õ£¬ÄÇÃ´É¾³ıÏÖÓĞµÄ£¬È»ºóÁ¢¼´·µ»Ø S_OK
+			//å¦‚æœè°ƒç”¨è€…æä¾›çš„ åç¼€ä¸ºç©ºï¼Œé‚£ä¹ˆåˆ é™¤ç°æœ‰çš„ï¼Œç„¶åç«‹å³è¿”å› S_OK
 			if (*pszExt == L'\0')
 			{
 				*pszPathExt = L'\0';
 				return S_OK;
 			}
 
-			//¹ÊÒâ²»ÓÃÎ¢ÈíµÄ·½·¨£¬Î¢ÈíµÄ·½·¨ÔÚ»º´æÇø²»×ãÊ±»áÆÆ»µÔ­Ê¼Öµ¡£
-			//¸²¸ÇÏÖÓĞÎÄ¼şºó×º
+			//æ•…æ„ä¸ç”¨å¾®è½¯çš„æ–¹æ³•ï¼Œå¾®è½¯çš„æ–¹æ³•åœ¨ç¼“å­˜åŒºä¸è¶³æ—¶ä¼šç ´ååŸå§‹å€¼ã€‚
+			//è¦†ç›–ç°æœ‰æ–‡ä»¶åç¼€
 			const auto szPathBufferEnd = pszPath + cchPath;
 			const auto cchExt = wcslen(pszExt);
 
@@ -1021,7 +1021,7 @@ namespace YY
 				return E_INVALIDARG;
 			}
 
-			// MAX_PATH ³¤¶ÈµÄÂ·¾¶ÖØĞÂ½ûÖ¹³¤ÃüÃû
+			// MAX_PATH é•¿åº¦çš„è·¯å¾„é‡æ–°ç¦æ­¢é•¿å‘½å
 			if (cchPathOut <= MAX_PATH)
 				dwFlags &= ~PATHCCH_ALLOW_LONG_PATHS;
 			else if ((dwFlags & PATHCCH_ALLOW_LONG_PATHS) == 0)
@@ -1117,7 +1117,7 @@ namespace YY
 
 
 				//LABEL_49
-				//Ê£Óà²¿·ÖÊÇ·ñ <= MAX_PATH£¬Èç¹ûÂú×ãÌõ¼ş£¬ÄÇÃ´Ó¦¸ÃÖØĞÂ¿ªÊ¼¡£²¢ÇÒ½«Â·¾¶ÏŞÖÆÔÚ MAX_PATH
+				//å‰©ä½™éƒ¨åˆ†æ˜¯å¦ <= MAX_PATHï¼Œå¦‚æœæ»¡è¶³æ¡ä»¶ï¼Œé‚£ä¹ˆåº”è¯¥é‡æ–°å¼€å§‹ã€‚å¹¶ä¸”å°†è·¯å¾„é™åˆ¶åœ¨ MAX_PATH
 				if ((dwFlags & PATHCCH_ALLOW_LONG_PATHS) && ulReservedSize && cchPathOut <= ulReservedSize + MAX_PATH)
 				{
 					if (cchPathOut > MAX_PATH)
@@ -1128,9 +1128,9 @@ namespace YY
 
 					pTempOut = pszPathOut;
 
-					//»º³åÇø±ØÈ» >= 1 ,ËùÒÔÎÒÃÇ¿ÉÒÔÖ±½ÓÉèÖÃ¡£
+					//ç¼“å†²åŒºå¿…ç„¶ >= 1 ,æ‰€ä»¥æˆ‘ä»¬å¯ä»¥ç›´æ¥è®¾ç½®ã€‚
 					*pTempOut = L'\0';
-					// Çå³ı´íÎó£¬·½±ãÎÒÃÇÖØĞÂ¿ªÊ¼¡£
+					// æ¸…é™¤é”™è¯¯ï¼Œæ–¹ä¾¿æˆ‘ä»¬é‡æ–°å¼€å§‹ã€‚
 					hr = S_OK;
 				}
 
@@ -1140,16 +1140,16 @@ namespace YY
 
 				for (;*pszServer;)
 				{
-					/* »ñÈ¡ÏÂÒ»¸öÎÄ¼şÃû£¬¹ÊÒâ²»ÓÃÎ¢ÈíµÄ·½°¸£¬¶øÇÒĞ§ÂÊµÍ¡­¡­
-					* Óöµ½ '\\' ÔòËµÃ÷ÎÄ¼şÃû½áÊø
-					* Óöµ½ '\0' ÔòËµÃ÷Â·¾¶Ò²½áÊøÁË
+					/* è·å–ä¸‹ä¸€ä¸ªæ–‡ä»¶åï¼Œæ•…æ„ä¸ç”¨å¾®è½¯çš„æ–¹æ¡ˆï¼Œè€Œä¸”æ•ˆç‡ä½â€¦â€¦
+					* é‡åˆ° '\\' åˆ™è¯´æ˜æ–‡ä»¶åç»“æŸ
+					* é‡åˆ° '\0' åˆ™è¯´æ˜è·¯å¾„ä¹Ÿç»“æŸäº†
 					*/
 					unsigned cchFileName = 0;
 					for (; pszServer[cchFileName] && pszServer[cchFileName] != L'\\'; ++cchFileName)
 					{
-						/* °²È«¼ì²é
-						* 1. ÆÕÍ¨Â·¾¶ÖĞ£¬ÎÄ¼şÃû×î¶à 256¸ö×Ö·û
-						* 2. Â·¾¶×î´ó´¦Àí³¤¶ÈÎª PATHCCH_MAX_CCH
+						/* å®‰å…¨æ£€æŸ¥
+						* 1. æ™®é€šè·¯å¾„ä¸­ï¼Œæ–‡ä»¶åæœ€å¤š 256ä¸ªå­—ç¬¦
+						* 2. è·¯å¾„æœ€å¤§å¤„ç†é•¿åº¦ä¸º PATHCCH_MAX_CCH
 						*/
 
 						if (((dwFlags & PATHCCH_ALLOW_LONG_PATHS) == 0 && cchFileName > MAXIMUM_FILENAME_LENGTH)
@@ -1162,22 +1162,22 @@ namespace YY
 
 					if (cchFileName == 1 && pszServer[0] == L'.')
 					{
-						//±íÊ¾µ±Ç°Ä¿Â¼
+						//è¡¨ç¤ºå½“å‰ç›®å½•
 
 						++pszServer;
 
 						if (*pszServer)
 						{
-							//ËµÃ÷ÕâÀïÊÇ '\\'£¬¼ÌĞøÌø¹ı
+							//è¯´æ˜è¿™é‡Œæ˜¯ '\\'ï¼Œç»§ç»­è·³è¿‡
 							++pszServer;
 						}
 						else
 						{
-							//ÕâÀïÊÇ L'\0'
+							//è¿™é‡Œæ˜¯ L'\0'
 
 							if (pTempOut > pszPathOut && PathCchIsRoot(pszPathOut) == FALSE)
 							{
-								//²»ÊÇ¸úÄ¿Â¼£¬¶øÇÒ½áÊø£¬ÄÇÃ´ĞèÒªÉ¾³ı×îºóµÄ '\\'
+								//ä¸æ˜¯è·Ÿç›®å½•ï¼Œè€Œä¸”ç»“æŸï¼Œé‚£ä¹ˆéœ€è¦åˆ é™¤æœ€åçš„ '\\'
 								--pTempOut;
 								*pTempOut = L'\0';
 							}
@@ -1189,13 +1189,13 @@ namespace YY
 						&& pszServer[0] == L'.'
 						&& pszServer[1] == L'.')
 					{
-						//±íÊ¾ÉÏ¼¶Ä¿Â¼
+						//è¡¨ç¤ºä¸Šçº§ç›®å½•
 
 						pszServer += 2;
 
 						if (pTempOut <= pszPathOut || PathCchIsRoot(pszPathOut))
 						{
-							//ÎÄ¼şÊÇ¸ùÄ¿Â¼£¬»òÕß¿ªÊ¼Î»ÖÃÊ±£¬Óöµ½ ".." ÔòÖ±½ÓºöÂÔ¼´¿É¡£
+							//æ–‡ä»¶æ˜¯æ ¹ç›®å½•ï¼Œæˆ–è€…å¼€å§‹ä½ç½®æ—¶ï¼Œé‡åˆ° ".." åˆ™ç›´æ¥å¿½ç•¥å³å¯ã€‚
 
 							if (*pszServer == L'\\')
 								++pszServer;
@@ -1222,19 +1222,19 @@ namespace YY
 
 						if (pTempOut + cchFileName >= pszPathOutEnd)
 						{
-							//¿Õ¼ä²»×ã£¬ÌØÊâÅĞ¶ÏÒ»ÏÂ£¬Ä³Ğ©ÌØ¶¨µÄĞÎÊ½ÊÇ¿ÉÒÔ´¦ÀíµÄ¡£
+							//ç©ºé—´ä¸è¶³ï¼Œç‰¹æ®Šåˆ¤æ–­ä¸€ä¸‹ï¼ŒæŸäº›ç‰¹å®šçš„å½¢å¼æ˜¯å¯ä»¥å¤„ç†çš„ã€‚
 							if (cchFileName == 1 && pszServer[0] == L'\\')
 							{
 								if (pszServer[1] == L'\0' || (pszServer[1] == L'.' && pszServer[2] == L'\0'))
 								{
-									//¿ÉÒÔÈ·ÈÏ£¬Â·¾¶ÒÑ¾­½áÊø£¬ËùÒÔÎŞĞèÔÙÌí¼Ó '\\'
+									//å¯ä»¥ç¡®è®¤ï¼Œè·¯å¾„å·²ç»ç»“æŸï¼Œæ‰€ä»¥æ— éœ€å†æ·»åŠ  '\\'
 									break;
 								}
 								else if (pTempOut + 1 == pszPathOutEnd
 									&& pszServer[1] == L'.'
 									&& pszServer[2] == L'.')
 								{
-									//ÏÂÒ»¸öÏîÄ¿ÊÇ·µ»ØÉÏÒ»¸öÏîÄ¿£¬ËùÒÔ¿ÉÒÔÎ±ÔìÒ»ÏÂ£¬Ö±½ÓÉèÖÃÎª L'\0' È»ºóÍùÏÂÒÆ¶¯
+									//ä¸‹ä¸€ä¸ªé¡¹ç›®æ˜¯è¿”å›ä¸Šä¸€ä¸ªé¡¹ç›®ï¼Œæ‰€ä»¥å¯ä»¥ä¼ªé€ ä¸€ä¸‹ï¼Œç›´æ¥è®¾ç½®ä¸º L'\0' ç„¶åå¾€ä¸‹ç§»åŠ¨
 									++pszServer;
 									*pTempOut++ = L'\0';
 									continue;
@@ -1245,7 +1245,7 @@ namespace YY
 							goto OnFailedLabel;
 						}
 
-						//¸´ÖÆÎÄ¼şÃû
+						//å¤åˆ¶æ–‡ä»¶å
 						memcpy(pTempOut, pszServer, cchFileName * sizeof(pszServer[0]));
 						pszServer += cchFileName;
 						pTempOut += cchFileName;
@@ -1253,8 +1253,8 @@ namespace YY
 					}
 				}
 				
-				/* É¾³ı Â·¾¶Ä©Î²µÄ .
-				* "*." Ôò±£Áô 
+				/* åˆ é™¤ è·¯å¾„æœ«å°¾çš„ .
+				* "*." åˆ™ä¿ç•™ 
 				*/
 				if (pTempOut > pszPathOut)
 				{
@@ -1309,7 +1309,7 @@ namespace YY
 				}
 
 
-				//´¦ÓÚ³¤ÃüÃûÄ£Ê½ÖĞ£¬Èç¹û¹æ·¶»¯ºóµÄÂ·¾¶ÓĞĞ§²¿·ÖĞ¡ÓÚ MAX_PATH£¬ÄÇÃ´É¾³ı³¤ÃüÃûÇ°×º
+				//å¤„äºé•¿å‘½åæ¨¡å¼ä¸­ï¼Œå¦‚æœè§„èŒƒåŒ–åçš„è·¯å¾„æœ‰æ•ˆéƒ¨åˆ†å°äº MAX_PATHï¼Œé‚£ä¹ˆåˆ é™¤é•¿å‘½åå‰ç¼€
 				if (ulReservedSize)
 				{
 					if (pTempOut - pszPathOut <= ulReservedSize + MAX_PATH)
@@ -1329,13 +1329,13 @@ namespace YY
 				
 				if (cchPathOut > 1 && *pszPathOut == L'\0')
 				{
-					//Èç¹ûÂ·¾¶Îª ¿Õ£¬Ôò×ª»»Îª "\\"
+					//å¦‚æœè·¯å¾„ä¸º ç©ºï¼Œåˆ™è½¬æ¢ä¸º "\\"
 					pszPathOut[0] = L'\\';
 					pszPathOut[1] = L'\0';
 				}
 				else if(cchPathOut > 3 && pszPathOut[1] == L':' && pszPathOut[2] == L'\0')
 				{
-					// Èç¹ûÂ·¾¶Îª "X:"£¬Ôò×ª»»Îª "X:\\"
+					// å¦‚æœè·¯å¾„ä¸º "X:"ï¼Œåˆ™è½¬æ¢ä¸º "X:\\"
 					pszPathOut[2] = L'\\';
 					pszPathOut[3] = L'\0';
 				}
@@ -1345,7 +1345,7 @@ namespace YY
 			} while (false);
 
 
-			//LABEL_96 Ê§°Ü
+			//LABEL_96 å¤±è´¥
 		OnFailedLabel:
 
 			*pszPathOut = L'\0';
@@ -1453,19 +1453,19 @@ namespace YY
 					break;
 				}
 
-				//¼«¶ËÇé¿ö¿ÉÄÜĞèÒª¶îÍâÌí¼Ó '\\' Á¬½Ó£¬¼ò»¯´¦Àí£¬Ö±½Ó + 1¡£¸ÄÂß¼­ÓëÎ¢Èí²»Í¬¡£
-				//×Ö·û´®Ä©Î²ĞèÒª '\0' ½áÊø
+				//æç«¯æƒ…å†µå¯èƒ½éœ€è¦é¢å¤–æ·»åŠ  '\\' è¿æ¥ï¼Œç®€åŒ–å¤„ç†ï¼Œç›´æ¥ + 1ã€‚æ”¹é€»è¾‘ä¸å¾®è½¯ä¸åŒã€‚
+				//å­—ç¬¦ä¸²æœ«å°¾éœ€è¦ '\0' ç»“æŸ
 				const auto cchPathInNeed = cchPathIn + cchMore + 1 + 1;
 
 
 				if (cchPathInNeed < _countof(PathOutStaticBuffer))
 				{
-					//¾²Ì¬»º³åÇø¿ÉÒÔÈİÄÉ£¬ÎÒÃÇÖ±½ÓÊ¹ÓÃ¾²Ì¬»º³åÇø
+					//é™æ€ç¼“å†²åŒºå¯ä»¥å®¹çº³ï¼Œæˆ‘ä»¬ç›´æ¥ä½¿ç”¨é™æ€ç¼“å†²åŒº
 					pszPathOutTmp = PathOutStaticBuffer;
 				}
 				else
 				{
-					//ºÃ°É£¬ÎÒÃÇÕæµÄĞèÒª¿ª±ÙÁÙÊ±»º³åÇø
+					//å¥½å§ï¼Œæˆ‘ä»¬çœŸçš„éœ€è¦å¼€è¾Ÿä¸´æ—¶ç¼“å†²åŒº
 					pszPathOutTmp = (PWSTR)LocalAlloc(LMEM_ZEROINIT, cchPathInNeed * sizeof(wchar_t));
 					if (!pszPathOutTmp)
 					{
@@ -1495,7 +1495,7 @@ namespace YY
 					{
 						if (pszMore[0] == L'\\' && pszMore[1] != L'\\')
 						{
-							//Â·¾¶ÊÇ '\\' ¿ªÍ·£¬ÄÇÃ´ ËüÓë pszPathIn µÄ¸ùÄ¿Â¼½øĞĞºÏ²¢
+							//è·¯å¾„æ˜¯ '\\' å¼€å¤´ï¼Œé‚£ä¹ˆ å®ƒä¸ pszPathIn çš„æ ¹ç›®å½•è¿›è¡Œåˆå¹¶
 							++pszMore;
 							--cchMore;
 
@@ -1512,7 +1512,7 @@ namespace YY
 						}
 						else
 						{
-							//ÕâÊÇÒ»¸ö¾ø¶ÔµÄÂ·¾¶£¬ÎÒÃÇÖ»ĞèÒª°Ñ pszMore ¸´ÖÆµ½ pszPathOutTmp
+							//è¿™æ˜¯ä¸€ä¸ªç»å¯¹çš„è·¯å¾„ï¼Œæˆ‘ä»¬åªéœ€è¦æŠŠ pszMore å¤åˆ¶åˆ° pszPathOutTmp
 							memcpy(pszPathOutTmp, pszMore, cchMore * sizeof(wchar_t));
 							cchPathOutTmp = cchMore;
 							break;
@@ -1520,7 +1520,7 @@ namespace YY
 					}
 
 					/*
-					* ²»Ïëµ÷ÓÃËü¡­¡­Ö»ÊÇ×·¼ÓÒ»¸ö '\' ¶øÒÑ
+					* ä¸æƒ³è°ƒç”¨å®ƒâ€¦â€¦åªæ˜¯è¿½åŠ ä¸€ä¸ª '\' è€Œå·²
 					PWSTR pszEnd;
 					hr = PathCchAddBackslashEx(pszPathOutTmp, cchPathOutTmp, &pszEnd, &cchPathOutTmp);
 					if (FAILED(hr))
@@ -1546,7 +1546,7 @@ namespace YY
 			}
 			else
 			{
-				//±£Ö¤×Ö·û´® '\0' ½Ø¶Ï
+				//ä¿è¯å­—ç¬¦ä¸² '\0' æˆªæ–­
 				pszPathOutTmp[cchPathOutTmp] = L'\0';
 				hr = PathCchCanonicalizeEx(pszPathOut, cchPathOut, pszPathOutTmp, dwFlags);
 			}
@@ -1607,7 +1607,7 @@ namespace YY
 		{
 			if (pszMore && PathIsUNCEx(pszMore, nullptr) == false && internal::IsExtendedLengthDosDevicePath(pszMore) == false)
 			{
-				//Ìø¹ı¿ªÍ·µÄËùÓĞ '\\'
+				//è·³è¿‡å¼€å¤´çš„æ‰€æœ‰ '\\'
 				for (;*pszMore == L'\\';++pszMore);
 			}
 
@@ -1718,13 +1718,13 @@ namespace YY
 				return pPathAllocCombine(pszPathIn, pszMore, dwFlags, ppszPathOut);
 			}
 
-			//²ÎÊı¼ì²é
+			//å‚æ•°æ£€æŸ¥
 			if (ppszPathOut == nullptr)
 				return E_INVALIDARG;
 
 			*ppszPathOut = nullptr;
 
-			//²»ÄÜÍ¬Ê±Îª null
+			//ä¸èƒ½åŒæ—¶ä¸º null
 			if (pszPathIn == nullptr && pszMore == nullptr)
 				return E_INVALIDARG;
 
@@ -1758,7 +1758,7 @@ namespace YY
 				cchBufferSize += 6;
 			}
 
-			//±£Ö¤±ß½çÒÀÈ»ÔÚ ×î´óÖµÄÚ
+			//ä¿è¯è¾¹ç•Œä¾ç„¶åœ¨ æœ€å¤§å€¼å†…
 			const auto cchMaxPath = (dwFlags & PATHCCH_ALLOW_LONG_PATHS) ? PATHCCH_MAX_CCH : MAX_PATH;
 			if (cchBufferSize > cchMaxPath)
 				cchBufferSize = cchMaxPath;
@@ -1810,7 +1810,7 @@ namespace YY
 			}
 
 
-			//²ÎÊı¼ì²é
+			//å‚æ•°æ£€æŸ¥
 			if (ppszPathOut == nullptr)
 				return E_INVALIDARG;
 
@@ -1838,7 +1838,7 @@ namespace YY
 				cchBufferSize += 6;
 			}
 
-			//±£Ö¤±ß½çÒÀÈ»ÔÚ ×î´óÖµÄÚ
+			//ä¿è¯è¾¹ç•Œä¾ç„¶åœ¨ æœ€å¤§å€¼å†…
 			const auto cchMaxPath = (dwFlags & PATHCCH_ALLOW_LONG_PATHS) ? PATHCCH_MAX_CCH : MAX_PATH;
 			if (cchBufferSize > cchMaxPath)
 				cchBufferSize = cchMaxPath;

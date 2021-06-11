@@ -1,4 +1,4 @@
-
+ï»¿
 
 
 
@@ -21,7 +21,7 @@
     _APPLY(api_ms_win_core_path_l1_1_0,                  "api-ms-win-core-path-l1-1-0"        , 0                 ) 
 
 
-//È«¾Ö¿ÉÄÜÊ¹ÓÃµ½µÄº¯Êı
+//å…¨å±€å¯èƒ½ä½¿ç”¨åˆ°çš„å‡½æ•°
 #define _YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)                                                        \
     _APPLY(NtCreateFile,                                 ntdll                                         ) \
     _APPLY(NtClose,                                      ntdll                                         ) \
@@ -95,14 +95,14 @@
 #pragma comment(lib, "Gdi32.lib")
 #endif
 
-//Õ¹¿ªº¯ÊıµÄËùÓĞµÄ ÉùÃ÷ ÒÔ¼° try_get_ º¯Êı
+//å±•å¼€å‡½æ•°çš„æ‰€æœ‰çš„ å£°æ˜ ä»¥åŠ try_get_ å‡½æ•°
 #define YY_Thunks_Defined
 #define __YY_Thunks_Expand_Function(_MODULE, _FUNCTION, _SIZE)                                 \
 	static decltype(_FUNCTION)* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept       \
 	{                                                                                          \
         __declspec(allocate(".YYThr$AAA")) static void* _CRT_CONCATENATE(pInit_ ,_FUNCTION) =  \
               reinterpret_cast<void*>(&_CRT_CONCATENATE(try_get_, _FUNCTION));                 \
-        /*ÎªÁË±ÜÃâ±àÒëÆ÷½« YYThr$AAA ½ÚÓÅ»¯µô*/                                                \
+        /*ä¸ºäº†é¿å…ç¼–è¯‘å™¨å°† YYThr$AAA èŠ‚ä¼˜åŒ–æ‰*/                                                \
         __foreinclude(_CRT_CONCATENATE(pInit_ ,_FUNCTION));                                    \
 		__declspec(allocate(".YYThu$AAB")) static void* _CRT_CONCATENATE(pFun_, _FUNCTION);    \
 		return reinterpret_cast<decltype(_FUNCTION)*>(try_get_function(                        \
@@ -131,7 +131,7 @@ namespace YY
 					/*
 					https://github.com/Chuyu-Team/YY-Thunks/issues/10
 
-					ÓÃ»§±¨¸æ£¬Windows XP ÎŞ·¨×ª»» STATUS_TIMEOUT¡£Êµ¼Ê½á¹ûÒ²ÊÇrubin£¬Òò´Ë£¬ÌØÊâ´¦ÀíÒ»ÏÂ¡£
+					ç”¨æˆ·æŠ¥å‘Šï¼ŒWindows XP æ— æ³•è½¬æ¢ STATUS_TIMEOUTã€‚å®é™…ç»“æœä¹Ÿæ˜¯rubinï¼Œå› æ­¤ï¼Œç‰¹æ®Šå¤„ç†ä¸€ä¸‹ã€‚
 					*/
 					return ERROR_TIMEOUT;
 				}
@@ -141,7 +141,7 @@ namespace YY
 				}
 				else
 				{
-					//Èç¹ûÃ»ÓĞRtlNtStatusToDosError¾ÍÖ±½ÓÉèÖÃStatus´úÂë°É£¬·´ÕıÖÁÉÙ±ÈÃ»ÓĞ´íÎó´úÂëÇ¿
+					//å¦‚æœæ²¡æœ‰RtlNtStatusToDosErrorå°±ç›´æ¥è®¾ç½®Statusä»£ç å§ï¼Œåæ­£è‡³å°‘æ¯”æ²¡æœ‰é”™è¯¯ä»£ç å¼º
 					return Status;
 				}
 
@@ -190,10 +190,10 @@ namespace YY
 			{
 #define __szVolumeMountPointPrefix__ L"\\\\?\\GLOBALROOT"
 
-				//Ò»¸öÉè±¸Ãû³Æ 512 ³¤¶È¹»¶àÁË°É£¿
+				//ä¸€ä¸ªè®¾å¤‡åç§° 512 é•¿åº¦å¤Ÿå¤šäº†å§ï¼Ÿ
 				wchar_t szVolumeMountPoint[512];
 				
-				//¼ì²é»º³åÇøÊÇ·ñ³ä×ã
+				//æ£€æŸ¥ç¼“å†²åŒºæ˜¯å¦å……è¶³
 				auto cbBufferNeed = sizeof(__szVolumeMountPointPrefix__) + NtName->Length;
 
 				if (cbBufferNeed > sizeof(szVolumeMountPoint))
@@ -242,6 +242,6 @@ namespace YY
 
 } //namespace YY
 
-//µ¼ÈëÊµ¼ÊµÄÊµÏÖ
+//å¯¼å…¥å®é™…çš„å®ç°
 #define __YY_Thunks_Expand_Function(_MODULE, _FUNCTION, _SIZE) _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION, _SIZE)
 #include "YY_Thunks_List.hpp"

@@ -1,4 +1,4 @@
-
+ï»¿
 
 
 namespace YY
@@ -52,13 +52,13 @@ inet_pton(
 			{
 				auto& Ch = *Start;
 
-				//±ØĞëÊÇ0~9Êı×Ö
+				//å¿…é¡»æ˜¯0~9æ•°å­—
 				if (Ch >= Char('0') && Ch <= Char('9'))
 				{
 					auto NewNum = IPNum * 10ul + (Ch & 0x0Ful);
 					if (NewNum > 0xFF)
 					{
-						//²»ÄÜ´óÓÚ255
+						//ä¸èƒ½å¤§äº255
 						return 0;
 					}
 
@@ -82,7 +82,7 @@ inet_pton(
 				++pszAddrString;
 		}
 
-		//Î´Õı³£½Ø¶Ï
+		//æœªæ­£å¸¸æˆªæ–­
 		if (i != _countof(IPAddress) || *pszAddrString != Char('\0'))
 			return 0;
 
@@ -104,7 +104,7 @@ inet_pton(
 		{
 			if (pszAddrString[0] == Char(':') && pszAddrString[1] == Char(':'))
 			{
-				//Ëõ½øÖ»ÄÜÓĞÒ»´Î
+				//ç¼©è¿›åªèƒ½æœ‰ä¸€æ¬¡
 				if (InsertIndex != -1)
 					return 0;
 
@@ -126,7 +126,7 @@ inet_pton(
 
 				unsigned int NewNum;
 
-				//0~9Êı×Ö
+				//0~9æ•°å­—
 				if (Ch >= Char('0') && Ch <= Char('9'))
 				{
 					NewNum = Ch & 0x0Ful;
@@ -141,7 +141,7 @@ inet_pton(
 				}
 				else
 				{
-					//ÎŞ·¨Ê¶±ğ
+					//æ— æ³•è¯†åˆ«
 					return 0;
 				}
 
@@ -149,7 +149,7 @@ inet_pton(
 
 				if (NewNum > 0xFFFF)
 				{
-					//²»ÄÜ´óÓÚ255
+					//ä¸èƒ½å¤§äº255
 					return 0;
 				}
 
@@ -157,7 +157,7 @@ inet_pton(
 			}
 
 
-			//½Ø¶Ï´íÎó
+			//æˆªæ–­é”™è¯¯
 			if (Start == pszAddrString)
 			{
 				return 0;
@@ -182,7 +182,7 @@ inet_pton(
 		}
 
 
-		//Î´Õı³£½Ø¶Ï
+		//æœªæ­£å¸¸æˆªæ–­
 		if (*pszAddrString != Char('\0'))
 		{
 			return 0;
@@ -199,7 +199,7 @@ inet_pton(
 			}
 			else
 			{
-				//ÏÈ¸´ÖÆÍ·
+				//å…ˆå¤åˆ¶å¤´
 
 				auto j = 0;
 				for (; j != InsertIndex; ++j)
@@ -207,13 +207,13 @@ inet_pton(
 					((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[j];
 				}
 
-				//²¹³äÖĞ¼ä 0
+				//è¡¥å……ä¸­é—´ 0
 				for (const auto Count = _countof(IPAddress.u.Word) - i + j; j != Count; ++j)
 				{
 					((IN6_ADDR*)pAddrBuf)->u.Word[j] = 0;
 				}
 
-				//¸´ÖÆĞ¡Î²°Í
+				//å¤åˆ¶å°å°¾å·´
 				for (; j != _countof(IPAddress.u.Word); ++j, ++InsertIndex)
 				{
 					((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[InsertIndex];
@@ -281,13 +281,13 @@ InetPtonW(
 			{
 				auto& Ch = *Start;
 
-				//±ØĞëÊÇ0~9Êı×Ö
+				//å¿…é¡»æ˜¯0~9æ•°å­—
 				if (Ch >= Char('0') && Ch <= Char('9'))
 				{
 					auto NewNum = IPNum * 10ul + (Ch & 0x0Ful);
 					if (NewNum > 0xFF)
 					{
-						//²»ÄÜ´óÓÚ255
+						//ä¸èƒ½å¤§äº255
 						return 0;
 					}
 
@@ -311,7 +311,7 @@ InetPtonW(
 				++pszAddrString;
 		}
 
-		//Î´Õı³£½Ø¶Ï
+		//æœªæ­£å¸¸æˆªæ–­
 		if (i != _countof(IPAddress) || *pszAddrString != Char('\0'))
 			return 0;
 
@@ -333,7 +333,7 @@ InetPtonW(
 		{
 			if (pszAddrString[0] == Char(':') && pszAddrString[1] == Char(':'))
 			{
-				//Ëõ½øÖ»ÄÜÓĞÒ»´Î
+				//ç¼©è¿›åªèƒ½æœ‰ä¸€æ¬¡
 				if (InsertIndex != -1)
 					return 0;
 
@@ -355,7 +355,7 @@ InetPtonW(
 
 				unsigned int NewNum;
 
-				//0~9Êı×Ö
+				//0~9æ•°å­—
 				if (Ch >= Char('0') && Ch <= Char('9'))
 				{
 					NewNum = Ch & 0x0Ful;
@@ -370,7 +370,7 @@ InetPtonW(
 				}
 				else
 				{
-					//ÎŞ·¨Ê¶±ğ
+					//æ— æ³•è¯†åˆ«
 					return 0;
 				}
 
@@ -378,7 +378,7 @@ InetPtonW(
 
 				if (NewNum > 0xFFFF)
 				{
-					//²»ÄÜ´óÓÚ255
+					//ä¸èƒ½å¤§äº255
 					return 0;
 				}
 
@@ -386,7 +386,7 @@ InetPtonW(
 			}
 
 
-			//½Ø¶Ï´íÎó
+			//æˆªæ–­é”™è¯¯
 			if (Start == pszAddrString)
 			{
 				return 0;
@@ -411,7 +411,7 @@ InetPtonW(
 		}
 
 
-		//Î´Õı³£½Ø¶Ï
+		//æœªæ­£å¸¸æˆªæ–­
 		if (*pszAddrString != Char('\0'))
 		{
 			return 0;
@@ -428,7 +428,7 @@ InetPtonW(
 			}
 			else
 			{
-				//ÏÈ¸´ÖÆÍ·
+				//å…ˆå¤åˆ¶å¤´
 
 				auto j = 0;
 				for (; j != InsertIndex; ++j)
@@ -436,13 +436,13 @@ InetPtonW(
 					((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[j];
 				}
 
-				//²¹³äÖĞ¼ä 0
+				//è¡¥å……ä¸­é—´ 0
 				for (const auto Count = _countof(IPAddress.u.Word) - i + j; j != Count; ++j)
 				{
 					((IN6_ADDR*)pAddrBuf)->u.Word[j] = 0;
 				}
 
-				//¸´ÖÆĞ¡Î²°Í
+				//å¤åˆ¶å°å°¾å·´
 				for (; j != _countof(IPAddress.u.Word); ++j, ++InsertIndex)
 				{
 					((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[InsertIndex];
@@ -516,18 +516,18 @@ inet_ntop(
 				auto Num = IPv4[i];
 				if (Num < 10)
 				{
-					//1 Î»
+					//1 ä½
 					szString[cchString++] = Hex[Num];
 				}
 				else if (Num < 100)
 				{
-					//2 Î»
+					//2 ä½
 					szString[cchString++] = Hex[Num / 10];
 					szString[cchString++] = Hex[Num % 10];
 				}
 				else
 				{
-					//3 Î»
+					//3 ä½
 					szString[cchString++] = Hex[Num / 100];
 					szString[cchString++] = Hex[(Num / 10) % 10];
 					szString[cchString++] = Hex[Num % 10];
@@ -551,7 +551,7 @@ inet_ntop(
 			int ZeroIndex = -1;
 			int ZeroCount = 1;
 
-			//Í³¼Æ Á¬Ğø 0¸öÊı×î¶àµÄÇé¿ö
+			//ç»Ÿè®¡ è¿ç»­ 0ä¸ªæ•°æœ€å¤šçš„æƒ…å†µ
 			for (int i = 0; i != _countof(IPv6);)
 			{
 				auto j = i;
@@ -595,18 +595,18 @@ inet_ntop(
 
 					if (Num <= 0xF)
 					{
-						//1 Î»
+						//1 ä½
 						szString[cchString++] = Hex[Num];
 					}
 					else if (Num <= 0xFF)
 					{
-						//2 Î»
+						//2 ä½
 						szString[cchString++] = Hex[Num >> 4];
 						szString[cchString++] = Hex[Num & 0x0F];
 					}
 					else if (Num <= 0xFFF)
 					{
-						//3 Î»
+						//3 ä½
 						szString[cchString++] = Hex[(Num >> 8)];
 
 						szString[cchString++] = Hex[(Num >> 4) & 0x0F];
@@ -614,7 +614,7 @@ inet_ntop(
 					}
 					else
 					{
-						//4Î»
+						//4ä½
 						szString[cchString++] = Hex[(Num >> 12)];
 						szString[cchString++] = Hex[(Num >> 8) & 0x0F];
 
@@ -642,7 +642,7 @@ inet_ntop(
 			{
 				if (szString != BufferTemp)
 				{
-					//»º³åÇø²»×ã
+					//ç¼“å†²åŒºä¸è¶³
 
 					memcpy(pStringBuf, szString, sizeof(szString[0]) * cchString);
 				}
@@ -717,18 +717,18 @@ InetNtopW(
 				auto Num = IPv4[i];
 				if (Num < 10)
 				{
-					//1 Î»
+					//1 ä½
 					szString[cchString++] = Hex[Num];
 				}
 				else if (Num < 100)
 				{
-					//2 Î»
+					//2 ä½
 					szString[cchString++] = Hex[Num / 10];
 					szString[cchString++] = Hex[Num % 10];
 				}
 				else
 				{
-					//3 Î»
+					//3 ä½
 					szString[cchString++] = Hex[Num / 100];
 					szString[cchString++] = Hex[(Num / 10) % 10];
 					szString[cchString++] = Hex[Num % 10];
@@ -752,7 +752,7 @@ InetNtopW(
 			int ZeroIndex = -1;
 			int ZeroCount = 1;
 
-			//Í³¼Æ Á¬Ğø 0¸öÊı×î¶àµÄÇé¿ö
+			//ç»Ÿè®¡ è¿ç»­ 0ä¸ªæ•°æœ€å¤šçš„æƒ…å†µ
 			for (int i = 0; i != _countof(IPv6);)
 			{
 				auto j = i;
@@ -796,18 +796,18 @@ InetNtopW(
 
 					if (Num <= 0xF)
 					{
-						//1 Î»
+						//1 ä½
 						szString[cchString++] = Hex[Num];
 					}
 					else if (Num <= 0xFF)
 					{
-						//2 Î»
+						//2 ä½
 						szString[cchString++] = Hex[Num >> 4];
 						szString[cchString++] = Hex[Num & 0x0F];
 					}
 					else if (Num <= 0xFFF)
 					{
-						//3 Î»
+						//3 ä½
 						szString[cchString++] = Hex[(Num >> 8)];
 
 						szString[cchString++] = Hex[(Num >> 4) & 0x0F];
@@ -815,7 +815,7 @@ InetNtopW(
 					}
 					else
 					{
-						//4Î»
+						//4ä½
 						szString[cchString++] = Hex[(Num >> 12)];
 						szString[cchString++] = Hex[(Num >> 8) & 0x0F];
 
@@ -843,7 +843,7 @@ InetNtopW(
 			{
 				if (szString != BufferTemp)
 				{
-					//»º³åÇø²»×ã
+					//ç¼“å†²åŒºä¸è¶³
 
 					memcpy(pStringBuf, szString, sizeof(szString[0]) * cchString);
 				}
@@ -870,7 +870,7 @@ __YY_Thunks_Expand_Function(ws2_32, InetNtopW, 16);
 //Windows 8.1, Windows Vista [desktop apps | UWP apps]
 //Windows Server 2008 [desktop apps | UWP apps]
 
-//²Î¿¼ https://blog.csdn.net/liangzhao_jay/article/details/53261684 ÊµÏÖ
+//å‚è€ƒ https://blog.csdn.net/liangzhao_jay/article/details/53261684 å®ç°
 EXTERN_C
 int
 WSAAPI
@@ -912,7 +912,7 @@ WSAPoll(
 			FD_SET(fd.fd, &writefds);
 		}
 
-		//Òì³£
+		//å¼‚å¸¸
 		if (fd.events & (POLLERR | POLLHUP | POLLNVAL))
 		{
 			FD_SET(fd.fd, &exceptfds);
@@ -921,9 +921,9 @@ WSAPoll(
 
 
 	/*
-	timeout  < 0 £¬ÎŞÏŞµÈ´ı
-	timeout == 0 £¬ÂíÉÏ»ØÀ´
-	timeout  >0  £¬×î³¤µÈÕâ¸öÊ±¼ä
+	timeout  < 0 ï¼Œæ— é™ç­‰å¾…
+	timeout == 0 ï¼Œé©¬ä¸Šå›æ¥
+	timeout  >0  ï¼Œæœ€é•¿ç­‰è¿™ä¸ªæ—¶é—´
 	*/
 	timeval* __ptimeout = nullptr;
 

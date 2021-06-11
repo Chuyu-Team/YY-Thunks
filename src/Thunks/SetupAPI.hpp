@@ -1,4 +1,4 @@
-
+﻿
 #include <setupapi.h>
 
 namespace YY

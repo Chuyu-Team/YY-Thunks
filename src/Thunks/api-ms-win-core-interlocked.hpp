@@ -1,4 +1,4 @@
-
+ï»¿
 
 namespace YY
 {
@@ -90,7 +90,7 @@ InterlockedFlushSList(
      _End:
     }
 
-    //Ö±½Ó·µ»Øeax¼´¿É¡£
+    //ç›´æ¥è¿”å›eaxå³å¯ã€‚
 }
 #endif
 
@@ -160,7 +160,7 @@ InterlockedPushEntrySList(
         jnz _Loop
     }
 
-    //asm»á¸üĞÂeax
+    //asmä¼šæ›´æ–°eax
 }
 #endif
 
@@ -203,7 +203,7 @@ InterlockedPopEntrySList(
 
     }
 
-    //asm »áĞŞ¸Äeax
+    //asm ä¼šä¿®æ”¹eax
 }
 #endif
 

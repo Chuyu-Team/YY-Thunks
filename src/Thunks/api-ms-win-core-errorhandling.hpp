@@ -1,4 +1,4 @@
-
+ï»¿
 
 namespace YY
 {
@@ -26,7 +26,7 @@ RaiseFailFastException(
 		return pRaiseFailFastException(pExceptionRecord, pContextRecord, dwFlags);
 	}
 
-	//Ö±½Ó½áÊø½ø³Ì
+	//ç›´æŽ¥ç»“æŸè¿›ç¨‹
 	TerminateProcess(NtGetCurrentProcess(), pExceptionRecord ? pExceptionRecord->ExceptionCode : STATUS_FAIL_FAST_EXCEPTION);
 }
 #endif

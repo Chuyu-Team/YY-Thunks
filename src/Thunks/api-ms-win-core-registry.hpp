@@ -1,4 +1,4 @@
-
+ï»¿
 namespace YY
 {
 	namespace Thunks
@@ -322,24 +322,24 @@ RegGetValueW(
 	{
 		if (dwType == REG_MULTI_SZ)
 		{
-			//Á¬Ğø2¸ö null ½áÎ²
+			//è¿ç»­2ä¸ª null ç»“å°¾
 			cbDataFix = cbData + sizeof(*lpValue) * 2;
 		}
 		else if (dwType == REG_SZ)
 		{
-			//Ò»¸önull ½áÎ²
+			//ä¸€ä¸ªnull ç»“å°¾
 			cbDataFix = cbData + sizeof(*lpValue);
 		}
 		else if (dwType == REG_EXPAND_SZ)
 		{
 			if (dwFlags & RRF_NOEXPAND)
 			{
-				//Ò»¸önull ½áÎ²
+				//ä¸€ä¸ªnull ç»“å°¾
 				cbDataFix = cbData + sizeof(*lpValue);
 			}
 			else
 			{
-				//ĞèÒªÕ¹¿ª
+				//éœ€è¦å±•å¼€
 				cbDataFix = pvData && pcbData ? *pcbData : 0;
 				lStatus = SHQueryValueExW(hkey, lpValue, nullptr, &dwType, pvData, &cbDataFix);
 
@@ -368,7 +368,7 @@ RegGetValueW(
 		if (pdwType)
 			*pdwType = dwType;
 
-		//¼ì²âÀàĞÍÊÇ·ñÖ§³Ö
+		//æ£€æµ‹ç±»å‹æ˜¯å¦æ”¯æŒ
 		switch (dwType)
 		{
 		case REG_NONE:
@@ -383,13 +383,13 @@ RegGetValueW(
 			}
 			else if (pvData && lStatus == ERROR_SUCCESS)
 			{
-				//µ±º¯Êı³É¹¦Ê±£¬±£Ö¤×Ö·û´®Õı³£ NULL ½áÎ²
+				//å½“å‡½æ•°æˆåŠŸæ—¶ï¼Œä¿è¯å­—ç¬¦ä¸²æ­£å¸¸ NULL ç»“å°¾
 				if (REG_SZ == dwType || REG_EXPAND_SZ == dwType)
 				{
-					//±£Ö¤1¸ö NULL ½áÎ²
+					//ä¿è¯1ä¸ª NULL ç»“å°¾
 
 
-					//sizeof(wchar_t) ±ß½ç¶ÔÆë
+					//sizeof(wchar_t) è¾¹ç•Œå¯¹é½
 					if (cbData % sizeof(*lpValue))
 					{
 						if (cbData >= cbDataBackup)
@@ -431,9 +431,9 @@ RegGetValueW(
 			}
 			else if (pvData && lStatus == ERROR_SUCCESS)
 			{
-				//±£Ö¤×îºóÒ»¸ö×Ö·û´® NULL ½áÎ² ²¢ÇÒ °üº¬ NULL ½áÊø·û
+				//ä¿è¯æœ€åä¸€ä¸ªå­—ç¬¦ä¸² NULL ç»“å°¾ å¹¶ä¸” åŒ…å« NULL ç»“æŸç¬¦
 
-				//sizeof(wchar_t) ±ß½ç¶ÔÆë
+				//sizeof(wchar_t) è¾¹ç•Œå¯¹é½
 				if (cbData % sizeof(*lpValue))
 				{
 					if (cbData >= cbDataBackup)
@@ -507,7 +507,7 @@ RegGetValueW(
 
 	if ((RRF_ZEROONFAILURE & dwFlags) != 0 && lStatus)
 	{
-		//È«0Ìî³ä
+		//å…¨0å¡«å……
 		if (pvData && cbDataBackup)
 		{
 			memset(pvData, 0, cbDataBackup);
@@ -579,24 +579,24 @@ RegGetValueA(
 	{
 		if (dwType == REG_MULTI_SZ)
 		{
-			//Á¬Ğø2¸ö null ½áÎ²
+			//è¿ç»­2ä¸ª null ç»“å°¾
 			cbDataFix = cbData + sizeof(*lpValue) * 2;
 		}
 		else if (dwType == REG_SZ)
 		{
-			//Ò»¸önull ½áÎ²
+			//ä¸€ä¸ªnull ç»“å°¾
 			cbDataFix = cbData + sizeof(*lpValue);
 		}
 		else if (dwType == REG_EXPAND_SZ)
 		{
 			if (dwFlags & RRF_NOEXPAND)
 			{
-				//Ò»¸önull ½áÎ²
+				//ä¸€ä¸ªnull ç»“å°¾
 				cbDataFix = cbData + sizeof(*lpValue);
 			}
 			else
 			{
-				//ĞèÒªÕ¹¿ª
+				//éœ€è¦å±•å¼€
 				cbDataFix = pvData && pcbData ? *pcbData : 0;
 				lStatus = SHQueryValueExA(hkey, lpValue, nullptr, &dwType, pvData, &cbDataFix);
 
@@ -625,7 +625,7 @@ RegGetValueA(
 		if (pdwType)
 			*pdwType = dwType;
 
-		//¼ì²âÀàĞÍÊÇ·ñÖ§³Ö
+		//æ£€æµ‹ç±»å‹æ˜¯å¦æ”¯æŒ
 		switch (dwType)
 		{
 		case REG_NONE:
@@ -639,10 +639,10 @@ RegGetValueA(
 			}
 			else if (pvData && lStatus == ERROR_SUCCESS)
 			{
-				//µ±º¯Êı³É¹¦Ê±£¬±£Ö¤×Ö·û´®Õı³£ NULL ½áÎ²
+				//å½“å‡½æ•°æˆåŠŸæ—¶ï¼Œä¿è¯å­—ç¬¦ä¸²æ­£å¸¸ NULL ç»“å°¾
 				if (REG_SZ == dwType || REG_EXPAND_SZ == dwType)
 				{
-					//±£Ö¤1¸ö NULL ½áÎ²
+					//ä¿è¯1ä¸ª NULL ç»“å°¾
 					auto cStringMin = cbData;
 
 
@@ -670,7 +670,7 @@ RegGetValueA(
 			}
 			else
 			{
-				//±£Ö¤×îºóÒ»¸ö×Ö·û´® NULL ½áÎ² ²¢ÇÒ °üº¬ NULL ½áÊø·û
+				//ä¿è¯æœ€åä¸€ä¸ªå­—ç¬¦ä¸² NULL ç»“å°¾ å¹¶ä¸” åŒ…å« NULL ç»“æŸç¬¦
 
 				auto cStringMin = cbData;
 
@@ -732,7 +732,7 @@ RegGetValueA(
 
 	if ((RRF_ZEROONFAILURE & dwFlags) != 0 && lStatus)
 	{
-		//È«0Ìî³ä
+		//å…¨0å¡«å……
 		if (pvData && cbDataBackup)
 		{
 			memset(pvData, 0, cbDataBackup);

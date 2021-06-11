@@ -1,4 +1,4 @@
-
+ï»¿
 
 #include <Shlobj.h>
 
@@ -16,7 +16,7 @@ namespace YY
 				const int csidl;
 			};
 
-			//VistaÒÔºóµÄShell32.dll ÓÐ¸ö kfapi::GetFolderIdByCSIDL£¬ÎÒÃÇ¿ÉÒÔ¸ù¾ÝËü¿ÉÒÔ·´ÍÆ³ö³ö ÏÂÃæµÄKnownFoldersIdToCSIDL
+			//Vistaä»¥åŽçš„Shell32.dll æœ‰ä¸ª kfapi::GetFolderIdByCSIDLï¼Œæˆ‘ä»¬å¯ä»¥æ ¹æ®å®ƒå¯ä»¥åæŽ¨å‡ºå‡º ä¸‹é¢çš„KnownFoldersIdToCSIDL
 			static int __fastcall KnownFoldersIdToCSIDL(const GUID& rfid)
 			{
 
@@ -33,18 +33,18 @@ namespace YY
 					{ FOLDERID_PrintersFolder, CSIDL_PRINTERS },
 					{ FOLDERID_Pictures, CSIDL_MYPICTURES },
 					{ FOLDERID_ResourceDir, CSIDL_RESOURCES },
-					{ FOLDERID_CommonStartup, CSIDL_COMMON_STARTUP /*µÈ¼ÛCSIDL_COMMON_ALTSTARTUP*/},
+					{ FOLDERID_CommonStartup, CSIDL_COMMON_STARTUP /*ç­‰ä»·CSIDL_COMMON_ALTSTARTUP*/},
 					{ FOLDERID_PublicVideos, CSIDL_COMMON_VIDEO },
-					{ FOLDERID_Desktop, CSIDL_DESKTOP /*µÈ¼ÛCSIDL_DESKTOPDIRECTORY*/},
+					{ FOLDERID_Desktop, CSIDL_DESKTOP /*ç­‰ä»·CSIDL_DESKTOPDIRECTORY*/},
 					{ FOLDERID_History, CSIDL_HISTORY },
-					{ FOLDERID_SamplePictures, CSIDL_COMMON_PICTURES }, //×ö¸ö¼æÈÝ´¦Àí°É£¬·´Õý¶¼ÊÇ·ÅÍ¼Æ¬µÄ
+					{ FOLDERID_SamplePictures, CSIDL_COMMON_PICTURES }, //åšä¸ªå…¼å®¹å¤„ç†å§ï¼Œåæ­£éƒ½æ˜¯æ”¾å›¾ç‰‡çš„
 					{ FOLDERID_RecycleBinFolder, CSIDL_BITBUCKET },
 					{ FOLDERID_CommonPrograms, CSIDL_COMMON_PROGRAMS },
 					{ FOLDERID_NetHood, CSIDL_NETHOOD },
 					{ FOLDERID_Cookies, CSIDL_COOKIES },
 					{ FOLDERID_LocalizedResourcesDir, CSIDL_RESOURCES_LOCALIZED },
-					{ FOLDERID_Favorites, CSIDL_FAVORITES /*µÈ¼ÛÓÚCSIDL_COMMON_FAVORITES*/},
-					{ FOLDERID_SampleMusic, CSIDL_COMMON_MUSIC }, //×ö¸ö¼æÈÝ´¦Àí°É£¬·´Õý¶¼ÊÇ·ÅÒôÀÖµÄ
+					{ FOLDERID_Favorites, CSIDL_FAVORITES /*ç­‰ä»·äºŽCSIDL_COMMON_FAVORITES*/},
+					{ FOLDERID_SampleMusic, CSIDL_COMMON_MUSIC }, //åšä¸ªå…¼å®¹å¤„ç†å§ï¼Œåæ­£éƒ½æ˜¯æ”¾éŸ³ä¹çš„
 					{ FOLDERID_SendTo, CSIDL_SENDTO },
 					{ FOLDERID_AdminTools, CSIDL_ADMINTOOLS },
 					{ FOLDERID_Music, CSIDL_MYMUSIC },
@@ -52,7 +52,7 @@ namespace YY
 					{ FOLDERID_System, CSIDL_SYSTEM },
 					{ FOLDERID_Programs, CSIDL_PROGRAMS },
 #ifdef _AMD64_
-					{ FOLDERID_ProgramFilesX64, CSIDL_PROGRAM_FILES }, //¼æÈÝÏÂ£¬·´Õý x64Â·¾¶ ¸ú ÆÕÍ¨µÄÊÇÒ»ÑùµÄ¡£
+					{ FOLDERID_ProgramFilesX64, CSIDL_PROGRAM_FILES }, //å…¼å®¹ä¸‹ï¼Œåæ­£ x64è·¯å¾„ è·Ÿ æ™®é€šçš„æ˜¯ä¸€æ ·çš„ã€‚
 #endif
 					{ FOLDERID_ComputerFolder, CSIDL_DRIVES },
 					{ FOLDERID_CommonAdminTools, CSIDL_COMMON_ADMINTOOLS },
@@ -62,19 +62,19 @@ namespace YY
 					{ FOLDERID_PublicPictures, CSIDL_COMMON_PICTURES },
 					{ FOLDERID_PrintHood, CSIDL_PRINTHOOD },
 					{ FOLDERID_Profile, CSIDL_PROFILE },
-					{ FOLDERID_SampleVideos, CSIDL_COMMON_VIDEO }, //×ö¸ö¼æÈÝ´¦Àí°É£¬·´Õý¶¼ÊÇ·ÅÊÓÆµµÄ
-					{ FOLDERID_LocalAppDataLow, CSIDL_LOCAL_APPDATA }, //¼æÈÝÏÂ£¬Ö±½ÓÓÃAppData
+					{ FOLDERID_SampleVideos, CSIDL_COMMON_VIDEO }, //åšä¸ªå…¼å®¹å¤„ç†å§ï¼Œåæ­£éƒ½æ˜¯æ”¾è§†é¢‘çš„
+					{ FOLDERID_LocalAppDataLow, CSIDL_LOCAL_APPDATA }, //å…¼å®¹ä¸‹ï¼Œç›´æŽ¥ç”¨AppData
 #ifdef _AMD64_
-					{ FOLDERID_ProgramFilesCommonX64, CSIDL_PROGRAM_FILES_COMMON }, //¼æÈÝÏÂ£¬·´Õý x64Â·¾¶ ¸ú ÆÕÍ¨µÄÊÇÒ»ÑùµÄ¡£
+					{ FOLDERID_ProgramFilesCommonX64, CSIDL_PROGRAM_FILES_COMMON }, //å…¼å®¹ä¸‹ï¼Œåæ­£ x64è·¯å¾„ è·Ÿ æ™®é€šçš„æ˜¯ä¸€æ ·çš„ã€‚
 #endif
 					{ FOLDERID_PublicDocuments, CSIDL_COMMON_DOCUMENTS },
 					{ FOLDERID_SystemX86, CSIDL_SYSTEMX86 },
 					{ FOLDERID_PublicMusic, CSIDL_COMMON_MUSIC },
 					{ FOLDERID_ProgramFiles, CSIDL_PROGRAM_FILES },
 					{ FOLDERID_Fonts, CSIDL_FONTS },
-					{ FOLDERID_Startup, CSIDL_STARTUP /*µÈÐ§CSIDL_ALTSTARTUP*/},
+					{ FOLDERID_Startup, CSIDL_STARTUP /*ç­‰æ•ˆCSIDL_ALTSTARTUP*/},
 					{ FOLDERID_StartMenu, CSIDL_STARTMENU },
-					{ FOLDERID_NetworkFolder, CSIDL_NETWORK /*µÈÐ§CSIDL_COMPUTERSNEARME*/},
+					{ FOLDERID_NetworkFolder, CSIDL_NETWORK /*ç­‰æ•ˆCSIDL_COMPUTERSNEARME*/},
 					{ FOLDERID_Documents, CSIDL_MYDOCUMENTS },
 					{ FOLDERID_CommonOEMLinks, CSIDL_COMMON_OEM_LINKS },
 					{ FOLDERID_RoamingAppData, CSIDL_APPDATA },
