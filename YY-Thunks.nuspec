@@ -65,8 +65,9 @@
         - 添加 UnmapViewOfFileEx
         - 添加 VirtualProtectFromApp
         - 添加 OpenFileMappingFromApp
+        - 解决Bug，SHCreateShellItem 符号名称错误。
     </releaseNotes>
-    <copyright>Copyright 2020</copyright>
+    <copyright>Copyright 2021</copyright>
     <tags>Chuyu YY-Thunks native nativepackage</tags>
     <repository type="git" url="https://github.com/Chuyu-Team/YY-Thunks.git" branch="master" commit="$commit$" />
   </metadata>

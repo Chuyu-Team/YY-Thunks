@@ -833,7 +833,7 @@ SHCreateShellItem(
 }
 #endif
 
-__YY_Thunks_Expand_Function(shell32, SHCreateShellItem, 20);
+__YY_Thunks_Expand_Function(shell32, SHCreateShellItem, 16);
 
 #endif
 
