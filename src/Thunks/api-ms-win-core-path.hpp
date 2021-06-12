@@ -6,7 +6,7 @@ namespace YY
 {
 	namespace Thunks
 	{
-#ifndef YY_Thunks_Defined
+#ifdef YY_Thunks_Implemented
 		namespace internal
 		{
 			static bool __fastcall IsHexDigitWorker(wchar_t ch)
@@ -144,19 +144,18 @@ namespace YY
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		BOOL
-		WINAPI
-		PathIsUNCEx(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		8,
+		BOOL,
+		WINAPI,
+		PathIsUNCEx,
 			_In_ PCWSTR pszPath,
 			_Outptr_opt_ PCWSTR* ppszServer
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (ppszServer)
 				*ppszServer = nullptr;
@@ -196,24 +195,19 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathIsUNCEx, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		BOOL
-		WINAPI
-		PathCchIsRoot(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		4,
+		BOOL,
+		WINAPI,
+		PathCchIsRoot,
 			_In_opt_ PCWSTR pszPath
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			// NULL or ""
 			if (pszPath == nullptr || pszPath[0] == L'\0')
@@ -295,27 +289,22 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchIsRoot, 4);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchAddBackslashEx(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		16,
+		HRESULT,
+		WINAPI,
+		PathCchAddBackslashEx,
 			_Inout_updates_(cchPath) PWSTR pszPath,
 			_In_ size_t cchPath,
 			_Outptr_opt_result_buffer_(*pcchRemaining) PWSTR* ppszEnd,
 			_Out_opt_ size_t* pcchRemaining
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (ppszEnd)
 				*ppszEnd = nullptr;
@@ -368,50 +357,40 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchAddBackslashEx, 16);
-
-#endif
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchAddBackslash(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		8,
+		HRESULT,
+		WINAPI,
+		PathCchAddBackslash,
 			_Inout_updates_(cchPath) PWSTR pszPath,
 			_In_ size_t cchPath
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			return Thunks::PathCchAddBackslashEx(pszPath, cchPath, nullptr, nullptr);
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchAddBackslash, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchRemoveBackslashEx(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		16,
+		HRESULT,
+		WINAPI,
+		PathCchRemoveBackslashEx,
 			_Inout_updates_(_Inexpressible_(cchPath)) PWSTR pszPath,
 			_In_ size_t cchPath,
 			_Outptr_opt_result_buffer_(*pcchRemaining) PWSTR* ppszEnd,
 			_Out_opt_ size_t* pcchRemaining
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (ppszEnd)
 				*ppszEnd = nullptr;
@@ -456,49 +435,39 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchRemoveBackslashEx, 16);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchRemoveBackslash(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		8,
+		HRESULT,
+		WINAPI,
+		PathCchRemoveBackslash,
 			_Inout_updates_(cchPath) PWSTR pszPath,
 			_In_ size_t cchPath
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			return Thunks::PathCchRemoveBackslashEx(pszPath, cchPath, nullptr, nullptr);
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchRemoveBackslash, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchSkipRoot(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		8,
+		HRESULT,
+		WINAPI,
+		PathCchSkipRoot,
 			_In_ PCWSTR pszPath,
 			_Outptr_ PCWSTR* ppszRootEnd
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (pszPath == nullptr || *pszPath == L'\0' || ppszRootEnd == nullptr)
 				return E_INVALIDARG;
@@ -561,25 +530,20 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchSkipRoot, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchStripToRoot(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		8,
+		HRESULT,
+		WINAPI,
+		PathCchStripToRoot,
 			_Inout_updates_(_Inexpressible_(cchPath)) PWSTR pszPath,
 			_In_ size_t cchPath
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (pszPath == nullptr || cchPath == 0 || cchPath > PATHCCH_MAX_CCH)
 				return E_INVALIDARG;
@@ -623,25 +587,20 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchStripToRoot, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchRemoveFileSpec(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		8,
+		HRESULT,
+		WINAPI,
+		PathCchRemoveFileSpec,
 			_Inout_updates_(_Inexpressible_(cchPath)) PWSTR pszPath,
 			_In_ size_t cchPath
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (pszPath == nullptr || cchPath == 0 || cchPath > PATHCCH_MAX_CCH)
 				return E_INVALIDARG;
@@ -685,26 +644,21 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchRemoveFileSpec, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchFindExtension(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		12,
+		HRESULT,
+		WINAPI,
+		PathCchFindExtension,
 			_In_reads_(_Inexpressible_(cchPath)) PCWSTR pszPath,
 			_In_ size_t cchPath,
 			_Outptr_ PCWSTR* ppszExt
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if(ppszExt == nullptr)
 				return E_INVALIDARG;
@@ -744,26 +698,21 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchFindExtension, 12);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchAddExtension(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		12,
+		HRESULT,
+		WINAPI,
+		PathCchAddExtension,
 			_Inout_updates_(cchPath) PWSTR pszPath,
 			_In_ size_t cchPath,
 			_In_ PCWSTR pszExt
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (pszPath == nullptr || cchPath == 0 || cchPath > PATHCCH_MAX_CCH || internal::IsValidExtensionWorker(pszExt) == false)
 			{
@@ -848,26 +797,21 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchAddExtension, 12);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchRenameExtension(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		12,
+		HRESULT,
+		WINAPI,
+		PathCchRenameExtension,
 			_Inout_updates_(cchPath) PWSTR pszPath,
 			_In_ size_t cchPath,
 			_In_ PCWSTR pszExt
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (pszPath == nullptr || cchPath == 0 || cchPath > PATHCCH_MAX_CCH || internal::IsValidExtensionWorker(pszExt) == false)
 				return E_INVALIDARG;
@@ -935,25 +879,20 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchRenameExtension, 12);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchRemoveExtension(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		8,
+		HRESULT,
+		WINAPI,
+		PathCchRemoveExtension,
 			_Inout_updates_(_Inexpressible_(cchPath)) PWSTR pszPath,
 			_In_ size_t cchPath
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (pszPath == nullptr || cchPath == 0 || cchPath > PATHCCH_MAX_CCH)
 				return E_INVALIDARG;
@@ -985,28 +924,23 @@ namespace YY
 			}
 		}
 #endif
-
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchRemoveExtension, 8);
-
-#endif
 		
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		APIENTRY
-		PathCchCanonicalizeEx(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		16,
+		HRESULT,
+		APIENTRY,
+		PathCchCanonicalizeEx,
 			_Out_writes_(cchPathOut) PWSTR pszPathOut,
 			_In_ size_t cchPathOut,
 			_In_ PCWSTR pszPathIn,
 			_In_ ULONG dwFlags
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (const auto pPathCchCanonicalizeEx = try_get_PathCchCanonicalizeEx())
 			{
@@ -1369,53 +1303,43 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchCanonicalizeEx, 16);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchCanonicalize(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		12,
+		HRESULT,
+		WINAPI,
+		PathCchCanonicalize,
 			_Out_writes_(cchPathOut) PWSTR pszPathOut,
 			_In_ size_t cchPathOut,
 			_In_ PCWSTR pszPathIn
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			return PathCchCanonicalizeEx(pszPathOut, cchPathOut, pszPathIn, 0);
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchCanonicalize, 12);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchCombineEx(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		20,
+		HRESULT,
+		WINAPI,
+		PathCchCombineEx,
 			_Out_writes_(cchPathOut) PWSTR pszPathOut,
 			_In_ size_t cchPathOut,
 			_In_opt_ PCWSTR pszPathIn,
 			_In_opt_ PCWSTR pszMore,
 			_In_ ULONG dwFlags
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (pszPathOut == nullptr
 				|| cchPathOut == 0
@@ -1558,52 +1482,43 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchCombineEx, 20);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchCombine(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		16,
+		HRESULT,
+		WINAPI,
+		PathCchCombine,
 			_Out_writes_(cchPathOut) PWSTR pszPathOut,
 			_In_ size_t cchPathOut,
 			_In_opt_ PCWSTR pszPathIn,
 			_In_opt_ PCWSTR pszMore
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			return PathCchCombineEx(pszPathOut, cchPathOut, pszPathIn, pszMore, 0);
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchCombine, 16);
-
-#endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchAppendEx(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		16,
+		HRESULT,
+		WINAPI,
+		PathCchAppendEx,
 			_Inout_updates_(cchPath) PWSTR pszPath,
 			_In_ size_t cchPath,
 			_In_opt_ PCWSTR pszMore,
 			_In_ ULONG dwFlags
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (pszMore && PathIsUNCEx(pszMore, nullptr) == false && internal::IsExtendedLengthDosDevicePath(pszMore) == false)
 			{
@@ -1615,50 +1530,40 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchAppendEx, 16);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchAppend(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		12,
+		HRESULT,
+		WINAPI,
+		PathCchAppend,
 			_Inout_updates_(cchPath) PWSTR pszPath,
 			_In_ size_t cchPath,
 			_In_opt_ PCWSTR pszMore
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			return PathCchAppendEx(pszPath, cchPath, pszMore, 0);
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchAppend, 12);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathCchStripPrefix(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		8,
+		HRESULT,
+		WINAPI,
+		PathCchStripPrefix,
 			_Inout_updates_(cchPath) PWSTR pszPath,
 			_In_ size_t cchPath
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (pszPath == nullptr || cchPath == 0 || cchPath > PATHCCH_MAX_CCH)
 				return E_INVALIDARG;
@@ -1691,27 +1596,22 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathCchStripPrefix, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathAllocCombine(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		16,
+		HRESULT,
+		WINAPI,
+		PathAllocCombine,
 			_In_opt_ PCWSTR pszPathIn,
 			_In_opt_ PCWSTR pszMore,
 			_In_ ULONG dwFlags,
 			_Outptr_ PWSTR* ppszPathOut
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (const auto pPathAllocCombine = try_get_PathAllocCombine())
 			{
@@ -1780,29 +1680,23 @@ namespace YY
 
 			return hr;
 		}
-
-#endif
-
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathAllocCombine, 16);
-
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
 		//Minimum supported client	Windows 8 [desktop apps | UWP apps]
 		//Minimum supported server	Windows Server 2012 [desktop apps | UWP apps]
-
-		EXTERN_C
-		HRESULT
-		WINAPI
-		PathAllocCanonicalize(
+		__DEFINE_THUNK(
+		api_ms_win_core_path_l1_1_0,
+		12,
+		HRESULT,
+		WINAPI,
+		PathAllocCanonicalize,
 			_In_ PCWSTR pszPathIn,
 			_In_ ULONG dwFlags,
 			_Outptr_ PWSTR* ppszPathOut
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (const auto pPathAllocCanonicalize = try_get_PathAllocCanonicalize())
 			{
@@ -1861,10 +1755,6 @@ namespace YY
 
 			return hr;
 		}
-#endif
-
-		__YY_Thunks_Expand_Function(api_ms_win_core_path_l1_1_0, PathAllocCanonicalize, 12);
-
 #endif
 
 	}

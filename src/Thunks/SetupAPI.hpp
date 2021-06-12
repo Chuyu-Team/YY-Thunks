@@ -5,7 +5,7 @@ namespace YY
 {
 	namespace Thunks
 	{
-#ifdef YY_Thunks_Defined
+#ifdef YY_Thunks_Implemented
         namespace internal
         {
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
@@ -111,12 +111,14 @@ namespace YY
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-        //Available in Windows Vista and later versions of Windows.
 
-        EXTERN_C
-		BOOL
-        WINAPI
-        SetupDiGetDevicePropertyW(
+        //Available in Windows Vista and later versions of Windows.
+        __DEFINE_THUNK(
+        setupapi,
+        32,
+		BOOL,
+        WINAPI,
+        SetupDiGetDevicePropertyW,
             _In_         HDEVINFO         DeviceInfoSet,
             _In_         PSP_DEVINFO_DATA DeviceInfoData,
             _In_   CONST DEVPROPKEY      *PropertyKey,
@@ -126,9 +128,6 @@ namespace YY
             _Out_opt_    PDWORD           RequiredSize,
             _In_         DWORD            Flags
             )
-#ifdef YY_Thunks_Defined
-            ;
-#else
         {
             if(const auto pSetupDiGetDevicePropertyW = try_get_SetupDiGetDevicePropertyW())
             {
@@ -162,19 +161,18 @@ namespace YY
 
             return TRUE;
         }
-#endif
-        __YY_Thunks_Expand_Function(setupapi, SetupDiGetDevicePropertyW, 32);
-
 #endif //!YY_Thunks_Support_Version < NTDDI_WIN6
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-        //Available in Windows Vista and later versions of Windows.
 
-        EXTERN_C
-        BOOL
-        WINAPI
-        SetupDiSetDevicePropertyW(
+        //Available in Windows Vista and later versions of Windows.
+        __DEFINE_THUNK(
+        setupapi,
+        28,
+        BOOL,
+        WINAPI,
+        SetupDiSetDevicePropertyW,
             _In_         HDEVINFO         DeviceInfoSet,
             _In_         PSP_DEVINFO_DATA DeviceInfoData,
             _In_   CONST DEVPROPKEY      *PropertyKey,
@@ -183,9 +181,6 @@ namespace YY
             _In_         DWORD            PropertyBufferSize,
             _In_         DWORD            Flags
             )
-#ifdef YY_Thunks_Defined
-            ;
-#else
         {
             if (const auto pSetupDiSetDevicePropertyW = try_get_SetupDiSetDevicePropertyW())
             {
@@ -217,16 +212,17 @@ namespace YY
             return SetupDiSetDeviceRegistryPropertyW(DeviceInfoSet, DeviceInfoData, Property, PropertyBuffer, PropertyBufferSize);
         }
 #endif
-        __YY_Thunks_Expand_Function(setupapi, SetupDiSetDevicePropertyW, 28);
-#endif
+
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-        //Available in Windows Vista and later versions of Windows.
 
-        EXTERN_C
-        BOOL
-        WINAPI
-        SetupDiGetClassPropertyW(
+        //Available in Windows Vista and later versions of Windows.
+        __DEFINE_THUNK(
+        setupapi,
+        28,
+        BOOL,
+        WINAPI,
+        SetupDiGetClassPropertyW,
             _In_   CONST GUID            *ClassGuid,
             _In_   CONST DEVPROPKEY      *PropertyKey,
             _Out_        DEVPROPTYPE     *PropertyType,
@@ -235,9 +231,6 @@ namespace YY
             _Out_opt_    PDWORD           RequiredSize,
             _In_         DWORD            Flags
             )
-#ifdef YY_Thunks_Defined
-            ;
-#else
         {
             if(const auto pSetupDiGetClassPropertyW = try_get_SetupDiGetClassPropertyW())
             {
@@ -268,16 +261,16 @@ namespace YY
         }
 #endif
 
-        __YY_Thunks_Expand_Function(setupapi, SetupDiGetClassPropertyW, 28);
-#endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-        //Available in Windows Vista and later versions of Windows.
 
-        EXTERN_C
-        BOOL
-        WINAPI
-        SetupDiGetClassPropertyExW(
+        //Available in Windows Vista and later versions of Windows.
+        __DEFINE_THUNK(
+        setupapi,
+        36,
+        BOOL,
+        WINAPI,
+        SetupDiGetClassPropertyExW,
             _In_   CONST GUID            *ClassGuid,
             _In_   CONST DEVPROPKEY      *PropertyKey,
             _Out_        DEVPROPTYPE     *PropertyType,
@@ -288,9 +281,6 @@ namespace YY
             _In_opt_     PCWSTR           MachineName,
             _Reserved_   PVOID            Reserved
             )
-#ifdef YY_Thunks_Defined
-            ;
-#else
         {
             if (const auto pSetupDiGetClassPropertyExW = try_get_SetupDiGetClassPropertyExW())
             {
@@ -321,16 +311,16 @@ namespace YY
         }
 #endif
 
-        __YY_Thunks_Expand_Function(setupapi, SetupDiGetClassPropertyExW, 36);
-#endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-        //Available in Windows Vista and later versions of Windows.
 
-        EXTERN_C
-        BOOL
-        WINAPI
-        SetupDiSetClassPropertyW(
+        //Available in Windows Vista and later versions of Windows.
+        __DEFINE_THUNK(
+        setupapi,
+        24,
+        BOOL,
+        WINAPI,
+        SetupDiSetClassPropertyW,
             _In_   CONST GUID            *ClassGuid,
             _In_   CONST DEVPROPKEY      *PropertyKey,
             _In_         DEVPROPTYPE      PropertyType,
@@ -338,9 +328,6 @@ namespace YY
             _In_         DWORD            PropertyBufferSize,
             _In_         DWORD            Flags
             )
-#ifdef YY_Thunks_Defined
-            ;
-#else
         {
             if (const auto pSetupDiSetClassPropertyW = try_get_SetupDiSetClassPropertyW())
             {
@@ -367,16 +354,16 @@ namespace YY
         }
 #endif
 
-        __YY_Thunks_Expand_Function(setupapi, SetupDiSetClassPropertyW, 24);
-#endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-        //Available in Windows Vista and later versions of Windows.
 
-        EXTERN_C
-        BOOL
-        WINAPI
-        SetupDiSetClassPropertyExW(
+        //Available in Windows Vista and later versions of Windows.
+        __DEFINE_THUNK(
+        setupapi,
+        32,
+        BOOL,
+        WINAPI,
+        SetupDiSetClassPropertyExW,
             _In_   CONST GUID            *ClassGuid,
             _In_   CONST DEVPROPKEY      *PropertyKey,
             _In_         DEVPROPTYPE      PropertyType,
@@ -386,9 +373,6 @@ namespace YY
             _In_opt_     PCWSTR           MachineName,
             _Reserved_   PVOID            Reserved
             )
-#ifdef YY_Thunks_Defined
-            ;
-#else
         {
             if (const auto pSetupDiSetClassPropertyExW = try_get_SetupDiSetClassPropertyExW())
             {
@@ -413,8 +397,6 @@ namespace YY
 
             return SetupDiSetClassRegistryPropertyW(ClassGuid, Property, PropertyBuffer, PropertyBufferSize, MachineName, Reserved);
         }
-#endif
-        __YY_Thunks_Expand_Function(setupapi, SetupDiSetClassPropertyExW, 32);
 #endif
 
 

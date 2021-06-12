@@ -8,16 +8,15 @@ namespace YY
 #if (YY_Thunks_Support_Version < NTDDI_WINXPSP2)
 
 		//Windows Vista, Windows XP Professional x64 Edition, Windows XP with SP2, Windows Server 2003
-		EXTERN_C
-		BOOL
-		WINAPI
-		GetNumaNodeProcessorMask(
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+		WINAPI,
+		GetNumaNodeProcessorMask,
 			_In_  UCHAR Node,
 			_Out_ PULONGLONG ProcessorMask
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (auto pGetNumaNodeProcessorMask = try_get_GetNumaNodeProcessorMask())
 			{
@@ -44,24 +43,19 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(kernel32, GetNumaNodeProcessorMask, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
 		//Windows 7, Windows Server 2008 R2
-		EXTERN_C
-		BOOL
-		WINAPI
-		GetNumaNodeProcessorMaskEx(
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+		WINAPI,
+		GetNumaNodeProcessorMaskEx,
 			_In_ USHORT Node,
 			_Out_ PGROUP_AFFINITY ProcessorMask
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (auto pGetNumaNodeProcessorMaskEx = try_get_GetNumaNodeProcessorMaskEx())
 			{
@@ -88,25 +82,20 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(kernel32, GetNumaNodeProcessorMaskEx, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
 		//Windows 7, Windows Server 2008 R2
-		EXTERN_C
-		BOOL
-		WINAPI
-		SetThreadGroupAffinity(
+		__DEFINE_THUNK(
+		kernel32,
+		12,
+		BOOL,
+		WINAPI,
+		SetThreadGroupAffinity,
 			_In_ HANDLE hThread,
 			_In_ CONST GROUP_AFFINITY* GroupAffinity,
 			_Out_opt_ PGROUP_AFFINITY PreviousGroupAffinity
 			)
-#ifdef YY_Thunks_Defined
-		;
-#else
 		{
 			if (auto pSetThreadGroupAffinity = try_get_SetThreadGroupAffinity())
 			{
@@ -133,24 +122,19 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(kernel32, SetThreadGroupAffinity, 12);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXPSP2)
 
 		//Windows Vista, Windows XP Professional x64 Edition, Windows XP with SP2 [desktop apps only]
 		//Windows Server 2003 [desktop apps only]
-		EXTERN_C
-		BOOL
-		WINAPI
-		GetNumaHighestNodeNumber(
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		BOOL,
+		WINAPI,
+		GetNumaHighestNodeNumber,
 			_Out_ PULONG HighestNodeNumber
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (auto pGetNumaHighestNodeNumber = try_get_GetNumaHighestNodeNumber())
 			{
@@ -164,25 +148,20 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(kernel32, GetNumaHighestNodeNumber, 4);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
 		//Minimum supported client	Windows 7 [desktop apps only]
 		//Minimum supported server	Windows Server 2008 R2 [desktop apps only]
-		EXTERN_C
-		BOOL
-		WINAPI
-		GetNumaProximityNodeEx(
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+		WINAPI,
+		GetNumaProximityNodeEx,
 			_In_ ULONG ProximityId,
 			_Out_ PUSHORT NodeNumber
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (const auto pGetNumaProximityNodeEx = try_get_GetNumaProximityNodeEx())
 			{
@@ -198,10 +177,6 @@ namespace YY
 
 			return bRet;
 		}
-#endif
-
-		__YY_Thunks_Expand_Function(kernel32, GetNumaProximityNodeEx, 8);
-
 #endif
 
 	}//namespace Thunks

@@ -9,29 +9,23 @@ namespace YY
 		//Minimum supported client	Windows Vista
 		//Minimum supported server	Windows Server 2008
 		//Windows XP有这个API啊……微软文档抽风了？
-		EXTERN_C
-		DWORD
-		WINAPI
-		WTSGetActiveConsoleSessionId(
+		__DEFINE_THUNK(
+		kernel32,
+		0,
+		DWORD,
+		WINAPI,
+		WTSGetActiveConsoleSessionId,
 			VOID
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (const auto pWTSGetActiveConsoleSessionId = try_get_WTSGetActiveConsoleSessionId())
 			{
 				return pWTSGetActiveConsoleSessionId();
 			}
 
-
 			//因为Windows 2000没有会话隔离，所有的进程始终在 0 会话中运行，因此直接返回 0 即可。
 			return 0;
 		}
-#endif
-
-		__YY_Thunks_Expand_Function(kernel32, WTSGetActiveConsoleSessionId, 0);
-
 #endif
 
 
@@ -39,16 +33,15 @@ namespace YY
 
 		//Minimum supported client	Windows Vista, Windows XP Professional x64 Edition, Windows XP with SP2[desktop apps only]
 		//Minimum supported server	Windows Server 2003 [desktop apps only]
-		EXTERN_C
-		BOOL
-		WINAPI
-		GetNumaProcessorNode(
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+		WINAPI,
+		GetNumaProcessorNode,
 			_In_  UCHAR Processor,
 			_Out_ PUCHAR NodeNumber
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (const auto pGetNumaProcessorNode = try_get_GetNumaProcessorNode())
 			{
@@ -75,25 +68,20 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(kernel32, GetNumaProcessorNode, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
 		//Minimum supported client	Windows 7 [desktop apps only]
 		//Minimum supported server	Windows Server 2008 R2 [desktop apps only]
-		EXTERN_C
-		BOOL
-		WINAPI
-		GetNumaNodeNumberFromHandle(
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+		WINAPI,
+		GetNumaNodeNumberFromHandle,
 			_In_  HANDLE hFile,
 			_Out_ PUSHORT NodeNumber
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (const auto pGetNumaNodeNumberFromHandle = try_get_GetNumaNodeNumberFromHandle())
 			{
@@ -107,25 +95,20 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(kernel32, GetNumaNodeNumberFromHandle, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
 		//Minimum supported client	Windows 7 [desktop apps only]
 		//Minimum supported server	Windows Server 2008 R2 [desktop apps only]
-		EXTERN_C
-		BOOL
-		WINAPI
-		GetNumaProcessorNodeEx(
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+		WINAPI,
+		GetNumaProcessorNodeEx,
 			_In_  PPROCESSOR_NUMBER Processor,
 			_Out_ PUSHORT NodeNumber
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (const auto pGetNumaProcessorNodeEx = try_get_GetNumaProcessorNodeEx())
 			{
@@ -157,25 +140,20 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(kernel32, GetNumaProcessorNodeEx, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXPSP2)
 
 		//Minimum supported client	Windows Vista, Windows XP Professional x64 Edition, Windows XP with SP2 [desktop apps only]
 		//Minimum supported server	Windows Server 2003 [desktop apps only]
-		EXTERN_C
-		BOOL
-		WINAPI
-		GetNumaAvailableMemoryNode(
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+		WINAPI,
+		GetNumaAvailableMemoryNode,
 			_In_  UCHAR Node,
 			_Out_ PULONGLONG AvailableBytes
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (const auto pGetNumaAvailableMemoryNode = try_get_GetNumaAvailableMemoryNode())
 			{
@@ -202,25 +180,20 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(kernel32, GetNumaAvailableMemoryNode, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
 		//Minimum supported client	Windows 7 [desktop apps only]
 		//Minimum supported server	Windows Server 2008 R2 [desktop apps only]
-		EXTERN_C
-		BOOL
-		WINAPI
-		GetNumaAvailableMemoryNodeEx(
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+		WINAPI,
+		GetNumaAvailableMemoryNodeEx,
 			_In_  USHORT Node,
 			_Out_ PULONGLONG AvailableBytes
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (const auto pGetNumaAvailableMemoryNodeEx = try_get_GetNumaAvailableMemoryNodeEx())
 			{
@@ -239,25 +212,20 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(kernel32, GetNumaAvailableMemoryNodeEx, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
 		//Minimum supported client	Windows Vista [desktop apps only]
 		//Minimum supported server	Windows Server 2008 [desktop apps only]
-		EXTERN_C
-		BOOL
-		WINAPI
-		GetNumaProximityNode(
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+		WINAPI,
+		GetNumaProximityNode,
 			_In_  ULONG ProximityId,
 			_Out_ PUCHAR NodeNumber
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (const auto pGetNumaProximityNode = try_get_GetNumaProximityNode())
 			{
@@ -271,19 +239,17 @@ namespace YY
 		}
 #endif
 
-		__YY_Thunks_Expand_Function(kernel32, GetNumaProximityNode, 8);
-
-#endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
 		//Minimum supported client	Windows Vista [desktop apps only]
 		//Minimum supported server	Windows Server 2008 [desktop apps only]
-		EXTERN_C
-		LPVOID
-		WINAPI
-		MapViewOfFileExNuma(
+		__DEFINE_THUNK(
+		kernel32,
+		28,
+		LPVOID,
+		WINAPI,
+		MapViewOfFileExNuma,
 			_In_     HANDLE hFileMappingObject,
 			_In_     DWORD dwDesiredAccess,
 			_In_     DWORD dwFileOffsetHigh,
@@ -292,9 +258,6 @@ namespace YY
 			_In_opt_ LPVOID lpBaseAddress,
 			_In_     DWORD nndPreferred
 			)
-#ifdef YY_Thunks_Defined
-			;
-#else
 		{
 			if (const auto pMapViewOfFileExNuma = try_get_MapViewOfFileExNuma())
 			{
@@ -303,10 +266,6 @@ namespace YY
 
 			return MapViewOfFileEx(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap, lpBaseAddress);
 		}
-#endif
-
-		__YY_Thunks_Expand_Function(kernel32, MapViewOfFileExNuma, 28);
-
 #endif
 	}
 }

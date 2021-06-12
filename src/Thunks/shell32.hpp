@@ -6,7 +6,7 @@ namespace YY
 {
 	namespace Thunks
 	{
-#ifndef YY_Thunks_Defined
+#ifdef YY_Thunks_Implemented
 		namespace internal
 		{
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
@@ -421,420 +421,368 @@ namespace YY
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps only]
-//Windows Server 2008 [desktop apps only]
 
-EXTERN_C
-HRESULT
-STDAPICALLTYPE
-SHGetKnownFolderPath(
-	_In_ REFKNOWNFOLDERID rfid,
-	_In_ DWORD /* KNOWN_FOLDER_FLAG */ dwFlags,
-	_In_opt_ HANDLE hToken,
-	_Outptr_ PWSTR* ppszPath
-	)
-#ifdef YY_Thunks_Defined
-;
-#else
-{
-	if (const auto pSHGetKnownFolderPath = try_get_SHGetKnownFolderPath())
-	{
-		return pSHGetKnownFolderPath(rfid, dwFlags, hToken, ppszPath);
-	}
-
-	const auto csidl = internal::KnownFoldersIdToCSIDL(rfid);
-
-	if (csidl == -1)
-	{
-		return __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
-	}
-
-	auto pPathBuffer = (wchar_t*)CoTaskMemAlloc(MAX_PATH * sizeof(wchar_t));
-	if (!pPathBuffer)
-		return E_OUTOFMEMORY;
-
-	auto hr = SHGetFolderPathW(nullptr, csidl, hToken, dwFlags | csidl, pPathBuffer);
-	if (hr != S_OK)
-	{
-		CoTaskMemFree(pPathBuffer);
-		return hr;
-	}
-
-	*ppszPath = pPathBuffer;
-
-	return S_OK;
-}
-#endif
-
-__YY_Thunks_Expand_Function(shell32, SHGetKnownFolderPath, 16);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps only]
-//Windows Server 2008 [desktop apps only]
-
-EXTERN_C
-HRESULT
-STDAPICALLTYPE
-SHSetKnownFolderPath(
-	_In_ REFKNOWNFOLDERID rfid,
-	_In_ DWORD /* KNOWN_FOLDER_FLAG */ dwFlags,
-	_In_opt_ HANDLE hToken,
-	_In_ PCWSTR pszPath
-	)
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (const auto pSHSetKnownFolderPath = try_get_SHSetKnownFolderPath())
-	{
-		return pSHSetKnownFolderPath(rfid, dwFlags, hToken, pszPath);
-	}
-
-	const auto csidl = internal::KnownFoldersIdToCSIDL(rfid);
-
-	if (csidl == -1)
-	{
-		return __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
-	}
-
-	return SHSetFolderPathW(csidl, hToken, dwFlags, pszPath);
-}
-#endif
-
-__YY_Thunks_Expand_Function(shell32, SHSetKnownFolderPath, 16);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps only]
-//Windows Server 2008 [desktop apps only]
-
-EXTERN_C
-HRESULT
-STDAPICALLTYPE
-SHGetKnownFolderIDList(
-	_In_ REFKNOWNFOLDERID rfid,
-	_In_ DWORD /* KNOWN_FOLDER_FLAG */ dwFlags,
-	_In_opt_ HANDLE hToken,
-	_Outptr_ PIDLIST_ABSOLUTE *ppidl
-	)
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (const auto pSHGetKnownFolderIDList = try_get_SHGetKnownFolderIDList())
-	{
-		return pSHGetKnownFolderIDList(rfid, dwFlags, hToken, ppidl);
-	}
-
-	const auto csidl = internal::KnownFoldersIdToCSIDL(rfid);
-
-	if (csidl == -1)
-	{
-		return __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
-	}
-
-	return SHGetFolderLocation(nullptr, csidl, hToken, dwFlags, ppidl);
-}
-#endif
-
-__YY_Thunks_Expand_Function(shell32, SHGetKnownFolderIDList, 16);
-
-#endif
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps only]
-//Windows Server 2008 [desktop apps only]
-
-EXTERN_C
-HRESULT
-STDAPICALLTYPE
-SHBindToFolderIDListParent(
-	_In_opt_ IShellFolder *psfRoot,
-	_In_ PCUIDLIST_RELATIVE pidl,
-	_In_ REFIID riid,
-	_Outptr_ void **ppv,
-	_Outptr_opt_ PCUITEMID_CHILD *ppidlLast
-	)
-#ifdef YY_Thunks_Defined
-;
-#else
-{
-	if (const auto pSHBindToFolderIDListParent = try_get_SHBindToFolderIDListParent())
-	{
-		return pSHBindToFolderIDListParent(psfRoot, pidl, riid, ppv, ppidlLast);
-	}
-
-	return internal::SHBindToFolderIDListParentEx(psfRoot, pidl, nullptr, riid, ppv, ppidlLast);
-}
-#endif
-
-__YY_Thunks_Expand_Function(shell32, SHBindToFolderIDListParent, 20);
-
-#endif
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps only]
-//Windows Server 2008 [desktop apps only]
-
-EXTERN_C
-HRESULT
-STDAPICALLTYPE
-SHBindToFolderIDListParentEx(
-	_In_opt_ IShellFolder *psfRoot,
-	_In_ PCUIDLIST_RELATIVE pidl,
-	_In_opt_ IBindCtx *ppbc,
-	_In_ REFIID riid,
-	_Outptr_ void **ppv,
-	_Outptr_opt_ PCUITEMID_CHILD *ppidlLast
-	)
-#ifdef YY_Thunks_Defined
-;
-#else
-{
-	if (const auto pSHBindToFolderIDListParentEx = try_get_SHBindToFolderIDListParentEx())
-	{
-		return pSHBindToFolderIDListParentEx(psfRoot, pidl, ppbc, riid, ppv, ppidlLast);
-	}
-
-	return internal::SHBindToFolderIDListParentEx(psfRoot, pidl, ppbc, riid, ppv, ppidlLast);
-}
-#endif
-
-__YY_Thunks_Expand_Function(shell32, SHBindToFolderIDListParentEx, 24);
-
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps only]
-//Windows Server 2008 [desktop apps only]
-
-EXTERN_C
-HRESULT
-STDAPICALLTYPE
-SHBindToObject(
-	_In_opt_ IShellFolder *psf,
-	_In_ PCUIDLIST_RELATIVE pidl,
-	_In_opt_ IBindCtx *pbc,
-	_In_ REFIID riid,
-	_Outptr_ void **ppv
-	)
-#ifdef YY_Thunks_Defined
-;
-#else
-{
-	if (const auto pSHBindToObject = try_get_SHBindToObject())
-	{
-		return pSHBindToObject(psf, pidl, pbc, riid, ppv);
-	}
-
-	return internal::SHBindToObject(psf, pidl, pbc, riid, ppv);
-}
-#endif
-
-__YY_Thunks_Expand_Function(shell32, SHBindToObject, 20);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps only]
-//Windows Server 2008 [desktop apps only]
-
-EXTERN_C
-HRESULT
-STDAPICALLTYPE
-SHCreateItemFromIDList(
-	_In_ PCIDLIST_ABSOLUTE pidl,
-	_In_ REFIID riid,
-	_Outptr_ void **ppv
-	)
-#ifdef YY_Thunks_Defined
-;
-#else
-{
-	if (const auto pSHCreateItemFromIDList = try_get_SHCreateItemFromIDList())
-	{
-		return pSHCreateItemFromIDList(pidl, riid, ppv);
-	}
-
-	
-	return internal::SHCreateItemFromIDList(pidl, riid, ppv);
-}
-#endif
-
-__YY_Thunks_Expand_Function(shell32, SHCreateItemFromIDList, 12);
-
-#endif
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps only]
-//Windows Server 2008 [desktop apps only]
-
-EXTERN_C
-HRESULT
-STDAPICALLTYPE
-SHCreateItemWithParent(
-	_In_opt_ PCIDLIST_ABSOLUTE pidlParent,
-	_In_opt_ IShellFolder *psfParent,
-	_In_ PCUITEMID_CHILD pidl,
-	_In_ REFIID riid,
-	_Outptr_ void **ppvItem
-	)
-#ifdef YY_Thunks_Defined
-;
-#else
-{
-	if (const auto pSHCreateItemWithParent = try_get_SHCreateItemWithParent())
-	{
-		return pSHCreateItemWithParent(pidlParent, psfParent, pidl, riid, ppvItem);
-	}
-
-	return internal::SHCreateItemWithParent(pidlParent, psfParent, pidl, riid, ppvItem);
-}
-
-#endif
-
-__YY_Thunks_Expand_Function(shell32, SHCreateItemWithParent, 20);
-
-#endif
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps only]
-//Windows Server 2008 [desktop apps only]
-
-EXTERN_C
-HRESULT
-STDAPICALLTYPE
-SHCreateItemFromRelativeName(
-	_In_ IShellItem *psiParent,
-	_In_ PCWSTR pszName,
-	_In_opt_ IBindCtx* pbc,
-	_In_ REFIID riid,
-	_Outptr_ void **ppv
-	)
-#ifdef YY_Thunks_Defined
-;
-#else
-{
-	if (const auto pSHCreateItemFromRelativeName = try_get_SHCreateItemFromRelativeName())
-	{
-		return pSHCreateItemFromRelativeName(psiParent, pszName, pbc, riid, ppv);
-	}
-
-	*ppv = nullptr;
-
-	IShellFolder* pShellFolder;
-
-	auto hr = psiParent->BindToHandler(nullptr, BHID_SFObject, __uuidof(pShellFolder), (void**)&pShellFolder);
-
-	if (SUCCEEDED(hr))
-	{
-		PIDLIST_RELATIVE pidl;
-
-		hr = internal::ParseDisplayNameChild(pShellFolder, nullptr, pbc, (LPWSTR)pszName, nullptr, &pidl, nullptr);
-
-
-		if (SUCCEEDED(hr))
+		//Windows Vista [desktop apps only]
+		//Windows Server 2008 [desktop apps only]
+		__DEFINE_THUNK(
+		shell32,
+		16,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHGetKnownFolderPath,
+			_In_ REFKNOWNFOLDERID rfid,
+			_In_ DWORD /* KNOWN_FOLDER_FLAG */ dwFlags,
+			_In_opt_ HANDLE hToken,
+			_Outptr_ PWSTR* ppszPath
+			)
 		{
-			hr = internal::SHCreateItemWithParent(nullptr, pShellFolder, pidl, riid, ppv);
-			ILFree(pidl);
+			if (const auto pSHGetKnownFolderPath = try_get_SHGetKnownFolderPath())
+			{
+				return pSHGetKnownFolderPath(rfid, dwFlags, hToken, ppszPath);
+			}
+
+			const auto csidl = internal::KnownFoldersIdToCSIDL(rfid);
+
+			if (csidl == -1)
+			{
+				return __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+			}
+
+			auto pPathBuffer = (wchar_t*)CoTaskMemAlloc(MAX_PATH * sizeof(wchar_t));
+			if (!pPathBuffer)
+				return E_OUTOFMEMORY;
+
+			auto hr = SHGetFolderPathW(nullptr, csidl, hToken, dwFlags | csidl, pPathBuffer);
+			if (hr != S_OK)
+			{
+				CoTaskMemFree(pPathBuffer);
+				return hr;
+			}
+
+			*ppszPath = pPathBuffer;
+
+			return S_OK;
 		}
-
-		pShellFolder->Release();
-	}
-
-	return hr;
-}
 #endif
 
-__YY_Thunks_Expand_Function(shell32, SHCreateItemFromRelativeName, 20);
-
-#endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps only]
-//Windows Server 2008 [desktop apps only]
 
-EXTERN_C
-HRESULT
-STDAPICALLTYPE
-SHGetNameFromIDList(
-	_In_ PCIDLIST_ABSOLUTE pidl,
-	_In_ SIGDN sigdnName,
-	_Outptr_ PWSTR *ppszName
-	)
-#ifdef YY_Thunks_Defined
-;
-#else
-{
-	if (const auto pSHGetNameFromIDList = try_get_SHGetNameFromIDList())
-	{
-		return pSHGetNameFromIDList(pidl, sigdnName, ppszName);
-	}
+		//Windows Vista [desktop apps only]
+		//Windows Server 2008 [desktop apps only]
+		__DEFINE_THUNK(
+		shell32,
+		16,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHSetKnownFolderPath,
+			_In_ REFKNOWNFOLDERID rfid,
+			_In_ DWORD /* KNOWN_FOLDER_FLAG */ dwFlags,
+			_In_opt_ HANDLE hToken,
+			_In_ PCWSTR pszPath
+			)
+		{
+			if (const auto pSHSetKnownFolderPath = try_get_SHSetKnownFolderPath())
+			{
+				return pSHSetKnownFolderPath(rfid, dwFlags, hToken, pszPath);
+			}
 
-	*ppszName = NULL;
+			const auto csidl = internal::KnownFoldersIdToCSIDL(rfid);
 
-	IShellItem* ppsi;
+			if (csidl == -1)
+			{
+				return __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+			}
 
-	
-	auto hr = internal::SHCreateItemFromIDList(pidl, __uuidof(ppsi), (void**)&ppsi);
-
-	if (SUCCEEDED(hr))
-	{
-		hr = ppsi->GetDisplayName(sigdnName, ppszName);
-
-		ppsi->Release();
-	}
-
-	return hr;
-}
+			return SHSetFolderPathW(csidl, hToken, dwFlags, pszPath);
+		}
 #endif
 
-__YY_Thunks_Expand_Function(shell32, SHGetNameFromIDList, 12);
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps only]
+		//Windows Server 2008 [desktop apps only]
+		__DEFINE_THUNK(
+		shell32,
+		16,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHGetKnownFolderIDList,
+			_In_ REFKNOWNFOLDERID rfid,
+			_In_ DWORD /* KNOWN_FOLDER_FLAG */ dwFlags,
+			_In_opt_ HANDLE hToken,
+			_Outptr_ PIDLIST_ABSOLUTE *ppidl
+			)
+		{
+			if (const auto pSHGetKnownFolderIDList = try_get_SHGetKnownFolderIDList())
+			{
+				return pSHGetKnownFolderIDList(rfid, dwFlags, hToken, ppidl);
+			}
+
+			const auto csidl = internal::KnownFoldersIdToCSIDL(rfid);
+
+			if (csidl == -1)
+			{
+				return __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+			}
+
+			return SHGetFolderLocation(nullptr, csidl, hToken, dwFlags, ppidl);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps only]
+		//Windows Server 2008 [desktop apps only]
+		__DEFINE_THUNK(
+		shell32,
+		20,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHBindToFolderIDListParent,
+			_In_opt_ IShellFolder *psfRoot,
+			_In_ PCUIDLIST_RELATIVE pidl,
+			_In_ REFIID riid,
+			_Outptr_ void **ppv,
+			_Outptr_opt_ PCUITEMID_CHILD *ppidlLast
+			)
+		{
+			if (const auto pSHBindToFolderIDListParent = try_get_SHBindToFolderIDListParent())
+			{
+				return pSHBindToFolderIDListParent(psfRoot, pidl, riid, ppv, ppidlLast);
+			}
+
+			return internal::SHBindToFolderIDListParentEx(psfRoot, pidl, nullptr, riid, ppv, ppidlLast);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps only]
+		//Windows Server 2008 [desktop apps only]
+		__DEFINE_THUNK(
+		shell32,
+		24,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHBindToFolderIDListParentEx,
+			_In_opt_ IShellFolder *psfRoot,
+			_In_ PCUIDLIST_RELATIVE pidl,
+			_In_opt_ IBindCtx *ppbc,
+			_In_ REFIID riid,
+			_Outptr_ void **ppv,
+			_Outptr_opt_ PCUITEMID_CHILD *ppidlLast
+			)
+		{
+			if (const auto pSHBindToFolderIDListParentEx = try_get_SHBindToFolderIDListParentEx())
+			{
+				return pSHBindToFolderIDListParentEx(psfRoot, pidl, ppbc, riid, ppv, ppidlLast);
+			}
+
+			return internal::SHBindToFolderIDListParentEx(psfRoot, pidl, ppbc, riid, ppv, ppidlLast);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps only]
+		//Windows Server 2008 [desktop apps only]
+		__DEFINE_THUNK(
+		shell32,
+		20,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHBindToObject,
+			_In_opt_ IShellFolder *psf,
+			_In_ PCUIDLIST_RELATIVE pidl,
+			_In_opt_ IBindCtx *pbc,
+			_In_ REFIID riid,
+			_Outptr_ void **ppv
+			)
+		{
+			if (const auto pSHBindToObject = try_get_SHBindToObject())
+			{
+				return pSHBindToObject(psf, pidl, pbc, riid, ppv);
+			}
+
+			return internal::SHBindToObject(psf, pidl, pbc, riid, ppv);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps only]
+		//Windows Server 2008 [desktop apps only]
+		__DEFINE_THUNK(
+		shell32,
+		12,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHCreateItemFromIDList,
+			_In_ PCIDLIST_ABSOLUTE pidl,
+			_In_ REFIID riid,
+			_Outptr_ void **ppv
+			)
+		{
+			if (const auto pSHCreateItemFromIDList = try_get_SHCreateItemFromIDList())
+			{
+				return pSHCreateItemFromIDList(pidl, riid, ppv);
+			}
+
+	
+			return internal::SHCreateItemFromIDList(pidl, riid, ppv);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps only]
+		//Windows Server 2008 [desktop apps only]
+		__DEFINE_THUNK(
+		shell32,
+		20,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHCreateItemWithParent,
+			_In_opt_ PCIDLIST_ABSOLUTE pidlParent,
+			_In_opt_ IShellFolder *psfParent,
+			_In_ PCUITEMID_CHILD pidl,
+			_In_ REFIID riid,
+			_Outptr_ void **ppvItem
+			)
+		{
+			if (const auto pSHCreateItemWithParent = try_get_SHCreateItemWithParent())
+			{
+				return pSHCreateItemWithParent(pidlParent, psfParent, pidl, riid, ppvItem);
+			}
+
+			return internal::SHCreateItemWithParent(pidlParent, psfParent, pidl, riid, ppvItem);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps only]
+		//Windows Server 2008 [desktop apps only]
+		__DEFINE_THUNK(
+		shell32,
+		20,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHCreateItemFromRelativeName,
+			_In_ IShellItem *psiParent,
+			_In_ PCWSTR pszName,
+			_In_opt_ IBindCtx* pbc,
+			_In_ REFIID riid,
+			_Outptr_ void **ppv
+			)
+		{
+			if (const auto pSHCreateItemFromRelativeName = try_get_SHCreateItemFromRelativeName())
+			{
+				return pSHCreateItemFromRelativeName(psiParent, pszName, pbc, riid, ppv);
+			}
+
+			*ppv = nullptr;
+
+			IShellFolder* pShellFolder;
+
+			auto hr = psiParent->BindToHandler(nullptr, BHID_SFObject, __uuidof(pShellFolder), (void**)&pShellFolder);
+
+			if (SUCCEEDED(hr))
+			{
+				PIDLIST_RELATIVE pidl;
+
+				hr = internal::ParseDisplayNameChild(pShellFolder, nullptr, pbc, (LPWSTR)pszName, nullptr, &pidl, nullptr);
+
+
+				if (SUCCEEDED(hr))
+				{
+					hr = internal::SHCreateItemWithParent(nullptr, pShellFolder, pidl, riid, ppv);
+					ILFree(pidl);
+				}
+
+				pShellFolder->Release();
+			}
+
+			return hr;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps only]
+		//Windows Server 2008 [desktop apps only]
+		__DEFINE_THUNK(
+		shell32,
+		12,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHGetNameFromIDList,
+			_In_ PCIDLIST_ABSOLUTE pidl,
+			_In_ SIGDN sigdnName,
+			_Outptr_ PWSTR *ppszName
+			)
+		{
+			if (const auto pSHGetNameFromIDList = try_get_SHGetNameFromIDList())
+			{
+				return pSHGetNameFromIDList(pidl, sigdnName, ppszName);
+			}
+
+			*ppszName = NULL;
+
+			IShellItem* ppsi;
+
+	
+			auto hr = internal::SHCreateItemFromIDList(pidl, __uuidof(ppsi), (void**)&ppsi);
+
+			if (SUCCEEDED(hr))
+			{
+				hr = ppsi->GetDisplayName(sigdnName, ppszName);
+
+				ppsi->Release();
+			}
+
+			return hr;
+		}
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXPSP1)
-//Windows XP with SP1 [desktop apps only] 
-//Windows Server 2003 [desktop apps only]
 
-EXTERN_C
-HRESULT
-STDAPICALLTYPE
-SHCreateShellItem(
-	_In_opt_ PCIDLIST_ABSOLUTE pidlParent,
-	_In_opt_ IShellFolder *psfParent,
-	_In_ PCUITEMID_CHILD pidl,
-	_Outptr_ IShellItem **ppsi
-	)
-#ifdef YY_Thunks_Defined
-;
-#else
-{
-	if (const auto pSHCreateShellItem = try_get_SHCreateShellItem())
-	{
-		return pSHCreateShellItem(pidlParent, psfParent, pidl, ppsi);
-	}
+		//Windows XP with SP1 [desktop apps only] 
+		//Windows Server 2003 [desktop apps only]
+		__DEFINE_THUNK(
+		shell32,
+		16,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHCreateShellItem,
+			_In_opt_ PCIDLIST_ABSOLUTE pidlParent,
+			_In_opt_ IShellFolder *psfParent,
+			_In_ PCUITEMID_CHILD pidl,
+			_Outptr_ IShellItem **ppsi
+			)
+		{
+			if (const auto pSHCreateShellItem = try_get_SHCreateShellItem())
+			{
+				return pSHCreateShellItem(pidlParent, psfParent, pidl, ppsi);
+			}
 	
-	*ppsi = nullptr;
+			*ppsi = nullptr;
 
-	if (pidlParent || psfParent)
-		return internal::SHCreateItemWithParent(pidlParent, psfParent, pidl, __uuidof(IShellItem), (void**)ppsi);
-	else
-		return internal::SHCreateItemFromIDList(pidl, __uuidof(IShellItem), (void**)ppsi);
-}
-#endif
-
-__YY_Thunks_Expand_Function(shell32, SHCreateShellItem, 16);
-
+			if (pidlParent || psfParent)
+				return internal::SHCreateItemWithParent(pidlParent, psfParent, pidl, __uuidof(IShellItem), (void**)ppsi);
+			else
+				return internal::SHCreateItemFromIDList(pidl, __uuidof(IShellItem), (void**)ppsi);
+		}
 #endif
 
 	}//namespace Thunks

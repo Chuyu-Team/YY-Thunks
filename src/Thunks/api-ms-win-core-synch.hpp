@@ -1,6 +1,6 @@
 ﻿
 
-#ifndef YY_Thunks_Defined
+#ifdef YY_Thunks_Implemented
 
 //读写锁参考了https://blog.csdn.net/yichigo/article/details/36898561
 #define YY_SRWLOCK_OWNED_BIT           0
@@ -89,7 +89,7 @@ namespace YY
 {
 	namespace Thunks
 	{
-#ifndef YY_Thunks_Defined
+#ifdef YY_Thunks_Implemented
 		namespace internal
 		{
 			static HANDLE __fastcall GetGlobalKeyedEventHandle()
@@ -1216,521 +1216,924 @@ namespace YY
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista, Windows Server 2008
 
-EXTERN_C
-BOOL
-WINAPI
-InitializeCriticalSectionEx(
-    _Out_ LPCRITICAL_SECTION lpCriticalSection,
-    _In_ DWORD dwSpinCount,
-    _In_ DWORD Flags
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pInitializeCriticalSectionEx = try_get_InitializeCriticalSectionEx())
-	{
-		return pInitializeCriticalSectionEx(lpCriticalSection, dwSpinCount, Flags);
-	}
-
-	return InitializeCriticalSectionAndSpinCount(lpCriticalSection, dwSpinCount);
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, InitializeCriticalSectionEx, 12);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-VOID
-WINAPI
-InitOnceInitialize(
-    _Out_ PINIT_ONCE InitOnce
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	*InitOnce = INIT_ONCE_STATIC_INIT;
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, InitOnceInitialize, 4);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-BOOL
-WINAPI
-InitOnceBeginInitialize(
-    _Inout_ LPINIT_ONCE lpInitOnce,
-    _In_ DWORD dwFlags,
-    _Out_ PBOOL fPending,
-    _Outptr_opt_result_maybenull_ LPVOID* lpContext
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pInitOnceBeginInitialize = try_get_InitOnceBeginInitialize())
-	{
-		return pInitOnceBeginInitialize(lpInitOnce, dwFlags, fPending, lpContext);
-	}
-
-	auto Status = internal::RtlRunOnceBeginInitialize(lpInitOnce, dwFlags, lpContext);
-
-	if (Status >= STATUS_SUCCESS)
-	{
-		*fPending = Status == STATUS_PENDING;
-		return TRUE;
-	}
-	else
-	{
-		internal::BaseSetLastNTError(Status);
-		return FALSE;
-	}
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, InitOnceBeginInitialize, 16);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-BOOL
-WINAPI
-InitOnceComplete(
-    _Inout_ LPINIT_ONCE lpInitOnce,
-    _In_ DWORD dwFlags,
-    _In_opt_ LPVOID lpContext
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pInitOnceComplete = try_get_InitOnceComplete())
-	{
-		return pInitOnceComplete(lpInitOnce, dwFlags, lpContext);
-	}
-	
-	auto Status = internal::RtlRunOnceComplete(lpInitOnce, dwFlags, lpContext);
-
-	if (Status >= 0)
-	{
-		return TRUE;
-	}
-	else
-	{
-		internal::BaseSetLastNTError(Status);
-		return FALSE;
-	}
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, InitOnceComplete, 12);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-BOOL
-WINAPI
-InitOnceExecuteOnce(
-    _Inout_ PINIT_ONCE InitOnce,
-    _In_ __callback PINIT_ONCE_FN InitFn,
-    _Inout_opt_ PVOID Parameter,
-    _Outptr_opt_result_maybenull_ LPVOID* Context
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pInitOnceExecuteOnce = try_get_InitOnceExecuteOnce())
-	{
-		return pInitOnceExecuteOnce(InitOnce, InitFn, Parameter, Context);
-	}
-
-	auto Status = internal::RtlRunOnceBeginInitialize(InitOnce, 0, Context);
-
-	ULONG_PTR ExceptionArgument;
-
-	do
-	{
-		if (Status < STATUS_SUCCESS)
+		//Windows Vista, Windows Server 2008
+		__DEFINE_THUNK(
+		kernel32,
+		12,
+		BOOL,
+		WINAPI,
+		InitializeCriticalSectionEx,
+			_Out_ LPCRITICAL_SECTION lpCriticalSection,
+			_In_ DWORD dwSpinCount,
+			_In_ DWORD Flags
+			)
 		{
-			ExceptionArgument = 0;
-		}
-		else if (Status == STATUS_PENDING)
-		{
-			if (InitFn(InitOnce, Parameter, Context))
+			if (auto const pInitializeCriticalSectionEx = try_get_InitializeCriticalSectionEx())
 			{
-				auto NewContext = Context;
-				if (NewContext)
-					NewContext = (LPVOID*)*NewContext;
+				return pInitializeCriticalSectionEx(lpCriticalSection, dwSpinCount, Flags);
+			}
 
-				Status = internal::RtlRunOnceComplete(InitOnce, 0, NewContext);
+			return InitializeCriticalSectionAndSpinCount(lpCriticalSection, dwSpinCount);
+		}
+#endif
 
-				if (Status >= STATUS_SUCCESS)
-					break;
 
-				ExceptionArgument = 1;
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+		WINAPI,
+		InitOnceInitialize,
+			_Out_ PINIT_ONCE InitOnce
+			)
+		{
+			*InitOnce = INIT_ONCE_STATIC_INIT;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		BOOL,
+		WINAPI,
+		InitOnceBeginInitialize,
+			_Inout_ LPINIT_ONCE lpInitOnce,
+			_In_ DWORD dwFlags,
+			_Out_ PBOOL fPending,
+			_Outptr_opt_result_maybenull_ LPVOID* lpContext
+			)
+		{
+			if (auto const pInitOnceBeginInitialize = try_get_InitOnceBeginInitialize())
+			{
+				return pInitOnceBeginInitialize(lpInitOnce, dwFlags, fPending, lpContext);
+			}
+
+			auto Status = internal::RtlRunOnceBeginInitialize(lpInitOnce, dwFlags, lpContext);
+
+			if (Status >= STATUS_SUCCESS)
+			{
+				*fPending = Status == STATUS_PENDING;
+				return TRUE;
 			}
 			else
 			{
-				Status = internal::RtlRunOnceComplete(InitOnce, RTL_RUN_ONCE_INIT_FAILED, nullptr);
-				if (Status >= STATUS_SUCCESS)
-				{
-					Status = STATUS_UNSUCCESSFUL;
-					break;
-				}
-				ExceptionArgument = 2;
+				internal::BaseSetLastNTError(Status);
+				return FALSE;
 			}
 		}
-		else
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		12,
+		BOOL,
+		WINAPI,
+		InitOnceComplete,
+			_Inout_ LPINIT_ONCE lpInitOnce,
+			_In_ DWORD dwFlags,
+			_In_opt_ LPVOID lpContext
+			)
 		{
-			break;
+			if (auto const pInitOnceComplete = try_get_InitOnceComplete())
+			{
+				return pInitOnceComplete(lpInitOnce, dwFlags, lpContext);
+			}
+	
+			auto Status = internal::RtlRunOnceComplete(lpInitOnce, dwFlags, lpContext);
+
+			if (Status >= 0)
+			{
+				return TRUE;
+			}
+			else
+			{
+				internal::BaseSetLastNTError(Status);
+				return FALSE;
+			}
 		}
-
-		RaiseException(Status, EXCEPTION_NONCONTINUABLE, 1, &ExceptionArgument);
-
-	} while (false);
-
-	//别问我为什么不设置LastError……，Windows 7的这个函数也没设置 LastError，既然这样，我们都偷懒下吧，行为跟微软保持一致。
-	return Status >= STATUS_SUCCESS;
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, InitOnceExecuteOnce, 16);
-
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
 
-EXTERN_C
-HANDLE
-WINAPI
-CreateEventExW(
-    _In_opt_ LPSECURITY_ATTRIBUTES lpEventAttributes,
-    _In_opt_ LPCWSTR lpName,
-    _In_ DWORD dwFlags,
-    _In_ DWORD dwDesiredAccess
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto pCreateEventExW = try_get_CreateEventExW())
-	{
-		return pCreateEventExW(lpEventAttributes, lpName, dwFlags, dwDesiredAccess);
-	}
-
-	return CreateEventW(lpEventAttributes, dwFlags & CREATE_EVENT_MANUAL_RESET, dwFlags & CREATE_EVENT_INITIAL_SET, lpName);
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, CreateEventExW, 16);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-HANDLE
-WINAPI
-CreateEventExA(
-    _In_opt_ LPSECURITY_ATTRIBUTES lpEventAttributes,
-    _In_opt_ LPCSTR lpName,
-    _In_ DWORD dwFlags,
-    _In_ DWORD dwDesiredAccess
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto pCreateEventExA = try_get_CreateEventExA())
-	{
-		return pCreateEventExA(lpEventAttributes, lpName, dwFlags, dwDesiredAccess);
-	}
-
-	return CreateEventA(lpEventAttributes, dwFlags & CREATE_EVENT_MANUAL_RESET, dwFlags & CREATE_EVENT_INITIAL_SET, lpName);
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, CreateEventExA, 16);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-HANDLE
-WINAPI
-CreateMutexExW(
-    _In_opt_ LPSECURITY_ATTRIBUTES lpMutexAttributes,
-    _In_opt_ LPCWSTR lpName,
-    _In_ DWORD dwFlags,
-    _In_ DWORD dwDesiredAccess
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto pCreateMutexExW = try_get_CreateMutexExW())
-	{
-		return pCreateMutexExW(lpMutexAttributes, lpName, dwFlags, dwDesiredAccess);
-	}
-
-	return CreateMutexW(lpMutexAttributes, dwFlags & CREATE_MUTEX_INITIAL_OWNER, lpName);
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, CreateMutexExW, 16);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-HANDLE
-WINAPI
-CreateMutexExA(
-    _In_opt_ LPSECURITY_ATTRIBUTES lpMutexAttributes,
-    _In_opt_ LPCSTR lpName,
-    _In_ DWORD dwFlags,
-    _In_ DWORD dwDesiredAccess
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto pCreateMutexExA = try_get_CreateMutexExA())
-	{
-		return pCreateMutexExA(lpMutexAttributes, lpName, dwFlags, dwDesiredAccess);
-	}
-
-	return CreateMutexA(lpMutexAttributes, dwFlags & CREATE_MUTEX_INITIAL_OWNER, lpName);
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, CreateMutexExA, 16);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-HANDLE
-WINAPI
-CreateSemaphoreExW(
-    _In_opt_ LPSECURITY_ATTRIBUTES lpSemaphoreAttributes,
-    _In_ LONG lInitialCount,
-    _In_ LONG lMaximumCount,
-    _In_opt_ LPCWSTR lpName,
-    _Reserved_ DWORD dwFlags,
-    _In_ DWORD dwDesiredAccess
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto pCreateSemaphoreExW = try_get_CreateSemaphoreExW())
-	{
-		return pCreateSemaphoreExW(lpSemaphoreAttributes, lInitialCount, lMaximumCount, lpName, dwFlags, dwDesiredAccess);
-	}
-
-	return CreateSemaphoreW(lpSemaphoreAttributes, lInitialCount, lMaximumCount, lpName);
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, CreateSemaphoreExW, 24);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-HANDLE
-WINAPI
-CreateWaitableTimerExW(
-    _In_opt_ LPSECURITY_ATTRIBUTES lpTimerAttributes,
-    _In_opt_ LPCWSTR lpTimerName,
-    _In_ DWORD dwFlags,
-    _In_ DWORD dwDesiredAccess
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto pCreateWaitableTimerExW = try_get_CreateWaitableTimerExW())
-	{
-		return pCreateWaitableTimerExW(lpTimerAttributes, lpTimerName, dwFlags, dwDesiredAccess);
-	}
-
-	return CreateWaitableTimerW(lpTimerAttributes, dwFlags&CREATE_WAITABLE_TIMER_MANUAL_RESET, lpTimerName);
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, CreateWaitableTimerExW, 16);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-VOID
-WINAPI
-InitializeSRWLock(
-    _Out_ PSRWLOCK SRWLock
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	*SRWLock = RTL_SRWLOCK_INIT;
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, InitializeSRWLock, 4);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-VOID
-WINAPI
-AcquireSRWLockExclusive(
-    _Inout_ PSRWLOCK SRWLock
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pAcquireSRWLockExclusive = try_get_AcquireSRWLockExclusive())
-	{
-		return pAcquireSRWLockExclusive(SRWLock);
-	}
-
-	YY_SRWLOCK_WAIT_BLOCK StackWaitBlock;
-	bool bOptimize;
-
-	//尝试加锁一次
-#if defined(_WIN64)
-	auto OldBit = InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
-#else
-	auto OldBit = InterlockedBitTestAndSet((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
-#endif
-
-	if(OldBit == false)
-	{
-		//成功锁定
-		return;
-	}
-
-	for (;;)
-	{
-		auto SRWLockOld =  *(volatile size_t*)SRWLock;
-
-		if (YY_SRWLOCK_OWNED & SRWLockOld)
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		BOOL,
+		WINAPI,
+		InitOnceExecuteOnce,
+			_Inout_ PINIT_ONCE InitOnce,
+			_In_ __callback PINIT_ONCE_FN InitFn,
+			_Inout_opt_ PVOID Parameter,
+			_Outptr_opt_result_maybenull_ LPVOID* Context
+			)
 		{
-			/*
-			if (RtlpWaitCouldDeadlock())
-				ZwTerminateProcess((HANDLE)0xFFFFFFFF, 0xC000004B);
-			*/
+			if (auto const pInitOnceExecuteOnce = try_get_InitOnceExecuteOnce())
+			{
+				return pInitOnceExecuteOnce(InitOnce, InitFn, Parameter, Context);
+			}
+
+			auto Status = internal::RtlRunOnceBeginInitialize(InitOnce, 0, Context);
+
+			ULONG_PTR ExceptionArgument;
+
+			do
+			{
+				if (Status < STATUS_SUCCESS)
+				{
+					ExceptionArgument = 0;
+				}
+				else if (Status == STATUS_PENDING)
+				{
+					if (InitFn(InitOnce, Parameter, Context))
+					{
+						auto NewContext = Context;
+						if (NewContext)
+							NewContext = (LPVOID*)*NewContext;
+
+						Status = internal::RtlRunOnceComplete(InitOnce, 0, NewContext);
+
+						if (Status >= STATUS_SUCCESS)
+							break;
+
+						ExceptionArgument = 1;
+					}
+					else
+					{
+						Status = internal::RtlRunOnceComplete(InitOnce, RTL_RUN_ONCE_INIT_FAILED, nullptr);
+						if (Status >= STATUS_SUCCESS)
+						{
+							Status = STATUS_UNSUCCESSFUL;
+							break;
+						}
+						ExceptionArgument = 2;
+					}
+				}
+				else
+				{
+					break;
+				}
+
+				RaiseException(Status, EXCEPTION_NONCONTINUABLE, 1, &ExceptionArgument);
+
+			} while (false);
+
+			//别问我为什么不设置LastError……，Windows 7的这个函数也没设置 LastError，既然这样，我们都偷懒下吧，行为跟微软保持一致。
+			return Status >= STATUS_SUCCESS;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		HANDLE,
+		WINAPI,
+		CreateEventExW,
+			_In_opt_ LPSECURITY_ATTRIBUTES lpEventAttributes,
+			_In_opt_ LPCWSTR lpName,
+			_In_ DWORD dwFlags,
+			_In_ DWORD dwDesiredAccess
+			)
+		{
+			if (auto pCreateEventExW = try_get_CreateEventExW())
+			{
+				return pCreateEventExW(lpEventAttributes, lpName, dwFlags, dwDesiredAccess);
+			}
+
+			return CreateEventW(lpEventAttributes, dwFlags & CREATE_EVENT_MANUAL_RESET, dwFlags & CREATE_EVENT_INITIAL_SET, lpName);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		HANDLE,
+		WINAPI,
+		CreateEventExA,
+			_In_opt_ LPSECURITY_ATTRIBUTES lpEventAttributes,
+			_In_opt_ LPCSTR lpName,
+			_In_ DWORD dwFlags,
+			_In_ DWORD dwDesiredAccess
+			)
+		{
+			if (auto pCreateEventExA = try_get_CreateEventExA())
+			{
+				return pCreateEventExA(lpEventAttributes, lpName, dwFlags, dwDesiredAccess);
+			}
+
+			return CreateEventA(lpEventAttributes, dwFlags & CREATE_EVENT_MANUAL_RESET, dwFlags & CREATE_EVENT_INITIAL_SET, lpName);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		HANDLE,
+		WINAPI,
+		CreateMutexExW,
+			_In_opt_ LPSECURITY_ATTRIBUTES lpMutexAttributes,
+			_In_opt_ LPCWSTR lpName,
+			_In_ DWORD dwFlags,
+			_In_ DWORD dwDesiredAccess
+			)
+		{
+			if (auto pCreateMutexExW = try_get_CreateMutexExW())
+			{
+				return pCreateMutexExW(lpMutexAttributes, lpName, dwFlags, dwDesiredAccess);
+			}
+
+			return CreateMutexW(lpMutexAttributes, dwFlags & CREATE_MUTEX_INITIAL_OWNER, lpName);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		HANDLE,
+		WINAPI,
+		CreateMutexExA,
+			_In_opt_ LPSECURITY_ATTRIBUTES lpMutexAttributes,
+			_In_opt_ LPCSTR lpName,
+			_In_ DWORD dwFlags,
+			_In_ DWORD dwDesiredAccess
+			)
+		{
+			if (auto pCreateMutexExA = try_get_CreateMutexExA())
+			{
+				return pCreateMutexExA(lpMutexAttributes, lpName, dwFlags, dwDesiredAccess);
+			}
+
+			return CreateMutexA(lpMutexAttributes, dwFlags & CREATE_MUTEX_INITIAL_OWNER, lpName);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		24,
+		HANDLE,
+		WINAPI,
+		CreateSemaphoreExW,
+			_In_opt_ LPSECURITY_ATTRIBUTES lpSemaphoreAttributes,
+			_In_ LONG lInitialCount,
+			_In_ LONG lMaximumCount,
+			_In_opt_ LPCWSTR lpName,
+			_Reserved_ DWORD dwFlags,
+			_In_ DWORD dwDesiredAccess
+			)
+		{
+			if (auto pCreateSemaphoreExW = try_get_CreateSemaphoreExW())
+			{
+				return pCreateSemaphoreExW(lpSemaphoreAttributes, lInitialCount, lMaximumCount, lpName, dwFlags, dwDesiredAccess);
+			}
+
+			return CreateSemaphoreW(lpSemaphoreAttributes, lInitialCount, lMaximumCount, lpName);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		HANDLE,
+		WINAPI,
+		CreateWaitableTimerExW,
+			_In_opt_ LPSECURITY_ATTRIBUTES lpTimerAttributes,
+			_In_opt_ LPCWSTR lpTimerName,
+			_In_ DWORD dwFlags,
+			_In_ DWORD dwDesiredAccess
+			)
+		{
+			if (auto pCreateWaitableTimerExW = try_get_CreateWaitableTimerExW())
+			{
+				return pCreateWaitableTimerExW(lpTimerAttributes, lpTimerName, dwFlags, dwDesiredAccess);
+			}
+
+			return CreateWaitableTimerW(lpTimerAttributes, dwFlags&CREATE_WAITABLE_TIMER_MANUAL_RESET, lpTimerName);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+		WINAPI,
+		InitializeSRWLock,
+			_Out_ PSRWLOCK SRWLock
+			)
+		{
+			*SRWLock = RTL_SRWLOCK_INIT;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+		WINAPI,
+		AcquireSRWLockExclusive,
+			_Inout_ PSRWLOCK SRWLock
+			)
+		{
+			if (auto const pAcquireSRWLockExclusive = try_get_AcquireSRWLockExclusive())
+			{
+				return pAcquireSRWLockExclusive(SRWLock);
+			}
+
+			YY_SRWLOCK_WAIT_BLOCK StackWaitBlock;
+			bool bOptimize;
+
+			//尝试加锁一次
+#if defined(_WIN64)
+			auto OldBit = InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
+#else
+			auto OldBit = InterlockedBitTestAndSet((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
+#endif
+
+			if(OldBit == false)
+			{
+				//成功锁定
+				return;
+			}
+
+			for (;;)
+			{
+				auto SRWLockOld =  *(volatile size_t*)SRWLock;
+
+				if (YY_SRWLOCK_OWNED & SRWLockOld)
+				{
+					/*
+					if (RtlpWaitCouldDeadlock())
+						ZwTerminateProcess((HANDLE)0xFFFFFFFF, 0xC000004B);
+					*/
+
+					StackWaitBlock.next = nullptr;
+					StackWaitBlock.flag = 3;
+					bOptimize = false;
+
+					size_t SRWLockNew;
+
+					if (YY_SRWLOCK_CONTENDED & SRWLockOld)
+					{
+						//有人正在等待连接
+						StackWaitBlock.notify = nullptr;
+						StackWaitBlock.shareCount = 0;
+						StackWaitBlock.back = (YY_SRWLOCK_WAIT_BLOCK*)(SRWLockOld & (~YY_SRWLOCK_MASK));
+
+						SRWLockNew = (size_t)(&StackWaitBlock) | (SRWLockOld & YY_SRWLOCK_CONTENTION_LOCK) | YY_SRWLOCK_SHARED | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED;
+
+						if ((YY_SRWLOCK_SHARED & SRWLockOld) == 0)
+						{
+							bOptimize = true;
+						}
+					}
+					else
+					{
+						//没有其他人没有等待，所以我们需要创建一个
+						StackWaitBlock.notify = (YY_SRWLOCK_WAIT_BLOCK*)&StackWaitBlock;
+						StackWaitBlock.shareCount = (SRWLockOld >> YY_SRWLOCK_BITS);
+
+
+						SRWLockNew = StackWaitBlock.shareCount > 1 ?
+							(size_t)(&StackWaitBlock) | YY_SRWLOCK_CONTENTION_LOCK | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED 
+							: (size_t)(&StackWaitBlock) | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED;
+					}
+
+					if (InterlockedCompareExchange((volatile size_t*)SRWLock, SRWLockNew, SRWLockOld) != SRWLockOld)
+					{
+						//更新锁状态失败，其他线程正在处理改锁，要不咋们换个姿势再来
+				
+						//RtlBackoff就懒得做了，反正只是等待一会而已，直接YieldProcessor再来一次吧。
+						//RtlBackoff(&nBackOff)
+
+						YieldProcessor();
+						continue;
+					}
+
+
+					if (bOptimize)
+					{
+						internal::RtlpOptimizeSRWLockList(SRWLock, SRWLockNew);
+					}
+
+					auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
+					auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
+					if (!pNtWaitForKeyedEvent)
+					{
+						internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+					}
+
+					//自旋
+					for (DWORD SpinCount = SRWLockSpinCount; SpinCount; --SpinCount)
+					{
+						if ((StackWaitBlock.flag & 2) == 0)
+							break;
+
+						YieldProcessor();
+					}
+
+					if (InterlockedBitTestAndReset((volatile LONG*)&StackWaitBlock.flag, 1))
+					{
+						pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
+					}
+				}
+				else
+				{
+					//尝试获取锁的所有权
+					if (InterlockedCompareExchange((volatile size_t*)SRWLock, SRWLockOld | YY_SRWLOCK_OWNED, SRWLockOld) == SRWLockOld)
+					{
+						//成功加锁
+						return;
+					}
+
+					//可能多线程并发访问，换个姿势再来一次
+					YieldProcessor();
+				}
+			}
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		//Windows 7 [desktop apps | UWP apps]
+		//Windows Server 2008 R2 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		BOOLEAN,
+		WINAPI,
+		TryAcquireSRWLockExclusive,
+			_Inout_ PSRWLOCK SRWLock
+			)
+		{
+			if (auto const pTryAcquireSRWLockExclusive = try_get_TryAcquireSRWLockExclusive())
+			{
+				return pTryAcquireSRWLockExclusive(SRWLock);
+			}
+
+#if defined(_WIN64)
+			return InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
+#else
+			return InterlockedBitTestAndSet((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
+#endif
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+		WINAPI,
+		ReleaseSRWLockExclusive,
+			_Inout_ PSRWLOCK SRWLock
+			)
+		{
+			if (auto const pReleaseSRWLockExclusive = try_get_ReleaseSRWLockExclusive())
+			{
+				return pReleaseSRWLockExclusive(SRWLock);
+			}
+
+			auto OldSRWLock = InterlockedExchangeAdd((volatile size_t *)SRWLock, size_t(-1));
+			if ((OldSRWLock & YY_SRWLOCK_OWNED) == 0)
+			{
+				internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+			}
+
+			if ((OldSRWLock & YY_SRWLOCK_CONTENDED) && (OldSRWLock & YY_SRWLOCK_SHARED) == 0)
+			{
+				OldSRWLock -= YY_SRWLOCK_OWNED;
+
+				auto NewSRWLock = OldSRWLock | YY_SRWLOCK_SHARED;
+				auto CurrentSRWLock = InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock);
+
+				if (CurrentSRWLock == OldSRWLock)
+					internal::RtlpWakeSRWLock(SRWLock, NewSRWLock);
+			}
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+		WINAPI,
+		AcquireSRWLockShared,
+			_Inout_ PSRWLOCK SRWLock
+			)
+		{
+			if (auto const pAcquireSRWLockShared = try_get_AcquireSRWLockShared())
+			{
+				return pAcquireSRWLockShared(SRWLock);
+			}
+
+			YY_SRWLOCK_WAIT_BLOCK StackWaitBlock;
+			bool bOptimize;
+
+			//尝试给全新的锁加锁	
+			auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, size_t(0x11), 0);
+
+			//成功
+			if (OldSRWLock == size_t(0))
+			{
+				return;
+			}
+
+
+			size_t NewSRWLock;
+
+			for (;; OldSRWLock = *(volatile size_t *)SRWLock)
+			{
+				if ((OldSRWLock & YY_SRWLOCK_OWNED) && ((OldSRWLock & YY_SRWLOCK_CONTENDED) || YY_SRWLOCK_GET_BLOCK(OldSRWLock) == nullptr))
+				{
+					//if ( RtlpWaitCouldDeadlock() )
+					//    ZwTerminateProcess((HANDLE)0xFFFFFFFF, 0xC000004B);
+
+
+					StackWaitBlock.flag = 2;
+					StackWaitBlock.shareCount = 0;
+					StackWaitBlock.next = nullptr;
+
+					bOptimize = false;
+
+					if (OldSRWLock & YY_SRWLOCK_CONTENDED)
+					{
+						//已经有人等待，我们插入一个新的等待块
+						StackWaitBlock.back = YY_SRWLOCK_GET_BLOCK(OldSRWLock);
+						StackWaitBlock.notify = nullptr;
+
+						NewSRWLock = size_t(&StackWaitBlock) | (OldSRWLock & YY_SRWLOCK_CONTENTION_LOCK) | (YY_SRWLOCK_SHARED | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED);
+
+						if ((OldSRWLock & YY_SRWLOCK_SHARED) == 0)
+						{
+							bOptimize = true;
+						}
+					}
+					else
+					{
+						StackWaitBlock.notify = &StackWaitBlock;
+						NewSRWLock = size_t(&StackWaitBlock) | (YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED);
+					}
+
+
+					if (InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock) == OldSRWLock)
+					{
+						//更新成功！
+
+						if (bOptimize)
+						{
+							internal::RtlpOptimizeSRWLockList(SRWLock, NewSRWLock);
+						}
+
+						auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
+						auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
+						if (!pNtWaitForKeyedEvent)
+						{
+							internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+						}
+
+						//自旋
+						for (DWORD SpinCount = SRWLockSpinCount; SpinCount; --SpinCount)
+						{
+							if ((StackWaitBlock.flag & 2) == 0)
+								break;
+
+							YieldProcessor();
+						}
+
+						if (InterlockedBitTestAndReset((volatile LONG*)&StackWaitBlock.flag, 1))
+						{
+							pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
+						}
+
+						continue;
+					}
+				}
+				else
+				{
+					if (OldSRWLock & YY_SRWLOCK_CONTENDED)
+					{
+						//既然有人在等待锁，那么YY_SRWLOCK_OWNED应该重新加上
+						NewSRWLock = OldSRWLock | YY_SRWLOCK_OWNED;
+					}
+					else
+					{
+						//没有人等待，那么单纯加个 0x10即可
+						NewSRWLock = (OldSRWLock + 0x10) | YY_SRWLOCK_OWNED;
+					}
+
+					if (InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock) == OldSRWLock)
+						return;
+				}
+
+				//偷懒下，直接 YieldProcessor 吧
+				//RtlBackoff(&nBackOff);
+				YieldProcessor();
+			}
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		//Windows 7 [desktop apps | UWP apps] 
+		//Windows Server 2008 R2 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		BOOLEAN,
+		WINAPI,
+		TryAcquireSRWLockShared,
+			_Inout_ PSRWLOCK SRWLock
+			)
+		{
+			if (auto const pTryAcquireSRWLockShared = try_get_TryAcquireSRWLockShared())
+			{
+				return pTryAcquireSRWLockShared(SRWLock);
+			}
+
+			//尝试给全新的锁加锁
+			auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, size_t(0x11), 0);
+
+			//成功
+			if (OldSRWLock == size_t(0))
+			{
+				return TRUE;
+			}
+
+			for (;;)
+			{
+				if ((OldSRWLock & YY_SRWLOCK_OWNED) && ((OldSRWLock & YY_SRWLOCK_CONTENDED) || YY_SRWLOCK_GET_BLOCK(OldSRWLock) == nullptr))
+				{
+					//正在被锁定中
+					return FALSE;
+				}
+				else
+				{
+					size_t NewSRWLock;
+
+					if (OldSRWLock & YY_SRWLOCK_CONTENDED)
+						NewSRWLock = OldSRWLock | YY_SRWLOCK_OWNED;
+					else
+						NewSRWLock = (OldSRWLock + 0x10) | YY_SRWLOCK_OWNED;
+
+					if (InterlockedCompareExchange((volatile size_t*)SRWLock, NewSRWLock, OldSRWLock) == OldSRWLock)
+					{
+						//锁定完成
+						return TRUE;
+					}
+
+					//RtlBackoff((unsigned int *)&v4);
+					YieldProcessor();
+					OldSRWLock = *(volatile size_t*)SRWLock;
+				}
+			}
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+		WINAPI,
+		ReleaseSRWLockShared,
+			_Inout_ PSRWLOCK SRWLock
+			)
+		{
+			if (auto const pReleaseSRWLockShared = try_get_ReleaseSRWLockShared())
+			{
+				return pReleaseSRWLockShared(SRWLock);
+			}
+
+			//尝试解锁只加一次读锁的情况
+
+			auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, 0, size_t(0x11));
+
+			//解锁成功
+			if (OldSRWLock == size_t(0x11))
+			{
+				return;
+			}
+
+			if ((OldSRWLock & YY_SRWLOCK_OWNED) == 0)
+			{
+				internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+			}
+
+			for (;;)
+			{
+				if (OldSRWLock & YY_SRWLOCK_CONTENDED)
+				{
+					if (OldSRWLock & YY_SRWLOCK_CONTENTION_LOCK)
+					{
+						auto pLastNode = YY_SRWLOCK_GET_BLOCK(OldSRWLock);
+
+						for (; pLastNode->notify == nullptr; pLastNode = pLastNode->back);
+
+						/* 
+						既然是在释放共享锁，说明一定有人获取了共享锁
+						如果有人获取了共享锁，就一定没有人获取独到占锁
+						只需要把共享次数减1
+						取出notify节点的共享次数变量的地址, 原子减
+						*/
+						if (InterlockedDecrement((volatile size_t *)&(pLastNode->notify->shareCount)) > 0)
+						{
+							return;
+						}
+					}
+
+
+					for (;;)
+					{
+						auto NewSRWLock = OldSRWLock & (~(YY_SRWLOCK_CONTENTION_LOCK | YY_SRWLOCK_OWNED));
+						size_t LastSRWLock;
+
+						if (OldSRWLock & YY_SRWLOCK_SHARED)
+						{
+							LastSRWLock = InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock);
+
+							if (LastSRWLock == OldSRWLock)
+								return;
+						}
+						else
+						{
+							NewSRWLock |= YY_SRWLOCK_SHARED;
+
+							LastSRWLock = InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock);
+							if (LastSRWLock == OldSRWLock)
+								return internal::RtlpWakeSRWLock(SRWLock, NewSRWLock);
+						}
+
+						OldSRWLock = LastSRWLock;
+					}
+
+					break;
+				}
+				else
+				{
+					auto NewSRWLock = size_t(YY_SRWLOCK_GET_BLOCK(OldSRWLock)) <= 0x10 ? 0 : OldSRWLock - 0x10;
+
+					auto LastSRWLock = InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock);
+					if (LastSRWLock == OldSRWLock)
+						break;
+
+					OldSRWLock = LastSRWLock;
+				}
+			}
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+		WINAPI,
+		InitializeConditionVariable,
+			_Out_ PCONDITION_VARIABLE ConditionVariable
+			)
+		{
+			*ConditionVariable = CONDITION_VARIABLE_INIT;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		12,
+		BOOL,
+		WINAPI,
+		SleepConditionVariableCS,
+			_Inout_ PCONDITION_VARIABLE ConditionVariable,
+			_Inout_ PCRITICAL_SECTION   CriticalSection,
+			_In_    DWORD               dwMilliseconds
+			)
+		{
+			if (auto const pSleepConditionVariableCS = try_get_SleepConditionVariableCS())
+			{
+				return pSleepConditionVariableCS(ConditionVariable, CriticalSection, dwMilliseconds);
+			}
+
+			YY_CV_WAIT_BLOCK StackWaitBlock;
 
 			StackWaitBlock.next = nullptr;
-			StackWaitBlock.flag = 3;
-			bOptimize = false;
+			StackWaitBlock.flag = 2;
+			StackWaitBlock.SRWLock = nullptr;
 
-			size_t SRWLockNew;
+			auto OldConditionVariable = *(size_t*)ConditionVariable;
 
-			if (YY_SRWLOCK_CONTENDED & SRWLockOld)
+			size_t NewConditionVariable;
+
+			for (;;)
 			{
-				//有人正在等待连接
-				StackWaitBlock.notify = nullptr;
-				StackWaitBlock.shareCount = 0;
-				StackWaitBlock.back = (YY_SRWLOCK_WAIT_BLOCK*)(SRWLockOld & (~YY_SRWLOCK_MASK));
+				NewConditionVariable = size_t(&StackWaitBlock) | (OldConditionVariable & YY_CV_MASK);
+				StackWaitBlock.back = YY_CV_GET_BLOCK(OldConditionVariable);
 
-				SRWLockNew = (size_t)(&StackWaitBlock) | (SRWLockOld & YY_SRWLOCK_CONTENTION_LOCK) | YY_SRWLOCK_SHARED | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED;
-
-				if ((YY_SRWLOCK_SHARED & SRWLockOld) == 0)
+				if (StackWaitBlock.back)
 				{
-					bOptimize = true;
+					StackWaitBlock.notify = nullptr;
+
+					NewConditionVariable |= 0x8;
 				}
+				else
+				{
+					StackWaitBlock.notify = &StackWaitBlock;
+				}
+
+				auto LastConditionVariable = InterlockedCompareExchange((volatile size_t*)ConditionVariable, NewConditionVariable, OldConditionVariable);
+
+				if (LastConditionVariable == OldConditionVariable)
+					break;
+
+				OldConditionVariable = LastConditionVariable;
 			}
-			else
+
+			LeaveCriticalSection(CriticalSection);
+
+			//0x8 标记新增时，才进行优化 ConditionVariableWaitList
+			if ((OldConditionVariable ^ NewConditionVariable) & 0x8)
 			{
-				//没有其他人没有等待，所以我们需要创建一个
-				StackWaitBlock.notify = (YY_SRWLOCK_WAIT_BLOCK*)&StackWaitBlock;
-				StackWaitBlock.shareCount = (SRWLockOld >> YY_SRWLOCK_BITS);
-
-
-				SRWLockNew = StackWaitBlock.shareCount > 1 ?
-					(size_t)(&StackWaitBlock) | YY_SRWLOCK_CONTENTION_LOCK | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED 
-					: (size_t)(&StackWaitBlock) | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED;
+				internal::RtlpOptimizeConditionVariableWaitList(ConditionVariable, NewConditionVariable);
 			}
 
-			if (InterlockedCompareExchange((volatile size_t*)SRWLock, SRWLockNew, SRWLockOld) != SRWLockOld)
-			{
-				//更新锁状态失败，其他线程正在处理改锁，要不咋们换个姿势再来
-				
-				//RtlBackoff就懒得做了，反正只是等待一会而已，直接YieldProcessor再来一次吧。
-				//RtlBackoff(&nBackOff)
-
-				YieldProcessor();
-				continue;
-			}
-
-
-			if (bOptimize)
-			{
-				internal::RtlpOptimizeSRWLockList(SRWLock, SRWLockNew);
-			}
 
 			auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
 			auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
@@ -1740,190 +2143,118 @@ AcquireSRWLockExclusive(
 			}
 
 			//自旋
-			for (DWORD SpinCount = SRWLockSpinCount; SpinCount; --SpinCount)
+			for (auto SpinCount = ConditionVariableSpinCount; SpinCount; --SpinCount)
 			{
-				if ((StackWaitBlock.flag & 2) == 0)
+				if (!(StackWaitBlock.flag & 2))
 					break;
 
 				YieldProcessor();
 			}
 
+			NTSTATUS Status = 0;
+
 			if (InterlockedBitTestAndReset((volatile LONG*)&StackWaitBlock.flag, 1))
 			{
-				pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
-			}
-		}
-		else
-		{
-			//尝试获取锁的所有权
-			if (InterlockedCompareExchange((volatile size_t*)SRWLock, SRWLockOld | YY_SRWLOCK_OWNED, SRWLockOld) == SRWLockOld)
-			{
-				//成功加锁
-				return;
-			}
+				LARGE_INTEGER TimeOut;
 
-			//可能多线程并发访问，换个姿势再来一次
-			YieldProcessor();
-		}
-	}
-}
-#endif
+				Status = pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, internal::BaseFormatTimeOut(&TimeOut, dwMilliseconds));
 
-__YY_Thunks_Expand_Function(kernel32, AcquireSRWLockExclusive, 4);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
-//Windows 7 [desktop apps | UWP apps]
-//Windows Server 2008 R2 [desktop apps | UWP apps]
-
-EXTERN_C
-BOOLEAN
-WINAPI
-TryAcquireSRWLockExclusive(
-    _Inout_ PSRWLOCK SRWLock
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pTryAcquireSRWLockExclusive = try_get_TryAcquireSRWLockExclusive())
-	{
-		return pTryAcquireSRWLockExclusive(SRWLock);
-	}
-
-#if defined(_WIN64)
-	return InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
-#else
-	return InterlockedBitTestAndSet((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
-#endif
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, TryAcquireSRWLockExclusive, 4);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-VOID
-WINAPI
-ReleaseSRWLockExclusive(
-    _Inout_ PSRWLOCK SRWLock
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pReleaseSRWLockExclusive = try_get_ReleaseSRWLockExclusive())
-	{
-		return pReleaseSRWLockExclusive(SRWLock);
-	}
-
-	auto OldSRWLock = InterlockedExchangeAdd((volatile size_t *)SRWLock, size_t(-1));
-	if ((OldSRWLock & YY_SRWLOCK_OWNED) == 0)
-	{
-		internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
-	}
-
-	if ((OldSRWLock & YY_SRWLOCK_CONTENDED) && (OldSRWLock & YY_SRWLOCK_SHARED) == 0)
-	{
-		OldSRWLock -= YY_SRWLOCK_OWNED;
-
-		auto NewSRWLock = OldSRWLock | YY_SRWLOCK_SHARED;
-		auto CurrentSRWLock = InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock);
-
-		if (CurrentSRWLock == OldSRWLock)
-			internal::RtlpWakeSRWLock(SRWLock, NewSRWLock);
-	}
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, ReleaseSRWLockExclusive, 4);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-VOID
-WINAPI
-AcquireSRWLockShared(
-    _Inout_ PSRWLOCK SRWLock
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pAcquireSRWLockShared = try_get_AcquireSRWLockShared())
-	{
-		return pAcquireSRWLockShared(SRWLock);
-	}
-
-	YY_SRWLOCK_WAIT_BLOCK StackWaitBlock;
-	bool bOptimize;
-
-	//尝试给全新的锁加锁	
-	auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, size_t(0x11), 0);
-
-	//成功
-	if (OldSRWLock == size_t(0))
-	{
-		return;
-	}
-
-
-	size_t NewSRWLock;
-
-	for (;; OldSRWLock = *(volatile size_t *)SRWLock)
-	{
-		if ((OldSRWLock & YY_SRWLOCK_OWNED) && ((OldSRWLock & YY_SRWLOCK_CONTENDED) || YY_SRWLOCK_GET_BLOCK(OldSRWLock) == nullptr))
-		{
-			//if ( RtlpWaitCouldDeadlock() )
-			//    ZwTerminateProcess((HANDLE)0xFFFFFFFF, 0xC000004B);
-
-
-			StackWaitBlock.flag = 2;
-			StackWaitBlock.shareCount = 0;
-			StackWaitBlock.next = nullptr;
-
-			bOptimize = false;
-
-			if (OldSRWLock & YY_SRWLOCK_CONTENDED)
-			{
-				//已经有人等待，我们插入一个新的等待块
-				StackWaitBlock.back = YY_SRWLOCK_GET_BLOCK(OldSRWLock);
-				StackWaitBlock.notify = nullptr;
-
-				NewSRWLock = size_t(&StackWaitBlock) | (OldSRWLock & YY_SRWLOCK_CONTENTION_LOCK) | (YY_SRWLOCK_SHARED | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED);
-
-				if ((OldSRWLock & YY_SRWLOCK_SHARED) == 0)
+				if (Status == STATUS_TIMEOUT && internal::RtlpWakeSingle(ConditionVariable, &StackWaitBlock) == FALSE)
 				{
-					bOptimize = true;
+					pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
+					Status = 0;
 				}
 			}
-			else
+
+			EnterCriticalSection(CriticalSection);
+
+			internal::BaseSetLastNTError(Status);
+
+			return Status >= 0 && Status != STATUS_TIMEOUT;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		BOOL,
+		WINAPI,
+		SleepConditionVariableSRW,
+			_Inout_ PCONDITION_VARIABLE ConditionVariable,
+			_Inout_ PSRWLOCK SRWLock,
+			_In_ DWORD dwMilliseconds,
+			_In_ ULONG Flags
+			)
+		{
+			if (auto const pSleepConditionVariableSRW = try_get_SleepConditionVariableSRW())
 			{
-				StackWaitBlock.notify = &StackWaitBlock;
-				NewSRWLock = size_t(&StackWaitBlock) | (YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED);
+				return pSleepConditionVariableSRW(ConditionVariable, SRWLock, dwMilliseconds, Flags);
 			}
 
+			YY_CV_WAIT_BLOCK StackWaitBlock;
 
-			if (InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock) == OldSRWLock)
+			NTSTATUS Status = 0;
+
+			do
 			{
-				//更新成功！
-
-				if (bOptimize)
+				if (Flags & ~CONDITION_VARIABLE_LOCKMODE_SHARED)
 				{
-					internal::RtlpOptimizeSRWLockList(SRWLock, NewSRWLock);
+					Status = STATUS_INVALID_PARAMETER_2;
+					break;
+				}
+
+				StackWaitBlock.next = nullptr;
+				StackWaitBlock.flag = 2;
+				StackWaitBlock.SRWLock = nullptr;
+
+				if (Flags& CONDITION_VARIABLE_LOCKMODE_SHARED)
+				{
+					StackWaitBlock.flag |= 0x4;
+				}
+
+				size_t Current = *(volatile size_t*)ConditionVariable;
+				size_t New;
+
+				for (;;)
+				{
+					New = size_t(&StackWaitBlock) | (Current & YY_CV_MASK);
+
+					if (StackWaitBlock.back = YY_CV_GET_BLOCK(Current))
+					{
+						StackWaitBlock.notify = nullptr;
+
+						New |= 0x8;
+					}
+					else
+					{
+						StackWaitBlock.notify = &StackWaitBlock;
+					}
+
+					const auto Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, New, Current);
+
+					if (Last == Current)
+					{
+						break;
+					}
+
+
+					Current = Last;
+				}
+
+				if (Flags& CONDITION_VARIABLE_LOCKMODE_SHARED)
+					YY::Thunks::ReleaseSRWLockShared(SRWLock);
+				else
+					YY::Thunks::ReleaseSRWLockExclusive(SRWLock);
+
+				if ((Current ^ New) & 0x8)
+				{
+					//新增0x8 标记位才调用 RtlpOptimizeConditionVariableWaitList
+					internal::RtlpOptimizeConditionVariableWaitList(ConditionVariable, New);
 				}
 
 				auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
@@ -1934,9 +2265,9 @@ AcquireSRWLockShared(
 				}
 
 				//自旋
-				for (DWORD SpinCount = SRWLockSpinCount; SpinCount; --SpinCount)
+				for (auto SpinCount = ConditionVariableSpinCount; SpinCount; --SpinCount)
 				{
-					if ((StackWaitBlock.flag & 2) == 0)
+					if (!(StackWaitBlock.flag & 2))
 						break;
 
 					YieldProcessor();
@@ -1944,965 +2275,489 @@ AcquireSRWLockShared(
 
 				if (InterlockedBitTestAndReset((volatile LONG*)&StackWaitBlock.flag, 1))
 				{
-					pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
+					LARGE_INTEGER TimeOut;
+
+					Status = pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, internal::BaseFormatTimeOut(&TimeOut, dwMilliseconds));
+
+					if (Status == STATUS_TIMEOUT && internal::RtlpWakeSingle(ConditionVariable, &StackWaitBlock) == FALSE)
+					{
+						pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
+						Status = 0;
+					}
 				}
 
-				continue;
-			}
+				if (Flags& CONDITION_VARIABLE_LOCKMODE_SHARED)
+					YY::Thunks::AcquireSRWLockShared(SRWLock);
+				else
+					YY::Thunks::AcquireSRWLockExclusive(SRWLock);
+
+			} while (false);
+
+
+			internal::BaseSetLastNTError(Status);
+
+			return Status >= 0 && Status != STATUS_TIMEOUT;
+
 		}
-		else
-		{
-			if (OldSRWLock & YY_SRWLOCK_CONTENDED)
-			{
-				//既然有人在等待锁，那么YY_SRWLOCK_OWNED应该重新加上
-				NewSRWLock = OldSRWLock | YY_SRWLOCK_OWNED;
-			}
-			else
-			{
-				//没有人等待，那么单纯加个 0x10即可
-				NewSRWLock = (OldSRWLock + 0x10) | YY_SRWLOCK_OWNED;
-			}
-
-			if (InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock) == OldSRWLock)
-				return;
-		}
-
-		//偷懒下，直接 YieldProcessor 吧
-		//RtlBackoff(&nBackOff);
-		YieldProcessor();
-	}
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, AcquireSRWLockShared, 4);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
-//Windows 7 [desktop apps | UWP apps] 
-//Windows Server 2008 R2 [desktop apps | UWP apps]
-
-EXTERN_C
-BOOLEAN
-WINAPI
-TryAcquireSRWLockShared(
-    _Inout_ PSRWLOCK SRWLock
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pTryAcquireSRWLockShared = try_get_TryAcquireSRWLockShared())
-	{
-		return pTryAcquireSRWLockShared(SRWLock);
-	}
-
-	//尝试给全新的锁加锁
-	auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, size_t(0x11), 0);
-
-	//成功
-	if (OldSRWLock == size_t(0))
-	{
-		return TRUE;
-	}
-
-	for (;;)
-	{
-		if ((OldSRWLock & YY_SRWLOCK_OWNED) && ((OldSRWLock & YY_SRWLOCK_CONTENDED) || YY_SRWLOCK_GET_BLOCK(OldSRWLock) == nullptr))
-		{
-			//正在被锁定中
-			return FALSE;
-		}
-		else
-		{
-			size_t NewSRWLock;
-
-			if (OldSRWLock & YY_SRWLOCK_CONTENDED)
-				NewSRWLock = OldSRWLock | YY_SRWLOCK_OWNED;
-			else
-				NewSRWLock = (OldSRWLock + 0x10) | YY_SRWLOCK_OWNED;
-
-			if (InterlockedCompareExchange((volatile size_t*)SRWLock, NewSRWLock, OldSRWLock) == OldSRWLock)
-			{
-				//锁定完成
-				return TRUE;
-			}
-
-			//RtlBackoff((unsigned int *)&v4);
-			YieldProcessor();
-			OldSRWLock = *(volatile size_t*)SRWLock;
-		}
-	}
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, TryAcquireSRWLockShared, 4);
-
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
 
-EXTERN_C
-VOID
-WINAPI
-ReleaseSRWLockShared(
-    _Inout_ PSRWLOCK SRWLock
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pReleaseSRWLockShared = try_get_ReleaseSRWLockShared())
-	{
-		return pReleaseSRWLockShared(SRWLock);
-	}
-
-	//尝试解锁只加一次读锁的情况
-
-	auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, 0, size_t(0x11));
-
-	//解锁成功
-	if (OldSRWLock == size_t(0x11))
-	{
-		return;
-	}
-
-	if ((OldSRWLock & YY_SRWLOCK_OWNED) == 0)
-	{
-		internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
-	}
-
-	for (;;)
-	{
-		if (OldSRWLock & YY_SRWLOCK_CONTENDED)
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+		WINAPI,
+		WakeConditionVariable,
+			_Inout_ PCONDITION_VARIABLE ConditionVariable
+			)
 		{
-			if (OldSRWLock & YY_SRWLOCK_CONTENTION_LOCK)
+			if (auto const pWakeConditionVariable = try_get_WakeConditionVariable())
 			{
-				auto pLastNode = YY_SRWLOCK_GET_BLOCK(OldSRWLock);
-
-				for (; pLastNode->notify == nullptr; pLastNode = pLastNode->back);
-
-				/* 
-				既然是在释放共享锁，说明一定有人获取了共享锁
-				如果有人获取了共享锁，就一定没有人获取独到占锁
-				只需要把共享次数减1
-				取出notify节点的共享次数变量的地址, 原子减
-				*/
-				if (InterlockedDecrement((volatile size_t *)&(pLastNode->notify->shareCount)) > 0)
-				{
-					return;
-				}
+				return pWakeConditionVariable(ConditionVariable);
 			}
 
+			size_t Current = *(volatile size_t*)ConditionVariable;
+			size_t Last;
 
-			for (;;)
+			for (; Current; Current = Last)
 			{
-				auto NewSRWLock = OldSRWLock & (~(YY_SRWLOCK_CONTENTION_LOCK | YY_SRWLOCK_OWNED));
-				size_t LastSRWLock;
-
-				if (OldSRWLock & YY_SRWLOCK_SHARED)
+				if (Current & 0x8)
 				{
-					LastSRWLock = InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock);
+					if ((Current & 0x7) == 0x7)
+					{
+						return;
+					}
 
-					if (LastSRWLock == OldSRWLock)
+					Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, Current + 1, Current);
+					if (Last == Current)
 						return;
 				}
 				else
 				{
-					NewSRWLock |= YY_SRWLOCK_SHARED;
-
-					LastSRWLock = InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock);
-					if (LastSRWLock == OldSRWLock)
-						return internal::RtlpWakeSRWLock(SRWLock, NewSRWLock);
-				}
-
-				OldSRWLock = LastSRWLock;
-			}
-
-			break;
-		}
-		else
-		{
-			auto NewSRWLock = size_t(YY_SRWLOCK_GET_BLOCK(OldSRWLock)) <= 0x10 ? 0 : OldSRWLock - 0x10;
-
-			auto LastSRWLock = InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock);
-			if (LastSRWLock == OldSRWLock)
-				break;
-
-			OldSRWLock = LastSRWLock;
-		}
-	}
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, ReleaseSRWLockShared, 4);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-VOID
-WINAPI
-InitializeConditionVariable(
-    _Out_ PCONDITION_VARIABLE ConditionVariable
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	*ConditionVariable = CONDITION_VARIABLE_INIT;
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, InitializeConditionVariable, 4);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-BOOL
-WINAPI
-SleepConditionVariableCS(
-    _Inout_ PCONDITION_VARIABLE ConditionVariable,
-    _Inout_ PCRITICAL_SECTION   CriticalSection,
-    _In_    DWORD               dwMilliseconds
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pSleepConditionVariableCS = try_get_SleepConditionVariableCS())
-	{
-		return pSleepConditionVariableCS(ConditionVariable, CriticalSection, dwMilliseconds);
-	}
-
-	YY_CV_WAIT_BLOCK StackWaitBlock;
-
-	StackWaitBlock.next = nullptr;
-	StackWaitBlock.flag = 2;
-	StackWaitBlock.SRWLock = nullptr;
-
-	auto OldConditionVariable = *(size_t*)ConditionVariable;
-
-	size_t NewConditionVariable;
-
-	for (;;)
-	{
-		NewConditionVariable = size_t(&StackWaitBlock) | (OldConditionVariable & YY_CV_MASK);
-		StackWaitBlock.back = YY_CV_GET_BLOCK(OldConditionVariable);
-
-		if (StackWaitBlock.back)
-		{
-			StackWaitBlock.notify = nullptr;
-
-			NewConditionVariable |= 0x8;
-		}
-		else
-		{
-			StackWaitBlock.notify = &StackWaitBlock;
-		}
-
-		auto LastConditionVariable = InterlockedCompareExchange((volatile size_t*)ConditionVariable, NewConditionVariable, OldConditionVariable);
-
-		if (LastConditionVariable == OldConditionVariable)
-			break;
-
-		OldConditionVariable = LastConditionVariable;
-	}
-
-	LeaveCriticalSection(CriticalSection);
-
-	//0x8 标记新增时，才进行优化 ConditionVariableWaitList
-	if ((OldConditionVariable ^ NewConditionVariable) & 0x8)
-	{
-		internal::RtlpOptimizeConditionVariableWaitList(ConditionVariable, NewConditionVariable);
-	}
-
-
-	auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
-	auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
-	if (!pNtWaitForKeyedEvent)
-	{
-		internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
-	}
-
-	//自旋
-	for (auto SpinCount = ConditionVariableSpinCount; SpinCount; --SpinCount)
-	{
-		if (!(StackWaitBlock.flag & 2))
-			break;
-
-		YieldProcessor();
-	}
-
-	NTSTATUS Status = 0;
-
-	if (InterlockedBitTestAndReset((volatile LONG*)&StackWaitBlock.flag, 1))
-	{
-		LARGE_INTEGER TimeOut;
-
-		Status = pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, internal::BaseFormatTimeOut(&TimeOut, dwMilliseconds));
-
-		if (Status == STATUS_TIMEOUT && internal::RtlpWakeSingle(ConditionVariable, &StackWaitBlock) == FALSE)
-		{
-			pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
-			Status = 0;
-		}
-	}
-
-	EnterCriticalSection(CriticalSection);
-
-	internal::BaseSetLastNTError(Status);
-
-	return Status >= 0 && Status != STATUS_TIMEOUT;
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, SleepConditionVariableCS, 12);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-BOOL
-WINAPI
-SleepConditionVariableSRW(
-    _Inout_ PCONDITION_VARIABLE ConditionVariable,
-    _Inout_ PSRWLOCK SRWLock,
-    _In_ DWORD dwMilliseconds,
-    _In_ ULONG Flags
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pSleepConditionVariableSRW = try_get_SleepConditionVariableSRW())
-	{
-		return pSleepConditionVariableSRW(ConditionVariable, SRWLock, dwMilliseconds, Flags);
-	}
-
-	YY_CV_WAIT_BLOCK StackWaitBlock;
-
-	NTSTATUS Status = 0;
-
-	do
-	{
-		if (Flags & ~CONDITION_VARIABLE_LOCKMODE_SHARED)
-		{
-			Status = STATUS_INVALID_PARAMETER_2;
-			break;
-		}
-
-		StackWaitBlock.next = nullptr;
-		StackWaitBlock.flag = 2;
-		StackWaitBlock.SRWLock = nullptr;
-
-		if (Flags& CONDITION_VARIABLE_LOCKMODE_SHARED)
-		{
-			StackWaitBlock.flag |= 0x4;
-		}
-
-		size_t Current = *(volatile size_t*)ConditionVariable;
-		size_t New;
-
-		for (;;)
-		{
-			New = size_t(&StackWaitBlock) | (Current & YY_CV_MASK);
-
-			if (StackWaitBlock.back = YY_CV_GET_BLOCK(Current))
-			{
-				StackWaitBlock.notify = nullptr;
-
-				New |= 0x8;
-			}
-			else
-			{
-				StackWaitBlock.notify = &StackWaitBlock;
-			}
-
-			const auto Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, New, Current);
-
-			if (Last == Current)
-			{
-				break;
-			}
-
-
-			Current = Last;
-		}
-
-		if (Flags& CONDITION_VARIABLE_LOCKMODE_SHARED)
-			YY::Thunks::ReleaseSRWLockShared(SRWLock);
-		else
-			YY::Thunks::ReleaseSRWLockExclusive(SRWLock);
-
-		if ((Current ^ New) & 0x8)
-		{
-			//新增0x8 标记位才调用 RtlpOptimizeConditionVariableWaitList
-			internal::RtlpOptimizeConditionVariableWaitList(ConditionVariable, New);
-		}
-
-		auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
-		auto pNtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
-		if (!pNtWaitForKeyedEvent)
-		{
-			internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
-		}
-
-		//自旋
-		for (auto SpinCount = ConditionVariableSpinCount; SpinCount; --SpinCount)
-		{
-			if (!(StackWaitBlock.flag & 2))
-				break;
-
-			YieldProcessor();
-		}
-
-		if (InterlockedBitTestAndReset((volatile LONG*)&StackWaitBlock.flag, 1))
-		{
-			LARGE_INTEGER TimeOut;
-
-			Status = pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, internal::BaseFormatTimeOut(&TimeOut, dwMilliseconds));
-
-			if (Status == STATUS_TIMEOUT && internal::RtlpWakeSingle(ConditionVariable, &StackWaitBlock) == FALSE)
-			{
-				pNtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
-				Status = 0;
-			}
-		}
-
-		if (Flags& CONDITION_VARIABLE_LOCKMODE_SHARED)
-			YY::Thunks::AcquireSRWLockShared(SRWLock);
-		else
-			YY::Thunks::AcquireSRWLockExclusive(SRWLock);
-
-	} while (false);
-
-
-	internal::BaseSetLastNTError(Status);
-
-	return Status >= 0 && Status != STATUS_TIMEOUT;
-
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, SleepConditionVariableSRW, 16);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-VOID
-WINAPI
-WakeConditionVariable(
-    _Inout_ PCONDITION_VARIABLE ConditionVariable
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pWakeConditionVariable = try_get_WakeConditionVariable())
-	{
-		return pWakeConditionVariable(ConditionVariable);
-	}
-
-	size_t Current = *(volatile size_t*)ConditionVariable;
-	size_t Last;
-
-	for (; Current; Current = Last)
-	{
-		if (Current & 0x8)
-		{
-			if ((Current & 0x7) == 0x7)
-			{
-				return;
-			}
-
-			Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, Current + 1, Current);
-			if (Last == Current)
-				return;
-		}
-		else
-		{
-			Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, Current | 0x8, Current);
-			if (Last == Current)
-			{
-				internal::RtlpWakeConditionVariable(ConditionVariable, Current + 8, 1);
-				return;
-			}
-		}
-	}
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, WakeConditionVariable, 4);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-//Windows Vista [desktop apps | UWP apps]
-//Windows Server 2008 [desktop apps | UWP apps]
-
-EXTERN_C
-VOID
-WINAPI
-WakeAllConditionVariable(
-    _Inout_ PCONDITION_VARIABLE ConditionVariable
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pWakeAllConditionVariable = try_get_WakeAllConditionVariable())
-	{
-		return pWakeAllConditionVariable(ConditionVariable);
-	}
-
-	size_t Current = *(volatile size_t*)ConditionVariable;
-	size_t Last;
-
-	for (; Current && (Current & 0x7) != 0x7; Current = Last)
-	{
-		if (Current & 0x8)
-		{
-			Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, Current | 0x7, Current);
-			if (Last == Current)
-				return;
-		}
-		else
-		{
-			Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, 0, Current);
-			if (Last == Current)
-			{
-				auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
-				auto pNtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
-
-				if (!pNtReleaseKeyedEvent)
-				{
-					internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
-				}
-
-				for (auto pBlock = YY_CV_GET_BLOCK(Current); pBlock;)
-				{
-					auto Tmp = pBlock->back;
-
-					if (!InterlockedBitTestAndReset((volatile LONG*)&pBlock->flag, 1))
+					Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, Current | 0x8, Current);
+					if (Last == Current)
 					{
-						pNtReleaseKeyedEvent(GlobalKeyedEventHandle, pBlock, FALSE, nullptr);
+						internal::RtlpWakeConditionVariable(ConditionVariable, Current + 8, 1);
+						return;
+					}
+				}
+			}
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+		WINAPI,
+		WakeAllConditionVariable,
+			_Inout_ PCONDITION_VARIABLE ConditionVariable
+			)
+		{
+			if (auto const pWakeAllConditionVariable = try_get_WakeAllConditionVariable())
+			{
+				return pWakeAllConditionVariable(ConditionVariable);
+			}
+
+			size_t Current = *(volatile size_t*)ConditionVariable;
+			size_t Last;
+
+			for (; Current && (Current & 0x7) != 0x7; Current = Last)
+			{
+				if (Current & 0x8)
+				{
+					Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, Current | 0x7, Current);
+					if (Last == Current)
+						return;
+				}
+				else
+				{
+					Last = InterlockedCompareExchange((volatile size_t*)ConditionVariable, 0, Current);
+					if (Last == Current)
+					{
+						auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
+						auto pNtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
+
+						if (!pNtReleaseKeyedEvent)
+						{
+							internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+						}
+
+						for (auto pBlock = YY_CV_GET_BLOCK(Current); pBlock;)
+						{
+							auto Tmp = pBlock->back;
+
+							if (!InterlockedBitTestAndReset((volatile LONG*)&pBlock->flag, 1))
+							{
+								pNtReleaseKeyedEvent(GlobalKeyedEventHandle, pBlock, FALSE, nullptr);
+							}
+
+							pBlock = Tmp;
+						}
+
+						return;
+					}
+				}
+			}
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+		//Windows 8 [desktop apps only]
+		//Windows Server 2012 [desktop apps only]
+		__DEFINE_THUNK(
+		kernel32,
+		12,
+		BOOL,
+		WINAPI,
+		InitializeSynchronizationBarrier,
+			_Out_ LPSYNCHRONIZATION_BARRIER lpBarrier,
+			_In_ LONG lTotalThreads,
+			_In_ LONG lSpinCount
+			)
+		{
+			if (auto const pEnterSynchronizationBarrier = try_get_InitializeSynchronizationBarrier())
+			{
+				return pEnterSynchronizationBarrier(lpBarrier, lTotalThreads, lSpinCount);
+			}
+
+			auto pYYBarrier = (YY_BARRIER*)lpBarrier;
+
+			pYYBarrier->lTotalThreads = lTotalThreads;
+			pYYBarrier->lRemainderThreads = lTotalThreads;
+			pYYBarrier->dwNumProcessors = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->NumberOfProcessors;
+			pYYBarrier->dwSpinCount = lSpinCount == -1 ? 2000 : lSpinCount;
+
+			if ((pYYBarrier->hEvent[0] = CreateEventW(nullptr, TRUE, FALSE, nullptr)) == nullptr)
+				return FALSE;
+
+			if ((pYYBarrier->hEvent[1] = CreateEventW(nullptr, TRUE, FALSE, nullptr)) == nullptr)
+			{
+				auto lStatus = GetLastError();
+				CloseHandle(pYYBarrier->hEvent[0]);
+				SetLastError(lStatus);
+				return FALSE;
+			}
+
+			return TRUE;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+		//Windows 8 [desktop apps only]
+		//Windows Server 2012 [desktop apps only]
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+		WINAPI,
+		EnterSynchronizationBarrier,
+			_Inout_ LPSYNCHRONIZATION_BARRIER lpBarrier,
+			_In_ DWORD dwFlags
+			)
+		{
+			if (auto const pEnterSynchronizationBarrier = try_get_EnterSynchronizationBarrier())
+			{
+				return pEnterSynchronizationBarrier(lpBarrier, dwFlags);
+			}
+
+			if (dwFlags & ~(SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY | SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY | SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE))
+			{
+				internal::RaiseStatus(STATUS_INVALID_PARAMETER);
+			}
+
+			DWORD dwRtlBarrierFlags = dwFlags & (SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY | SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY);
+
+			if ((dwFlags & SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE) == 0)
+				dwRtlBarrierFlags |= 0x10000;
+
+
+			auto pYYBarrier = (YY_BARRIER*)lpBarrier;
+
+
+			auto Current = InterlockedDecrement(&pYYBarrier->lRemainderThreads);
+
+			const auto GroupStatus = Current & 0x80000000;
+
+			const auto EventIndex = Current >= 0 ? 1 : 0;
+			DWORD dwRemainderThreads = Current & 0x7FFFFFFF;
+
+			if (dwRemainderThreads == 0)
+			{
+				//剩余数量已经变成 0 了，我们需要唤醒之前等待的线程，并且翻转 EventIndex
+				const auto NewEventIndex = EventIndex ? 0 : 1;
+
+
+				//将下次需要使用的事件设置为 无信号状态
+				auto NewEvent = pYYBarrier->hEvent[NewEventIndex];
+				if (size_t(NewEvent) & 0x1)
+				{
+					auto hEvent = (HANDLE)(size_t(NewEvent) & ~size_t(0x1));
+					pYYBarrier->hEvent[NewEventIndex] = hEvent;
+
+					ResetEvent(hEvent);
+				}
+
+				//吧当前的 GroupStatus 状态置反，然后组合成新的 RemainderThreads
+				auto NewRemainderThreads = pYYBarrier->lTotalThreads | (GroupStatus ^ 0x80000000);
+
+				//此标记后将自动删除 Barrier，后续也将无法再次利用 Barrier
+				if (dwRtlBarrierFlags & 0x10000)
+				{
+					pYYBarrier->lTotalThreads = 1;
+				}
+				pYYBarrier->lRemainderThreads = NewRemainderThreads;
+
+				auto Event = pYYBarrier->hEvent[EventIndex];
+				if (size_t(Event) & 0x1)
+				{
+					SetEvent((HANDLE)(size_t(Event) & ~size_t(0x1)));
+				}
+
+				return TRUE;
+			}
+
+			if (pYYBarrier->dwSpinCount && ((dwRemainderThreads < pYYBarrier->dwNumProcessors && (dwRtlBarrierFlags & SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY) == 0) || (dwRtlBarrierFlags & SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY)))
+			{
+				DWORD CurrentSpinCount = 0;
+				for (;;)
+				{
+					if ((pYYBarrier->lRemainderThreads & 0x80000000) != GroupStatus)
+					{
+						//自旋等待成功
+						auto dwSpinCount = pYYBarrier->dwSpinCount;
+
+						if (dwSpinCount < 5000)
+						{
+							pYYBarrier->dwSpinCount = dwSpinCount + 1;
+						}
+
+						goto __retrun;
 					}
 
-					pBlock = Tmp;
+					//指定 SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY 标识时会始终自旋，所以没有此标识时我们无需更新当前自旋次数
+					if ((dwRtlBarrierFlags & SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY) == 0)
+					{
+						++CurrentSpinCount;
+					}
+
+					YieldProcessor();
+
+					auto dwSpinCount = pYYBarrier->dwSpinCount;
+
+					if (CurrentSpinCount >= dwSpinCount)
+					{
+						if (dwSpinCount > 50)
+						{
+							pYYBarrier->dwSpinCount = dwSpinCount - 1;
+						}
+
+						break;
+					}
+				}
+			}
+
+			{
+				//如果没有 0x1标记则添加一个，来指示已经 WaitForSingleObject 了
+				HANDLE hEnvet = pYYBarrier->hEvent[EventIndex];
+				if ((size_t(hEnvet) & 0x1) == 0)
+				{
+					pYYBarrier->hEvent[EventIndex] = HANDLE(size_t(hEnvet) | 0x1);
 				}
 
-				return;
+				if ((pYYBarrier->lRemainderThreads & 0x80000000) == GroupStatus)
+					WaitForSingleObject((HANDLE)(size_t(hEnvet) & ~size_t(0x1)), INFINITE);
 			}
+
+		__retrun:
+
+			if (dwRtlBarrierFlags & 0x10000)
+				InterlockedIncrement(&pYYBarrier->lTotalThreads);
+
+			return TRUE;
 		}
-	}
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, WakeAllConditionVariable, 4);
-
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps only]
-//Windows Server 2012 [desktop apps only]
 
-EXTERN_C
-BOOL
-WINAPI
-InitializeSynchronizationBarrier(
-    _Out_ LPSYNCHRONIZATION_BARRIER lpBarrier,
-    _In_ LONG lTotalThreads,
-    _In_ LONG lSpinCount
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pEnterSynchronizationBarrier = try_get_InitializeSynchronizationBarrier())
-	{
-		return pEnterSynchronizationBarrier(lpBarrier, lTotalThreads, lSpinCount);
-	}
+		//Windows 8 [desktop apps only]
+		//Windows Server 2012 [desktop apps only]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		BOOL,
+		WINAPI,
+		DeleteSynchronizationBarrier,
+			_Inout_ LPSYNCHRONIZATION_BARRIER lpBarrier
+			)
+		{
+			if (auto const pDeleteSynchronizationBarrier = try_get_DeleteSynchronizationBarrier())
+			{
+				return pDeleteSynchronizationBarrier(lpBarrier);
+			}
 
-	auto pYYBarrier = (YY_BARRIER*)lpBarrier;
+			auto pYYBarrier = (YY_BARRIER*)lpBarrier;
 
-	pYYBarrier->lTotalThreads = lTotalThreads;
-	pYYBarrier->lRemainderThreads = lTotalThreads;
-	pYYBarrier->dwNumProcessors = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->NumberOfProcessors;
-	pYYBarrier->dwSpinCount = lSpinCount == -1 ? 2000 : lSpinCount;
+			//自旋等待所有 EnterSynchronizationBarrier 都进入就绪
+			for (; pYYBarrier->lTotalThreads != (pYYBarrier->lRemainderThreads & 0x7FFFFFFF);)
+			{
+				//等待16毫秒
+				Sleep(16);
+			}
 
-	if ((pYYBarrier->hEvent[0] = CreateEventW(nullptr, TRUE, FALSE, nullptr)) == nullptr)
-		return FALSE;
+			BOOL bSuccess = FALSE;
+			if (auto hEnent = (HANDLE)(size_t(pYYBarrier->hEvent[0]) & ~size_t(0x1)))
+				CloseHandle(hEnent);
 
-	if ((pYYBarrier->hEvent[1] = CreateEventW(nullptr, TRUE, FALSE, nullptr)) == nullptr)
-	{
-		auto lStatus = GetLastError();
-		CloseHandle(pYYBarrier->hEvent[0]);
-		SetLastError(lStatus);
-		return FALSE;
-	}
+			if (auto hEnent = (HANDLE)(size_t(pYYBarrier->hEvent[1]) & ~size_t(0x1)))
+				CloseHandle(hEnent);
 
-	return TRUE;
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, InitializeSynchronizationBarrier, 12);
-
+			//微软文档说的，这个函数总是返回 TRUE，但是微软Windows 8的实现略有问题，直接转发了 RtlDeleteBarrier，返回值并不正确
+			return TRUE;
+		}
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps only]
-//Windows Server 2012 [desktop apps only]
 
-EXTERN_C
-BOOL
-WINAPI
-EnterSynchronizationBarrier(
-    _Inout_ LPSYNCHRONIZATION_BARRIER lpBarrier,
-    _In_ DWORD dwFlags
-    )
-#ifdef YY_Thunks_Defined
-	;
+		//Windows 8 [desktop apps | UWP apps]
+		//Windows Server 2012 [desktop apps | UWP apps] 
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		BOOL,
+		WINAPI,
+		WaitOnAddress,
+			_In_reads_bytes_(AddressSize) volatile VOID* Address,
+			_In_reads_bytes_(AddressSize) PVOID CompareAddress,
+			_In_ SIZE_T AddressSize,
+			_In_opt_ DWORD dwMilliseconds
+			)
+		{
+			if (auto const pWaitOnAddress = try_get_WaitOnAddress())
+			{
+				return pWaitOnAddress(Address, CompareAddress, AddressSize, dwMilliseconds);
+			}
+
+			//参数检查，AddressSize 只能 为 1,2,4,8
+			if (AddressSize > 8 || AddressSize == 0 || ((AddressSize - 1) & AddressSize) != 0)
+			{
+				//STATUS_INVALID_PARAMETER
+				SetLastError(ERROR_INVALID_PARAMETER);
+				return FALSE;
+			}
+
+			YY_ADDRESS_WAIT_BLOCK WaitBlock;
+			WaitBlock.Address = Address;
+			WaitBlock.back = nullptr;
+			WaitBlock.notify = nullptr;
+			WaitBlock.next = nullptr;
+			WaitBlock.flag = 1;
+
+			internal::RtlpAddWaitBlockToWaitList(&WaitBlock);
+
+			bool bSame;
+			switch (AddressSize)
+			{
+			case 1:
+				bSame = *(volatile byte*)Address == *(volatile byte*)CompareAddress;
+				break;
+			case 2:
+				bSame = *(volatile WORD*)Address == *(volatile WORD*)CompareAddress;
+				break;
+			case 4:
+				bSame = *(volatile DWORD*)Address == *(volatile DWORD*)CompareAddress;
+				break;
+			default:
+			//case 8:
+#if _WIN64
+				//64位自身能保证操作的原子性
+				bSame = *(volatile unsigned long long*)Address == *(volatile unsigned long long*)CompareAddress;
 #else
-{
-	if (auto const pEnterSynchronizationBarrier = try_get_EnterSynchronizationBarrier())
-	{
-		return pEnterSynchronizationBarrier(lpBarrier, dwFlags);
-	}
-
-	if (dwFlags & ~(SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY | SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY | SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE))
-	{
-		internal::RaiseStatus(STATUS_INVALID_PARAMETER);
-	}
-
-	DWORD dwRtlBarrierFlags = dwFlags & (SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY | SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY);
-
-	if ((dwFlags & SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE) == 0)
-		dwRtlBarrierFlags |= 0x10000;
-
-
-	auto pYYBarrier = (YY_BARRIER*)lpBarrier;
-
-
-	auto Current = InterlockedDecrement(&pYYBarrier->lRemainderThreads);
-
-	const auto GroupStatus = Current & 0x80000000;
-
-	const auto EventIndex = Current >= 0 ? 1 : 0;
-	DWORD dwRemainderThreads = Current & 0x7FFFFFFF;
-
-	if (dwRemainderThreads == 0)
-	{
-		//剩余数量已经变成 0 了，我们需要唤醒之前等待的线程，并且翻转 EventIndex
-		const auto NewEventIndex = EventIndex ? 0 : 1;
-
-
-		//将下次需要使用的事件设置为 无信号状态
-		auto NewEvent = pYYBarrier->hEvent[NewEventIndex];
-		if (size_t(NewEvent) & 0x1)
-		{
-			auto hEvent = (HANDLE)(size_t(NewEvent) & ~size_t(0x1));
-			pYYBarrier->hEvent[NewEventIndex] = hEvent;
-
-			ResetEvent(hEvent);
-		}
-
-		//吧当前的 GroupStatus 状态置反，然后组合成新的 RemainderThreads
-		auto NewRemainderThreads = pYYBarrier->lTotalThreads | (GroupStatus ^ 0x80000000);
-
-		//此标记后将自动删除 Barrier，后续也将无法再次利用 Barrier
-		if (dwRtlBarrierFlags & 0x10000)
-		{
-			pYYBarrier->lTotalThreads = 1;
-		}
-		pYYBarrier->lRemainderThreads = NewRemainderThreads;
-
-		auto Event = pYYBarrier->hEvent[EventIndex];
-		if (size_t(Event) & 0x1)
-		{
-			SetEvent((HANDLE)(size_t(Event) & ~size_t(0x1)));
-		}
-
-		return TRUE;
-	}
-
-	if (pYYBarrier->dwSpinCount && ((dwRemainderThreads < pYYBarrier->dwNumProcessors && (dwRtlBarrierFlags & SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY) == 0) || (dwRtlBarrierFlags & SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY)))
-	{
-		DWORD CurrentSpinCount = 0;
-		for (;;)
-		{
-			if ((pYYBarrier->lRemainderThreads & 0x80000000) != GroupStatus)
-			{
-				//自旋等待成功
-				auto dwSpinCount = pYYBarrier->dwSpinCount;
-
-				if (dwSpinCount < 5000)
-				{
-					pYYBarrier->dwSpinCount = dwSpinCount + 1;
-				}
-
-				goto __retrun;
-			}
-
-			//指定 SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY 标识时会始终自旋，所以没有此标识时我们无需更新当前自旋次数
-			if ((dwRtlBarrierFlags & SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY) == 0)
-			{
-				++CurrentSpinCount;
-			}
-
-			YieldProcessor();
-
-			auto dwSpinCount = pYYBarrier->dwSpinCount;
-
-			if (CurrentSpinCount >= dwSpinCount)
-			{
-				if (dwSpinCount > 50)
-				{
-					pYYBarrier->dwSpinCount = dwSpinCount - 1;
-				}
-
+				bSame = InterlockedCompareExchange64((volatile long long*)Address, 0, 0) == *(volatile long long*)CompareAddress;
+#endif
 				break;
 			}
-		}
-	}
 
-	{
-		//如果没有 0x1标记则添加一个，来指示已经 WaitForSingleObject 了
-		HANDLE hEnvet = pYYBarrier->hEvent[EventIndex];
-		if ((size_t(hEnvet) & 0x1) == 0)
+
+			if (!bSame)
+			{
+				//结果不相同，我们从等待队列移除
+				internal::RtlpWaitOnAddressRemoveWaitBlock(&WaitBlock);
+				return TRUE;
+			}
+
+			LARGE_INTEGER TimeOut;
+
+			auto Status = internal::RtlpWaitOnAddressWithTimeout(&WaitBlock, internal::BaseFormatTimeOut(&TimeOut, dwMilliseconds));
+
+			if (Status)
+			{
+				internal::BaseSetLastNTError(Status);
+			}
+
+			return Status < 0 || Status == STATUS_TIMEOUT ? FALSE : TRUE;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+		//Windows 8 [desktop apps | UWP apps]
+		//Windows Server 2012 [desktop apps | UWP apps] 
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+		WINAPI,
+		WakeByAddressSingle,
+			_In_ PVOID Address
+			)
 		{
-			pYYBarrier->hEvent[EventIndex] = HANDLE(size_t(hEnvet) | 0x1);
+			if (auto const pWakeByAddressSingle = try_get_WakeByAddressSingle())
+			{
+				return pWakeByAddressSingle(Address);
+			}
+
+			internal::RtlpWakeByAddress(Address, FALSE);
 		}
-
-		if ((pYYBarrier->lRemainderThreads & 0x80000000) == GroupStatus)
-			WaitForSingleObject((HANDLE)(size_t(hEnvet) & ~size_t(0x1)), INFINITE);
-	}
-
-__retrun:
-
-	if (dwRtlBarrierFlags & 0x10000)
-		InterlockedIncrement(&pYYBarrier->lTotalThreads);
-
-	return TRUE;
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, EnterSynchronizationBarrier, 8);
-
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps only]
-//Windows Server 2012 [desktop apps only]
 
-EXTERN_C
-BOOL
-WINAPI
-DeleteSynchronizationBarrier(
-    _Inout_ LPSYNCHRONIZATION_BARRIER lpBarrier
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pDeleteSynchronizationBarrier = try_get_DeleteSynchronizationBarrier())
-	{
-		return pDeleteSynchronizationBarrier(lpBarrier);
-	}
+		//Windows 8 [desktop apps | UWP apps]
+		//Windows Server 2012 [desktop apps | UWP apps] 
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+		WINAPI,
+		WakeByAddressAll,
+			_In_ PVOID Address
+			)
+		{
+			if (auto const pWakeByAddressAll = try_get_WakeByAddressAll())
+			{
+				return pWakeByAddressAll(Address);
+			}
 
-	auto pYYBarrier = (YY_BARRIER*)lpBarrier;
-
-	//自旋等待所有 EnterSynchronizationBarrier 都进入就绪
-	for (; pYYBarrier->lTotalThreads != (pYYBarrier->lRemainderThreads & 0x7FFFFFFF);)
-	{
-		//等待16毫秒
-		Sleep(16);
-	}
-
-	BOOL bSuccess = FALSE;
-	if (auto hEnent = (HANDLE)(size_t(pYYBarrier->hEvent[0]) & ~size_t(0x1)))
-		CloseHandle(hEnent);
-
-	if (auto hEnent = (HANDLE)(size_t(pYYBarrier->hEvent[1]) & ~size_t(0x1)))
-		CloseHandle(hEnent);
-
-	//微软文档说的，这个函数总是返回 TRUE，但是微软Windows 8的实现略有问题，直接转发了 RtlDeleteBarrier，返回值并不正确
-	return TRUE;
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, DeleteSynchronizationBarrier, 4);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps | UWP apps]
-//Windows Server 2012 [desktop apps | UWP apps] 
-
-EXTERN_C
-BOOL
-WINAPI
-WaitOnAddress(
-    _In_reads_bytes_(AddressSize) volatile VOID* Address,
-    _In_reads_bytes_(AddressSize) PVOID CompareAddress,
-    _In_ SIZE_T AddressSize,
-    _In_opt_ DWORD dwMilliseconds
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pWaitOnAddress = try_get_WaitOnAddress())
-	{
-		return pWaitOnAddress(Address, CompareAddress, AddressSize, dwMilliseconds);
-	}
-
-	//参数检查，AddressSize 只能 为 1,2,4,8
-	if (AddressSize > 8 || AddressSize == 0 || ((AddressSize - 1) & AddressSize) != 0)
-	{
-		//STATUS_INVALID_PARAMETER
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
-	}
-
-	YY_ADDRESS_WAIT_BLOCK WaitBlock;
-	WaitBlock.Address = Address;
-	WaitBlock.back = nullptr;
-	WaitBlock.notify = nullptr;
-	WaitBlock.next = nullptr;
-	WaitBlock.flag = 1;
-
-	internal::RtlpAddWaitBlockToWaitList(&WaitBlock);
-
-	bool bSame;
-	switch (AddressSize)
-	{
-	case 1:
-		bSame = *(volatile byte*)Address == *(volatile byte*)CompareAddress;
-		break;
-	case 2:
-		bSame = *(volatile WORD*)Address == *(volatile WORD*)CompareAddress;
-		break;
-	case 4:
-		bSame = *(volatile DWORD*)Address == *(volatile DWORD*)CompareAddress;
-		break;
-	default:
-	//case 8:
-#if _WIN64
-		//64位自身能保证操作的原子性
-		bSame = *(volatile unsigned long long*)Address == *(volatile unsigned long long*)CompareAddress;
-#else
-		bSame = InterlockedCompareExchange64((volatile long long*)Address, 0, 0) == *(volatile long long*)CompareAddress;
-#endif
-		break;
-	}
-
-
-	if (!bSame)
-	{
-		//结果不相同，我们从等待队列移除
-		internal::RtlpWaitOnAddressRemoveWaitBlock(&WaitBlock);
-		return TRUE;
-	}
-
-	LARGE_INTEGER TimeOut;
-
-	auto Status = internal::RtlpWaitOnAddressWithTimeout(&WaitBlock, internal::BaseFormatTimeOut(&TimeOut, dwMilliseconds));
-
-	if (Status)
-	{
-		internal::BaseSetLastNTError(Status);
-	}
-
-	return Status < 0 || Status == STATUS_TIMEOUT ? FALSE : TRUE;
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, WaitOnAddress, 16);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps | UWP apps]
-//Windows Server 2012 [desktop apps | UWP apps] 
-
-EXTERN_C
-VOID
-WINAPI
-WakeByAddressSingle(
-    _In_ PVOID Address
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pWakeByAddressSingle = try_get_WakeByAddressSingle())
-	{
-		return pWakeByAddressSingle(Address);
-	}
-
-	internal::RtlpWakeByAddress(Address, FALSE);
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, WakeByAddressSingle, 4);
-
-#endif
-
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
-//Windows 8 [desktop apps | UWP apps]
-//Windows Server 2012 [desktop apps | UWP apps] 
-
-EXTERN_C
-VOID
-WINAPI
-WakeByAddressAll(
-    _In_ PVOID Address
-    )
-#ifdef YY_Thunks_Defined
-	;
-#else
-{
-	if (auto const pWakeByAddressAll = try_get_WakeByAddressAll())
-	{
-		return pWakeByAddressAll(Address);
-	}
-
-	internal::RtlpWakeByAddress(Address, TRUE);
-}
-#endif
-
-__YY_Thunks_Expand_Function(kernel32, WakeByAddressAll, 4);
-
+			internal::RtlpWakeByAddress(Address, TRUE);
+		}
 #endif
 	}//namespace Thunks
 

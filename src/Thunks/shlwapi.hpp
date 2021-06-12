@@ -1,9 +1,12 @@
-﻿namespace YY
+﻿
+#include <Shlwapi.h>
+
+namespace YY
 {
 	namespace Thunks
 	{
 
-#ifndef YY_Thunks_Defined
+#ifdef YY_Thunks_Implemented
 		namespace internal
 		{
 			template<class Char>
@@ -118,64 +121,56 @@
 		}
 #endif
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
-// Windows 2000 Professional, Windows XP [desktop apps only] 
-// Windows 2000 Server [desktop apps only]
-// 虽然Windows 2000支持，但是在IE6里面而IE6不一定所有Windows 2000都有，因此低于5.1我们就静态引入。
 
-EXTERN_C
-BOOL
-WINAPI
-StrToInt64ExA(
-	_In_ PCSTR pszString,
-	STIF_FLAGS dwFlags,
-	_Out_ LONGLONG* pllRet
-	)
-#ifdef YY_Thunks_Defined
-;
-#else
-{
-	if (const auto pStrToInt64ExA = try_get_StrToInt64ExA())
-	{
-		return pStrToInt64ExA(pszString, dwFlags, pllRet);
-	}
+		// Windows 2000 Professional, Windows XP [desktop apps only] 
+		// Windows 2000 Server [desktop apps only]
+		// 虽然Windows 2000支持，但是在IE6里面而IE6不一定所有Windows 2000都有，因此低于5.1我们就静态引入。
+		__DEFINE_THUNK(
+		shlwapi,
+		12,
+		BOOL,
+		WINAPI,
+		StrToInt64ExA,
+			_In_ PCSTR pszString,
+			STIF_FLAGS dwFlags,
+			_Out_ LONGLONG* pllRet
+			)
+		{
+			if (const auto pStrToInt64ExA = try_get_StrToInt64ExA())
+			{
+				return pStrToInt64ExA(pszString, dwFlags, pllRet);
+			}
 
-	return internal::StrToInt64ExT(pszString, dwFlags, pllRet);
-}
-#endif
-
-__YY_Thunks_Expand_Function(shlwapi, StrToInt64ExA, 12);
-
+			return internal::StrToInt64ExT(pszString, dwFlags, pllRet);
+		}
 #endif //YY_Thunks_Support_Version < NTDDI_WINXP
 
+
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
-// Windows 2000 Professional, Windows XP [desktop apps only] 
-// Windows 2000 Server [desktop apps only]
-// 虽然Windows 2000支持，但是在IE6里面而IE6不一定所有Windows 2000都有，因此低于5.1我们就静态引入。
 
-EXTERN_C
-BOOL
-WINAPI
-StrToInt64ExW(
-	_In_ PCWSTR pszString,
-	STIF_FLAGS dwFlags,
-	_Out_ LONGLONG* pllRet
-	)
-#ifdef YY_Thunks_Defined
-;
-#else
-{
-	if (const auto pStrToInt64ExW = try_get_StrToInt64ExW())
-	{
-		return pStrToInt64ExW(pszString, dwFlags, pllRet);
-	}
+		// Windows 2000 Professional, Windows XP [desktop apps only] 
+		// Windows 2000 Server [desktop apps only]
+		// 虽然Windows 2000支持，但是在IE6里面而IE6不一定所有Windows 2000都有，因此低于5.1我们就静态引入。
+		__DEFINE_THUNK(
+		shlwapi,
+		12,
+		BOOL,
+		WINAPI,
+		StrToInt64ExW,
+			_In_ PCWSTR pszString,
+			STIF_FLAGS dwFlags,
+			_Out_ LONGLONG* pllRet
+			)
+		{
+			if (const auto pStrToInt64ExW = try_get_StrToInt64ExW())
+			{
+				return pStrToInt64ExW(pszString, dwFlags, pllRet);
+			}
 
-	return internal::StrToInt64ExT(pszString, dwFlags, pllRet);
-}
-#endif
-
-__YY_Thunks_Expand_Function(shlwapi, StrToInt64ExW, 12);
-
+			return internal::StrToInt64ExT(pszString, dwFlags, pllRet);
+		}
 #endif //YY_Thunks_Support_Version < NTDDI_WINXP
 	}
 }
