@@ -1,5 +1,10 @@
 ﻿# YY-Thunks - 让兼容 Windows 更轻松
-
+![license](https://img.shields.io/github/license/Chuyu-Team/YY-Thunks)
+![downloads](https://img.shields.io/github/downloads/Chuyu-Team/YY-Thunks/total)
+![contributors](https://img.shields.io/github/contributors-anon/Chuyu-Team/YY-Thunks)
+![release](https://img.shields.io/github/v/release/Chuyu-Team/YY-Thunks?include_prereleases)
+![nuget](https://img.shields.io/nuget/vpre/YY-Thunks)
+[![Build&Test](https://github.com/Chuyu-Team/YY-Thunks/actions/workflows/Build&Test.yml/badge.svg)](https://github.com/Chuyu-Team/YY-Thunks/actions/workflows/Build&Test.yml)
 
 ## 关于 YY-Thunks
 

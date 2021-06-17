@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>YY-Thunks</id>
@@ -13,60 +13,7 @@
     <description>功能 —— 让兼容Windows更轻松
 - 简洁优雅，一个obj解决找不到指定入口点问题。</description>
     <summary>优雅的解决Windows XP RTM无法定位程序输入点 DecodePointer、EncodePointer、RegDeleteKeyEx等，让你兼容Windows更轻松。</summary>
-    <releaseNotes>
-      * 新增[Fea 21](https://github.com/Chuyu-Team/YY-Thunks/issues/21), 添加 Pathcch API Thunks。
-        - 添加 PathIsUNCEx
-        - 添加 PathCchIsRoot
-        - 添加 PathCchAddBackslashEx
-        - 添加 PathCchAddBackslash
-        - 添加 PathCchRemoveBackslashEx
-        - 添加 PathCchRemoveBackslash
-        - 添加 PathCchSkipRoot
-        - 添加 PathCchStripToRoot
-        - 添加 PathCchRemoveFileSpec
-        - 添加 PathCchFindExtension
-        - 添加 PathCchAddExtension
-        - 添加 PathCchRenameExtension
-        - 添加 PathCchRemoveExtension
-        - 添加 PathCchCanonicalizeEx
-        - 添加 PathCchCanonicalize
-        - 添加 PathCchCombineEx
-        - 添加 PathCchCombine
-        - 添加 PathCchAppendEx
-        - 添加 PathCchAppend
-        - 添加 PathCchStripPrefix
-        - 添加 PathAllocCombine
-        - 添加 PathAllocCanonicalize
-      * 改进多线程支持
-        - 改进 GetNumaNodeProcessorMask Fallback逻辑的合理性。
-        - 添加 GetNumaProximityNodeEx
-        - 添加 GetNumaProcessorNode
-        - 添加 GetNumaNodeNumberFromHandle
-        - 添加 GetNumaProcessorNodeEx
-        - 添加 GetNumaAvailableMemoryNode
-        - 添加 GetNumaAvailableMemoryNodeEx
-        - 添加 GetNumaProximityNode
-        - 添加 MapViewOfFileExNuma
-        - 添加 AllocateUserPhysicalPagesNuma
-        - 添加 VirtualAllocExNuma
-        - 添加 CreateFileMappingNumaW
-        - 添加 GetMaximumProcessorCount
-        - 添加 GetActiveProcessorCount
-        - 添加 GetActiveProcessorGroupCount
-        - 添加 GetMaximumProcessorGroupCount
-      * 其他
-        - 添加 GetMemoryErrorHandlingCapabilities
-        - 添加 VirtualAllocFromApp
-        - 添加 VirtualAlloc2
-        - 添加 VirtualAlloc2FromApp
-        - 添加 CreateFileMappingFromApp
-        - 添加 CreateFileMapping2
-        - 添加 MapViewOfFileFromApp
-        - 添加 UnmapViewOfFileEx
-        - 添加 VirtualProtectFromApp
-        - 添加 OpenFileMappingFromApp
-        - 解决Bug，SHCreateShellItem 符号名称错误。
-    </releaseNotes>
+    <releaseNotes>$releaseNotes$</releaseNotes>
     <copyright>Copyright 2021</copyright>
     <tags>Chuyu YY-Thunks native nativepackage</tags>
     <repository type="git" url="https://github.com/Chuyu-Team/YY-Thunks.git" branch="master" commit="$commit$" />

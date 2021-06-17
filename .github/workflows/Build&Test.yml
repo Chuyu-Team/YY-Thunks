@@ -1,0 +1,158 @@
+﻿name: Build&Test
+
+on: [push]
+
+jobs:
+  Build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: 初始化
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+          mkdir -p Bin
+          Invoke-WebRequest -Uri https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.2.8/LibMaker.exe -OutFile Bin\LibMaker.exe
+          Invoke-WebRequest -Uri https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.2.8/MinimumRequiredVersionHelper.exe -OutFile Bin\MinimumRequiredVersionHelper.exe
+          
+          $ProgramFiles = ${env:ProgramFiles(x86)}
+
+          if (-not $ProgramFiles)
+          {
+              $ProgramFiles = $env:ProgramFiles
+          }
+          
+          $BuiltInVsWhereExe = "$ProgramFiles\Microsoft Visual Studio\Installer\vswhere.exe"
+
+          if (-not (Test-Path $BuiltInVsWhereExe))
+          {
+              throw "找不到vswhere.exe！"
+          }
+          
+          Write-Output $BuiltInVsWhereExe
+          
+          $LatestVisualStudioRoot = & $BuiltInVsWhereExe -latest -prerelease -property installationPath
+          
+          if (-not (Test-Path $LatestVisualStudioRoot))
+          {
+              throw "找不到 VisualStudioRoot！"
+          }
+          
+          echo "LatestVisualStudioRoot=$LatestVisualStudioRoot" >> $env:GITHUB_ENV
+          
+          $MSBuildBinPath="$LatestVisualStudioRoot\MSBuild\Current\Bin"
+          
+          if (-not (Test-Path $MSBuildBinPath))
+          {
+              $installationVersion = & $BuiltInVsWhereExe -latest -prerelease -property installationVersion
+              $majorVersion = "$installationVersion".Split('.')[0]
+              
+              $MSBuildBinPath="$LatestVisualStudioRoot\MSBuild\$majorVersion.0\Bin"
+          }
+          
+          if (-not (Test-Path $MSBuildBinPath))
+          {
+              throw "找不到 MSBuildBinPath！"
+          }
+          
+          echo "MSBuildBinPath=$MSBuildBinPath" >> $env:GITHUB_ENV
+          
+          if($env:GITHUB_REF.StartsWith("refs/tags/v", "CurrentCultureIgnoreCase"))
+          {
+              $BuildVersion = $env:GITHUB_REF.Remove(0, 11);
+              echo "BuildVersion=$BuildVersion" >> $env:GITHUB_ENV
+
+              # github的内置版本有Bug，此行必须添加，否则无法获得内容
+              git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+
+              $releaseNotes = & git tag -l --format='%(contents)' $env:GITHUB_REF.Remove(0, 10)
+              $content = [System.IO.File]::ReadAllText("YY-Thunks.nuspec")
+              
+              # 使用此文本替换 .nuspec 中的 releaseNotes
+              # [System.IO.File]::WriteAllText("YY-Thunks-New.nuspec", $content)
+              # 微软这个大爷……
+              
+              $releaseNotesToken = '$releaseNotes$'
+              $releaseNotesIndex = $content.IndexOf($releaseNotesToken)
+              
+              if($releaseNotesIndex -ne -1)
+              {
+                  echo $content.Substring(0, $releaseNotesIndex) | out-file "YY-Thunks-New.nuspec" -NoNewline
+                  echo $releaseNotes | out-file "YY-Thunks-New.nuspec" -Append
+                  echo $content.Remove(0, $releaseNotesIndex + $releaseNotesToken.Length) | out-file "YY-Thunks-New.nuspec" -NoNewline -Append
+              }
+          }
+
+    - name: 执行编译
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      shell: cmd
+      run: |
+          set Path=%GITHUB_WORKSPACE%\Bin;%Path%
+          set LatestVisualStudioRoot=${{env.LatestVisualStudioRoot}}
+          
+          setlocal
+          call "%LatestVisualStudioRoot%\VC\Auxiliary\Build\vcvars32.bat"
+          call "%GITHUB_WORKSPACE%\src\Build.cmd"
+          endlocal
+          
+          setlocal
+          call "%LatestVisualStudioRoot%\VC\Auxiliary\Build\vcvars64.bat"
+          call "%GITHUB_WORKSPACE%\src\Build.cmd"
+          endlocal
+
+    - name: 执行单元测试
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      shell: cmd
+      run: |
+          ::MSBuild 目录更新到 Path
+          set Path=${{env.MSBuildBinPath}};${{env.LatestVisualStudioRoot}}\Common7\IDE\CommonExtensions\Microsoft\TestWindow;%Path%
+          
+          ::编译单元测试项目
+          msbuild src\YY-Thunks.UnitTest.vcxproj -p:Configuration=Release;Platform=Win32
+          msbuild src\YY-Thunks.UnitTest.vcxproj -p:Configuration=Release;Platform=x64
+          
+          vstest.console.exe src\Release\YY-Thunks.UnitTest.dll /logger:trx;LogFileName=UnitTestWin32.trx
+          vstest.console.exe src\x64\Release\YY-Thunks.UnitTest.dll /logger:trx;LogFileName=UnitTestWin64.trx
+    - uses: dorny/test-reporter@v1
+      if: success() || failure()
+      with:
+        name: 单元测试报告
+        path: TestResults/*.trx
+        reporter: dotnet-trx
+        
+    - name: 文件打包
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      shell: cmd
+      run: |
+          ::打包Release
+          7z a -tzip YY-Thunks-${{env.BuildVersion}}-Binary.zip objs LICENSE ReadMe.md ThunksList.md
+          
+          ::打包Nuget
+          if "${{env.BuildVersion}}" NEQ "" (
+              nuget pack YY-Thunks-New.nuspec -Properties version=${{env.BuildVersion}};commit=%GITHUB_SHA%
+          )
+                    
+    - uses: actions/upload-artifact@v2
+      with:
+        path: |
+            *.nupkg
+            *.zip
+            
+    - uses: xresloader/upload-to-github-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        file: "YY-Thunks-*.zip"
+        overwrite: true
+        tags: true
+        draft: false
+
+    - name: 内容发布
+      if: contains(github.ref, 'tags/')
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      shell: cmd
+      run: |
+         :: 把生成的nuget包发布到nuget中
+         nuget push YY-Thunks.${{env.BuildVersion}}.nupkg -ApiKey ${{ secrets.NUGET_TOKEN }} -Source https://api.nuget.org/v3/index.json
+
