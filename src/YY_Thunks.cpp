@@ -97,9 +97,11 @@
 
 //展开函数的所有的 声明 以及 try_get_ 函数
 #define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                 \
+    __APPLY_UNIT_TEST_BOOL(_FUNCTION);                                                         \
     EXTERN_C _RETURN_ _CONVENTION_ _FUNCTION(__VA_ARGS__);                                     \
 	static decltype(_FUNCTION)* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept       \
 	{                                                                                          \
+        __CHECK_UNIT_TEST_BOOL(_FUNCTION);                                                     \
         __declspec(allocate(".YYThr$AAA")) static void* _CRT_CONCATENATE(pInit_ ,_FUNCTION) =  \
               reinterpret_cast<void*>(&_CRT_CONCATENATE(try_get_, _FUNCTION));                 \
         /*为了避免编译器将 YYThr$AAA 节优化掉*/                                                \

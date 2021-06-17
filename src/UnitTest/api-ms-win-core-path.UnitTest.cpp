@@ -12,6 +12,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathIsUNCEx)
 	{
 	public:
+		PathIsUNCEx()
+		{
+			YY::Thunks::aways_null_try_get_PathIsUNCEx = true;
+		}
+
 		TEST_METHOD(传统UNC路径分割)
 		{
 			PCWSTR pszServer;
@@ -49,6 +54,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchIsRoot)
 	{
 	public:
+		PathCchIsRoot()
+		{
+			YY::Thunks::aways_null_try_get_PathCchIsRoot = true;
+		}
+
 		TEST_METHOD(Dos路径测试)
 		{
 
@@ -129,6 +139,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchAddBackslashEx)
 	{
 	public:
+		PathCchAddBackslashEx()
+		{
+			YY::Thunks::aways_null_try_get_PathCchAddBackslashEx = true;
+		}
+
 		TEST_METHOD(基础功能测试)
 		{
 			{
@@ -183,6 +198,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchRemoveBackslashEx)
 	{
 	public:
+		PathCchRemoveBackslashEx()
+		{
+			YY::Thunks::aways_null_try_get_PathCchRemoveBackslashEx = true;
+		}
+
 		TEST_METHOD(Dos路径测试)
 		{
 			{
@@ -573,6 +593,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchSkipRoot)
 	{
 	public:
+		PathCchSkipRoot()
+		{
+			YY::Thunks::aways_null_try_get_PathCchSkipRoot = true;
+		}
+
 		TEST_METHOD(Dos路径)
 		{
 			{
@@ -846,6 +871,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchStripToRoot)
 	{
 	public:
+		PathCchStripToRoot()
+		{
+			YY::Thunks::aways_null_try_get_PathCchStripToRoot = true;
+		}
+
 		TEST_METHOD(Dos路径测试)
 		{
 			{
@@ -1085,6 +1115,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchRemoveFileSpec)
 	{
 	public:
+		PathCchRemoveFileSpec()
+		{
+			YY::Thunks::aways_null_try_get_PathCchRemoveFileSpec = true;
+		}
+
 		TEST_METHOD(Dos路径测试)
 		{
 			{
@@ -1412,6 +1447,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchFindExtension)
 	{
 	public:
+		PathCchFindExtension()
+		{
+			YY::Thunks::aways_null_try_get_PathCchFindExtension = true;
+		}
+
 		TEST_METHOD(常规后缀提取)
 		{
 			{
@@ -1493,6 +1533,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchAddExtension)
 	{
 	public:
+		PathCchAddExtension()
+		{
+			YY::Thunks::aways_null_try_get_PathCchAddExtension = true;
+		}
+
 		TEST_METHOD(常规的添加)
 		{
 			{
@@ -1666,6 +1711,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchRenameExtension)
 	{
 	public:
+		PathCchRenameExtension()
+		{
+			YY::Thunks::aways_null_try_get_PathCchRenameExtension = true;
+		}
+
 		TEST_METHOD(添加后缀)
 		{
 			{
@@ -1741,6 +1791,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchRemoveExtension)
 	{
 	public:
+		PathCchRemoveExtension()
+		{
+			YY::Thunks::aways_null_try_get_PathCchRemoveExtension = true;
+		}
+
 		TEST_METHOD(基础功能验证)
 		{
 			{
@@ -1770,6 +1825,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchCanonicalizeEx)
 	{
 	public:
+		PathCchCanonicalizeEx()
+		{
+			YY::Thunks::aways_null_try_get_PathCchCanonicalizeEx = true;
+		}
+
 		TEST_METHOD(基础功能验证)
 		{
 			{
@@ -1875,6 +1935,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchCombineEx)
 	{
 	public:
+		PathCchCombineEx()
+		{
+			YY::Thunks::aways_null_try_get_PathCchCombineEx = true;
+		}
+
 		TEST_METHOD(基础功能验证)
 		{
 			{
@@ -1959,6 +2024,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchAppendEx)
 	{
 	public:
+		PathCchAppendEx()
+		{
+			YY::Thunks::aways_null_try_get_PathCchAppendEx = true;
+		}
+
 		TEST_METHOD(基础功能验证)
 		{
 			{
@@ -2041,6 +2111,11 @@ namespace api_ms_win_core_path
 	TEST_CLASS(PathCchStripPrefix)
 	{
 	public:
+		PathCchStripPrefix()
+		{
+			YY::Thunks::aways_null_try_get_PathCchStripPrefix = true;
+		}
+
 		TEST_METHOD(Dos路径)
 		{
 			{

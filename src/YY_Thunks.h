@@ -32,6 +32,15 @@
         = reinterpret_cast<void const*>(_FUNCTION)
 #endif
 
+#ifdef __YY_Thunks_Unit_Test
+	#define __APPLY_UNIT_TEST_BOOL(_FUNCTION) bool _CRT_CONCATENATE(aways_null_try_get_, _FUNCTION) = false
+	#define __CHECK_UNIT_TEST_BOOL(_FUNCTION) if(_CRT_CONCATENATE(aways_null_try_get_, _FUNCTION)) return nullptr
+#else
+	#define __APPLY_UNIT_TEST_BOOL(_FUNCTION)
+	#define __CHECK_UNIT_TEST_BOOL(_FUNCTION)
+#endif
+
+
 #pragma section(".YYThu$AAA",    long, read, write) //鸭船模块缓存节点
 #pragma section(".YYThu$AAB",    long, read, write) //鸭船函数缓存节点
 #pragma section(".YYThu$AAC",    long, read, write) //保留，暂时用于边界结束
@@ -360,8 +369,10 @@ static void* __fastcall try_get_function(
 
 
 #define _APPLY(_FUNCTION, _MODULE)                                                                    \
+    __APPLY_UNIT_TEST_BOOL(_FUNCTION);                                                                \
     static _CRT_CONCATENATE(_FUNCTION, _pft) __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept \
     {                                                                                                 \
+        __CHECK_UNIT_TEST_BOOL(_FUNCTION);                                                            \
         __declspec(allocate(".YYThr$AAA")) static void* _CRT_CONCATENATE(pInit_ ,_FUNCTION) =         \
               reinterpret_cast<void*>(&_CRT_CONCATENATE(try_get_, _FUNCTION));                        \
         /*为了避免编译器将 YYThr$AAA 节优化掉*/                                                       \
