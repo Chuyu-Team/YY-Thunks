@@ -3,25 +3,47 @@
 #ifdef YY_Thunks_Implemented
 
 //读写锁参考了https://blog.csdn.net/yichigo/article/details/36898561
-#define YY_SRWLOCK_OWNED_BIT           0
-#define YY_SRWLOCK_CONTENDED_BIT       1
-#define YY_SRWLOCK_SHARED_BIT          2
-#define YY_SRWLOCK_CONTENTION_LOCK_BIT 3
+#define YY_SRWLOCK_Locked_BIT           0
+#define YY_SRWLOCK_Waiting_BIT          1
+#define YY_SRWLOCK_Waking_BIT           2
+#define YY_SRWLOCK_MultipleShared_BIT   3
 //已经有人获得这个锁
-#define YY_SRWLOCK_OWNED               0x00000001ul
+#define YY_SRWLOCK_Locked               0x00000001ul
 //有人正在等待锁
-#define YY_SRWLOCK_CONTENDED           0x00000002ul
-//有人正在优化锁
-#define YY_SRWLOCK_SHARED              0x00000004ul
+#define YY_SRWLOCK_Waiting              0x00000002ul
+//有人正在唤醒锁
+#define YY_SRWLOCK_Waking               0x00000004ul
 //
-#define YY_SRWLOCK_CONTENTION_LOCK     0x00000008ul
-#define YY_SRWLOCK_MASK    (size_t(YY_SRWLOCK_OWNED | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_SHARED | YY_SRWLOCK_CONTENTION_LOCK))
+#define YY_SRWLOCK_MultipleShared       0x00000008ul
+
+#define YY_SRWLOCK_MASK    (size_t(0xF))
 #define YY_SRWLOCK_BITS    4
 #define YY_SRWLOCK_GET_BLOCK(SRWLock) ((YY_SRWLOCK_WAIT_BLOCK*)(SRWLock & (~YY_SRWLOCK_MASK)))
 
 //SRWLock自旋次数
 #define SRWLockSpinCount 1024
 
+//取自Win7
+struct _YY_RTL_SRWLOCK
+{
+	union
+	{
+		struct
+		{
+			ULONG_PTR Locked : 1;       
+			ULONG_PTR Waiting : 1;           
+			ULONG_PTR Waking : 1;            
+			ULONG_PTR MultipleShared : 1;
+#ifdef _WIN64
+			ULONG_PTR Shared : 60;
+#else
+			ULONG_PTR Shared : 28;
+#endif
+		};
+		ULONG_PTR Value;
+		VOID* Ptr;
+	};
+};
 
 typedef struct __declspec(align(16)) _YY_SRWLOCK_WAIT_BLOCK
 {
@@ -144,7 +166,7 @@ namespace YY
 
 				for (;;)
 				{
-					if ((Status & YY_SRWLOCK_OWNED) == 0)
+					if ((Status & YY_SRWLOCK_Locked) == 0)
 					{
 						//微软就不判断下空指针？如此自信？
 						auto pWatiBlock = YY_SRWLOCK_GET_BLOCK(Status);
@@ -168,11 +190,11 @@ namespace YY
 							pWatiBlock->notify = notify->next;
 							notify->next = nullptr;
 
-							//SRWLock & (~YY_SRWLOCK_SHARED)
+							//SRWLock & (~YY_SRWLOCK_Waking)
 #ifdef _WIN64
-							_InterlockedAnd64((volatile LONG_PTR *)SRWLock, ~LONG_PTR(YY_SRWLOCK_SHARED));
+							_InterlockedAnd64((volatile LONG_PTR *)SRWLock, ~LONG_PTR(YY_SRWLOCK_Waking));
 #else
-							_InterlockedAnd((volatile LONG_PTR *)SRWLock, ~LONG_PTR(YY_SRWLOCK_SHARED));
+							_InterlockedAnd((volatile LONG_PTR *)SRWLock, ~LONG_PTR(YY_SRWLOCK_Waking));
 #endif
 							if (!InterlockedBitTestAndReset((volatile LONG*)&notify->flag, 1))
 							{
@@ -220,7 +242,7 @@ namespace YY
 					}
 					else
 					{
-						auto NewStatus = InterlockedCompareExchange((volatile LONG *)SRWLock, Status & ~YY_SRWLOCK_SHARED, Status);
+						auto NewStatus = InterlockedCompareExchange((volatile LONG *)SRWLock, Status & ~YY_SRWLOCK_Waking, Status);
 						if (NewStatus == Status)
 							return;
 
@@ -233,7 +255,7 @@ namespace YY
 			{
 				for (;;)
 				{
-					if (Status & YY_SRWLOCK_OWNED)
+					if (Status & YY_SRWLOCK_Locked)
 					{
 						if (auto WatiBlock = (YY_SRWLOCK_WAIT_BLOCK*)(Status & (~YY_SRWLOCK_MASK)))
 						{
@@ -250,8 +272,8 @@ namespace YY
 							WatiBlock->notify = pBlock->notify;
 						}
 
-						//微软为什么用 Status - YY_SRWLOCK_SHARED，而为什么不用 Status & ~YY_SRWLOCK_SHARED ？
-						auto CurrentStatus = InterlockedCompareExchange((volatile size_t *)SRWLock, Status & ~YY_SRWLOCK_SHARED, Status);
+						//微软为什么用 Status - YY_SRWLOCK_Waking，而为什么不用 Status & ~YY_SRWLOCK_Waking ？
+						auto CurrentStatus = InterlockedCompareExchange((volatile size_t *)SRWLock, Status - YY_SRWLOCK_Waking, Status);
 						if (CurrentStatus == Status)
 							break;
 
@@ -1600,9 +1622,9 @@ namespace YY
 
 			//尝试加锁一次
 #if defined(_WIN64)
-			auto OldBit = InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
+			auto OldBit = InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_Locked_BIT);
 #else
-			auto OldBit = InterlockedBitTestAndSet((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
+			auto OldBit = InterlockedBitTestAndSet((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_Locked_BIT);
 #endif
 
 			if(OldBit == false)
@@ -1615,7 +1637,7 @@ namespace YY
 			{
 				auto SRWLockOld =  *(volatile size_t*)SRWLock;
 
-				if (YY_SRWLOCK_OWNED & SRWLockOld)
+				if (YY_SRWLOCK_Locked & SRWLockOld)
 				{
 					/*
 					if (RtlpWaitCouldDeadlock())
@@ -1628,16 +1650,16 @@ namespace YY
 
 					size_t SRWLockNew;
 
-					if (YY_SRWLOCK_CONTENDED & SRWLockOld)
+					if (YY_SRWLOCK_Waiting & SRWLockOld)
 					{
 						//有人正在等待连接
 						StackWaitBlock.notify = nullptr;
 						StackWaitBlock.shareCount = 0;
 						StackWaitBlock.back = (YY_SRWLOCK_WAIT_BLOCK*)(SRWLockOld & (~YY_SRWLOCK_MASK));
 
-						SRWLockNew = (size_t)(&StackWaitBlock) | (SRWLockOld & YY_SRWLOCK_CONTENTION_LOCK) | YY_SRWLOCK_SHARED | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED;
+						SRWLockNew = (size_t)(&StackWaitBlock) | (SRWLockOld & YY_SRWLOCK_MultipleShared) | YY_SRWLOCK_Waking | YY_SRWLOCK_Waiting | YY_SRWLOCK_Locked;
 
-						if ((YY_SRWLOCK_SHARED & SRWLockOld) == 0)
+						if ((YY_SRWLOCK_Waking & SRWLockOld) == 0)
 						{
 							bOptimize = true;
 						}
@@ -1650,8 +1672,8 @@ namespace YY
 
 
 						SRWLockNew = StackWaitBlock.shareCount > 1 ?
-							(size_t)(&StackWaitBlock) | YY_SRWLOCK_CONTENTION_LOCK | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED 
-							: (size_t)(&StackWaitBlock) | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED;
+							(size_t)(&StackWaitBlock) | YY_SRWLOCK_MultipleShared | YY_SRWLOCK_Waiting | YY_SRWLOCK_Locked
+							: (size_t)(&StackWaitBlock) | YY_SRWLOCK_Waiting | YY_SRWLOCK_Locked;
 					}
 
 					if (InterlockedCompareExchange((volatile size_t*)SRWLock, SRWLockNew, SRWLockOld) != SRWLockOld)
@@ -1695,7 +1717,7 @@ namespace YY
 				else
 				{
 					//尝试获取锁的所有权
-					if (InterlockedCompareExchange((volatile size_t*)SRWLock, SRWLockOld | YY_SRWLOCK_OWNED, SRWLockOld) == SRWLockOld)
+					if (InterlockedCompareExchange((volatile size_t*)SRWLock, SRWLockOld | YY_SRWLOCK_Locked, SRWLockOld) == SRWLockOld)
 					{
 						//成功加锁
 						return;
@@ -1728,9 +1750,9 @@ namespace YY
 			}
 
 #if defined(_WIN64)
-			return InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
+			return InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_Locked_BIT);
 #else
-			return InterlockedBitTestAndSet((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_OWNED_BIT);
+			return InterlockedBitTestAndSet((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_Locked_BIT);
 #endif
 		}
 #endif
@@ -1755,16 +1777,16 @@ namespace YY
 			}
 
 			auto OldSRWLock = InterlockedExchangeAdd((volatile size_t *)SRWLock, size_t(-1));
-			if ((OldSRWLock & YY_SRWLOCK_OWNED) == 0)
+			if ((OldSRWLock & YY_SRWLOCK_Locked) == 0)
 			{
 				internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 			}
 
-			if ((OldSRWLock & YY_SRWLOCK_CONTENDED) && (OldSRWLock & YY_SRWLOCK_SHARED) == 0)
+			if ((OldSRWLock & YY_SRWLOCK_Waiting) && (OldSRWLock & YY_SRWLOCK_Waking) == 0)
 			{
-				OldSRWLock -= YY_SRWLOCK_OWNED;
+				OldSRWLock -= YY_SRWLOCK_Locked;
 
-				auto NewSRWLock = OldSRWLock | YY_SRWLOCK_SHARED;
+				auto NewSRWLock = OldSRWLock | YY_SRWLOCK_Waking;
 				auto CurrentSRWLock = InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock);
 
 				if (CurrentSRWLock == OldSRWLock)
@@ -1809,7 +1831,7 @@ namespace YY
 
 			for (;; OldSRWLock = *(volatile size_t *)SRWLock)
 			{
-				if ((OldSRWLock & YY_SRWLOCK_OWNED) && ((OldSRWLock & YY_SRWLOCK_CONTENDED) || YY_SRWLOCK_GET_BLOCK(OldSRWLock) == nullptr))
+				if ((OldSRWLock & YY_SRWLOCK_Locked) && ((OldSRWLock & YY_SRWLOCK_Waiting) || YY_SRWLOCK_GET_BLOCK(OldSRWLock) == nullptr))
 				{
 					//if ( RtlpWaitCouldDeadlock() )
 					//    ZwTerminateProcess((HANDLE)0xFFFFFFFF, 0xC000004B);
@@ -1821,15 +1843,15 @@ namespace YY
 
 					bOptimize = false;
 
-					if (OldSRWLock & YY_SRWLOCK_CONTENDED)
+					if (OldSRWLock & YY_SRWLOCK_Waiting)
 					{
 						//已经有人等待，我们插入一个新的等待块
 						StackWaitBlock.back = YY_SRWLOCK_GET_BLOCK(OldSRWLock);
 						StackWaitBlock.notify = nullptr;
 
-						NewSRWLock = size_t(&StackWaitBlock) | (OldSRWLock & YY_SRWLOCK_CONTENTION_LOCK) | (YY_SRWLOCK_SHARED | YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED);
+						NewSRWLock = size_t(&StackWaitBlock) | (OldSRWLock & YY_SRWLOCK_MultipleShared) | (YY_SRWLOCK_Waking | YY_SRWLOCK_Waiting | YY_SRWLOCK_Locked);
 
-						if ((OldSRWLock & YY_SRWLOCK_SHARED) == 0)
+						if ((OldSRWLock & YY_SRWLOCK_Waking) == 0)
 						{
 							bOptimize = true;
 						}
@@ -1837,7 +1859,7 @@ namespace YY
 					else
 					{
 						StackWaitBlock.notify = &StackWaitBlock;
-						NewSRWLock = size_t(&StackWaitBlock) | (YY_SRWLOCK_CONTENDED | YY_SRWLOCK_OWNED);
+						NewSRWLock = size_t(&StackWaitBlock) | (YY_SRWLOCK_Waiting | YY_SRWLOCK_Locked);
 					}
 
 
@@ -1876,15 +1898,15 @@ namespace YY
 				}
 				else
 				{
-					if (OldSRWLock & YY_SRWLOCK_CONTENDED)
+					if (OldSRWLock & YY_SRWLOCK_Waiting)
 					{
-						//既然有人在等待锁，那么YY_SRWLOCK_OWNED应该重新加上
-						NewSRWLock = OldSRWLock | YY_SRWLOCK_OWNED;
+						//既然有人在等待锁，那么YY_SRWLOCK_Locked应该重新加上
+						NewSRWLock = OldSRWLock | YY_SRWLOCK_Locked;
 					}
 					else
 					{
 						//没有人等待，那么单纯加个 0x10即可
-						NewSRWLock = (OldSRWLock + 0x10) | YY_SRWLOCK_OWNED;
+						NewSRWLock = (OldSRWLock + 0x10) | YY_SRWLOCK_Locked;
 					}
 
 					if (InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock) == OldSRWLock)
@@ -1928,7 +1950,7 @@ namespace YY
 
 			for (;;)
 			{
-				if ((OldSRWLock & YY_SRWLOCK_OWNED) && ((OldSRWLock & YY_SRWLOCK_CONTENDED) || YY_SRWLOCK_GET_BLOCK(OldSRWLock) == nullptr))
+				if ((OldSRWLock & YY_SRWLOCK_Locked) && ((OldSRWLock & YY_SRWLOCK_Waiting) || YY_SRWLOCK_GET_BLOCK(OldSRWLock) == nullptr))
 				{
 					//正在被锁定中
 					return FALSE;
@@ -1937,10 +1959,10 @@ namespace YY
 				{
 					size_t NewSRWLock;
 
-					if (OldSRWLock & YY_SRWLOCK_CONTENDED)
-						NewSRWLock = OldSRWLock | YY_SRWLOCK_OWNED;
+					if (OldSRWLock & YY_SRWLOCK_Waiting)
+						NewSRWLock = OldSRWLock | YY_SRWLOCK_Locked;
 					else
-						NewSRWLock = (OldSRWLock + 0x10) | YY_SRWLOCK_OWNED;
+						NewSRWLock = (OldSRWLock + 0x10) | YY_SRWLOCK_Locked;
 
 					if (InterlockedCompareExchange((volatile size_t*)SRWLock, NewSRWLock, OldSRWLock) == OldSRWLock)
 					{
@@ -1985,16 +2007,16 @@ namespace YY
 				return;
 			}
 
-			if ((OldSRWLock & YY_SRWLOCK_OWNED) == 0)
+			if ((OldSRWLock & YY_SRWLOCK_Locked) == 0)
 			{
 				internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
 			}
 
 			for (;;)
 			{
-				if (OldSRWLock & YY_SRWLOCK_CONTENDED)
+				if (OldSRWLock & YY_SRWLOCK_Waiting)
 				{
-					if (OldSRWLock & YY_SRWLOCK_CONTENTION_LOCK)
+					if (OldSRWLock & YY_SRWLOCK_MultipleShared)
 					{
 						auto pLastNode = YY_SRWLOCK_GET_BLOCK(OldSRWLock);
 
@@ -2015,10 +2037,10 @@ namespace YY
 
 					for (;;)
 					{
-						auto NewSRWLock = OldSRWLock & (~(YY_SRWLOCK_CONTENTION_LOCK | YY_SRWLOCK_OWNED));
+						auto NewSRWLock = OldSRWLock & (~(YY_SRWLOCK_MultipleShared | YY_SRWLOCK_Locked));
 						size_t LastSRWLock;
 
-						if (OldSRWLock & YY_SRWLOCK_SHARED)
+						if (OldSRWLock & YY_SRWLOCK_Waking)
 						{
 							LastSRWLock = InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock);
 
@@ -2027,7 +2049,7 @@ namespace YY
 						}
 						else
 						{
-							NewSRWLock |= YY_SRWLOCK_SHARED;
+							NewSRWLock |= YY_SRWLOCK_Waking;
 
 							LastSRWLock = InterlockedCompareExchange((volatile size_t *)SRWLock, NewSRWLock, OldSRWLock);
 							if (LastSRWLock == OldSRWLock)
