@@ -39,6 +39,7 @@
 | [GetSystemDefaultLocaleName](https://docs.microsoft.com/windows/desktop/api/winnls/nf-winnls-getsystemdefaultlocalename)       | 不存在时，调用LCIDToLocaleName。
 | [EnumCalendarInfoExEx](https://docs.microsoft.com/windows/desktop/api/winnls/nf-winnls-enumcalendarinfoexex)                   | 不存在时，调用EnumCalendarInfoExW。
 | [EnumDateFormatsExEx](https://docs.microsoft.com/windows/desktop/api/winnls/nf-winnls-enumdateformatsexex)                     | 不存在时，调用EnumDateFormatsExW。
+| [LCMapStringEx](https://docs.microsoft.com/windows/win32/api/winnls/nf-winnls-lcmapstringex)                                   | 不存在时，调用LCMapStringW。
 | [GetFileInformationByHandleEx](https://docs.microsoft.com/windows/desktop/api/winbase/nf-winbase-getfileinformationbyhandleex) | 不存在时，调用NtQueryInformationFile 或者 NtQueryDirectoryFile。
 | [SetFileInformationByHandle](https://docs.microsoft.com/windows/desktop/api/winbase/nf-winbase-getfileinformationbyhandleex)   | 不存在时，调用NtSetInformationFile。
 | [GetFinalPathNameByHandleW(A)](https://docs.microsoft.com/windows/desktop/api/fileapi/nf-fileapi-getfinalpathnamebyhandlew)    | 不存在时，调用NtQueryObject以及NtQueryInformationFile。
