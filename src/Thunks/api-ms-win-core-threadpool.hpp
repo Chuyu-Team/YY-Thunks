@@ -200,8 +200,18 @@ namespace YY
 
 			}
 
-			static const _TP_CLEANUP_GROUP_FUNCS TppWorkpCleanupGroupMemberVFuncs = { &TppWorkpFree, &TppWorkCallbackEpilog, 0, &TppWorkCancelPendingCallbacks };
-			static void* TppWorkpTaskVFuncs;
+			static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppWorkpCleanupGroupMemberVFuncs()
+			{
+				static const _TP_CLEANUP_GROUP_FUNCS TppWorkpCleanupGroupMemberVFuncs = { &TppWorkpFree, &TppWorkCallbackEpilog, 0, &TppWorkCancelPendingCallbacks };
+				return &TppWorkpCleanupGroupMemberVFuncs;
+			}
+
+			
+			static void* __fastcall GetTppWorkpTaskVFuncs()
+			{
+				static void* TppWorkpTaskVFuncs;
+				return TppWorkpTaskVFuncs;
+			}
 
 			static
 			NTSTATUS
@@ -324,7 +334,7 @@ namespace YY
 
 				pWork->retaddr = _ReturnAddress();
 
-				auto Status = TppWorkInitialize(pWork, pv, pcbe, pcbe ? pcbe->u.Flags : 0, &TppWorkpCleanupGroupMemberVFuncs, &TppWorkpTaskVFuncs);
+				auto Status = TppWorkInitialize(pWork, pv, pcbe, pcbe ? pcbe->u.Flags : 0, GetTppWorkpCleanupGroupMemberVFuncs(), GetTppWorkpTaskVFuncs());
 
 				do
 				{
@@ -386,7 +396,7 @@ namespace YY
 			TpReleaseWork(
 				_TP_WORK* Work)
 			{
-				if (Work == nullptr || (Work->uFlags1 & 0x10000) || Work->VFuncs != &Fallback::TppWorkpCleanupGroupMemberVFuncs)
+				if (Work == nullptr || (Work->uFlags1 & 0x10000) || Work->VFuncs != Fallback::GetTppWorkpCleanupGroupMemberVFuncs())
 				{
 					internal::RaiseStatus(STATUS_INVALID_PARAMETER);
 					return;
@@ -412,8 +422,19 @@ namespace YY
 				}
 			}
 
-			static const _TP_CLEANUP_GROUP_FUNCS TppTimerpCleanupGroupMemberVFuncs = { &TppTimerpFree };
-			static void* TppTimerpTaskVFuncs;
+			static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppTimerpCleanupGroupMemberVFuncs()
+			{
+				static const _TP_CLEANUP_GROUP_FUNCS TppTimerpCleanupGroupMemberVFuncs = { &TppTimerpFree };
+				return &TppTimerpCleanupGroupMemberVFuncs;
+			}
+
+			//作用暂时不知道，目前用不到
+			static void* __fastcall GetTppTimerpTaskVFuncs()
+			{
+				static void* TppTimerpTaskVFuncs;
+				return TppTimerpTaskVFuncs;
+			}
+			
 
 			static
 			NTSTATUS
@@ -438,7 +459,7 @@ namespace YY
 				
 				pTimer->retaddr = _ReturnAddress();
 
-				auto Status = TppWorkInitialize(pTimer, Context, CallbackEnviron, Flags | 0x1040000, &TppTimerpCleanupGroupMemberVFuncs, TppTimerpTaskVFuncs);
+				auto Status = TppWorkInitialize(pTimer, Context, CallbackEnviron, Flags | 0x1040000, GetTppTimerpCleanupGroupMemberVFuncs(), GetTppTimerpTaskVFuncs());
 
 				if (Status >= 0)
 				{
@@ -571,7 +592,7 @@ namespace YY
 			//参数验证
 			if (pwk == nullptr
 				|| (pwk->uFlags1 & 0x30000)
-				|| pwk->VFuncs != &Fallback::TppWorkpCleanupGroupMemberVFuncs)
+				|| pwk->VFuncs != Fallback::GetTppWorkpCleanupGroupMemberVFuncs())
 			{
 				//0xC000000D 参数错误
 				return;
@@ -697,7 +718,7 @@ namespace YY
 
 			if (pwk == nullptr
 				|| (pwk->uFlags1 & 0x30000)
-				|| (pwk->VFuncs != &Fallback::TppWorkpCleanupGroupMemberVFuncs))
+				|| (pwk->VFuncs != Fallback::GetTppWorkpCleanupGroupMemberVFuncs()))
 			{
 				//0xC000000D 参数错误
 				return;
@@ -791,7 +812,7 @@ namespace YY
 
 			if (pti == nullptr
 				|| (pti->uFlags1 & 0x30000)
-				|| pti->VFuncs != &Fallback::TppTimerpCleanupGroupMemberVFuncs)
+				|| pti->VFuncs != Fallback::GetTppTimerpCleanupGroupMemberVFuncs())
 			{
 				internal::RaiseStatus(STATUS_INVALID_PARAMETER);
 				return;
@@ -897,7 +918,7 @@ namespace YY
 
 			if (Timer == nullptr
 				|| (Timer->uFlags1 & 0x10000)
-				|| Timer->VFuncs != &Fallback::TppTimerpCleanupGroupMemberVFuncs)
+				|| Timer->VFuncs != Fallback::GetTppTimerpCleanupGroupMemberVFuncs())
 			{
 				internal::RaiseStatus(STATUS_INVALID_PARAMETER);
 				return;
