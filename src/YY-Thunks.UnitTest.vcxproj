@@ -77,19 +77,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)..;$(ProjectDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)..;$(ProjectDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)..;$(ProjectDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)..;$(ProjectDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -171,6 +171,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="UnitTest\api-ms-win-core-path.UnitTest.cpp" />
+    <ClCompile Include="UnitTest\api-ms-win-core-threadpool.UnitTest.cpp" />
     <ClCompile Include="UnitTest\YY-Thunks.UnitTest.cpp" />
     <ClCompile Include="YY_Thunks.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -199,6 +200,7 @@
     <ClInclude Include="Thunks\api-ms-win-core-synch.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-sysinfo.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-systemtopology.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-threadpool.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-util.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-version.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-winrt-error.hpp" />

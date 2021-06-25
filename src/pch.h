@@ -10,7 +10,7 @@
 // 添加要在此处预编译的标头
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 #include <Windows.h>
-
+#include <atltime.h>
 #include "CppUnitTest.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

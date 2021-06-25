@@ -33,6 +33,9 @@
     <ClCompile Include="UnitTest\YY-Thunks.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
+    <ClCompile Include="UnitTest\api-ms-win-core-threadpool.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -135,6 +138,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Thunks\api-ms-win-core-memory.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="Thunks\api-ms-win-core-threadpool.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
   </ItemGroup>
