@@ -211,3 +211,4 @@
 | [ReleaseMutexWhenCallbackReturns](https://docs.microsoft.com/windows/win32/api/threadpoolapiset/nf-threadpoolapiset-releasemutexwhencallbackreturns)                 | 不存在时，内部实现。警告，此函数请勿跨模块使用！！！
 | [LeaveCriticalSectionWhenCallbackReturns](https://docs.microsoft.com/windows/win32/api/threadpoolapiset/nf-threadpoolapiset-leavecriticalsectionwhencallbackreturns) | 不存在时，内部实现。警告，此函数请勿跨模块使用！！！
 | [FreeLibraryWhenCallbackReturns](https://docs.microsoft.com/windows/win32/api/threadpoolapiset/nf-threadpoolapiset-freelibrarywhencallbackreturns)                   | 不存在时，内部实现。警告，此函数请勿跨模块使用！！！
+| [FlushProcessWriteBuffers](https://docs.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-flushprocesswritebuffers)                             | 不存在时，调用VirtualProtect。
