@@ -927,4 +927,359 @@ namespace api_ms_win_core_threadpool
 			::CloseThreadpoolTimer(pTimer);
 		}
 	};
+
+
+	TEST_CLASS(SetThreadpoolWait)
+	{
+	public:
+		SetThreadpoolWait()
+		{
+			YY::Thunks::aways_null_try_get_CreateThreadpoolWait = true;
+			YY::Thunks::aways_null_try_get_CloseThreadpoolWait = true;
+			YY::Thunks::aways_null_try_get_SetThreadpoolWait = true;
+		}
+
+
+		TEST_METHOD(无限等待)
+		{
+			auto hEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+
+			Assert::IsNotNull(hEvent);
+
+			long RunCount = 0;
+
+			auto Wait = ::CreateThreadpoolWait([](
+					_Inout_     PTP_CALLBACK_INSTANCE Instance,
+					_Inout_opt_ PVOID                 Context,
+					_Inout_     PTP_WAIT              Wait,
+					_In_        TP_WAIT_RESULT        WaitResult
+					)
+				{
+					Assert::AreEqual(WaitResult, WAIT_OBJECT_0);
+
+					Assert::IsNotNull(Context);
+
+					InterlockedIncrement((long*)Context);
+
+				}, &RunCount, nullptr);
+
+			Assert::IsNotNull(Wait);
+
+			::SetThreadpoolWait(Wait, hEvent, nullptr);
+
+			Sleep(1000);
+
+			Assert::AreEqual(RunCount, 0l);
+
+			SetEvent(hEvent);
+
+			Sleep(1000);
+			Assert::AreEqual(RunCount, 1l);
+
+			Sleep(1000);
+			Assert::AreEqual(RunCount, 1l);
+
+			::CloseThreadpoolWait(Wait);
+
+			CloseHandle(hEvent);
+		}
+
+		TEST_METHOD(相对时间等待)
+		{
+			{
+				auto hEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+
+				Assert::IsNotNull(hEvent);
+
+				volatile long RunCount = 0;
+
+				auto Wait = ::CreateThreadpoolWait([](
+					_Inout_     PTP_CALLBACK_INSTANCE Instance,
+					_Inout_opt_ PVOID                 Context,
+					_Inout_     PTP_WAIT              Wait,
+					_In_        TP_WAIT_RESULT        WaitResult
+					)
+					{
+						Assert::AreEqual(WaitResult, (DWORD)WAIT_TIMEOUT);
+
+						Assert::IsNotNull(Context);
+
+						InterlockedIncrement((long*)Context);
+
+					}, (void*)&RunCount, nullptr);
+
+				Assert::IsNotNull(Wait);
+
+				CFileTime TimeOut = long long(CFileTime::Second) * -5ll;
+
+				::SetThreadpoolWait(Wait, hEvent, &TimeOut);
+
+				Sleep(1000);
+
+				Assert::AreEqual((long)RunCount, 0l);
+
+
+				Sleep(8000);
+				Assert::AreEqual((long)RunCount, 1l);
+
+				::CloseThreadpoolWait(Wait);
+
+				CloseHandle(hEvent);
+			}
+
+
+			//未超时
+			{
+				auto hEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+
+				Assert::IsNotNull(hEvent);
+
+				volatile long RunCount = 0;
+
+				auto Wait = ::CreateThreadpoolWait([](
+					_Inout_     PTP_CALLBACK_INSTANCE Instance,
+					_Inout_opt_ PVOID                 Context,
+					_Inout_     PTP_WAIT              Wait,
+					_In_        TP_WAIT_RESULT        WaitResult
+					)
+					{
+						Assert::AreEqual(WaitResult, (DWORD)WAIT_OBJECT_0);
+
+						Assert::IsNotNull(Context);
+
+						InterlockedIncrement((long*)Context);
+
+					}, (void*)&RunCount, nullptr);
+
+				Assert::IsNotNull(Wait);
+
+				CFileTime TimeOut = long long(CFileTime::Second) * -5ll;
+
+				::SetThreadpoolWait(Wait, hEvent, &TimeOut);
+
+				Sleep(1000);
+
+
+
+				Assert::AreEqual((long)RunCount, 0l);
+
+				SetEvent(hEvent);
+
+				Sleep(8000);
+				Assert::AreEqual((long)RunCount, 1l);
+
+				
+				::CloseThreadpoolWait(Wait);
+
+				CloseHandle(hEvent);
+			}
+		}
+
+		TEST_METHOD(绝对时间等待)
+		{
+			//等待一个未来的时间
+			{
+				auto hEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+
+				Assert::IsNotNull(hEvent);
+
+				volatile long RunCount = 0;
+
+				auto Wait = ::CreateThreadpoolWait([](
+						_Inout_     PTP_CALLBACK_INSTANCE Instance,
+						_Inout_opt_ PVOID                 Context,
+						_Inout_     PTP_WAIT              Wait,
+						_In_        TP_WAIT_RESULT        WaitResult
+						)
+					{
+						Assert::AreEqual(WaitResult, (DWORD)WAIT_TIMEOUT);
+
+						Assert::IsNotNull(Context);
+
+						InterlockedIncrement((long*)Context);
+
+					}, (void*)&RunCount, nullptr);
+
+				Assert::IsNotNull(Wait);
+
+				CFileTime TimeOut;
+				GetSystemTimeAsFileTime(&TimeOut);
+
+				TimeOut += CFileTime::Second * 5ll;
+
+				::SetThreadpoolWait(Wait, hEvent, &TimeOut);
+
+				Sleep(1000);
+
+				Assert::AreEqual((long)RunCount, 0l);
+
+
+				Sleep(8000);
+				Assert::AreEqual((long)RunCount, 1l);
+
+				::CloseThreadpoolWait(Wait);
+
+				CloseHandle(hEvent);
+			}
+
+			//等待一个过去的时间
+			{
+				auto hEvent = CreateEventW(nullptr, TRUE, TRUE, nullptr);
+
+				Assert::IsNotNull(hEvent);
+
+				volatile long RunCount = 0;
+
+				auto Wait = ::CreateThreadpoolWait([](
+					_Inout_     PTP_CALLBACK_INSTANCE Instance,
+					_Inout_opt_ PVOID                 Context,
+					_Inout_     PTP_WAIT              Wait,
+					_In_        TP_WAIT_RESULT        WaitResult
+					)
+					{
+						Assert::AreEqual(WaitResult, (DWORD)WAIT_TIMEOUT);
+
+						Assert::IsNotNull(Context);
+
+						InterlockedIncrement((long*)Context);
+
+					}, (void*)&RunCount, nullptr);
+
+				Assert::IsNotNull(Wait);
+
+				CFileTime TimeOut;
+				GetSystemTimeAsFileTime(&TimeOut);
+
+				TimeOut -= CFileTime::Second * 5ll;
+
+				::SetThreadpoolWait(Wait, hEvent, &TimeOut);
+
+				Sleep(1000);
+
+				Assert::AreEqual((long)RunCount, 1l);
+
+				::CloseThreadpoolWait(Wait);
+
+				CloseHandle(hEvent);
+			}
+		}
+
+
+		TEST_METHOD(取消等待器)
+		{
+			{
+				auto hEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+
+				Assert::IsNotNull(hEvent);
+
+				volatile long RunCount = 0;
+
+				auto Wait = ::CreateThreadpoolWait([](
+					_Inout_     PTP_CALLBACK_INSTANCE Instance,
+					_Inout_opt_ PVOID                 Context,
+					_Inout_     PTP_WAIT              Wait,
+					_In_        TP_WAIT_RESULT        WaitResult
+					)
+					{
+						Assert::AreEqual(WaitResult, (DWORD)WAIT_TIMEOUT);
+
+						Assert::IsNotNull(Context);
+
+						InterlockedIncrement((long*)Context);
+
+					}, (void*)&RunCount, nullptr);
+
+				Assert::IsNotNull(Wait);
+
+				CFileTime TimeOut;
+				GetSystemTimeAsFileTime(&TimeOut);
+
+				TimeOut += CFileTime::Second * 5ll;
+
+				::SetThreadpoolWait(Wait, hEvent, &TimeOut);
+
+				Sleep(1000);
+
+				Assert::AreEqual((long)RunCount, 0l);
+
+				::SetThreadpoolWait(Wait, NULL, NULL);
+
+				Sleep(8000);
+				Assert::AreEqual((long)RunCount, 0l);
+
+				::CloseThreadpoolWait(Wait);
+
+				CloseHandle(hEvent);
+			}
+		}
+	};
+
+	TEST_CLASS(WaitForThreadpoolWaitCallbacks)
+	{
+	public:
+		WaitForThreadpoolWaitCallbacks()
+		{
+			YY::Thunks::aways_null_try_get_CreateThreadpoolWait = true;
+			YY::Thunks::aways_null_try_get_CloseThreadpoolWait = true;
+			YY::Thunks::aways_null_try_get_SetThreadpoolWait = true;
+			YY::Thunks::aways_null_try_get_WaitForThreadpoolWaitCallbacks = true;
+		}
+
+		TEST_METHOD(一般行为验证)
+		{
+			{
+				auto hEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+
+				Assert::IsNotNull(hEvent);
+
+				volatile long RunCount = 0;
+
+				auto Wait = ::CreateThreadpoolWait([](
+					_Inout_     PTP_CALLBACK_INSTANCE Instance,
+					_Inout_opt_ PVOID                 Context,
+					_Inout_     PTP_WAIT              Wait,
+					_In_        TP_WAIT_RESULT        WaitResult
+					)
+					{
+						Sleep(5 * 1000);
+						Assert::AreEqual(WaitResult, (DWORD)WAIT_TIMEOUT);
+
+						Assert::IsNotNull(Context);
+
+						InterlockedIncrement((long*)Context);
+
+					}, (void*)&RunCount, nullptr);
+
+				Assert::IsNotNull(Wait);
+
+				CFileTime TimeOut = {};
+
+				::SetThreadpoolWait(Wait, hEvent, &TimeOut);
+
+
+				auto h = (HANDLE)_beginthreadex(nullptr, 0, [](void* Wait) -> unsigned
+					{
+						Sleep(1000);
+
+						::WaitForThreadpoolWaitCallbacks((PTP_WAIT)Wait, TRUE);
+
+						return 0;
+					}, Wait, 0, nullptr);
+
+				Assert::IsNotNull(h);
+
+				Assert::AreEqual(WaitForSingleObject(h, 10 * 1000), WAIT_OBJECT_0, L"10秒内必须完成，这是预期。");
+
+				
+	
+				Assert::AreEqual((long)RunCount, 1l);
+
+				CloseHandle(h);
+
+				::CloseThreadpoolWait(Wait);
+
+				CloseHandle(hEvent);
+			}
+		}
+	};
 }

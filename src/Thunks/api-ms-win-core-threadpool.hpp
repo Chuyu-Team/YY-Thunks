@@ -122,7 +122,11 @@ struct _TP_TIMER : public _TP_WORK
 	HANDLE hQueueTimer;
 };
 
-
+//0xA0
+struct _TP_WAIT : public _TP_WORK
+{
+	HANDLE hWaitObject;
+};
 
 //不完善的定义，我们用多少，处理多少。
 struct _TP_CALLBACK_INSTANCE
@@ -377,6 +381,32 @@ namespace YY
 				return Status;
 			}
 
+			static void __fastcall TppWaitpFree(_TP_WORK* Work)
+			{
+				if (Work)
+				{
+					const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+					HeapFree(ProcessHeap, 0, Work);
+				}
+			}
+
+			static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppWaitpCleanupGroupMemberVFuncs()
+			{
+				static const _TP_CLEANUP_GROUP_FUNCS TppWorkpCleanupGroupMemberVFuncs = { &TppWaitpFree, &TppWorkCallbackEpilog, 0, &TppWorkCancelPendingCallbacks };
+				return &TppWorkpCleanupGroupMemberVFuncs;
+			}
+
+			static void __fastcall TppWaitpExecuteCallback(PTP_CALLBACK_INSTANCE Instance, _TP_WORK* Work)
+			{
+				((PTP_WAIT_CALLBACK)Work->Callback)(Instance, Work->Context, (PTP_WAIT)Work, 0);
+			}
+
+
+			static const TaskVFuncs* __fastcall GetTppWaitpTaskVFuncs()
+			{
+				static TaskVFuncs TppWorkpTaskVFuncs = { &TppWaitpExecuteCallback };
+				return &TppWorkpTaskVFuncs;
+			}
 
 			static void __fastcall TppWorkPost(_TP_WORK* pwk)
 			{
@@ -914,11 +944,10 @@ namespace YY
 
 			if (pftDueTime == nullptr)
 			{
-				if (auto hQueueTimer = pti->hQueueTimer)
+				if (auto hOrgQueueTimer = InterlockedExchangePointer(&pti->hQueueTimer, nullptr))
 				{
-					pti->hQueueTimer = nullptr;
 					//销毁计数器
-					DeleteTimerQueueTimer(nullptr, hQueueTimer, nullptr);
+					DeleteTimerQueueTimer(nullptr, hOrgQueueTimer, nullptr);
 
 					if (InterlockedExchangeAdd(&pti->nRef, -1) == 0)
 					{
@@ -1104,11 +1133,10 @@ namespace YY
 			{
 				Timer->un58 = _ReturnAddress();
 
-				if (auto hQueueTimer = Timer->hQueueTimer)
+				if (auto hOrgQueueTimer = InterlockedExchangePointer(&Timer->hQueueTimer, nullptr))
 				{
-					Timer->hQueueTimer = nullptr;
 					//销毁计数器
-					DeleteTimerQueueTimer(nullptr, hQueueTimer, INVALID_HANDLE_VALUE);
+					DeleteTimerQueueTimer(nullptr, hOrgQueueTimer, INVALID_HANDLE_VALUE);
 
 					InterlockedExchangeAdd(&Timer->nRef, -1);
 				}
@@ -1328,6 +1356,339 @@ namespace YY
 				internal::NtStatusToDosError(lStatus);
 				return FALSE;
 			}
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Minimum supported client	Windows Vista [desktop apps | UWP apps]
+		//Minimum supported server	Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		12,
+		PTP_WAIT,
+		WINAPI,
+		CreateThreadpoolWait,
+			_In_ PTP_WAIT_CALLBACK Callback,
+			_Inout_opt_ PVOID Context,
+			_In_opt_ PTP_CALLBACK_ENVIRON CallbackEnviron
+			)
+		{
+			if (auto const pCreateThreadpoolWait = try_get_CreateThreadpoolWait())
+			{
+				return pCreateThreadpoolWait(Callback, Context, CallbackEnviron);
+			}
+
+
+			auto Flags = CallbackEnviron ? CallbackEnviron->u.Flags : 0;
+
+			if (Callback == nullptr || (Flags & 0xFFFFFFFE) != 0)
+			{
+				internal::RaiseStatus(STATUS_INVALID_PARAMETER);
+				return nullptr;
+			}
+
+			NTSTATUS Status = STATUS_SUCCESS;
+
+			const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+			auto pWait = (_TP_WAIT*)HeapAlloc(ProcessHeap, HEAP_ZERO_MEMORY, sizeof(_TP_WAIT));
+
+			do
+			{
+				if (!pWait)
+				{
+					Status = STATUS_NO_MEMORY;
+					break;
+				}
+
+	
+				pWait->retaddr = _ReturnAddress();
+
+
+				Status = Fallback::TppWorkInitialize(pWait, Context, CallbackEnviron, Flags | 0x40000, Fallback::GetTppWaitpCleanupGroupMemberVFuncs(), Fallback::GetTppWaitpTaskVFuncs());
+
+				if (Status < 0)
+					break;
+
+				pWait->Callback = Callback;
+
+				if (CallbackEnviron)
+					pWait->FinalizationCallback = CallbackEnviron->FinalizationCallback;
+
+				if (pWait->CleanupGroup)
+					Fallback::TppCleanupGroupAddMember(pWait);
+
+				return pWait;
+
+			} while (false);
+
+			if(pWait)
+				HeapFree(ProcessHeap, 0, pWait);
+
+			internal::NtStatusToDosError(Status);
+
+			return nullptr;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Minimum supported client	Windows Vista [desktop apps | UWP apps]
+		//Minimum supported server	Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+		WINAPI,
+		CloseThreadpoolWait,
+			_Inout_ PTP_WAIT Wait
+			)
+		{
+			if (auto const pCloseThreadpoolWait = try_get_CloseThreadpoolWait())
+			{
+				return pCloseThreadpoolWait(Wait);
+			}
+
+			if (Wait == nullptr || (Wait->uFlags1 & 0x10000) || Wait->VFuncs != Fallback::GetTppWaitpCleanupGroupMemberVFuncs())
+			{
+				internal::RaiseStatus(STATUS_INVALID_PARAMETER);
+				return;
+			}
+
+			if (Fallback::TppCleanupGroupMemberRelease(Wait, true))
+			{
+				Wait->un58 = _ReturnAddress();
+
+				if (auto hOrgWaitObject = InterlockedExchangePointer(&Wait->hWaitObject, nullptr))
+				{
+					UnregisterWait(hOrgWaitObject);
+
+					if (InterlockedExchangeAdd(&Wait->nRef, -1) == 0)
+					{
+						Wait->VFuncs->pTppWorkpFree(Wait);
+					}
+				}
+
+				if (InterlockedExchangeAdd(&Wait->nRef, -1) == 0)
+				{
+					Wait->VFuncs->pTppWorkpFree(Wait);
+				}
+			}
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Minimum supported client	Windows Vista [desktop apps | UWP apps]
+		//Minimum supported server	Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		12,
+		VOID,
+		WINAPI,
+		SetThreadpoolWait,
+			_Inout_ PTP_WAIT Wait,
+			_In_opt_ HANDLE Handle,
+			_In_opt_ PFILETIME Timeout
+			)
+		{
+			if (auto const pSetThreadpoolWait = try_get_SetThreadpoolWait())
+			{
+				return pSetThreadpoolWait(Wait, Handle, Timeout);
+			}
+
+			if (Wait == nullptr || (Wait->uFlags1 & 0x30000) || Wait->VFuncs != Fallback::GetTppWaitpCleanupGroupMemberVFuncs())
+			{
+				internal::RaiseStatus(STATUS_INVALID_PARAMETER);
+				return;
+			}
+
+			if (Handle == nullptr)
+			{
+				//停止
+				if (auto hOrgWaitObject = InterlockedExchangePointer(&Wait->hWaitObject, nullptr))
+				{
+					UnregisterWait(hOrgWaitObject);
+
+					if (InterlockedExchangeAdd(&Wait->nRef, -1) == 0)
+					{
+						Wait->VFuncs->pTppWorkpFree(Wait);
+					}
+				}
+
+				return;
+			}
+
+			ULONG dwMilliseconds;
+
+			if (Timeout == nullptr)
+			{
+				dwMilliseconds = INFINITE;
+			}
+			else
+			{
+				LARGE_INTEGER Time;
+				Time.LowPart = Timeout->dwLowDateTime;
+				Time.HighPart = Timeout->dwHighDateTime;
+
+				if (Time.QuadPart < 0)
+				{
+					//这是一个相对时间
+					dwMilliseconds = Time.QuadPart / -10'000;
+				}
+				else if (Time.QuadPart == 0)
+				{
+					dwMilliseconds = 0;
+				}
+				else
+				{
+					//绝对时间
+					FILETIME CurrentTime;
+					GetSystemTimeAsFileTime(&CurrentTime);
+					LARGE_INTEGER lCurrentTime;
+					lCurrentTime.LowPart = CurrentTime.dwLowDateTime;
+					lCurrentTime.HighPart = CurrentTime.dwHighDateTime;
+
+					if (Time.QuadPart > lCurrentTime.QuadPart)
+					{
+						dwMilliseconds = (Time.QuadPart - lCurrentTime.QuadPart) / 10'000;
+					}
+					else
+					{
+						dwMilliseconds = 0;
+					}
+				}
+			}
+
+			InterlockedExchangeAdd(&Wait->nRef, 1);
+
+			HANDLE hWaitObject;
+
+			auto bRet = RegisterWaitForSingleObject(
+				&hWaitObject,
+				Handle,
+				[](
+					PVOID lpParameter,
+					BOOLEAN TimerOrWaitFired
+					)
+				{
+					auto Wait = (PTP_WAIT)lpParameter;
+
+					ResetEvent(Wait->hEvent);
+
+					//增加一次引用。
+					auto uFlags = Wait->uFlags;
+					for (;;)
+					{
+						auto uNewFlags = (uFlags & 0xFFFFFFFEu) + 2;
+						auto uOrgFlags = InterlockedCompareExchange(&Wait->uFlags, uNewFlags, uFlags);
+
+						if (uOrgFlags == uFlags)
+						{
+							uFlags = uNewFlags;
+							break;
+						}
+
+						uFlags = uOrgFlags;
+					}
+
+					TP_CALLBACK_INSTANCE Instance = {};
+
+					//Timer->pTaskVFuncs->pExecuteCallback(&Instance, Timer);
+					//暂时这样硬编码……
+					((PTP_WAIT_CALLBACK)Wait->Callback)(&Instance, Wait->Context, Wait, TimerOrWaitFired ? WAIT_TIMEOUT : WAIT_OBJECT_0);
+
+					Fallback::DoWhenCallbackReturns(&Instance);
+
+
+					uFlags = Wait->uFlags;
+					for (;;)
+					{
+						auto uNewFlags = uFlags - 2;
+
+						auto uOrgFlags = InterlockedCompareExchange(&Wait->uFlags, uNewFlags, uFlags);
+
+						if (uOrgFlags == uFlags)
+						{
+							uFlags = uNewFlags;
+							break;
+						}
+
+						uFlags = uOrgFlags;
+					}
+
+					if ((uFlags & 0xFFFFFFFEu) == 0)
+					{
+						//计数为 0，唤醒等待
+						SetEvent(Wait->hEvent);
+					}
+				},
+				Wait,
+				dwMilliseconds,
+				WT_EXECUTEONLYONCE);
+
+			if (bRet)
+			{
+				auto hOrgWaitObject = InterlockedExchangePointer(&Wait->hWaitObject, hWaitObject);
+
+				if (hOrgWaitObject == NULL)
+				{
+					return;
+				}
+
+				//释放历史
+				UnregisterWait(hOrgWaitObject);
+			}
+
+			
+			if (InterlockedExchangeAdd(&Wait->nRef, -1) == 0)
+			{
+				Wait->VFuncs->pTppWorkpFree(Wait);
+			}
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Minimum supported client	Windows Vista [desktop apps | UWP apps]
+		//Minimum supported server	Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		VOID,
+		WINAPI,
+		WaitForThreadpoolWaitCallbacks,
+			_Inout_ PTP_WAIT Wait,
+			_In_ BOOL CancelPendingCallbacks
+			)
+		{
+			if (auto const pWaitForThreadpoolWaitCallbacks = try_get_WaitForThreadpoolWaitCallbacks())
+			{
+				return pWaitForThreadpoolWaitCallbacks(Wait, CancelPendingCallbacks);
+			}
+
+			if (Wait == nullptr
+				|| (Wait->uFlags1 & 0x30000)
+				|| Wait->VFuncs != Fallback::GetTppWaitpCleanupGroupMemberVFuncs())
+			{
+				internal::RaiseStatus(STATUS_INVALID_PARAMETER);
+				return;
+			}
+
+			//CancelPendingCallbacks 无法支持
+
+			if ((Wait->uFlags & 0xFFFFFFFEu) == 0)
+			{
+				//等待计数为 0，直接返回即可
+				return;
+			}
+
+			WaitForSingleObject(Wait->hEvent, INFINITE);
+
 		}
 #endif
 	}
