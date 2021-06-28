@@ -26,7 +26,9 @@ namespace YY
 
 			return CoInitializeEx(
 				nullptr, 
-				COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+				initType == RO_INIT_SINGLETHREADED 
+				? COINIT_APARTMENTTHREADED
+				: COINIT_MULTITHREADED);
 		}
 #endif
 
