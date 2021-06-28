@@ -54,6 +54,57 @@ namespace api_ms_win_core_threadpool
 		}
 	};
 
+
+	TEST_CLASS(TrySubmitThreadpoolCallback)
+	{
+	public:
+		TrySubmitThreadpoolCallback()
+		{
+			YY::Thunks::aways_null_try_get_TrySubmitThreadpoolCallback = true;
+		}
+
+		TEST_METHOD(一般行为验证)
+		{
+			long RunCount = 0;
+
+			auto bRet = ::TrySubmitThreadpoolCallback([](
+					_Inout_     PTP_CALLBACK_INSTANCE Instance,
+					_Inout_opt_ PVOID                 Context
+					)
+				{
+					Assert::IsNotNull(Context);
+					InterlockedIncrement((long*)Context);
+				},
+				&RunCount,
+				nullptr);
+
+			Assert::IsTrue(bRet);
+
+			Sleep(1000);
+
+			//正常来说 1秒钟后函数必然执行成功
+			Assert::AreEqual(RunCount, 1l);
+
+			bRet = ::TrySubmitThreadpoolCallback([](
+				_Inout_     PTP_CALLBACK_INSTANCE Instance,
+				_Inout_opt_ PVOID                 Context
+				)
+				{
+					Assert::IsNotNull(Context);
+					InterlockedIncrement((long*)Context);
+				},
+				&RunCount,
+					nullptr);
+
+			Assert::IsTrue(bRet);
+
+			Sleep(1000);
+
+			//正常来说 1秒钟后函数必然执行成功
+			Assert::AreEqual(RunCount, 2l);
+		}
+	};
+
 	TEST_CLASS(WaitForThreadpoolWorkCallbacks)
 	{
 	public:
@@ -303,6 +354,77 @@ namespace api_ms_win_core_threadpool
 
 			Sleep(500);
 			Assert::AreEqual(RunCount, 1l);
+
+			::CloseThreadpoolTimer(pTimer);
+		}
+	};
+
+
+	TEST_CLASS(WaitForThreadpoolTimerCallbacks)
+	{
+	public:
+		WaitForThreadpoolTimerCallbacks()
+		{
+			YY::Thunks::aways_null_try_get_CreateThreadpoolTimer = true;
+			YY::Thunks::aways_null_try_get_CloseThreadpoolTimer = true;
+			YY::Thunks::aways_null_try_get_SetThreadpoolTimer = true;
+			YY::Thunks::aways_null_try_get_WaitForThreadpoolTimerCallbacks = true;
+		}
+
+		
+		TEST_METHOD(一般行为验证)
+		{
+			//数值为 0 时则立即触发定时器
+			struct ContextInfo
+			{
+				HANDLE hEvent;
+				long RunCount;
+			};
+
+			ContextInfo Data{ CreateEventW(nullptr, TRUE, FALSE, nullptr) };
+
+			Assert::IsNotNull(Data.hEvent);
+
+			auto pTimer = ::CreateThreadpoolTimer([](
+				_Inout_     PTP_CALLBACK_INSTANCE Instance,
+				_Inout_opt_ PVOID                 Context,
+				_Inout_     PTP_TIMER             Timer)
+				{
+					Assert::IsNotNull(Context);
+
+					auto& Data = *(ContextInfo*)Context;
+					SetEvent(Data.hEvent);
+					Sleep(800);
+					
+
+					InterlockedIncrement(&Data.RunCount);
+
+				}, &Data, nullptr);
+
+			Assert::IsNotNull(pTimer);
+
+			CFileTime ftDueTime = {};
+		
+			//ftDueTime = long long(CFileTime::Second) * 5ll * -1ll;
+
+			::SetThreadpoolTimer(pTimer, &ftDueTime, 1'500, 0);
+
+			Assert::AreEqual(WaitForSingleObject(Data.hEvent, 1 * 1000), WAIT_OBJECT_0, L"1秒内必须完成，这是预期。");
+
+			auto h = (HANDLE)_beginthreadex(nullptr, 0, [](void* Work) -> unsigned
+				{
+					::WaitForThreadpoolTimerCallbacks((PTP_TIMER)Work, FALSE);
+
+					return 0;
+				}, pTimer, 0, nullptr);
+
+			Assert::IsNotNull(h);
+
+			Assert::AreEqual(WaitForSingleObject(h, 30 * 1000), WAIT_OBJECT_0, L"6秒内必须完成，这是预期。");
+			CloseHandle(h);
+
+			Assert::AreEqual(Data.RunCount, 1l);
+
 
 			::CloseThreadpoolTimer(pTimer);
 		}
