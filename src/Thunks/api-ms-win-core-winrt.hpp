@@ -24,7 +24,9 @@ namespace YY
 				return pRoInitialize(initType);
 			}
 
-			return E_NOTIMPL;
+			return CoInitializeEx(
+				nullptr, 
+				COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 		}
 #endif
 
@@ -44,6 +46,8 @@ namespace YY
 			{
 				return pRoUninitialize();
 			}
+
+			CoUninitialize();
 		}
 #endif
 
