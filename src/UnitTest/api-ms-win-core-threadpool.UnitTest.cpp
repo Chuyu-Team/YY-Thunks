@@ -875,7 +875,20 @@ namespace api_ms_win_core_threadpool
 
 		TEST_METHOD(任务测试)
 		{
-			UserData Data(LoadLibraryExW(L"regedit.exe", nullptr, LOAD_LIBRARY_AS_DATAFILE));
+			wchar_t DllPath[MAX_PATH];
+
+			auto Count = GetModuleFileNameW((HMODULE)&__ImageBase, DllPath, _countof(DllPath));
+
+			Assert::IsTrue(Count && Count < _countof(DllPath));
+
+			CStringW NewDllPath;
+			NewDllPath.Format(L"%ws_%d.dll", DllPath, GetCurrentThreadId());
+
+			auto bRet = CopyFileW(DllPath, NewDllPath, FALSE);
+
+			Assert::IsTrue(bRet);
+
+			UserData Data(LoadLibraryExW(NewDllPath, nullptr, 0));
 
 			auto Work = ::CreateThreadpoolWork([](_Inout_     PTP_CALLBACK_INSTANCE Instance,
 				_Inout_opt_ PVOID                 Context,
@@ -891,9 +904,21 @@ namespace api_ms_win_core_threadpool
 			Assert::IsNotNull(Work);
 
 			::SubmitThreadpoolWork(Work);
-			Sleep(500);
+			
+			
+			long i = 0;
+			for (; i != 100; ++i)
+			{
+				Sleep(100);
+				HMODULE hModule;
+				if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NewDllPath, &hModule) == FALSE)
+				{
+					DeleteFileW(NewDllPath);
+					break;
+				}
+			}
 
-			Assert::IsFalse(FreeLibrary(Data.hHandle));
+			Assert::AreNotEqual(i, 100l);
 			Assert::AreEqual(Data.RunCount, 1l);
 
 			CloseThreadpoolWork(Work);
@@ -902,7 +927,20 @@ namespace api_ms_win_core_threadpool
 
 		TEST_METHOD(定时器测试)
 		{
-			UserData Data(LoadLibraryExW(L"splwow64.exe", nullptr, LOAD_LIBRARY_AS_DATAFILE));;
+			wchar_t DllPath[MAX_PATH];
+
+			auto Count = GetModuleFileNameW((HMODULE)&__ImageBase, DllPath, _countof(DllPath));
+
+			Assert::IsTrue(Count && Count < _countof(DllPath));
+
+			CStringW NewDllPath;
+			NewDllPath.Format(L"%ws_%d.dll", DllPath, GetCurrentThreadId());
+
+			auto bRet = CopyFileW(DllPath, NewDllPath, FALSE);
+
+			Assert::IsTrue(bRet);
+
+			UserData Data(LoadLibraryExW(NewDllPath, nullptr, 0));;
 
 			auto pTimer = ::CreateThreadpoolTimer([](
 				_Inout_     PTP_CALLBACK_INSTANCE Instance,
@@ -919,11 +957,22 @@ namespace api_ms_win_core_threadpool
 
 			FILETIME ftDueTime = {};
 			::SetThreadpoolTimer(pTimer, &ftDueTime, 0, 0);
-			Sleep(500);
 
-			Assert::IsFalse(FreeLibrary(Data.hHandle));
+			long i = 0;
+			for (; i != 100; ++i)
+			{
+				Sleep(100);
+				HMODULE hModule;
+				if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NewDllPath, &hModule) == FALSE)
+				{
+					DeleteFileW(NewDllPath);
+					break;
+				}
+			}
+
+			Assert::AreNotEqual(i, 100l);
 			Assert::AreEqual(Data.RunCount, 1l);
-			//FreeLibrary()
+
 			::CloseThreadpoolTimer(pTimer);
 		}
 	};
