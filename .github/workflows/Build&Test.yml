@@ -13,6 +13,12 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
           mkdir -p Bin
+
+          # Procdump工具，用于单元测试崩溃诊断
+          Invoke-WebRequest -Uri https://download.sysinternals.com/files/Procdump.zip  -OutFile Bin\Procdump.zip
+          &7z e Bin\Procdump.zip -o${{env.GITHUB_WORKSPACE}}\Bin 
+
+
           Invoke-WebRequest -Uri https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.2.8/LibMaker.exe -OutFile Bin\LibMaker.exe
           Invoke-WebRequest -Uri https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.2.8/MinimumRequiredVersionHelper.exe -OutFile Bin\MinimumRequiredVersionHelper.exe
           
@@ -103,17 +109,39 @@ jobs:
 
     - name: 执行单元测试
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      shell: cmd
+      shell: pwsh
       run: |
-          ::MSBuild 目录更新到 Path
-          set Path=${{env.MSBuildBinPath}};${{env.LatestVisualStudioRoot}}\Common7\IDE\CommonExtensions\Microsoft\TestWindow;%Path%
+          # MSBuild 目录更新到 Path
+          $Env:Path="${{env.MSBuildBinPath}};${{env.LatestVisualStudioRoot}}\Common7\IDE\CommonExtensions\Microsoft\TestWindow;" + $Env:Path
           
-          ::编译单元测试项目
-          msbuild src\YY-Thunks.UnitTest.vcxproj -p:Configuration=Release;Platform=Win32
-          msbuild src\YY-Thunks.UnitTest.vcxproj -p:Configuration=Release;Platform=x64
+          # 设置 PROCDUMP_PATH 目录
+          $Env:PROCDUMP_PATH="${{env.GITHUB_WORKSPACE}}\Bin"
+
+          # 编译单元测试项目
+          &msbuild src\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=Win32"
+          if($lastexitcode -ne 0)
+          {
+              throw "YY-Thunks.UnitTest.vcxproj编译失败！退出代码：$lastexitcode"
+          }
+           
+          &msbuild src\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=x64"
+          if($lastexitcode -ne 0)
+          {
+              throw "YY-Thunks.UnitTest.vcxproj编译失败！退出代码：$lastexitcode"
+          }
           
-          vstest.console.exe src\Release\YY-Thunks.UnitTest.dll /logger:trx;LogFileName=UnitTestWin32.trx
-          vstest.console.exe src\x64\Release\YY-Thunks.UnitTest.dll /logger:trx;LogFileName=UnitTestWin64.trx
+          &vstest.console src\Release\YY-Thunks.UnitTest.dll "/logger:trx;LogFileName=UnitTestWin32.trx" --Parallel "/Blame:CollectDump;CollectAlways=true;DumpType=full"
+          if($lastexitcode -ne 0)
+          {
+              throw "YY-Thunks.UnitTest单元测试失败！退出代码：$lastexitcode"
+          }
+          
+          &vstest.console src\x64\Release\YY-Thunks.UnitTest.dll "/logger:trx;LogFileName=UnitTestWin64.trx" --Parallel "/Blame:CollectDump;CollectAlways=true;DumpType=full"
+          if($lastexitcode -ne 0)
+          {
+              throw "YY-Thunks.UnitTest单元测试失败！退出代码：$lastexitcode"
+          }
+
     - uses: dorny/test-reporter@v1
       if: success() || failure()
       with:
@@ -138,7 +166,22 @@ jobs:
         path: |
             *.nupkg
             *.zip
-            
+
+    # 失败时我们收集一些信息，用于诊断
+    - uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: 错误信息
+        path: |
+            TestResults/**/*.dmp
+            TestResults/**/Sequence_*.xml
+            src\Release\YY-Thunks.UnitTest.dll
+            src\Release\YY-Thunks.UnitTest.pdb
+            src\Release\*.log
+            src\x64\Release\YY-Thunks.UnitTest.dll
+            src\x64\Release\YY-Thunks.UnitTest.pdb
+            src\x64\Release\*.log
+
     - uses: xresloader/upload-to-github-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
