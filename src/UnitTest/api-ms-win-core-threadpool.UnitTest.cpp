@@ -868,8 +868,7 @@ namespace api_ms_win_core_threadpool
 
 			~UserData()
 			{
-				if (hHandle)
-					CloseHandle(hHandle);
+				//故意泄露，反正是一个单元测试
 			}
 		};
 
@@ -882,7 +881,7 @@ namespace api_ms_win_core_threadpool
 			Assert::IsTrue(Count && Count < _countof(DllPath));
 
 			CStringW NewDllPath;
-			NewDllPath.Format(L"%ws_%d.dll", DllPath, GetCurrentThreadId());
+			NewDllPath.Format(L"%ws_任务测试_%d.dll", DllPath, GetCurrentThreadId());
 
 			auto bRet = CopyFileW(DllPath, NewDllPath, FALSE);
 
@@ -934,7 +933,7 @@ namespace api_ms_win_core_threadpool
 			Assert::IsTrue(Count && Count < _countof(DllPath));
 
 			CStringW NewDllPath;
-			NewDllPath.Format(L"%ws_%d.dll", DllPath, GetCurrentThreadId());
+			NewDllPath.Format(L"%ws_定时器测试_%d.dll", DllPath, GetCurrentThreadId());
 
 			auto bRet = CopyFileW(DllPath, NewDllPath, FALSE);
 
