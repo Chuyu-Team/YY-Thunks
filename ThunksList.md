@@ -218,3 +218,7 @@
 | [SetThreadpoolWait](https://docs.microsoft.com/windows/win32/api/threadpoolapiset/nf-threadpoolapiset-setthreadpoolwait)                                             | 不存在时，调用RegisterWaitForSingleObject。警告，此函数请勿跨模块使用！！！
 | [WaitForThreadpoolWaitCallbacks](https://docs.microsoft.com/windows/win32/api/threadpoolapiset/nf-threadpoolapiset-waitforthreadpoolwaitcallbacks)                   | 不存在时，内部实现。警告，此函数请勿跨模块使用！！！
 | [FlushProcessWriteBuffers](https://docs.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-flushprocesswritebuffers)                             | 不存在时，调用VirtualProtect。
+| [FlsAlloc](https://docs.microsoft.com/windows/win32/api/fibersapi/nf-fibersapi-flsalloc)                                       | 不存在时，使用Tls实现。警告，此函数请勿跨模块使用！！！
+| [FlsFree](https://docs.microsoft.com/windows/win32/api/fibersapi/nf-fibersapi-flsfree)                                         | 不存在时，使用Tls实现。警告，此函数请勿跨模块使用！！！
+| [FlsGetValue](https://docs.microsoft.com/windows/win32/api/fibersapi/nf-fibersapi-flsgetvalue)                                 | 不存在时，使用Tls实现。警告，此函数请勿跨模块使用！！！
+| [FlsSetValue](https://docs.microsoft.com/windows/win32/api/fibersapi/nf-fibersapi-flssetvalue)                                 | 不存在时，使用Tls实现。警告，此函数请勿跨模块使用！！！

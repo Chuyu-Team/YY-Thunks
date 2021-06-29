@@ -125,6 +125,13 @@ namespace YY
 	{
 		namespace internal
 		{
+			//代码块，分割任务
+			template<class Callback, typename... Params>
+			auto __forceinline Block(Callback&& _Callback, Params&&... args) -> decltype(_Callback(args...))
+			{
+				return _Callback(args...);
+			}
+
 			static DWORD __fastcall NtStatusToDosError(
 				_In_ NTSTATUS Status
 				)

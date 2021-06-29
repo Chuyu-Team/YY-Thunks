@@ -170,6 +170,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="UnitTest\api-ms-win-core-fibers.UnitTest.cpp" />
     <ClCompile Include="UnitTest\api-ms-win-core-path.UnitTest.cpp" />
     <ClCompile Include="UnitTest\api-ms-win-core-threadpool.UnitTest.cpp" />
     <ClCompile Include="UnitTest\YY-Thunks.UnitTest.cpp" />
@@ -184,6 +185,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Thunks\api-ms-win-core-datetime.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-errorhandling.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-fibers.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-file.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-interlocked.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-io.hpp" />

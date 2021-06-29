@@ -28,6 +28,7 @@
 #include "Thunks/api-ms-win-core-processtopology-obsolete.hpp"
 #include "Thunks/api-ms-win-core-memory.hpp"
 #include "Thunks/api-ms-win-core-threadpool.hpp"
+#include "Thunks/api-ms-win-core-fibers.hpp"
 
 
 
