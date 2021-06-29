@@ -1010,7 +1010,7 @@ namespace api_ms_win_core_threadpool
 
 				Assert::IsNotNull(Wait);
 
-				CFileTime TimeOut = long long(CFileTime::Second) * -5ll;
+				CFileTime TimeOut = long long(CFileTime::Second) * -2ll;
 
 				::SetThreadpoolWait(Wait, hEvent, &TimeOut);
 
@@ -1019,7 +1019,7 @@ namespace api_ms_win_core_threadpool
 				Assert::AreEqual((long)RunCount, 0l);
 
 
-				Sleep(8000);
+				Sleep(2000);
 				Assert::AreEqual((long)RunCount, 1l);
 
 				::CloseThreadpoolWait(Wait);
@@ -1053,7 +1053,7 @@ namespace api_ms_win_core_threadpool
 
 				Assert::IsNotNull(Wait);
 
-				CFileTime TimeOut = long long(CFileTime::Second) * -5ll;
+				CFileTime TimeOut = long long(CFileTime::Second) * -2ll;
 
 				::SetThreadpoolWait(Wait, hEvent, &TimeOut);
 
@@ -1065,7 +1065,7 @@ namespace api_ms_win_core_threadpool
 
 				SetEvent(hEvent);
 
-				Sleep(8000);
+				Sleep(2000);
 				Assert::AreEqual((long)RunCount, 1l);
 
 				
@@ -1105,7 +1105,7 @@ namespace api_ms_win_core_threadpool
 				CFileTime TimeOut;
 				GetSystemTimeAsFileTime(&TimeOut);
 
-				TimeOut += CFileTime::Second * 5ll;
+				TimeOut += CFileTime::Second * 2ll;
 
 				::SetThreadpoolWait(Wait, hEvent, &TimeOut);
 
@@ -1114,7 +1114,7 @@ namespace api_ms_win_core_threadpool
 				Assert::AreEqual((long)RunCount, 0l);
 
 
-				Sleep(8000);
+				Sleep(2000);
 				Assert::AreEqual((long)RunCount, 1l);
 
 				::CloseThreadpoolWait(Wait);
@@ -1194,7 +1194,7 @@ namespace api_ms_win_core_threadpool
 				CFileTime TimeOut;
 				GetSystemTimeAsFileTime(&TimeOut);
 
-				TimeOut += CFileTime::Second * 5ll;
+				TimeOut += CFileTime::Second * 2ll;
 
 				::SetThreadpoolWait(Wait, hEvent, &TimeOut);
 
@@ -1204,7 +1204,7 @@ namespace api_ms_win_core_threadpool
 
 				::SetThreadpoolWait(Wait, NULL, NULL);
 
-				Sleep(8000);
+				Sleep(2000);
 				Assert::AreEqual((long)RunCount, 0l);
 
 				::CloseThreadpoolWait(Wait);
