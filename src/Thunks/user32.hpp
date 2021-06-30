@@ -101,29 +101,61 @@ namespace YY
 				return pSetProcessDpiAwarenessContext(value);
 			}
 
-			PROCESS_DPI_AWARENESS DpiAwareness;
+			LSTATUS lStatus;
 
-			if (DPI_AWARENESS_CONTEXT_UNAWARE == value
-				|| DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED == value)
+			do
 			{
-				DpiAwareness = PROCESS_DPI_UNAWARE;
-			}
-			else if(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE == value)
-			{
-				DpiAwareness = PROCESS_SYSTEM_DPI_AWARE;
-			}
-			else if (DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE == value
-				|| DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 == value)
-			{
-				DpiAwareness = PROCESS_PER_MONITOR_DPI_AWARE;
-			}
-			else
-			{
-				SetLastError(ERROR_INVALID_PARAMETER);
-				return FALSE;
-			}
+				PROCESS_DPI_AWARENESS DpiAwareness;
 
-			return SetProcessDpiAwareness(DpiAwareness);
+				if (DPI_AWARENESS_CONTEXT_UNAWARE == value
+					|| DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED == value)
+				{
+					DpiAwareness = PROCESS_DPI_UNAWARE;
+				}
+				else if (DPI_AWARENESS_CONTEXT_SYSTEM_AWARE == value)
+				{
+					DpiAwareness = PROCESS_SYSTEM_DPI_AWARE;
+				}
+				else if (DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE == value
+					|| DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 == value)
+				{
+					DpiAwareness = PROCESS_PER_MONITOR_DPI_AWARE;
+				}
+				else
+				{
+					lStatus = ERROR_INVALID_PARAMETER;
+					break;
+				}
+
+				auto hr = SetProcessDpiAwareness(DpiAwareness);
+
+				if (SUCCEEDED(hr))
+				{
+					return TRUE;
+				}
+
+				//将 HRESULT 错误代码转换到 LSTATUS
+				if (hr & 0xFFFF0000)
+				{
+					if (HRESULT_FACILITY(hr) == FACILITY_WIN32)
+					{
+						lStatus = HRESULT_CODE(hr);
+					}
+					else
+					{
+						lStatus = ERROR_FUNCTION_FAILED;
+					}
+				}
+				else
+				{
+					lStatus = hr;
+				}
+
+			} while (false);
+
+			
+			SetLastError(lStatus);
+			return FALSE;
 		}
 #endif
 
