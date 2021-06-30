@@ -25,6 +25,9 @@ namespace YY
                 return pWindowsCreateString(sourceString, length, string);
             }
 
+            if (string)
+                *string = nullptr;
+
             return E_NOTIMPL;
         }
 #endif
@@ -50,6 +53,9 @@ namespace YY
             {
                 return pWindowsCreateStringReference(sourceString, length, hstringHeader, string);
             }
+
+            if (string)
+                *string = nullptr;
 
             return E_NOTIMPL;
         }
@@ -98,6 +104,10 @@ namespace YY
                 return pWindowsDuplicateString(string, newString);
             }
 
+
+            if (newString)
+                *newString = nullptr;
+
             return E_NOTIMPL;
         }
 #endif
@@ -144,6 +154,9 @@ namespace YY
             {
                 return pWindowsGetStringRawBuffer(string, length);
             }
+
+            if (length)
+                *length = 0;
 
             return nullptr;
         }

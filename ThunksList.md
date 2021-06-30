@@ -222,3 +222,6 @@
 | [FlsFree](https://docs.microsoft.com/windows/win32/api/fibersapi/nf-fibersapi-flsfree)                                         | 不存在时，使用Tls实现。警告，此函数请勿跨模块使用！！！
 | [FlsGetValue](https://docs.microsoft.com/windows/win32/api/fibersapi/nf-fibersapi-flsgetvalue)                                 | 不存在时，使用Tls实现。警告，此函数请勿跨模块使用！！！
 | [FlsSetValue](https://docs.microsoft.com/windows/win32/api/fibersapi/nf-fibersapi-flssetvalue)                                 | 不存在时，使用Tls实现。警告，此函数请勿跨模块使用！！！
+| [RoInitialize](https://docs.microsoft.com/windows/win32/api/roapi/nf-roapi-roinitialize)                                       | 不存在时，调用 CoInitializeEx。
+| [RoUninitialize](https://docs.microsoft.com/windows/win32/api/roapi/nf-roapi-rouninitialize)                                   | 不存在时，调用 CoUninitialize。
+

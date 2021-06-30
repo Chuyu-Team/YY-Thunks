@@ -24,7 +24,12 @@ namespace YY
 				return pRoInitialize(initType);
 			}
 
-			return E_NOTIMPL;
+			if ((unsigned)initType > (unsigned)RO_INIT_MULTITHREADED)
+			{
+				return E_INVALIDARG;
+			}
+
+			return CoInitializeEx(nullptr, initType ? COINIT_MULTITHREADED : COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 		}
 #endif
 
@@ -44,6 +49,8 @@ namespace YY
 			{
 				return pRoUninitialize();
 			}
+
+			CoUninitialize();
 		}
 #endif
 
@@ -65,6 +72,9 @@ namespace YY
 			{
 				return pRoActivateInstance(activatableClassId, instance);
 			}
+
+			if (instance)
+				*instance = nullptr;
 
 			return E_NOTIMPL;
 		}
@@ -90,6 +100,9 @@ namespace YY
 			{
 				return pRoRegisterActivationFactories(activatableClassIds, activationFactoryCallbacks, count, cookie);
 			}
+
+			if (cookie)
+				*cookie = nullptr;
 
 			return E_NOTIMPL;
 		}
@@ -136,6 +149,9 @@ namespace YY
 				return pRoGetActivationFactory(activatableClassId, iid, factory);
 			}
 
+			if (factory)
+				*factory = nullptr;
+
 			return E_NOTIMPL;
 
 		}
@@ -161,6 +177,10 @@ namespace YY
 			{
 				return pRoRegisterForApartmentShutdown(callbackObject, apartmentIdentifier, regCookie);
 			}
+
+			if (regCookie)
+				*regCookie = nullptr;
+
 
 			return E_NOTIMPL;
 
