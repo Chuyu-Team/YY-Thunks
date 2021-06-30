@@ -357,6 +357,43 @@ namespace api_ms_win_core_threadpool
 
 			::CloseThreadpoolTimer(pTimer);
 		}
+
+		TEST_METHOD(定时器覆盖)
+		{
+			long RunCount = 0;
+
+			auto pTimer = ::CreateThreadpoolTimer([](
+				_Inout_     PTP_CALLBACK_INSTANCE Instance,
+				_Inout_opt_ PVOID                 Context,
+				_Inout_     PTP_TIMER             Timer)
+				{
+					Assert::IsNotNull(Context);
+
+					InterlockedIncrement((long*)Context);
+
+				}, &RunCount, nullptr);
+
+			Assert::IsNotNull(pTimer);
+			CFileTime ftDueTime{};
+
+			::SetThreadpoolTimer(pTimer, &ftDueTime, 0, 0);
+
+			Sleep(100);
+			Assert::AreEqual(RunCount, 1l);
+
+			Sleep(100);
+			Assert::AreEqual(RunCount, 1l);
+
+			::SetThreadpoolTimer(pTimer, &ftDueTime, 0, 0);
+			Sleep(100);
+			Assert::AreEqual(RunCount, 2l);
+
+			Sleep(100);
+			Assert::AreEqual(RunCount, 2l);
+
+			::CloseThreadpoolTimer(pTimer);
+		}
+
 	};
 
 

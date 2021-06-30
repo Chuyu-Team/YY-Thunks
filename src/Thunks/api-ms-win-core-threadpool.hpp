@@ -958,6 +958,9 @@ namespace YY
 				return;
 			}
 
+			InterlockedIncrement(&pti->nRef);
+
+
 			LARGE_INTEGER lDueTime;
 			lDueTime.LowPart = pftDueTime->dwLowDateTime;
 			lDueTime.HighPart = pftDueTime->dwHighDateTime;
@@ -986,78 +989,76 @@ namespace YY
 				}
 			}
 
-
-			if (pti->hQueueTimer)
-			{
-				ChangeTimerQueueTimer(pti->hQueueTimer, nullptr, lDueTime.QuadPart, msPeriod);
-			}
-			else
-			{
-				InterlockedExchangeAdd(&pti->nRef, 1);
-
-				auto bRet = CreateTimerQueueTimer(&pti->hQueueTimer, nullptr, [](PVOID Parameter, BOOLEAN)
-					{
-						auto Timer = (PTP_TIMER)Parameter;
-
-						ResetEvent(Timer->hEvent);
-
-						//增加一次引用。
-						auto uFlags = Timer->uFlags;
-						for (;;)
-						{
-							auto uNewFlags = (uFlags & 0xFFFFFFFEu) + 2;
-							auto uOrgFlags = InterlockedCompareExchange(&Timer->uFlags, uNewFlags, uFlags);
-
-							if (uOrgFlags == uFlags)
-							{
-								uFlags = uNewFlags;
-								break;
-							}
-
-							uFlags = uOrgFlags;
-						}
-
-						TP_CALLBACK_INSTANCE Instance = {};
-
-						Timer->pTaskVFuncs->pExecuteCallback(&Instance, Timer);
-
-						Fallback::DoWhenCallbackReturns(&Instance);
-
-
-						uFlags = Timer->uFlags;
-						for (;;)
-						{
-							auto uNewFlags = uFlags - 2;
-
-							auto uOrgFlags = InterlockedCompareExchange(&Timer->uFlags, uNewFlags, uFlags);
-
-							if (uOrgFlags == uFlags)
-							{
-								uFlags = uNewFlags;
-								break;
-							}
-
-							uFlags = uOrgFlags;
-						}
-
-						if ((uFlags & 0xFFFFFFFEu) == 0)
-						{
-							//计数为 0，唤醒等待
-							SetEvent(Timer->hEvent);
-						}
-
-					}, pti, lDueTime.QuadPart, msPeriod, 0);
-
-				if (!bRet)
+			HANDLE hQueueTimer;
+			auto bRet = CreateTimerQueueTimer(&hQueueTimer, nullptr, [](PVOID Parameter, BOOLEAN)
 				{
-					if (InterlockedExchangeAdd(&pti->nRef, -1) == 0)
+					auto Timer = (PTP_TIMER)Parameter;
+
+					ResetEvent(Timer->hEvent);
+
+					//增加一次引用。
+					auto uFlags = Timer->uFlags;
+					for (;;)
 					{
-						pti->VFuncs->pTppWorkpFree(pti);
+						auto uNewFlags = (uFlags & 0xFFFFFFFEu) + 2;
+						auto uOrgFlags = InterlockedCompareExchange(&Timer->uFlags, uNewFlags, uFlags);
+
+						if (uOrgFlags == uFlags)
+						{
+							uFlags = uNewFlags;
+							break;
+						}
+
+						uFlags = uOrgFlags;
 					}
+
+					TP_CALLBACK_INSTANCE Instance = {};
+
+					Timer->pTaskVFuncs->pExecuteCallback(&Instance, Timer);
+
+					Fallback::DoWhenCallbackReturns(&Instance);
+
+
+					uFlags = Timer->uFlags;
+					for (;;)
+					{
+						auto uNewFlags = uFlags - 2;
+
+						auto uOrgFlags = InterlockedCompareExchange(&Timer->uFlags, uNewFlags, uFlags);
+
+						if (uOrgFlags == uFlags)
+						{
+							uFlags = uNewFlags;
+							break;
+						}
+
+						uFlags = uOrgFlags;
+					}
+
+					if ((uFlags & 0xFFFFFFFEu) == 0)
+					{
+						//计数为 0，唤醒等待
+						SetEvent(Timer->hEvent);
+					}
+
+				}, pti, lDueTime.QuadPart, msPeriod, 0);
+
+			if (bRet)
+			{
+				auto hOrgQueueTimer = InterlockedExchangePointer(&pti->hQueueTimer, hQueueTimer);
+
+				if (!hOrgQueueTimer)
+				{
+					return;
 				}
 
+				DeleteTimerQueueTimer(nullptr, hOrgQueueTimer, nullptr);
 			}
 
+			if (InterlockedExchangeAdd(&pti->nRef, -1) == 0)
+			{
+				pti->VFuncs->pTppWorkpFree(pti);
+			}
 		}
 #endif
 
