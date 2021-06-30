@@ -517,5 +517,57 @@ namespace YY
 
 		}
 #endif
+
+		
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Minimum supported client	Windows Vista [desktop apps | UWP apps]
+		//Minimum supported server	Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		0,
+		BOOL,
+		WINAPI,
+		IsThreadAFiber,
+			VOID
+			)
+		{
+			if (const auto pIsThreadAFiber = try_get_IsThreadAFiber())
+			{
+				return pIsThreadAFiber();
+			}
+
+			//如果当前没有 Fiber，那么我们认为这不是一个纤程
+			auto pFiber = GetCurrentFiber();
+
+			//0x1e00 是一个魔幻数字，似乎所有NT系统都会这样，当前不是一个Fiber时，第一次会返回 0x1e00。
+			return pFiber != nullptr && pFiber != (void*)0x1e00;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Minimum supported client	Windows Vista [desktop apps | UWP apps]
+		//Minimum supported server	Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		LPVOID,
+		WINAPI,
+		ConvertThreadToFiberEx,
+			_In_opt_ LPVOID lpParameter,
+			_In_     DWORD dwFlags
+			)
+		{
+			if (const auto pConvertThreadToFiberEx = try_get_ConvertThreadToFiberEx())
+			{
+				return pConvertThreadToFiberEx(lpParameter, dwFlags);
+			}
+
+			//FIBER_FLAG_FLOAT_SWITCH 无法使用，不过似乎关系不大。一些boost基础设施中都不切换浮点状态。
+			return ConvertThreadToFiber(lpParameter);
+		}
+#endif
 	}
 }
