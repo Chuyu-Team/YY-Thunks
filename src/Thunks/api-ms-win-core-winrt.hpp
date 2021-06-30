@@ -24,11 +24,17 @@ namespace YY
 				return pRoInitialize(initType);
 			}
 
-			return CoInitializeEx(
-				nullptr, 
-				initType == RO_INIT_SINGLETHREADED 
-				? COINIT_APARTMENTTHREADED
-				: COINIT_MULTITHREADED);
+			DWORD CoInitializeFlags = COINIT_DISABLE_OLE1DDE;
+			if (initType == RO_INIT_SINGLETHREADED)
+			{
+				CoInitializeFlags |= COINIT_APARTMENTTHREADED;
+			}
+			else
+			{
+				CoInitializeFlags |= COINIT_MULTITHREADED;
+			}
+
+			return CoInitializeEx(nullptr, CoInitializeFlags);
 		}
 #endif
 
