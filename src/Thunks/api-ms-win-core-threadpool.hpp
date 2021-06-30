@@ -960,7 +960,7 @@ namespace YY
 
 			InterlockedIncrement(&pti->nRef);
 
-
+			DWORD DueTime = 0;
 			LARGE_INTEGER lDueTime;
 			lDueTime.LowPart = pftDueTime->dwLowDateTime;
 			lDueTime.HighPart = pftDueTime->dwHighDateTime;
@@ -968,7 +968,7 @@ namespace YY
 			if (lDueTime.QuadPart < 0)
 			{
 				//相对时间
-				lDueTime.QuadPart /= -1 * 10 * 1000;
+				DueTime = lDueTime.QuadPart / -10'000;
 			}
 			else if (lDueTime.QuadPart > 0)
 			{
@@ -981,11 +981,7 @@ namespace YY
 
 				if (lDueTime.QuadPart > lCurrentTime.QuadPart)
 				{
-					lDueTime.QuadPart = (lDueTime.QuadPart - lCurrentTime.QuadPart) / 10'000;
-				}
-				else
-				{
-					lDueTime.QuadPart = 0;
+					DueTime = (lDueTime.QuadPart - lCurrentTime.QuadPart) / 10'000;
 				}
 			}
 
@@ -1041,7 +1037,7 @@ namespace YY
 						SetEvent(Timer->hEvent);
 					}
 
-				}, pti, lDueTime.QuadPart, msPeriod, 0);
+				}, pti, DueTime, msPeriod, 0);
 
 			if (bRet)
 			{

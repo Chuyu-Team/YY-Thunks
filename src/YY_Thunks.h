@@ -162,9 +162,13 @@ static __forceinline unsigned __int64 __fastcall __crt_rotate_pointer_value(unsi
 }
 
 #ifdef _WIN64
-#define __foreinclude(p) _bittest64(reinterpret_cast<LONG_PTR*>(&p), 0)
+#define __foreinclude(p)                          \
+	__pragma(warning(suppress:6031))              \
+	_bittest64(reinterpret_cast<LONG_PTR*>(&p), 0)
 #else
-#define __foreinclude(p) _bittest(reinterpret_cast<LONG_PTR*>(&p), 0)
+#define __foreinclude(p)                          \
+	__pragma(warning(suppress:6031))              \
+	_bittest(reinterpret_cast<LONG_PTR*>(&p), 0)
 #endif
 
 

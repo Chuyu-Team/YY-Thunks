@@ -22,6 +22,7 @@ namespace YY
 				return pGetTickCount64();
 			}
 
+			__pragma(warning(suppress:28159))
 			return GetTickCount();
 		}
 #endif
@@ -80,6 +81,7 @@ namespace YY
 		__DEFINE_THUNK(
 		kernel32,
 		12,
+		_Success_(return)
 		BOOL,
 		WINAPI,
 		GetLogicalProcessorInformationEx,

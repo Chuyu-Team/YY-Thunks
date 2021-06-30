@@ -148,6 +148,7 @@ namespace YY
 		__DEFINE_THUNK(
 		kernel32,
 		8,
+		_Success_(return)
 		BOOL,
 		WINAPI,
 		GetNumaAvailableMemoryNode,
@@ -188,6 +189,7 @@ namespace YY
 		__DEFINE_THUNK(
 		kernel32,
 		8,
+		_Success_(return)
 		BOOL,
 		WINAPI,
 		GetNumaAvailableMemoryNodeEx,
@@ -208,7 +210,7 @@ namespace YY
 				return FALSE;
 			}
 
-			return GetNumaAvailableMemoryNode(Node, AvailableBytes);
+			return GetNumaAvailableMemoryNode(UCHAR(Node), AvailableBytes);
 		}
 #endif
 

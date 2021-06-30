@@ -31,6 +31,7 @@ namespace YY
 		__DEFINE_THUNK(
 		kernel32,
 		16,
+		_Success_(return)
 		BOOL,
 		WINAPI,
 		GetFileInformationByHandleEx,
@@ -1192,6 +1193,7 @@ namespace YY
 		__DEFINE_THUNK(
 		kernel32,
 		20,
+		_Success_(return)
 		BOOL,
 		WINAPI,
 		SetFilePointerEx,

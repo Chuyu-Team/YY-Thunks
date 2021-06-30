@@ -441,6 +441,9 @@ namespace YY
 				return pSHGetKnownFolderPath(rfid, dwFlags, hToken, ppszPath);
 			}
 
+			if (ppszPath)
+				*ppszPath = nullptr;
+
 			const auto csidl = internal::KnownFoldersIdToCSIDL(rfid);
 
 			if (csidl == -1)

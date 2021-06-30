@@ -11,11 +11,12 @@ namespace YY
 		{
 			template<class Char>
 			static
+			_Success_(return)
 			BOOL
 			WINAPI
 			StrToInt64ExT(
 				_In_ const Char* pszString,
-				STIF_FLAGS dwFlags,
+				_In_ STIF_FLAGS dwFlags,
 				_Out_ LONGLONG* pllRet
 				)
 			{

@@ -150,6 +150,7 @@ namespace YY
 		__DEFINE_THUNK(
 		api_ms_win_core_path_l1_1_0,
 		8,
+		_Success_(return)
 		BOOL,
 		WINAPI,
 		PathIsUNCEx,
@@ -1659,7 +1660,7 @@ namespace YY
 			}
 
 			//保证边界依然在 最大值内
-			const auto cchMaxPath = (dwFlags & PATHCCH_ALLOW_LONG_PATHS) ? PATHCCH_MAX_CCH : MAX_PATH;
+			const unsigned cchMaxPath = (dwFlags & PATHCCH_ALLOW_LONG_PATHS) ? PATHCCH_MAX_CCH : MAX_PATH;
 			if (cchBufferSize > cchMaxPath)
 				cchBufferSize = cchMaxPath;
 
@@ -1733,7 +1734,7 @@ namespace YY
 			}
 
 			//保证边界依然在 最大值内
-			const auto cchMaxPath = (dwFlags & PATHCCH_ALLOW_LONG_PATHS) ? PATHCCH_MAX_CCH : MAX_PATH;
+			const unsigned cchMaxPath = (dwFlags & PATHCCH_ALLOW_LONG_PATHS) ? PATHCCH_MAX_CCH : MAX_PATH;
 			if (cchBufferSize > cchMaxPath)
 				cchBufferSize = cchMaxPath;
 

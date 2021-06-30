@@ -156,6 +156,7 @@ namespace YY
 		__DEFINE_THUNK(
 		kernel32,
 		8,
+		_Success_(return)
 		BOOL,
 		WINAPI,
 		GetNumaProximityNodeEx,

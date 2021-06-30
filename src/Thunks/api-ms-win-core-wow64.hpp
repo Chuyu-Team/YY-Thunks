@@ -114,6 +114,7 @@ namespace YY
 		__DEFINE_THUNK(
 		kernel32,
 		12,
+		_Success_(return)
 		BOOL,
 		WINAPI,
 		IsWow64Process2,

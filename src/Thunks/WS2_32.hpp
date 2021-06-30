@@ -41,7 +41,7 @@ namespace YY
 				//IPv4
 				UCHAR IPAddress[4] = {};
 
-				int i = 0;
+				unsigned i = 0;
 				for (; i != _countof(IPAddress); )
 				{
 					auto& IPNum = IPAddress[i++];
@@ -200,7 +200,7 @@ namespace YY
 					{
 						//先复制头
 
-						auto j = 0;
+						auto j = 0u;
 						for (; j != InsertIndex; ++j)
 						{
 							((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[j];
@@ -265,7 +265,7 @@ namespace YY
 				//IPv4
 				UCHAR IPAddress[4] = {};
 
-				int i = 0;
+				unsigned i = 0;
 				for (; i != _countof(IPAddress); )
 				{
 					auto& IPNum = IPAddress[i++];
@@ -424,7 +424,7 @@ namespace YY
 					{
 						//先复制头
 
-						auto j = 0;
+						auto j = 0u;
 						for (; j != InsertIndex; ++j)
 						{
 							((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[j];

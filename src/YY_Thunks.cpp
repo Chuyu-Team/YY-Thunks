@@ -166,7 +166,7 @@ namespace YY
 				return lStatus;
 			}
 
-			static void __fastcall RaiseStatus(NTSTATUS Status)
+			static __analysis_noreturn void __fastcall RaiseStatus(NTSTATUS Status)
 			{
 				RaiseException(Status, EXCEPTION_NONCONTINUABLE, 0, NULL);
 			}

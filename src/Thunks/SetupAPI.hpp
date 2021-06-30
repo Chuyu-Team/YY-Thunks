@@ -116,6 +116,7 @@ namespace YY
         __DEFINE_THUNK(
         setupapi,
         32,
+        _Success_(return)
 		BOOL,
         WINAPI,
         SetupDiGetDevicePropertyW,
@@ -220,6 +221,7 @@ namespace YY
         __DEFINE_THUNK(
         setupapi,
         28,
+        _Success_(return)
         BOOL,
         WINAPI,
         SetupDiGetClassPropertyW,
