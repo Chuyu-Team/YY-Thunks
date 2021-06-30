@@ -19,6 +19,15 @@
     <Filter Include="源文件\UnitTest">
       <UniqueIdentifier>{14839854-72a8-4749-9620-293e5a77f9c4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\def">
+      <UniqueIdentifier>{8046066d-ae9e-41ab-99d4-f33fd6889199}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\def\x86">
+      <UniqueIdentifier>{80f481d4-acd7-47dc-ad36-f9d681a5c7fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\def\x64">
+      <UniqueIdentifier>{d6cf9186-955d-44be-b803-54333f18d63d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -152,5 +161,13 @@
     <ClInclude Include="Thunks\api-ms-win-core-fibers.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="def\x86\PSAPI2Kernel32.def">
+      <Filter>源文件\def\x86</Filter>
+    </None>
+    <None Include="def\x64\PSAPI2Kernel32.def">
+      <Filter>源文件\def\x64</Filter>
+    </None>
   </ItemGroup>
 </Project>

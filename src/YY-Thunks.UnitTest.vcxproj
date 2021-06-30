@@ -220,6 +220,10 @@
     <ClInclude Include="Thunks\WS2_32.hpp" />
     <ClInclude Include="YY_Thunks_List.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="def\x64\PSAPI2Kernel32.def" />
+    <None Include="def\x86\PSAPI2Kernel32.def" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
