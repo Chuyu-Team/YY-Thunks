@@ -796,7 +796,7 @@ namespace YY
 			{
 				auto GlobalKeyedEventHandle = GetGlobalKeyedEventHandle();
 				auto pNtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
-				if (pNtReleaseKeyedEvent)
+				if (!pNtReleaseKeyedEvent)
 					internal::RaiseStatus(STATUS_NOT_FOUND);
 
 				for (; pBlock;)
@@ -1286,6 +1286,7 @@ namespace YY
 		__DEFINE_THUNK(
 		kernel32,
 		16,
+		_Success_(return)
 		BOOL,
 		WINAPI,
 		InitOnceBeginInitialize,

@@ -172,6 +172,7 @@
     </ClCompile>
     <ClCompile Include="UnitTest\api-ms-win-core-fibers.UnitTest.cpp" />
     <ClCompile Include="UnitTest\api-ms-win-core-path.UnitTest.cpp" />
+    <ClCompile Include="UnitTest\api-ms-win-core-synch.UnitTest.cpp" />
     <ClCompile Include="UnitTest\api-ms-win-core-threadpool.UnitTest.cpp" />
     <ClCompile Include="UnitTest\YY-Thunks.UnitTest.cpp" />
     <ClCompile Include="YY_Thunks.cpp">
