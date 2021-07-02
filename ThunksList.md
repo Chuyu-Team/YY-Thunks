@@ -228,3 +228,4 @@
 | [RoUninitialize](https://docs.microsoft.com/windows/win32/api/roapi/nf-roapi-rouninitialize)                                   | 不存在时，调用 CoUninitialize。
 | [GetDynamicTimeZoneInformation](https://docs.microsoft.com/windows/win32/api/timezoneapi/nf-timezoneapi-getdynamictimezoneinformation)   | 不存在时，调用 GetTimeZoneInformation。
 | [SetDynamicTimeZoneInformation](https://docs.microsoft.com/windows/win32/api/timezoneapi/nf-timezoneapi-setdynamictimezoneinformation)   | 不存在时，调用 SetTimeZoneInformation。
+| [GetProductInfo](https://docs.microsoft.com/windows/win32/api/sysinfoapi/nf-sysinfoapi-getproductinfo)                         | 不存在时，调用 GetVersionExW。

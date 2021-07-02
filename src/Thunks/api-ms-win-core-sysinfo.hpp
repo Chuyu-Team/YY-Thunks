@@ -327,7 +327,7 @@ namespace YY
 		{
 			if (const auto pGetNativeSystemInfo = try_get_GetNativeSystemInfo())
 			{
-				pGetNativeSystemInfo(lpSystemInfo);
+				return pGetNativeSystemInfo(lpSystemInfo);
 			}
 
 
@@ -335,6 +335,107 @@ namespace YY
 		}
 #endif
 
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows XP [desktop apps | UWP apps]
+		//Windows Server 2003 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		20,
+		BOOL,
+		WINAPI,
+		GetProductInfo,
+			_In_ DWORD dwOSMajorVersion,
+			_In_ DWORD dwOSMinorVersion,
+			_In_ DWORD dwSpMajorVersion,
+			_In_ DWORD dwSpMinorVersion,
+			_Out_ PDWORD pdwReturnedProductType
+			)
+		{
+			if (const auto pGetProductInfo = try_get_GetProductInfo())
+			{
+				return pGetProductInfo(dwOSMajorVersion, dwOSMinorVersion, dwSpMajorVersion, dwSpMinorVersion, pdwReturnedProductType);
+			}
+
+			if (!pdwReturnedProductType)
+				return FALSE;
+
+			//故意不检测版本号，能凑合就尽可能的凑合吧……
+
+			DWORD dwReturnedProductType = PRODUCT_UNLICENSED;
+
+			//由于不支持这个接口，所以系统版本必然是XP或者以下
+			OSVERSIONINFOEXW VersionInfo = { sizeof(VersionInfo) };
+			if (GetVersionExW((LPOSVERSIONINFOW)&VersionInfo))
+			{
+				if (VersionInfo.wSuiteMask & VER_SUITE_ENTERPRISE)
+				{
+					dwReturnedProductType = PRODUCT_ENTERPRISE_SERVER;
+				}
+				else if (VersionInfo.wSuiteMask & VER_SUITE_SMALLBUSINESS_RESTRICTED) // VER_SUITE_SMALLBUSINESS 与 VER_SUITE_SMALLBUSINESS_RESTRICTED
+				{
+					dwReturnedProductType = PRODUCT_SMALLBUSINESS_SERVER;
+				}
+				else if (VersionInfo.wSuiteMask & VER_SUITE_EMBEDDED_RESTRICTED) // VER_SUITE_EMBEDDEDNT 与 VER_SUITE_EMBEDDED_RESTRICTED
+				{
+					dwReturnedProductType = PRODUCT_EMBEDDED;
+				}
+				else if (VersionInfo.wSuiteMask & VER_SUITE_DATACENTER)
+				{
+					dwReturnedProductType = PRODUCT_DATACENTER_SERVER;
+				}
+				else if (VersionInfo.wSuiteMask & VER_SUITE_PERSONAL)
+				{
+					dwReturnedProductType = PRODUCT_HOME_BASIC;
+				}
+				else if (VersionInfo.wSuiteMask & VER_SUITE_BLADE)
+				{
+					dwReturnedProductType = PRODUCT_WEB_SERVER;
+				}
+				else if (VersionInfo.wSuiteMask & VER_SUITE_STORAGE_SERVER)
+				{
+					dwReturnedProductType = PRODUCT_STORAGE_STANDARD_SERVER;
+				}
+				else if (VersionInfo.wSuiteMask & VER_SUITE_COMPUTE_SERVER)
+				{
+					dwReturnedProductType = PRODUCT_CLUSTER_SERVER;
+				}
+				else if (VersionInfo.wSuiteMask & VER_SUITE_WH_SERVER)
+				{
+					dwReturnedProductType = PRODUCT_HOME_SERVER;
+				}
+				else
+				{
+					if (VersionInfo.wProductType == VER_NT_WORKSTATION)
+					{
+						//如果目标系统是5.1，因为SuiteMask中检测了Home，所以这里只可能是专业版
+						// 
+						//如果目标系统是5.0、5.2，只可能是专业版。
+
+						dwReturnedProductType = PRODUCT_PROFESSIONAL;
+					}
+					else if (VersionInfo.wProductType == VER_NT_DOMAIN_CONTROLLER || VersionInfo.wProductType == VER_NT_SERVER)
+					{
+						//如果目标系统是5.1、5.2，因为SuiteMask中检测了Small Business Server、Web Edition、Enterprise Edition、
+						//Datacenter Edition、Compute Cluster Server、Storage Server，所以这里只可能是Standard Edition
+						//
+						//如果目标系统是5.0，因为SuiteMask中检测了Datacenter Server，这里只能是 Advanced Server或者 Server，但是我没有找到 Advanced，姑且用 PRODUCT_STANDARD_SERVER 凑合吧。
+						dwReturnedProductType = PRODUCT_STANDARD_SERVER;
+					}
+					else
+					{
+						//这是什么鬼？
+						dwReturnedProductType = PRODUCT_UNDEFINED;
+					}
+				}
+			}
+
+			*pdwReturnedProductType = dwReturnedProductType;
+
+			return dwReturnedProductType != PRODUCT_UNDEFINED;
+		}
+#endif
 	}//namespace Thunks
 
 } //namespace YY
