@@ -149,9 +149,6 @@
     <ClInclude Include="Thunks\api-ms-win-core-processtopology-obsolete.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="YY_Thunks_List.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Thunks\api-ms-win-core-memory.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>

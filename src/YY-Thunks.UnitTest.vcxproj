@@ -25,6 +25,7 @@
     <RootNamespace>YYThunksUnitTest</RootNamespace>
     <WindowsTargetPlatformVersion>$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion('Windows', '10.0'))</WindowsTargetPlatformVersion>
     <ProjectSubType>NativeUnitTestProject</ProjectSubType>
+    <YY_Thunks_List_Path>$(MSBuildThisFileDirectory)YY_Thunks_List.hpp</YY_Thunks_List_Path>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -63,16 +64,12 @@
   <ImportGroup Label="Shared">
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -213,12 +210,11 @@
     <ClInclude Include="Thunks\kernel32.hpp" />
     <ClInclude Include="Thunks\psapi.hpp" />
     <ClInclude Include="Thunks\SetupAPI.hpp" />
-    <ClInclude Include="Thunks\shcore.hpp" />
     <ClInclude Include="Thunks\shell32.hpp" />
     <ClInclude Include="Thunks\shlwapi.hpp" />
     <ClInclude Include="Thunks\user32.hpp" />
     <ClInclude Include="Thunks\WS2_32.hpp" />
-    <ClInclude Include="YY_Thunks_List.hpp" />
+    <ClInclude Include="Thunks\shcore.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="def\x64\PSAPI2Kernel32.def" />
@@ -227,4 +223,20 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Target Name="Build_YY_Thunks_List_hpp" AfterTargets="BeforeClCompile" Inputs="$(MSBuildProjectFullPath)" Outputs="$(YY_Thunks_List_Path)">
+    <WriteLinesToFile
+      File="$(YY_Thunks_List_Path)"
+      Lines="// 由编译系统根据 $(MSBuildProjectFullPath) 自动生成，手工修改此文件无效！"
+      Overwrite="true"
+      Encoding="Unicode"
+      />
+    
+    <WriteLinesToFile
+      File="$(YY_Thunks_List_Path)"
+      Lines="#include %22%(ClInclude.Identity)%22"
+      Overwrite="false"
+      Encoding="Unicode"
+      Condition="@(ClInclude-&gt;StartsWith('Thunks%5C'))"
+      />
+  </Target>
 </Project>

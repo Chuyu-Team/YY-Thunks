@@ -12,6 +12,9 @@ if "%Platform%"=="" set Platform=x86
 
 md "objs\\%Platform%"
 
+::охиЗЁи YY_Thunks_List.hpp
+msbuild "%~dp0YY-Thunks.UnitTest.vcxproj" -t:Build_YY_Thunks_List_hpp
+
 call:Build%Platform%
 
 
