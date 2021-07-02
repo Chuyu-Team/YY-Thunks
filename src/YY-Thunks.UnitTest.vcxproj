@@ -201,6 +201,7 @@
     <ClInclude Include="Thunks\api-ms-win-core-sysinfo.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-systemtopology.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-threadpool.hpp" />
+    <ClInclude Include="Thunks\api-ms-win-core-timezone.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-util.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-version.hpp" />
     <ClInclude Include="Thunks\api-ms-win-core-winrt-error.hpp" />
@@ -224,19 +225,7 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <Target Name="Build_YY_Thunks_List_hpp" AfterTargets="BeforeClCompile" Inputs="$(MSBuildProjectFullPath)" Outputs="$(YY_Thunks_List_Path)">
-    <WriteLinesToFile
-      File="$(YY_Thunks_List_Path)"
-      Lines="// 由编译系统根据 $(MSBuildProjectFullPath) 自动生成，手工修改此文件无效！"
-      Overwrite="true"
-      Encoding="Unicode"
-      />
-    
-    <WriteLinesToFile
-      File="$(YY_Thunks_List_Path)"
-      Lines="#include %22%(ClInclude.Identity)%22"
-      Overwrite="false"
-      Encoding="Unicode"
-      Condition="@(ClInclude-&gt;StartsWith('Thunks%5C'))"
-      />
+    <WriteLinesToFile File="$(YY_Thunks_List_Path)" Lines="// 由编译系统根据 $(MSBuildProjectFullPath) 自动生成，手工修改此文件无效！" Overwrite="true" Encoding="Unicode" />
+    <WriteLinesToFile File="$(YY_Thunks_List_Path)" Lines="#include %22%(ClInclude.Identity)%22" Overwrite="false" Encoding="Unicode" Condition="@(ClInclude-&gt;StartsWith('Thunks%5C'))" />
   </Target>
 </Project>

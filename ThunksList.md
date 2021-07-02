@@ -226,4 +226,5 @@
 | [ConvertThreadToFiberEx](https://docs.microsoft.com/windows/win32/api/winbase/nf-winbase-convertthreadtofiberex)               | 不存在时，调用 ConvertThreadToFiber。
 | [RoInitialize](https://docs.microsoft.com/windows/win32/api/roapi/nf-roapi-roinitialize)                                       | 不存在时，调用 CoInitializeEx。
 | [RoUninitialize](https://docs.microsoft.com/windows/win32/api/roapi/nf-roapi-rouninitialize)                                   | 不存在时，调用 CoUninitialize。
-
+| [GetDynamicTimeZoneInformation](https://docs.microsoft.com/windows/win32/api/timezoneapi/nf-timezoneapi-getdynamictimezoneinformation)   | 不存在时，调用 GetTimeZoneInformation。
+| [SetDynamicTimeZoneInformation](https://docs.microsoft.com/windows/win32/api/timezoneapi/nf-timezoneapi-setdynamictimezoneinformation)   | 不存在时，调用 SetTimeZoneInformation。
