@@ -169,5 +169,11 @@
     <None Include="def\x64\PSAPI2Kernel32.def">
       <Filter>源文件\def\x64</Filter>
     </None>
+    <None Include="..\ReadMe.md">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="..\ThunksList.md">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

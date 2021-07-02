@@ -229,3 +229,4 @@
 | [GetDynamicTimeZoneInformation](https://docs.microsoft.com/windows/win32/api/timezoneapi/nf-timezoneapi-getdynamictimezoneinformation)   | 不存在时，调用 GetTimeZoneInformation。
 | [SetDynamicTimeZoneInformation](https://docs.microsoft.com/windows/win32/api/timezoneapi/nf-timezoneapi-setdynamictimezoneinformation)   | 不存在时，调用 SetTimeZoneInformation。
 | [GetProductInfo](https://docs.microsoft.com/windows/win32/api/sysinfoapi/nf-sysinfoapi-getproductinfo)                         | 不存在时，调用 GetVersionExW。
+| [EnumSystemLocalesEx](https://docs.microsoft.com/windows/win32/api/winnls/nf-winnls-enumsystemlocalesex)                       | 不存在时，调用 EnumSystemLocalesW。

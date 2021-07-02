@@ -218,6 +218,8 @@
     <ClInclude Include="Thunks\shcore.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\ReadMe.md" />
+    <None Include="..\ThunksList.md" />
     <None Include="def\x64\PSAPI2Kernel32.def" />
     <None Include="def\x86\PSAPI2Kernel32.def" />
   </ItemGroup>

@@ -5,6 +5,66 @@ namespace YY
 {
 	namespace Thunks
 	{
+#ifdef YY_Thunks_Implemented
+		namespace internal
+		{
+			struct FastDownlevelCallbackInfo
+			{
+				union
+				{
+					volatile LPVOID pRawPoint;
+					LOCALE_ENUMPROCEX lpLocaleEnumProcEx;
+					DATEFMT_ENUMPROCEXEX lpDateFmtEnumProcExEx;
+					CALINFO_ENUMPROCEXEX pCalInfoEnumProcExEx;
+				};
+
+				union
+				{
+					void* UserData;
+					LPARAM lParam;
+				};
+			};
+
+
+			static
+			FastDownlevelCallbackInfo*
+			__fastcall
+			GetFastDownlevelCallbackInfo()
+			{
+				static FastDownlevelCallbackInfo CallbackInfo;
+				return &CallbackInfo;
+			}
+
+			template<class Fun, class Type>
+			__forceinline
+			static
+			FastDownlevelCallbackInfo*
+			__fastcall
+			TryLockFastDownlevelCallbackInfo(Fun Callback, Type UserData)
+			{
+				auto pFastDownlevelCallback = GetFastDownlevelCallbackInfo();
+
+				if (InterlockedCompareExchangePointer(&pFastDownlevelCallback->pRawPoint, (PVOID)Callback, nullptr) != nullptr)
+				{
+					pFastDownlevelCallback->UserData = (void*)UserData;
+					return pFastDownlevelCallback;
+				}
+				else
+				{
+					return nullptr;
+				}
+			}
+			
+			__forceinline
+			static
+			void
+			__fastcall
+			UnlockFastDownlevelCallbackInfo(FastDownlevelCallbackInfo* pFastCallbackInfo)
+			{
+				InterlockedExchangePointer(&pFastCallbackInfo->pRawPoint, nullptr);
+			}
+		}
+#endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -812,63 +872,87 @@ namespace YY
 					break;
 				}
 
+				CALINFO_ENUMPROCEXW lpCalInfoEnumProcEx;
+				auto pFastCallbackInfo = internal::TryLockFastDownlevelCallbackInfo(pCalInfoEnumProcExEx, lParam);
+
+				if (pFastCallbackInfo)
+				{
+					lpCalInfoEnumProcEx = [](LPWSTR lpCalendarInfoString, CALID Calendar)
+					{
+						auto pFastCallbackInfo = internal::GetFastDownlevelCallbackInfo();
+
+						return pFastCallbackInfo->pCalInfoEnumProcExEx(lpCalendarInfoString, Calendar, nullptr, pFastCallbackInfo->lParam);
+					};
+				}
+				else
+				{
 #if defined(_X86_)
-				constexpr const auto lParamOffset = 1;
-				constexpr const auto pCallBackOffset = 16;
+					constexpr const auto lParamOffset = 1;
+					constexpr const auto pCallBackOffset = 16;
 
-				static constexpr const byte ThunkData[] =
-				{
-					//lpCalendarInfoString = 0Ch + 4h
-					//Calendar             = 08h + 8h
-					0x68, 0x00, 0x00, 0x00, 0x00,       // push    lParam                              ; lParam
-					0x6A, 0x00,                         // push    0                                   ; lpReserved
-					0xFF, 0x74, 0x24, 0x10,             // push    dword ptr Calendar[esp]             ; Calendar
-					0xFF, 0x74, 0x24, 0x10,             // push    dword ptr lpCalendarInfoString[esp] ; lpCalendarInfoString
+					static constexpr const byte ThunkData[] =
+					{
+						//lpCalendarInfoString = 0Ch + 4h
+						//Calendar             = 08h + 8h
+						0x68, 0x00, 0x00, 0x00, 0x00,       // push    lParam                              ; lParam
+						0x6A, 0x00,                         // push    0                                   ; lpReserved
+						0xFF, 0x74, 0x24, 0x10,             // push    dword ptr Calendar[esp]             ; Calendar
+						0xFF, 0x74, 0x24, 0x10,             // push    dword ptr lpCalendarInfoString[esp] ; lpCalendarInfoString
 
-					0xB8, 0x00, 0x00, 0x00, 0x00,       // mov     eax, pCalInfoEnumProcExEx
-					0xFF, 0xD0,                         // call    eax
-					0xC2, 0x08, 0x00,                   // retn    8
-				};
+						0xB8, 0x00, 0x00, 0x00, 0x00,       // mov     eax, pCalInfoEnumProcExEx
+						0xFF, 0xD0,                         // call    eax
+						0xC2, 0x08, 0x00,                   // retn    8
+					};
 #elif defined(_AMD64_)
-				constexpr const auto lParamOffset = 2;
-				constexpr const auto pCallBackOffset = 15;
+					constexpr const auto lParamOffset = 2;
+					constexpr const auto pCallBackOffset = 15;
 
-				static constexpr const byte ThunkData[] =
-				{
-					//lpCalendarInfoString = rcx
-					//Calendar             = edx
-					0x49, 0xB9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     r9, lParam
-					0x45, 0x33, 0xC0,                                           // xor     r8d, r8d                 ; lpReserved
+					static constexpr const byte ThunkData[] =
+					{
+						//lpCalendarInfoString = rcx
+						//Calendar             = edx
+						0x49, 0xB9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     r9, lParam
+						0x45, 0x33, 0xC0,                                           // xor     r8d, r8d                 ; lpReserved
 
-					0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     rax, pCalInfoEnumProcExEx
-					0xFF, 0xE0,                                                 // jmp     rax
-				};
+						0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     rax, pCalInfoEnumProcExEx
+						0xFF, 0xE0,                                                 // jmp     rax
+					};
 #endif
 
-				auto pFun = (byte*)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
+					auto pFun = (byte*)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
 
-				if (!pFun)
-				{
-					lStatus = ERROR_NOT_ENOUGH_MEMORY;
-					break;
+					if (!pFun)
+					{
+						lStatus = ERROR_NOT_ENOUGH_MEMORY;
+						break;
+					}
+
+					memcpy(pFun, ThunkData, sizeof(ThunkData));
+					*(size_t*)(pFun + lParamOffset) = lParam;
+					*(size_t*)(pFun + pCallBackOffset) = (size_t)pCalInfoEnumProcExEx;
+
+					DWORD flOldProtect;
+					VirtualProtect(pFun, sizeof(ThunkData), PAGE_EXECUTE_READ, &flOldProtect);
+
+					lpCalInfoEnumProcEx = (CALINFO_ENUMPROCEXW)pFun;
 				}
 
-				memcpy(pFun, ThunkData, sizeof(ThunkData));
-				*(size_t*)(pFun + lParamOffset) = lParam;
-				*(size_t*)(pFun + pCallBackOffset) = (size_t)pCalInfoEnumProcExEx;
-
-				DWORD flOldProtect;
-				VirtualProtect(pFun, sizeof(ThunkData), PAGE_EXECUTE_READ, &flOldProtect);
-
 				auto bSuccess = EnumCalendarInfoExW(
-					(CALINFO_ENUMPROCEXW)pFun,
+					lpCalInfoEnumProcEx,
 					Locale,
 					Calendar,
 					CalType);
 
 				lStatus = bSuccess ? ERROR_SUCCESS : GetLastError();
 
-				VirtualFree(pFun, 0, MEM_RELEASE);
+				if (pFastCallbackInfo)
+				{
+					internal::UnlockFastDownlevelCallbackInfo(pFastCallbackInfo);
+				}
+				else
+				{
+					VirtualFree(lpCalInfoEnumProcEx, 0, MEM_RELEASE);
+				}
 			} while (false);
 
 			if (lStatus == ERROR_SUCCESS)
@@ -922,60 +1006,84 @@ namespace YY
 					break;
 				}
 
+				DATEFMT_ENUMPROCEXW lpDateFmtEnumProcEx;
+				auto pFastCallbackInfo = internal::TryLockFastDownlevelCallbackInfo(lpDateFmtEnumProcExEx, lParam);
+
+				if (pFastCallbackInfo)
+				{
+					lpDateFmtEnumProcEx = [](LPWSTR lpDateFormatString, CALID CalendarID)
+					{
+						auto pFastCallbackInfo = internal::GetFastDownlevelCallbackInfo();
+
+						return pFastCallbackInfo->lpDateFmtEnumProcExEx(lpDateFormatString, CalendarID, pFastCallbackInfo->lParam);
+					};
+				}
+				else
+				{
 #if defined(_X86_)
-				constexpr const auto lParamOffset = 1;
-				constexpr const auto pCallBackOffset = 14;
+					constexpr const auto lParamOffset = 1;
+					constexpr const auto pCallBackOffset = 14;
 
-				static constexpr const byte ThunkData[] =
-				{
-					//lpDateFormatString = 08h + 4h
-					//CalendarID         = 04h + 8h
-					0x68, 0x00, 0x00, 0x00, 0x00,       // push    lParam                              ; lParam
-					0xFF, 0x74, 0x24, 0x0C,             // push    dword ptr CalendarID[esp]           ; CalendarID
-					0xFF, 0x74, 0x24, 0x0C,             // push    dword ptr lpDateFormatString[esp]   ; lpDateFormatString
+					static constexpr const byte ThunkData[] =
+					{
+						//lpDateFormatString = 08h + 4h
+						//CalendarID         = 04h + 8h
+						0x68, 0x00, 0x00, 0x00, 0x00,       // push    lParam                              ; lParam
+						0xFF, 0x74, 0x24, 0x0C,             // push    dword ptr CalendarID[esp]           ; CalendarID
+						0xFF, 0x74, 0x24, 0x0C,             // push    dword ptr lpDateFormatString[esp]   ; lpDateFormatString
 
-					0xB8, 0x00, 0x00, 0x00, 0x00,       // mov     eax, lpDateFmtEnumProcExEx
-					0xFF, 0xD0,                         // call    eax
-					0xC2, 0x08, 0x00,                   // retn    8
-				};
+						0xB8, 0x00, 0x00, 0x00, 0x00,       // mov     eax, lpDateFmtEnumProcExEx
+						0xFF, 0xD0,                         // call    eax
+						0xC2, 0x08, 0x00,                   // retn    8
+					};
 #elif defined(_AMD64_)
-				constexpr const auto lParamOffset = 2;
-				constexpr const auto pCallBackOffset = 12;
+					constexpr const auto lParamOffset = 2;
+					constexpr const auto pCallBackOffset = 12;
 
-				static constexpr const byte ThunkData[] =
-				{
-					//lpDateFormatString = rcx
-					//CalendarID         = edx
-					0x49, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     r8, lParam
+					static constexpr const byte ThunkData[] =
+					{
+						//lpDateFormatString = rcx
+						//CalendarID         = edx
+						0x49, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     r8, lParam
 
-					0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     rax, lpDateFmtEnumProcExEx
-					0xFF, 0xE0,                                                 // jmp     rax
-				};
+						0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     rax, lpDateFmtEnumProcExEx
+						0xFF, 0xE0,                                                 // jmp     rax
+					};
 #endif
 
-				auto pFun = (byte*)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
+					auto pFun = (byte*)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
 
-				if (!pFun)
-				{
-					lStatus = ERROR_NOT_ENOUGH_MEMORY;
-					break;
+					if (!pFun)
+					{
+						lStatus = ERROR_NOT_ENOUGH_MEMORY;
+						break;
+					}
+
+					memcpy(pFun, ThunkData, sizeof(ThunkData));
+					*(size_t*)(pFun + lParamOffset) = lParam;
+					*(size_t*)(pFun + pCallBackOffset) = (size_t)lpDateFmtEnumProcExEx;
+
+					DWORD flOldProtect;
+					VirtualProtect(pFun, sizeof(ThunkData), PAGE_EXECUTE_READ, &flOldProtect);
+
+					lpDateFmtEnumProcEx = (DATEFMT_ENUMPROCEXW)pFun;
 				}
 
-				memcpy(pFun, ThunkData, sizeof(ThunkData));
-				*(size_t*)(pFun + lParamOffset) = lParam;
-				*(size_t*)(pFun + pCallBackOffset) = (size_t)lpDateFmtEnumProcExEx;
-
-				DWORD flOldProtect;
-				VirtualProtect(pFun, sizeof(ThunkData), PAGE_EXECUTE_READ, &flOldProtect);
-
 				auto bSuccess = EnumDateFormatsExW(
-					(DATEFMT_ENUMPROCEXW)pFun,
+					lpDateFmtEnumProcEx,
 					Locale,
 					dwFlags);
 
 				lStatus = bSuccess ? ERROR_SUCCESS : GetLastError();
 
-				VirtualFree(pFun, 0, MEM_RELEASE);
+				if (pFastCallbackInfo)
+				{
+					internal::UnlockFastDownlevelCallbackInfo(pFastCallbackInfo);
+				}
+				else
+				{
+					VirtualFree(lpDateFmtEnumProcEx, 0, MEM_RELEASE);
+				}
 			} while (false);
 
 			if (lStatus == ERROR_SUCCESS)
@@ -1029,6 +1137,147 @@ namespace YY
 		}
 #endif
 
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Minimum supported client	Windows Vista [desktop apps | UWP apps]
+		//Minimum supported server	Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		BOOL,
+		WINAPI,
+		EnumSystemLocalesEx,
+			_In_ LOCALE_ENUMPROCEX lpLocaleEnumProcEx,
+			_In_ DWORD dwFlags,
+			_In_ LPARAM lParam,
+			_In_opt_ LPVOID lpReserved
+			)
+		{
+			if (const auto pEnumSystemLocalesEx = try_get_EnumSystemLocalesEx())
+			{
+				return pEnumSystemLocalesEx(lpLocaleEnumProcEx, dwFlags, lParam, lpReserved);
+			}
+
+			LSTATUS lStatus = ERROR_SUCCESS;
+
+			do
+			{
+
+				if (lpLocaleEnumProcEx == nullptr)
+				{
+					lStatus = ERROR_INVALID_PARAMETER;
+					break;
+				}
+
+				if (dwFlags & ~(LOCALE_WINDOWS | LOCALE_SUPPLEMENTAL | LOCALE_ALTERNATE_SORTS))
+				{
+					lStatus = ERROR_INVALID_FLAGS;
+					break;
+				}
+
+				DWORD dwLCID_Flags = 0;
+
+				if (dwFlags == LOCALE_ALL)
+				{
+					dwFlags = LCID_SUPPORTED | LCID_ALTERNATE_SORTS;
+				}
+				else
+				{
+					dwFlags &= (LOCALE_WINDOWS | LOCALE_SUPPLEMENTAL | LOCALE_ALTERNATE_SORTS);
+				}
+
+				LOCALE_ENUMPROCW lpLocaleEnumProc;
+
+				auto pFastCallbackInfo = internal::TryLockFastDownlevelCallbackInfo(lpLocaleEnumProcEx, lParam);
+
+				if (pFastCallbackInfo)
+				{
+					//上下文成功锁定，我们可以使用快速模式进行，无需开辟内存。
+					lpLocaleEnumProc = [](LPWSTR lpLocaleString) -> BOOL
+					{
+						auto pFastCallbackInfo = internal::GetFastDownlevelCallbackInfo();
+
+						return pFastCallbackInfo->lpLocaleEnumProcEx(lpLocaleString, 0, pFastCallbackInfo->lParam);
+					};
+				}
+				else
+				{
+#if defined(_X86_)
+					constexpr auto lParamOffset = 1;
+					constexpr auto pCallBackOffset = 12;
+
+					static constexpr const byte ThunkData[] =
+					{
+						//lpLocaleString     = 08h + 4h
+						0x68, 0x00, 0x00, 0x00, 0x00,       // push    lParam                              ; lParam
+						0x6A, 0x00,                         // push    0                                   ; dwFlags(目前总是0)
+						0xFF, 0x74, 0x24, 0x0C,             // push    dword ptr lpLocaleString[esp]       ; lpLocaleString
+
+						0xB8, 0x00, 0x00, 0x00, 0x00,       // mov     eax, lpLocaleEnumProcEx
+						0xFF, 0xD0,                         // call    eax
+						0xC2, 0x04, 0x00,                   // retn    4
+					};
+#elif defined(_AMD64_)
+					constexpr const lParamOffset = 4;
+					constexpr const pCallBackOffset = 14;
+
+					static constexpr const byte ThunkData[] =
+					{
+						//lpDateFormatString = rcx
+						0x33, 0xD2,                                                 // xor     edx, edx                   ; dwFlags(0)
+						0x49, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     r8, lParam
+
+						0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov     rax, lpDateFmtEnumProcExEx
+						0xFF, 0xE0,                                                 // jmp     rax
+					};
+#endif
+
+					auto pFun = (byte*)VirtualAlloc(nullptr, sizeof(ThunkData), MEM_COMMIT, PAGE_READWRITE);
+
+					if (!pFun)
+					{
+						lStatus = ERROR_NOT_ENOUGH_MEMORY;
+						break;
+					}
+
+					memcpy(pFun, ThunkData, sizeof(ThunkData));
+					*(size_t*)(pFun + lParamOffset) = lParam;
+					*(size_t*)(pFun + pCallBackOffset) = (size_t)lpLocaleEnumProcEx;
+
+					DWORD flOldProtect;
+					VirtualProtect(pFun, sizeof(ThunkData), PAGE_EXECUTE_READ, &flOldProtect);
+
+					lpLocaleEnumProc = (LOCALE_ENUMPROCW)pFun;
+				}
+
+
+				auto bRet = EnumSystemLocalesW(lpLocaleEnumProc, dwFlags);
+
+				lStatus = bRet ? ERROR_SUCCESS : GetLastError();
+
+				if (pFastCallbackInfo)
+				{
+					internal::UnlockFastDownlevelCallbackInfo(pFastCallbackInfo);
+				}
+				else
+				{
+					VirtualFree(lpLocaleEnumProc, 0, MEM_RELEASE);
+				}
+
+			}while (false);
+
+			if (lStatus == ERROR_SUCCESS)
+			{
+				return TRUE;
+			}
+			else
+			{
+				SetLastError(lStatus);
+				return FALSE;
+			}
+		}
+#endif
 
 	}//namespace Thunks
 
