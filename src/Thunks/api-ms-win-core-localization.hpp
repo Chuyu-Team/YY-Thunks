@@ -42,9 +42,12 @@ namespace YY
 			__fastcall
 			TryLockFastDownlevelCallbackInfo(Fun Callback, Type UserData)
 			{
+				if (!Callback)
+					return nullptr;
+
 				auto pFastDownlevelCallback = GetFastDownlevelCallbackInfo();
 
-				if (InterlockedCompareExchangePointer(&pFastDownlevelCallback->pRawPoint, (PVOID)Callback, nullptr) != nullptr)
+				if (InterlockedCompareExchangePointer(&pFastDownlevelCallback->pRawPoint, (PVOID)Callback, nullptr) == nullptr)
 				{
 					pFastDownlevelCallback->UserData = (void*)UserData;
 					return pFastDownlevelCallback;
@@ -1219,8 +1222,8 @@ namespace YY
 						0xC2, 0x04, 0x00,                   // retn    4
 					};
 #elif defined(_AMD64_)
-					constexpr const lParamOffset = 4;
-					constexpr const pCallBackOffset = 14;
+					constexpr auto lParamOffset = 4;
+					constexpr auto pCallBackOffset = 14;
 
 					static constexpr const byte ThunkData[] =
 					{
