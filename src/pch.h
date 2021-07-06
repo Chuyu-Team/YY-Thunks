@@ -12,6 +12,7 @@
 #include <Windows.h>
 #include <atltime.h>
 #include "CppUnitTest.h"
+#include <process.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
