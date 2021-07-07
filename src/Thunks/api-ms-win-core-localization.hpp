@@ -2356,7 +2356,7 @@ namespace YY
 					lcid = LocaleNameToLCID(Buffer, 0);
 
 					//成功找到了区域，那么停止搜索
-					if (lcid != 0)
+					if (lcid != 0 && lcid != LOCALE_CUSTOM_UNSPECIFIED)
 						break;
 
 					while(i)
@@ -2376,7 +2376,7 @@ namespace YY
 				}
 			}
 
-			if (lcid)
+			if (lcid !=0 && lcid != LOCALE_CUSTOM_UNSPECIFIED)
 			{
 				if (lpLocaleName == nullptr || cchLocaleName == 0)
 				{
