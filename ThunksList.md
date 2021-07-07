@@ -233,3 +233,6 @@
 | [GetThreadPreferredUILanguages](https://docs.microsoft.com/windows/win32/api/winnls/nf-winnls-getthreadpreferreduilanguages)   | 不存在时，调用 GetThreadLocale、GetUserDefaultLangID以及GetSystemDefaultLangID。
 | [GetThreadUILanguage](https://docs.microsoft.com/windows/win32/api/winnls/nf-winnls-getthreaduilanguage)                       | 不存在时，调用 GetThreadLocale。
 | [ResolveLocaleName](https://docs.microsoft.com/windows/win32/api/winnls/nf-winnls-resolvelocalename)                           | 不存在时，调用 LocaleNameToLCID以及LCIDToLocaleName。
+| [InitializeProcThreadAttributeList](https://docs.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-initializeprocthreadattributelist)          | 不存在时，内部实现。
+| [DeleteProcThreadAttributeList](https://docs.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-deleteprocthreadattributelist)                  | 不存在时，内部实现。
+| [UpdateProcThreadAttribute](https://docs.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute)                          | 不存在时，内部实现。PROC_THREAD_ATTRIBUTE_PARENT_PROCESS与PROC_THREAD_ATTRIBUTE_HANDLE_LIST特性会被忽略处理。
