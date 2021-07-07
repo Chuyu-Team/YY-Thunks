@@ -5,7 +5,7 @@ namespace YY
 {
 	namespace Thunks
 	{
-#ifdef YY_Thunks_Implemented
+#if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WIN6)
 		namespace internal
 		{
 			struct FastDownlevelCallbackInfo
@@ -2307,10 +2307,10 @@ namespace YY
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
-		//Minimum supported client	Windows Vista [desktop apps only]
-		//Minimum supported server	Windows Server 2008 [desktop apps only]
+		//Minimum supported client	Windows 7 [desktop apps | UWP apps]
+		//Minimum supported server	Windows Server 2008 R2 [desktop apps | UWP apps]
 		__DEFINE_THUNK(
 		kernel32,
 		12,
