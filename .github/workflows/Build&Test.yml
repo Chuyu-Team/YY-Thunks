@@ -16,7 +16,7 @@ jobs:
 
           # Procdump工具，用于单元测试崩溃诊断
           Invoke-WebRequest -Uri https://download.sysinternals.com/files/Procdump.zip  -OutFile Bin\Procdump.zip
-          &7z e Bin\Procdump.zip -o${{env.GITHUB_WORKSPACE}}\Bin 
+          &7z e Bin\Procdump.zip "-o$Env:GITHUB_WORKSPACE\Bin"
 
 
           Invoke-WebRequest -Uri https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.2.8/LibMaker.exe -OutFile Bin\LibMaker.exe
