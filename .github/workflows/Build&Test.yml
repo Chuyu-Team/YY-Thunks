@@ -115,16 +115,16 @@ jobs:
           $Env:Path="${{env.MSBuildBinPath}};${{env.LatestVisualStudioRoot}}\Common7\IDE\CommonExtensions\Microsoft\TestWindow;" + $Env:Path
           
           # 设置 PROCDUMP_PATH 目录
-          $Env:PROCDUMP_PATH="${{env.GITHUB_WORKSPACE}}\Bin"
+          $Env:PROCDUMP_PATH="$Env:GITHUB_WORKSPACE\Bin"
 
           # 编译单元测试项目
-          &msbuild src\YY-Thunks.UnitTest\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=Win32;SolutionDir=${{env.GITHUB_WORKSPACE}}\src"
+          &msbuild src\YY-Thunks.UnitTest\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=Win32;SolutionDir=$Env:GITHUB_WORKSPACE\src"
           if($lastexitcode -ne 0)
           {
               throw "YY-Thunks.UnitTest.vcxproj编译失败！退出代码：$lastexitcode"
           }
            
-          &msbuild src\YY-Thunks.UnitTest\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=x64;SolutionDir=${{env.GITHUB_WORKSPACE}}\src"
+          &msbuild src\YY-Thunks.UnitTest\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=x64;SolutionDir=$Env:GITHUB_WORKSPACE\src"
           if($lastexitcode -ne 0)
           {
               throw "YY-Thunks.UnitTest.vcxproj编译失败！退出代码：$lastexitcode"
