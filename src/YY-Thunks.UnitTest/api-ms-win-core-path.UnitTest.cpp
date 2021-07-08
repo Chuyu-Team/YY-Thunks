@@ -1,7 +1,7 @@
 ﻿#include "pch.h"
 #include "CppUnitTest.h"
 
-#include "src/Thunks/api-ms-win-core-path.hpp"
+#include "Thunks/api-ms-win-core-path.hpp"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

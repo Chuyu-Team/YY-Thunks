@@ -351,5 +351,5 @@ MigrationBackup/
 *.zip
 /src/WinXP
 /src/Windows2000
-/src/src
-/src/YY_Thunks_List.hpp
+/src/Thunks/Thunks
+/src/Thunks/YY_Thunks_List.hpp

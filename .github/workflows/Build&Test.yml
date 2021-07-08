@@ -118,30 +118,37 @@ jobs:
           $Env:PROCDUMP_PATH="${{env.GITHUB_WORKSPACE}}\Bin"
 
           # 编译单元测试项目
-          &msbuild src\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=Win32"
+          &msbuild src\YY-Thunks.UnitTest\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=Win32;SolutionDir=${{env.GITHUB_WORKSPACE}}\src"
           if($lastexitcode -ne 0)
           {
               throw "YY-Thunks.UnitTest.vcxproj编译失败！退出代码：$lastexitcode"
           }
            
-          &msbuild src\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=x64"
+          &msbuild src\YY-Thunks.UnitTest\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=x64;SolutionDir=${{env.GITHUB_WORKSPACE}}\src"
           if($lastexitcode -ne 0)
           {
               throw "YY-Thunks.UnitTest.vcxproj编译失败！退出代码：$lastexitcode"
           }
           
-          &vstest.console src\Release\YY-Thunks.UnitTest.dll "/logger:trx;LogFileName=UnitTestWin32.trx" --Parallel "/Blame:CollectDump;CollectAlways=true;DumpType=full"
+          $RunFaild = 0
+
+          &vstest.console src\Release\YY-Thunks.UnitTest.dll "/logger:trx;LogFileName=UnitTestWin32.trx" --Parallel "/Blame:CollectDump;CollectAlways=false;DumpType=full"
           if($lastexitcode -ne 0)
           {
+              $RunFaild = 1
               throw "YY-Thunks.UnitTest单元测试失败！退出代码：$lastexitcode"
           }
           
-          &vstest.console src\x64\Release\YY-Thunks.UnitTest.dll "/logger:trx;LogFileName=UnitTestWin64.trx" --Parallel "/Blame:CollectDump;CollectAlways=true;DumpType=full"
+          &vstest.console src\x64\Release\YY-Thunks.UnitTest.dll "/logger:trx;LogFileName=UnitTestWin64.trx" --Parallel "/Blame:CollectDump;CollectAlways=false;DumpType=full"
           if($lastexitcode -ne 0)
           {
-              throw "YY-Thunks.UnitTest单元测试失败！退出代码：$lastexitcode"
+              $RunFaild = 1
           }
 
+          if($RunFaild -ne 0)
+          {
+              throw "YY-Thunks.UnitTest单元测试失败！
+          }
     - uses: dorny/test-reporter@v1
       if: success() || failure()
       with:

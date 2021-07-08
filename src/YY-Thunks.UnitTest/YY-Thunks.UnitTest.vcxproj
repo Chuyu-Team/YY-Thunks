@@ -25,7 +25,7 @@
     <RootNamespace>YYThunksUnitTest</RootNamespace>
     <WindowsTargetPlatformVersion>$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion('Windows', '10.0'))</WindowsTargetPlatformVersion>
     <ProjectSubType>NativeUnitTestProject</ProjectSubType>
-    <YY_Thunks_List_Path>$(MSBuildThisFileDirectory)YY_Thunks_List.hpp</YY_Thunks_List_Path>
+    <YY_Thunks_List_Path>$(MSBuildThisFileDirectory)..\Thunks\YY_Thunks_List.hpp</YY_Thunks_List_Path>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -74,19 +74,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir);$(ProjectDir)..;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Thunks;$(SolutionDir);$(SolutionDir)Shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir);$(ProjectDir)..;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Thunks;$(SolutionDir);$(SolutionDir)Shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir);$(ProjectDir)..;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Thunks;$(SolutionDir);$(SolutionDir)Shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir);$(ProjectDir)..;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Thunks;$(SolutionDir);$(SolutionDir)Shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -167,13 +167,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="UnitTest\api-ms-win-core-fibers.UnitTest.cpp" />
-    <ClCompile Include="UnitTest\api-ms-win-core-localization.UnitTest.cpp" />
-    <ClCompile Include="UnitTest\api-ms-win-core-path.UnitTest.cpp" />
-    <ClCompile Include="UnitTest\api-ms-win-core-synch.UnitTest.cpp" />
-    <ClCompile Include="UnitTest\api-ms-win-core-threadpool.UnitTest.cpp" />
-    <ClCompile Include="UnitTest\YY-Thunks.UnitTest.cpp" />
-    <ClCompile Include="YY_Thunks.cpp">
+    <ClCompile Include="api-ms-win-core-fibers.UnitTest.cpp" />
+    <ClCompile Include="api-ms-win-core-localization.UnitTest.cpp" />
+    <ClCompile Include="api-ms-win-core-path.UnitTest.cpp" />
+    <ClCompile Include="api-ms-win-core-synch.UnitTest.cpp" />
+    <ClCompile Include="api-ms-win-core-threadpool.UnitTest.cpp" />
+    <ClCompile Include="YY-Thunks.UnitTest.cpp" />
+    <ClCompile Include="..\Thunks\YY_Thunks.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -182,53 +182,51 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Thunks\api-ms-win-core-datetime.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-errorhandling.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-fibers.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-file.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-interlocked.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-io.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-libraryloader.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-localization.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-memory.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-path.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-processthreads.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-processtopology-obsolete.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-psapi.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-realtime.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-registry.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-string.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-synch.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-sysinfo.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-systemtopology.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-threadpool.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-timezone.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-util.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-version.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-winrt-error.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-winrt-string.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-winrt.hpp" />
-    <ClInclude Include="Thunks\api-ms-win-core-wow64.hpp" />
-    <ClInclude Include="Thunks\kernel32.hpp" />
-    <ClInclude Include="Thunks\psapi.hpp" />
-    <ClInclude Include="Thunks\SetupAPI.hpp" />
-    <ClInclude Include="Thunks\shell32.hpp" />
-    <ClInclude Include="Thunks\shlwapi.hpp" />
-    <ClInclude Include="Thunks\user32.hpp" />
-    <ClInclude Include="Thunks\WS2_32.hpp" />
-    <ClInclude Include="Thunks\shcore.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-datetime.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-errorhandling.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-fibers.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-file.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-interlocked.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-io.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-libraryloader.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-localization.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-memory.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-path.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-processthreads.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-processtopology-obsolete.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-psapi.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-realtime.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-registry.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-string.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-synch.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-sysinfo.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-systemtopology.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-threadpool.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-timezone.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-util.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-version.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-winrt-error.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-winrt-string.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-winrt.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-wow64.hpp" />
+    <ClInclude Include="..\Thunks\kernel32.hpp" />
+    <ClInclude Include="..\Thunks\psapi.hpp" />
+    <ClInclude Include="..\Thunks\SetupAPI.hpp" />
+    <ClInclude Include="..\Thunks\shell32.hpp" />
+    <ClInclude Include="..\Thunks\shlwapi.hpp" />
+    <ClInclude Include="..\Thunks\user32.hpp" />
+    <ClInclude Include="..\Thunks\WS2_32.hpp" />
+    <ClInclude Include="..\Thunks\shcore.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\ReadMe.md" />
-    <None Include="..\ThunksList.md" />
-    <None Include="def\x64\PSAPI2Kernel32.def" />
-    <None Include="def\x86\PSAPI2Kernel32.def" />
+    <None Include="..\def\x64\PSAPI2Kernel32.def" />
+    <None Include="..\def\x86\PSAPI2Kernel32.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <Target Name="Build_YY_Thunks_List_hpp" AfterTargets="BeforeClCompile" Inputs="$(MSBuildProjectFullPath)" Outputs="$(YY_Thunks_List_Path)">
     <WriteLinesToFile File="$(YY_Thunks_List_Path)" Lines="// 由编译系统根据 $(MSBuildProjectFullPath) 自动生成，手工修改此文件无效！" Overwrite="true" Encoding="Unicode" />
-    <WriteLinesToFile File="$(YY_Thunks_List_Path)" Lines="#include %22%(ClInclude.Identity)%22" Overwrite="false" Encoding="Unicode" Condition="@(ClInclude-&gt;StartsWith('Thunks%5C'))" />
+    <WriteLinesToFile File="$(YY_Thunks_List_Path)" Lines="#include %22%(ClInclude.Identity)%22" Overwrite="false" Encoding="Unicode" Condition="@(ClInclude-&gt;StartsWith('..%5CThunks%5C')) and @(ClInclude-&gt;EndsWith('.hpp'))" />
   </Target>
 </Project>

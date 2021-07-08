@@ -1,5 +1,5 @@
 ﻿#include "pch.h"
-#include "src/Thunks/api-ms-win-core-synch.hpp"
+#include "Thunks/api-ms-win-core-synch.hpp"
 
 
 namespace api_ms_win_core_synch

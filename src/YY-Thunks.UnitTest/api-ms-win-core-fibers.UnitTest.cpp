@@ -1,5 +1,5 @@
 ﻿#include "pch.h"
-#include "src/Thunks/api-ms-win-core-fibers.hpp"
+#include "Thunks/api-ms-win-core-fibers.hpp"
 
 
 namespace api_ms_win_core_fibers

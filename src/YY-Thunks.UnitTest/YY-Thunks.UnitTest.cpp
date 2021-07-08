@@ -266,7 +266,7 @@ __declspec(allocate("TMP$__a")) LPCSTR _CRT_CONCATENATE(FunctionName, _FUNCTION)
 __if_not_exists(_CRT_CONCATENATE(FunctionName, _FUNCTION))
 
 
-#include "src/YY_Thunks_List.hpp"
+#include "Thunks/YY_Thunks_List.hpp"
 
 #undef __DEFINE_THUNK
 #pragma pop_macro("InterlockedCompareExchange64")

@@ -33,150 +33,144 @@
     <ClCompile Include="pch.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="YY_Thunks.cpp">
+    <ClCompile Include="api-ms-win-core-path.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
+    <ClCompile Include="YY-Thunks.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
+    <ClCompile Include="api-ms-win-core-threadpool.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
+    <ClCompile Include="api-ms-win-core-fibers.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
+    <ClCompile Include="api-ms-win-core-synch.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
+    <ClCompile Include="api-ms-win-core-localization.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Thunks\YY_Thunks.cpp">
       <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="UnitTest\api-ms-win-core-path.UnitTest.cpp">
-      <Filter>源文件\UnitTest</Filter>
-    </ClCompile>
-    <ClCompile Include="UnitTest\YY-Thunks.UnitTest.cpp">
-      <Filter>源文件\UnitTest</Filter>
-    </ClCompile>
-    <ClCompile Include="UnitTest\api-ms-win-core-threadpool.UnitTest.cpp">
-      <Filter>源文件\UnitTest</Filter>
-    </ClCompile>
-    <ClCompile Include="UnitTest\api-ms-win-core-fibers.UnitTest.cpp">
-      <Filter>源文件\UnitTest</Filter>
-    </ClCompile>
-    <ClCompile Include="UnitTest\api-ms-win-core-synch.UnitTest.cpp">
-      <Filter>源文件\UnitTest</Filter>
-    </ClCompile>
-    <ClCompile Include="UnitTest\api-ms-win-core-localization.UnitTest.cpp">
-      <Filter>源文件\UnitTest</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-datetime.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-datetime.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-errorhandling.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-errorhandling.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-file.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-file.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-interlocked.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-interlocked.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-io.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-io.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-libraryloader.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-libraryloader.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-localization.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-localization.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-path.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-path.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-processthreads.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-processthreads.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-psapi.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-psapi.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-realtime.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-realtime.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-registry.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-registry.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-string.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-string.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-synch.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-synch.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-sysinfo.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-sysinfo.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-systemtopology.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-systemtopology.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-util.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-util.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-version.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-version.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-winrt.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-winrt.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-winrt-error.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-winrt-error.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-winrt-string.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-winrt-string.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-wow64.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-wow64.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\kernel32.hpp">
+    <ClInclude Include="..\Thunks\kernel32.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\psapi.hpp">
+    <ClInclude Include="..\Thunks\psapi.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\SetupAPI.hpp">
+    <ClInclude Include="..\Thunks\SetupAPI.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\shcore.hpp">
+    <ClInclude Include="..\Thunks\shcore.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\shell32.hpp">
+    <ClInclude Include="..\Thunks\shell32.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\shlwapi.hpp">
+    <ClInclude Include="..\Thunks\shlwapi.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\user32.hpp">
+    <ClInclude Include="..\Thunks\user32.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\WS2_32.hpp">
+    <ClInclude Include="..\Thunks\WS2_32.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-processtopology-obsolete.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-processtopology-obsolete.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-memory.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-memory.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-threadpool.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-threadpool.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-fibers.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-fibers.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="Thunks\api-ms-win-core-timezone.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-timezone.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="def\x86\PSAPI2Kernel32.def">
+    <None Include="..\def\x86\PSAPI2Kernel32.def">
       <Filter>源文件\def\x86</Filter>
     </None>
-    <None Include="def\x64\PSAPI2Kernel32.def">
+    <None Include="..\def\x64\PSAPI2Kernel32.def">
       <Filter>源文件\def\x64</Filter>
-    </None>
-    <None Include="..\ReadMe.md">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="..\ThunksList.md">
-      <Filter>资源文件</Filter>
     </None>
   </ItemGroup>
 </Project>

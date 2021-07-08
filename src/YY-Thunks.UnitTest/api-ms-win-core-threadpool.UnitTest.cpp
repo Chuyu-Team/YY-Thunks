@@ -1,5 +1,5 @@
 ﻿#include "pch.h"
-#include "src/Thunks/api-ms-win-core-threadpool.hpp"
+#include "Thunks/api-ms-win-core-threadpool.hpp"
 #include <process.h>
 
 namespace api_ms_win_core_threadpool

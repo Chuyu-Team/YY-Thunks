@@ -1,6 +1,6 @@
 ﻿
 #include "pch.h"
-#include "src/Thunks/api-ms-win-core-localization.hpp"
+#include "Thunks/api-ms-win-core-localization.hpp"
 #include <set>
 
 namespace api_ms_win_core_localization
