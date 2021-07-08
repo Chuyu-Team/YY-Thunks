@@ -136,7 +136,6 @@ jobs:
           if($lastexitcode -ne 0)
           {
               $RunFaild = 1
-              throw "YY-Thunks.UnitTest单元测试失败！退出代码：$lastexitcode"
           }
           
           &vstest.console src\x64\Release\YY-Thunks.UnitTest.dll "/logger:trx;LogFileName=UnitTestWin64.trx" --Parallel "/Blame:CollectDump;CollectAlways=false;DumpType=full"
@@ -147,7 +146,7 @@ jobs:
 
           if($RunFaild -ne 0)
           {
-              throw "YY-Thunks.UnitTest单元测试失败！
+              throw "YY-Thunks.UnitTest单元测试失败！"
           }
     - uses: dorny/test-reporter@v1
       if: success() || failure()
