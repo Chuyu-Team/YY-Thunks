@@ -177,7 +177,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       if: failure()
       with:
-        name: 错误信息
+        name: ErrorLog
         path: |
             TestResults/**/*.dmp
             TestResults/**/Sequence_*.xml
