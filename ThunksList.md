@@ -194,6 +194,10 @@
 | DwmSetWindowAttribute                      | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
 | DwmFlush                                   | 不存在时，返回 `S_OK_`。
 | DwmGetCompositionTimingInfo                | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
+| DwmInvalidateIconicBitmaps                 | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
+| DwmSetIconicLivePreviewBitmap              | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
+| DwmSetIconicThumbnail                      | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
+
 
 ## dwrite.dll
 | 函数                                       | Fallback
