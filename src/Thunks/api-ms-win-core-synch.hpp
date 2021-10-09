@@ -1223,6 +1223,8 @@ namespace YY
 
 										break;
 									}
+
+									Current = Last;
 								}
 							}
 
