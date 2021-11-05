@@ -823,7 +823,7 @@ namespace YY
 
 					for (auto pItem = pBlock;;)
 					{
-						if (pItem->next == nullptr)
+						if (pItem->next != nullptr)
 						{
 							pBlock->next = pItem->next;
 							break;
