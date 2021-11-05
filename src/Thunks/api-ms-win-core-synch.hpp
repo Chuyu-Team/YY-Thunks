@@ -2662,7 +2662,7 @@ namespace YY
 		//Windows 8 [desktop apps | UWP apps]
 		//Windows Server 2012 [desktop apps | UWP apps] 
 		__DEFINE_THUNK(
-		kernel32,
+		api_ms_win_core_synch_l1_2_0,
 		16,
 		BOOL,
 		WINAPI,
@@ -2745,7 +2745,7 @@ namespace YY
 		//Windows 8 [desktop apps | UWP apps]
 		//Windows Server 2012 [desktop apps | UWP apps] 
 		__DEFINE_THUNK(
-		kernel32,
+		api_ms_win_core_synch_l1_2_0,
 		4,
 		VOID,
 		WINAPI,
@@ -2768,7 +2768,7 @@ namespace YY
 		//Windows 8 [desktop apps | UWP apps]
 		//Windows Server 2012 [desktop apps | UWP apps] 
 		__DEFINE_THUNK(
-		kernel32,
+		api_ms_win_core_synch_l1_2_0,
 		4,
 		VOID,
 		WINAPI,
