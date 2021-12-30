@@ -269,5 +269,24 @@ namespace YY
 			return MapViewOfFileEx(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap, lpBaseAddress);
 		}
 #endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
+
+		__DEFINE_THUNK(
+		kernel32,
+		0,
+		SIZE_T,
+		WINAPI,
+		GetLargePageMinimum,
+			VOID
+			)
+		{
+			if (const auto pGetLargePageMinimum = try_get_GetLargePageMinimum())
+			{
+				return pGetLargePageMinimum();
+			}
+			return 0;
+		}
+#endif
 	}
 }
