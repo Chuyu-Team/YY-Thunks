@@ -423,7 +423,26 @@ namespace YY
 #endif
 
 
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
 
+		//Minimum supported client	Windows Vista[desktop apps | UWP apps]
+		//Minimum supported server	Windows Server 2003[desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		0,
+		SIZE_T,
+		WINAPI,
+		GetLargePageMinimum,
+			VOID
+			)
+		{
+			if (const auto pGetLargePageMinimum = try_get_GetLargePageMinimum())
+			{
+				return pGetLargePageMinimum();
+			}
 
+			return 0;
+		}
+#endif
 	}
 }
