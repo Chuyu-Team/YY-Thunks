@@ -154,7 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="VC-LTL">
-      <Version>4.0.3.8</Version>
+      <Version>5.0.4-Beta3</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
