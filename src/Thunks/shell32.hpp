@@ -787,6 +787,43 @@ namespace YY
 				return internal::SHCreateItemFromIDList(pidl, __uuidof(IShellItem), (void**)ppsi);
 		}
 #endif
+		
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Minimum supported client	Windows Vista [desktop apps only]
+		//Minimum supported server	Windows Server 2008 [desktop apps only]
+		__DEFINE_THUNK(
+		shell32,
+		16,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHCreateItemFromParsingName,
+			_In_     PCWSTR    pszPath,
+			_In_opt_ IBindCtx* pbc,
+			_In_     REFIID    riid,
+			_Outptr_ void**    ppv
+			)
+		{
+			if (const auto pSHCreateItemFromParsingName = try_get_SHCreateItemFromParsingName())
+			{
+				return pSHCreateItemFromParsingName(pszPath, pbc, riid, ppv);
+			}
+
+			*ppv = nullptr;
+
+			PIDLIST_ABSOLUTE pidl;
+			auto hr = ::SHParseDisplayName(pszPath, pbc, &pidl, 0, nullptr);
+			if (SUCCEEDED(hr))
+			{
+				hr = internal::SHCreateItemFromIDList(pidl, riid, ppv);
+
+				ILFree(pidl);
+			}
+
+			return hr;
+		}
+#endif
 
 	}//namespace Thunks
 
