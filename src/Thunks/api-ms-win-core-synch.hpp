@@ -84,8 +84,11 @@ typedef struct __declspec(align(8)) _YY_ADDRESS_WAIT_BLOCK
 	//因为Windows 8以及更高版本才支持 ZwWaitForAlertByThreadId，所以我们直接把 ThreadId 砍掉了，反正没鸟用
 	//ULONG_PTR            ThreadId;
 
+	// 它是后继
 	_YY_ADDRESS_WAIT_BLOCK* back;
+	// 它是前驱
 	_YY_ADDRESS_WAIT_BLOCK* notify;
+	// 似乎指向Root，但是Root时才指向自己，其余情况为 nullptr，这是一种安全性？
 	_YY_ADDRESS_WAIT_BLOCK* next;
 	volatile size_t         flag;
 
@@ -955,7 +958,7 @@ namespace YY
 
 								if (pBlock != pItem)
 								{
-									pNotify->back->back = Tmp;
+									pNotify->back = Tmp;
 									if (Tmp)
 										Tmp->notify = pNotify;
 									else
