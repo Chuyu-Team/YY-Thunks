@@ -160,6 +160,44 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03)
 
+		//Windows Vista, Windows XP Professional x64 Edition [desktop apps only]
+		//Windows Server 2008, Windows Server 2003 with SP1 [desktop apps only]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		BOOL,
+		WINAPI,
+		SetThreadStackGuarantee,
+			_Inout_ ULONG *StackSizeInBytes
+		)
+		{
+			if (auto pSetThreadStackGuarantee = try_get_SetThreadStackGuarantee())
+			{
+				return pSetThreadStackGuarantee(StackSizeInBytes);
+			}
+			else
+			{
+				ULONG prev_size = ((TEB*)NtCurrentTeb())->GuaranteedStackBytes;
+				ULONG new_size = (*StackSizeInBytes + 4095) & ~4095;
+
+				/* at least 2 pages on 64-bit */
+				if (sizeof(void*) > sizeof(int) && new_size) new_size = max(new_size, 8192);
+
+				*StackSizeInBytes = prev_size;
+				if (new_size >= (char*)((TEB*)NtCurrentTeb())->NtTib.StackBase - (char*)((TEB*)NtCurrentTeb())->DeallocationStack)
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+				if (new_size > prev_size) ((TEB*)NtCurrentTeb())->GuaranteedStackBytes = (new_size + 4095) & ~4095;
+				return TRUE;
+			}
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
+
 		//Windows Vista [desktop apps | UWP apps]
 		//Windows Server 2003 [desktop apps | UWP apps]
 		__DEFINE_THUNK(
