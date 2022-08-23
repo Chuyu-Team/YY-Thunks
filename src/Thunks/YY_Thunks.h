@@ -90,7 +90,7 @@ EXTERN_C BOOL __YY_Thunks_Process_Terminating;
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
-	swtich(dwReason)
+	switch(dwReason)
 	{
 		case DLL_PROCESS_DETACH:
 		//我们可以通过 lpReserved != NULL 判断，当前是否处于强行卸载模式。
