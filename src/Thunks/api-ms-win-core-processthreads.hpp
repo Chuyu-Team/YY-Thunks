@@ -622,6 +622,83 @@ namespace YY
 			return FALSE;
 		}
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
+
+		//Windows Vista, Windows XP Professional x64 Edition [desktop apps only]
+		//Windows Server 2008, Windows Server 2003 with SP1 [desktop apps only]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		BOOL,
+		WINAPI,
+		SetThreadStackGuarantee,
+			_Inout_ ULONG *StackSizeInBytes
+			)
+		{
+			if (const auto pSetThreadStackGuarantee = try_get_SetThreadStackGuarantee())
+			{
+				return pSetThreadStackGuarantee(StackSizeInBytes);
+			}
+
+			// 以下内容来自：ucrt\misc\resetstk.cpp
+
+
+			// 因为只面向 Windows XP以及之前的系统，我们可以硬编码的确定，页大小只可能是 4K。
+			// 减少 GetSystemInfo 调用。
+			constexpr auto PageSize = 4096u;
+			constexpr auto MinStackRequest = 2u;
+
+			auto pStack = (LPBYTE)_alloca(1);
+
+			auto RegionSize = *StackSizeInBytes;
+
+			// TEB没有 GuaranteedStackBytes，没法知道上一次的结果，我们仅仅返回一个假的数值。
+			*StackSizeInBytes = PageSize;
+
+			// 长度为 0 时，不需要额外申请
+			if (RegionSize == 0)
+				return TRUE;
+
+			// 我们需要额外一块 PAGE_GUARD 来进行边界防御。
+			RegionSize = (RegionSize + PageSize + (PageSize - 1)) & ~(PageSize - 1);
+			RegionSize = max(RegionSize, PageSize * MinStackRequest);
+
+			MEMORY_BASIC_INFORMATION mbi;
+			if (VirtualQuery(pStack, &mbi, sizeof mbi) == 0)
+				return FALSE;
+
+			auto pStackBase = (LPBYTE)mbi.AllocationBase;
+
+			//
+			// Find the page(s) just below where the stack pointer currently points.
+			// This is the highest potential guard page.
+			auto pMaxGuard = (LPBYTE)(((DWORD_PTR)pStack & ~(DWORD_PTR)(PageSize - 1)) - RegionSize);
+
+			//
+			// If the potential guard page is too close to the start of the stack
+			// region, abandon the reset effort for lack of space.  Win9x has a
+			// larger reserved stack requirement.
+			auto pMinGuard = pStackBase + PageSize;
+
+			if (pMaxGuard < pMinGuard)
+			{
+				SetLastError(ERROR_INVALID_PARAMETER);
+				return FALSE;
+			}
+
+			// Set the new guard page just below the current stack page.
+			DWORD flOldProtect;
+			if (VirtualAlloc(pMaxGuard, RegionSize, MEM_COMMIT, PAGE_READWRITE) == nullptr
+				|| VirtualProtect(pMaxGuard, RegionSize, PAGE_READWRITE | PAGE_GUARD, &flOldProtect) == 0)
+			{
+				return FALSE;
+			}
+
+			return TRUE;
+		}
+#endif
 	}//namespace Thunks
 
 } //namespace YY
