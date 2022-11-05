@@ -238,3 +238,4 @@
 | [UpdateProcThreadAttribute](https://docs.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute)                          | 不存在时，内部实现。PROC_THREAD_ATTRIBUTE_PARENT_PROCESS与PROC_THREAD_ATTRIBUTE_HANDLE_LIST特性会被忽略处理。
 | [GetLargePageMinimum](https://docs.microsoft.com/windows/win32/api/memoryapi/nf-memoryapi-getlargepageminimum)    | 不存在时，假定为0 。
 | [SHCreateItemFromParsingName](https://docs.microsoft.com/windows/win32/api/shobjidl_core/nf-shobjidl_core-shcreateitemfromparsingname)    | 不存在时，调用SHParseDisplayName。
+| [PdhAddEnglishCounterW(A)](https://learn.microsoft.com/windows/win32/api/pdh/nf-pdh-pdhaddenglishcounterw)                     | 不存在时，调用PdhAddCounterW(A)。

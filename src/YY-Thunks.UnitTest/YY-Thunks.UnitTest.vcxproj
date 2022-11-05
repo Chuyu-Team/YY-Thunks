@@ -181,6 +181,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Thunks\Pdh.hpp" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="..\Thunks\api-ms-win-core-datetime.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-errorhandling.hpp" />

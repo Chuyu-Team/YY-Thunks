@@ -7,6 +7,7 @@
     _APPLY(ntdll,                                        "ntdll"                              , USING_UNSAFE_LOAD ) \
     _APPLY(kernel32,                                     "kernel32"                           , USING_UNSAFE_LOAD ) \
     _APPLY(psapi,                                        "psapi"                              , 0                 ) \
+    _APPLY(pdh,                                          "pdh"                                , 0                 ) \
     _APPLY(version,                                      "version"                            , 0                 ) \
 	_APPLY(advapi32,                                     "advapi32"                           , 0                 ) \
     _APPLY(user32,                                       "user32"                             , 0                 ) \
