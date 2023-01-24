@@ -181,6 +181,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Thunks\api-ms-win-core-com.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-window.hpp" />
     <ClInclude Include="..\Thunks\Pdh.hpp" />
     <ClInclude Include="pch.h" />
