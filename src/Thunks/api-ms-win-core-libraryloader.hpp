@@ -677,5 +677,66 @@ namespace YY
 		}
 #endif
 
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// Windows Vista [仅限桌面应用], Windows Server 2008 [仅限桌面应用]
+		__DEFINE_THUNK(
+		kernel32,
+		28,
+		BOOL,
+		APIENTRY,
+		EnumResourceLanguagesExW,
+			_In_opt_ HMODULE _hModule,
+			_In_ LPCWSTR _lpType,
+			_In_ LPCWSTR _lpName,
+			_In_ ENUMRESLANGPROCW _lpEnumFunc,
+			_In_opt_ LONG_PTR _lParam,
+			DWORD _dwFlags,
+			LANGID _LangId
+			)
+		{
+			const auto _pfnEnumResourceLanguagesExW = try_get_EnumResourceLanguagesExW();
+
+			if (_pfnEnumResourceLanguagesExW)
+			{
+				return _pfnEnumResourceLanguagesExW(_hModule, _lpType, _lpName, _lpEnumFunc, _lParam, _dwFlags, _LangId);
+			}
+
+			// WinXP不支持MUI，故而忽略 _dwFlags、_LangId
+			return EnumResourceLanguagesW(_hModule, _lpType, _lpName, _lpEnumFunc, _lParam);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// Windows Vista [仅限桌面应用], Windows Server 2008 [仅限桌面应用]
+		__DEFINE_THUNK(
+		kernel32,
+		28,
+		BOOL,
+		APIENTRY,
+		EnumResourceLanguagesExA,
+			_In_opt_ HMODULE _hModule,
+			_In_ LPCSTR _lpType,
+			_In_ LPCSTR _lpName,
+			_In_ ENUMRESLANGPROCA _lpEnumFunc,
+			_In_opt_ LONG_PTR _lParam,
+			DWORD _dwFlags,
+			LANGID _LangId
+			)
+		{
+			const auto _pfnEnumResourceLanguagesExA = try_get_EnumResourceLanguagesExA();
+
+			if (_pfnEnumResourceLanguagesExA)
+			{
+				return _pfnEnumResourceLanguagesExA(_hModule, _lpType, _lpName, _lpEnumFunc, _lParam, _dwFlags, _LangId);
+			}
+
+			// WinXP不支持MUI，故而忽略 _dwFlags、_LangId
+			return EnumResourceLanguagesA(_hModule, _lpType, _lpName, _lpEnumFunc, _lParam);
+		}
+#endif
 	}
 }

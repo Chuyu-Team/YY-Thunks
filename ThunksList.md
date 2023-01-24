@@ -241,4 +241,4 @@
 | [PdhAddEnglishCounterW(A)](https://learn.microsoft.com/windows/win32/api/pdh/nf-pdh-pdhaddenglishcounterw)                     | 不存在时，调用PdhAddCounterW(A)。
 | [SetThreadStackGuarantee](https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreadstackguarantee) | 不存在时，调用VirtualAlloc。
 | [SetCoalescableTimer](https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-setcoalescabletimer) | 不存在时，调用SetTimer。
-
+| [EnumResourceLanguagesExW(A)](https://learn.microsoft.com/windows/win32/api/libloaderapi/nf-libloaderapi-enumresourcelanguagesexw) | 不存在时，调用EnumResourceLanguagesW(A)。
