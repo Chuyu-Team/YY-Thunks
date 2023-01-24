@@ -167,6 +167,9 @@
     <ClInclude Include="..\Thunks\Pdh.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
+    <ClInclude Include="..\Thunks\ext-ms-win-ntuser-window.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\def\x86\PSAPI2Kernel32.def">
