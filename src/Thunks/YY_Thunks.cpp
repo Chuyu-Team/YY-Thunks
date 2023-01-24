@@ -97,6 +97,10 @@
 #pragma comment(lib, "Gdi32.lib")
 #endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+#pragma comment(lib, "User32.lib")
+#endif
+
 //展开函数的所有的 声明 以及 try_get_ 函数
 #define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                 \
     __APPLY_UNIT_TEST_BOOL(_FUNCTION);                                                         \
