@@ -165,4 +165,85 @@ namespace api_ms_win_core_synch
 
 		}
 	};
+
+	TEST_CLASS(TryAcquireSRWLockExclusive)
+	{
+	public:
+		TryAcquireSRWLockExclusive()
+		{
+			YY::Thunks::aways_null_try_get_TryAcquireSRWLockExclusive = true;
+			YY::Thunks::aways_null_try_get_AcquireSRWLockExclusive = true;
+			YY::Thunks::aways_null_try_get_ReleaseSRWLockExclusive = true;
+		}
+
+		TEST_METHOD(首次肯定成功)
+		{
+			SRWLOCK _SRWLock = {};
+			auto _bRet = ::TryAcquireSRWLockExclusive(&_SRWLock);
+
+			Assert::AreEqual(BOOLEAN(1), _bRet);
+		}
+
+		TEST_METHOD(如果其他线程占用，那么应该失败)
+		{
+			SRWLOCK _SRWLock = {};
+			auto _bRet = ::TryAcquireSRWLockExclusive(&_SRWLock);
+
+			Assert::AreEqual(BOOLEAN(1), _bRet);
+
+			auto _hThreadHandle = (HANDLE)_beginthreadex(nullptr, 0,
+				[](void* pMyData) -> unsigned
+				{
+					return ::TryAcquireSRWLockExclusive((SRWLOCK*)pMyData);
+				},
+				& _SRWLock,
+				0,
+				nullptr);
+
+			Assert::IsNotNull(_hThreadHandle);
+
+			auto _nRet = WaitForSingleObject(_hThreadHandle, 5 * 1000);
+			::ReleaseSRWLockExclusive(&_SRWLock);
+
+			Assert::AreEqual(WAIT_OBJECT_0, _nRet);
+
+			DWORD _uCode = -1;
+			GetExitCodeThread(_hThreadHandle, &_uCode);
+			CloseHandle(_hThreadHandle);
+
+			Assert::AreEqual(_uCode, (DWORD)0u);
+		}
+
+		TEST_METHOD(锁定后其他线程会等待)
+		{
+			SRWLOCK _SRWLock = {};
+			auto _bRet = ::TryAcquireSRWLockExclusive(&_SRWLock);
+
+			auto _hThreadHandle = (HANDLE)_beginthreadex(nullptr, 0,
+				[](void* pMyData) -> unsigned
+				{
+					auto _uStart = GetTickCount64();
+					::AcquireSRWLockExclusive((SRWLOCK*)pMyData);
+
+					return GetTickCount64() - _uStart;
+				},
+				&_SRWLock,
+				0,
+				nullptr);
+			Assert::IsNotNull(_hThreadHandle);
+
+			Sleep(500);
+			::ReleaseSRWLockExclusive(&_SRWLock);
+
+			auto _nRet = WaitForSingleObject(_hThreadHandle, 5 * 1000);
+
+			Assert::AreEqual(WAIT_OBJECT_0, _nRet);
+
+			DWORD _uCode = -1;
+			GetExitCodeThread(_hThreadHandle, &_uCode);
+			CloseHandle(_hThreadHandle);
+
+			Assert::IsTrue(_uCode >= 400 && _uCode <= 800);
+		}
+	};
 }

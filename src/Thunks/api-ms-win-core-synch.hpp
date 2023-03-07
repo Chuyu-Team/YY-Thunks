@@ -1756,9 +1756,9 @@ namespace YY
 			}
 
 #if defined(_WIN64)
-			return InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_Locked_BIT);
+			return InterlockedBitTestAndSet64((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_Locked_BIT) == 0;
 #else
-			return InterlockedBitTestAndSet((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_Locked_BIT);
+			return InterlockedBitTestAndSet((volatile LONG_PTR*)SRWLock, YY_SRWLOCK_Locked_BIT) == 0;
 #endif
 		}
 #endif
