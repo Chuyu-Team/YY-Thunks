@@ -54,6 +54,9 @@
     <ClCompile Include="..\Thunks\YY_Thunks.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="bcrypt.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -171,6 +174,9 @@
       <Filter>Thunks</Filter>
     </ClInclude>
     <ClInclude Include="..\Thunks\api-ms-win-core-com.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\bcrypt.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
   </ItemGroup>

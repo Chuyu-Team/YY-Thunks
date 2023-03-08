@@ -1,8 +1,4 @@
 ﻿
-
-
-
-
 #define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                                     \
     _APPLY(ntdll,                                        "ntdll"                              , USING_UNSAFE_LOAD ) \
     _APPLY(kernel32,                                     "kernel32"                           , USING_UNSAFE_LOAD ) \
@@ -10,6 +6,7 @@
     _APPLY(pdh,                                          "pdh"                                , 0                 ) \
     _APPLY(version,                                      "version"                            , 0                 ) \
 	_APPLY(advapi32,                                     "advapi32"                           , 0                 ) \
+	_APPLY(bcrypt,                                       "bcrypt"                             , 0                 ) \
     _APPLY(user32,                                       "user32"                             , 0                 ) \
     _APPLY(ws2_32,                                       "ws2_32"                             , 0                 ) \
     _APPLY(shell32,                                      "shell32"                            , 0                 ) \
@@ -48,8 +45,8 @@
     _APPLY(RtlWow64EnableFsRedirectionEx,                ntdll                                         ) \
     _APPLY(LdrLoadDll,                                   ntdll                                         ) \
     _APPLY(RtlDllShutdownInProgress,                     ntdll                                         ) \
-    _APPLY(AddDllDirectory,                              kernel32                                      )
-
+    _APPLY(AddDllDirectory,                              kernel32                                      ) \
+    _APPLY(SystemFunction036,                            advapi32                                      )
 
 
 #include <sdkddkver.h>
@@ -72,6 +69,15 @@
 #include <ws2tcpip.h>
 #include <psapi.h>
 #include <winnls.h>
+
+EXTERN_C
+BOOLEAN
+__stdcall
+SystemFunction036(
+    _Out_writes_bytes_(RandomBufferLength) PVOID RandomBuffer,
+    _In_ ULONG RandomBufferLength
+    );
+
 #include "YY_Thunks.h"
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03SP1)

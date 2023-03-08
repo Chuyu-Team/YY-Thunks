@@ -242,4 +242,5 @@
 | [SetThreadStackGuarantee](https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreadstackguarantee) | 不存在时，调用VirtualAlloc。
 | [SetCoalescableTimer](https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-setcoalescabletimer) | 不存在时，调用SetTimer。
 | [EnumResourceLanguagesExW(A)](https://learn.microsoft.com/windows/win32/api/libloaderapi/nf-libloaderapi-enumresourcelanguagesexw) | 不存在时，调用EnumResourceLanguagesW(A)。
-| [CoGetApartmentType](https://learn.microsoft.com/windows/win32/api/combaseapi/nf-combaseapi-cogetapartmenttype) | 不存在时，调用IComThreadingInfo。
+| [CoGetApartmentType](https://learn.microsoft.com/windows/win32/api/combaseapi/nf-combaseapi-cogetapartmenttype)                | 不存在时，调用IComThreadingInfo。
+| [BCryptGenRandom](https://learn.microsoft.com/windows/win32/api/bcrypt/nf-bcrypt-bcryptgenrandom)                              | 不存在时调用，RtlGenRandom。
