@@ -71,6 +71,7 @@
 | RegDeleteTreeW(A)                          | 调用SHDeleteKeyW(A)。
 | RegGetValueW(A)                            | 不存在时，调用RegQueryValueExW(A)。
 | RegCopyTreeW(A)                            | 不存在时，调用SHCopyKeyW(A)。
+| EventSetInformation                        | 不存在时，返回ERROR_NOT_SUPPORTED。
 
 ## bcrypt.dll
 | 函数                                       | Fallback
@@ -78,6 +79,17 @@
 | BCryptOpenAlgorithmProvider                | 内部实现。
 | BCryptCloseAlgorithmProvider               | 内部实现。
 | BCryptGenRandom                            | 不存在时调用，RtlGenRandom。
+
+## bluetoothapis.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| BluetoothGATTGetCharacteristicValue        | 不存在时，返回ERROR_NOT_SUPPORTED。
+| BluetoothGATTGetCharacteristics            | 不存在时，返回ERROR_NOT_SUPPORTED。
+| BluetoothGATTGetDescriptors                | 不存在时，返回ERROR_NOT_SUPPORTED。
+| BluetoothGATTGetServices                   | 不存在时，返回ERROR_NOT_SUPPORTED。
+| BluetoothGATTRegisterEvent                 | 不存在时，返回ERROR_NOT_SUPPORTED。
+| BluetoothGATTSetCharacteristicValue        | 不存在时，返回ERROR_NOT_SUPPORTED。
+| BluetoothGATTSetDescriptorValue            | 不存在时，返回ERROR_NOT_SUPPORTED。
 
 ## iphlpapi.dll
 | 函数                                       | Fallback
@@ -263,6 +275,20 @@
 | ReclaimVirtualMemory                       | 不存在时，返回ERROR_SUCCESS。
 | PrefetchVirtualMemory                      | 不存在时，返回ERROR_SUCCESS。
 
+## mfplat.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| MFCreateDXGIDeviceManager                  | 不存在时，返回E_NOTIMPL。
+| MFCreateDXGISurfaceBuffer                  | 不存在时，返回E_NOTIMPL。
+| MFLockDXGIDeviceManager                    | 不存在时，返回E_NOTIMPL。
+| MFUnlockDXGIDeviceManager                  | 不存在时，返回E_NOTIMPL。
+
+## netapi32.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| NetGetAadJoinInformation                   | 不存在时，始终认为没有加入 Azure AD 帐户 账号。
+| NetFreeAadJoinInformation                  | 不存在时，什么也不做。
+
 ## ole32.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
@@ -328,6 +354,15 @@
 | GetSystemMetricsForDpi                     | 不存在时，调用GetSystemMetrics。
 | AdjustWindowRectExForDpi                   | 不存在时，调用AdjustWindowRectEx。
 | SystemParametersInfoForDpi                 | 不存在时，调用SystemParametersInfoW。
+
+## userenv.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| CreateAppContainerProfile                  | 不存在时，返回E_NOTIMPL。
+| DeleteAppContainerProfile                  | 不存在时，返回E_NOTIMPL。
+| DeriveAppContainerSidFromAppContainerName  | 不存在时，返回E_NOTIMPL。
+| GetAppContainerFolderPath                  | 不存在时，返回E_NOTIMPL。
+| GetAppContainerRegistryLocation            | 不存在时，返回E_NOTIMPL。
 
 ## version.dll
 | 函数                                       | Fallback

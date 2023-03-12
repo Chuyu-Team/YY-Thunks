@@ -15,6 +15,10 @@
     _APPLY(setupapi,                                     "setupapi"                           , 0                 ) \
     _APPLY(ole32,                                        "ole32"                              , 0                 ) \
     _APPLY(iphlpapi,                                     "iphlpapi"                           , 0                 ) \
+    _APPLY(userenv,                                      "userenv"                            , 0                 ) \
+    _APPLY(mfplat,                                       "mfplat"                             , 0                 ) \
+    _APPLY(bluetoothapis,                                "bluetoothapis"                      , 0                 ) \
+    _APPLY(netapi32,                                     "netapi32"                           , 0                 ) \
     _APPLY(api_ms_win_core_winrt_l1_1_0,                 "api-ms-win-core-winrt-l1-1-0"       , 0                 ) \
     _APPLY(api_ms_win_core_winrt_string_l1_1_0,          "api-ms-win-core-winrt-string-l1-1-0", 0                 ) \
     _APPLY(api_ms_win_core_winrt_error_l1_1_0,           "api-ms-win-core-winrt-error-l1-1-0" , 0                 ) \

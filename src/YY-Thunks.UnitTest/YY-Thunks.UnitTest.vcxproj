@@ -184,10 +184,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Thunks\api-ms-win-core-com.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-eventing-provider.hpp" />
     <ClInclude Include="..\Thunks\bcrypt.hpp" />
+    <ClInclude Include="..\Thunks\bluetoothapis.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-window.hpp" />
     <ClInclude Include="..\Thunks\Iphlpapi.hpp" />
+    <ClInclude Include="..\Thunks\mfplat.hpp" />
+    <ClInclude Include="..\Thunks\netapi32.hpp" />
     <ClInclude Include="..\Thunks\Pdh.hpp" />
+    <ClInclude Include="..\Thunks\userenv.hpp" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="..\Thunks\api-ms-win-core-datetime.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-errorhandling.hpp" />
