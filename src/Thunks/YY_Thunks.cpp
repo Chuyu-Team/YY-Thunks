@@ -41,6 +41,7 @@
     _APPLY(NtQueryObject,                                ntdll                                         ) \
     _APPLY(NtQueryInformationThread,                     ntdll                                         ) \
     _APPLY(NtQueryInformationProcess,                    ntdll                                         ) \
+    _APPLY(NtSetInformationProcess,                      ntdll                                         ) \
     _APPLY(NtOpenKeyedEvent,                             ntdll                                         ) \
     _APPLY(NtWaitForKeyedEvent,                          ntdll                                         ) \
     _APPLY(NtReleaseKeyedEvent,                          ntdll                                         ) \

@@ -699,6 +699,206 @@ namespace YY
 			return TRUE;
 		}
 #endif
+		
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+		// 最低受支持的客户端	Windows 8 [桌面应用|UWP 应用]
+		// 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		BOOL,
+		WINAPI,
+		GetProcessMitigationPolicy,
+			_In_ HANDLE _hProcess,
+			_In_ PROCESS_MITIGATION_POLICY _eMitigationPolicy,
+			_Out_writes_bytes_(_cbLength) PVOID _pBuffer,
+			_In_ SIZE_T _cbLength
+			)
+		{
+			if (const auto _pfnGetProcessMitigationPolicy = try_get_GetProcessMitigationPolicy())
+			{
+				return _pfnGetProcessMitigationPolicy(_hProcess, _eMitigationPolicy, _pBuffer, _cbLength);
+			}
+
+			if (!_pBuffer)
+			{
+				SetLastError(ERROR_INVALID_PARAMETER);
+				return FALSE;
+			}
+
+			if ((DWORD)_eMitigationPolicy >= (DWORD)MaxProcessMitigationPolicy)
+			{
+				SetLastError(ERROR_INVALID_PARAMETER);
+				return FALSE;
+			}
+			const auto _pfnNtQueryInformationProcess = try_get_NtQueryInformationProcess();
+			if (!_pfnNtQueryInformationProcess)
+			{
+				SetLastError(ERROR_NOT_SUPPORTED);
+				return FALSE;
+			}
+
+			if (_eMitigationPolicy == ProcessDEPPolicy)
+			{
+				if (_cbLength != sizeof(PROCESS_MITIGATION_DEP_POLICY))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+				KEXECUTE_OPTIONS _DepOptions = {};
+				NTSTATUS _Status = _pfnNtQueryInformationProcess(_hProcess, ProcessExecuteFlags, &_DepOptions, sizeof(_DepOptions), nullptr);
+				if (_Status >= 0)
+				{
+					auto _pDepPolicy = (PROCESS_MITIGATION_DEP_POLICY*)_pBuffer;
+					_pDepPolicy->Enable = _DepOptions.ExecuteEnable ? 0 : 1;
+					_pDepPolicy->DisableAtlThunkEmulation = _DepOptions.DisableThunkEmulation;
+					_pDepPolicy->ReservedFlags = 0;
+					_pDepPolicy->Permanent = _DepOptions.Permanent;
+					return TRUE;
+				}
+				else if (STATUS_INVALID_INFO_CLASS == _Status || STATUS_NOT_SUPPORTED == _Status)
+				{
+					*(DWORD*)_pBuffer = 0;
+					return TRUE;
+				}
+				else
+				{
+					internal::BaseSetLastNTError(_Status);
+					return FALSE;
+				}
+			}
+			else if (_eMitigationPolicy == ProcessMitigationOptionsMask)
+			{
+				if (_cbLength < sizeof(UINT64))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+
+				memset(_pBuffer, 0, _cbLength);
+				return TRUE;
+			}
+			else
+			{
+				if (_cbLength != sizeof(DWORD))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+
+				YY_ProcessPolicyInfo _Info = { _eMitigationPolicy };
+				NTSTATUS _Status = _pfnNtQueryInformationProcess(_hProcess, YY_ProcessPolicy, &_Info, sizeof(_Info), nullptr);
+				if (_Status >= 0)
+				{
+					*(DWORD*)_pBuffer = _Info.Flags;
+					return TRUE;
+				}
+				else if (STATUS_INVALID_INFO_CLASS == _Status || STATUS_NOT_SUPPORTED == _Status)
+				{
+					// 如果没有这个特性，那么统一设置为0，表示内部所有环境方案都处于关闭状态
+					*(DWORD*)_pBuffer = 0;
+					return TRUE;
+				}
+				else
+				{
+					internal::BaseSetLastNTError(_Status);
+					return FALSE;
+				}
+			}
+			
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return FALSE;
+		}
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+		// 最低受支持的客户端	Windows 8 [桌面应用|UWP 应用]
+		// 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		12,
+		BOOL,
+		WINAPI,
+		SetProcessMitigationPolicy,
+			_In_ PROCESS_MITIGATION_POLICY _eMitigationPolicy,
+			_In_reads_bytes_(_cbLength) PVOID _pBuffer,
+			_In_ SIZE_T _cbLength
+			)
+		{
+			if (const auto _pfnSetProcessMitigationPolicy = try_get_SetProcessMitigationPolicy())
+			{
+				return _pfnSetProcessMitigationPolicy(_eMitigationPolicy, _pBuffer, _cbLength);
+			}
+
+			if (!_pBuffer)
+			{
+				SetLastError(ERROR_INVALID_PARAMETER);
+				return FALSE;
+			}
+
+			if ((DWORD)_eMitigationPolicy >= (DWORD)MaxProcessMitigationPolicy || _eMitigationPolicy == ProcessMitigationOptionsMask)
+			{
+				SetLastError(ERROR_INVALID_PARAMETER);
+				return FALSE;
+			}
+			const auto _pfnNtSetInformationProcess = try_get_NtSetInformationProcess();
+			if (!_pfnNtSetInformationProcess)
+			{
+				SetLastError(ERROR_NOT_SUPPORTED);
+				return FALSE;
+			}
+
+			NTSTATUS _Status;
+			if (_eMitigationPolicy == ProcessDEPPolicy)
+			{
+				if (_cbLength != sizeof(PROCESS_MITIGATION_DEP_POLICY))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+
+				auto& _DepPolicy = *(PROCESS_MITIGATION_DEP_POLICY*)_pBuffer;
+
+				KEXECUTE_OPTIONS _DepOptions = {};
+				if (_DepPolicy.Enable)
+				{
+					_DepOptions.ExecuteDisable = 1;
+				}
+				else
+				{
+					_DepOptions.ExecuteEnable = 1;
+				}
+				_DepOptions.DisableThunkEmulation = _DepPolicy.DisableAtlThunkEmulation;
+				_DepOptions.Permanent = _DepPolicy.Permanent;
+
+				_Status = _pfnNtSetInformationProcess(NtCurrentProcess(), YY_ProcessPolicy, &_DepOptions, sizeof(_DepOptions));
+				
+			}
+			else
+			{
+				if (_cbLength != sizeof(DWORD))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+
+				YY_ProcessPolicyInfo _Info = { _eMitigationPolicy, *(DWORD*)_pBuffer };
+				_Status = _pfnNtSetInformationProcess(NtCurrentProcess(), YY_ProcessPolicy, &_Info, sizeof(_Info));
+			}
+
+			if (_Status >= 0)
+			{
+				return TRUE;
+			}
+			else
+			{
+				internal::BaseSetLastNTError(_Status);
+				return FALSE;
+			}
+		}
+#endif
 	}//namespace Thunks
 
 } //namespace YY
