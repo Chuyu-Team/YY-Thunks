@@ -3005,6 +3005,13 @@ NtQueryDirectoryFile (
 		ULONG ProcessInformationLength
 		);
 
+	EXTERN_C NTSYSAPI NTSTATUS NTAPI NtSetInformationThread(
+		IN HANDLE ThreadHandle,
+		IN THREADINFOCLASS ThreadInformationClass,
+		OUT PVOID ThreadInformation,
+		IN ULONG ThreadInformationLength
+		);
+
 	EXTERN_C NTSYSAPI NTSTATUS NTAPI NtQueryInformationThread(
 		IN HANDLE ThreadHandle,
 		IN THREADINFOCLASS ThreadInformationClass,

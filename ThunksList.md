@@ -276,6 +276,8 @@
 | PrefetchVirtualMemory                      | 不存在时，返回ERROR_SUCCESS。
 | GetProcessMitigationPolicy                 | 不存在时，调用NtQueryInformationProcess。
 | SetProcessMitigationPolicy                 | 不存在时，调用NtSetInformationProcess。
+| SetProcessInformation                      | 不存在时，调用NtSetInformationProcess。
+| SetThreadInformation                       | 不存在时，调用NtSetInformationThread。
 
 ## mfplat.dll
 | 函数                                       | Fallback

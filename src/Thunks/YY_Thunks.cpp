@@ -40,6 +40,7 @@
     _APPLY(RtlFreeUnicodeString,                         ntdll                                         ) \
     _APPLY(NtQueryObject,                                ntdll                                         ) \
     _APPLY(NtQueryInformationThread,                     ntdll                                         ) \
+    _APPLY(NtSetInformationThread,                       ntdll                                         ) \
     _APPLY(NtQueryInformationProcess,                    ntdll                                         ) \
     _APPLY(NtSetInformationProcess,                      ntdll                                         ) \
     _APPLY(NtOpenKeyedEvent,                             ntdll                                         ) \

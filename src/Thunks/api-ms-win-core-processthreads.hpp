@@ -1,6 +1,6 @@
-﻿
-
-
+﻿#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#include <processthreadsapi.h>
+#endif
 
 #ifdef YY_Thunks_Implemented
 
@@ -899,6 +899,133 @@ namespace YY
 			}
 		}
 #endif
+		
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+		// 最低受支持的客户端	Windows 8 [桌面应用|UWP 应用]
+		// 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		BOOL,
+		WINAPI,
+		SetProcessInformation,
+			_In_ HANDLE _hProcess,
+			_In_ PROCESS_INFORMATION_CLASS _eProcessInformationClass,
+			_In_reads_bytes_(_cbProcessInformationSize) LPVOID _pProcessInformation,
+			_In_ DWORD _cbProcessInformationSize
+			)
+		{
+			if (const auto _pfnSetProcessInformation = try_get_SetProcessInformation())
+			{
+				return _pfnSetProcessInformation(_hProcess, _eProcessInformationClass, _pProcessInformation, _cbProcessInformationSize);
+			}
+
+			if (_pProcessInformation == nullptr || (DWORD)_eProcessInformationClass >= (DWORD)ProcessInformationClassMax)
+			{
+				SetLastError(ERROR_INVALID_PARAMETER);
+				return FALSE;
+			}
+
+			const auto _pfnNtSetInformationProcess = try_get_NtSetInformationProcess();
+			if (!_pfnNtSetInformationProcess)
+			{
+				SetLastError(ERROR_NOT_SUPPORTED);
+				return FALSE;
+			}
+
+			NTSTATUS _Status;
+			if (_eProcessInformationClass == ProcessMemoryPriority)
+			{
+				if (_cbProcessInformationSize != sizeof(MEMORY_PRIORITY_INFORMATION))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+				// PAGE_PRIORITY_INFORMATION
+				_Status = _pfnNtSetInformationProcess(_hProcess, ProcessPagePriority, _pProcessInformation, sizeof(DWORD));
+			}
+			else
+			{
+				SetLastError(ERROR_NOT_SUPPORTED);
+				return FALSE;
+			}
+
+			if (_Status >= 0)
+				return TRUE;
+
+			internal::BaseSetLastNTError(_Status);
+			return FALSE;
+		}
+#endif
+		
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+		// 最低受支持的客户端	Windows 8 [桌面应用|UWP 应用]
+		// 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		BOOL,
+		WINAPI,
+		SetThreadInformation,
+			_In_ HANDLE _hThread,
+			_In_ THREAD_INFORMATION_CLASS _eThreadInformationClass,
+			_In_reads_bytes_(_cbThreadInformationSize) LPVOID _pThreadInformation,
+			_In_ DWORD _cbThreadInformationSize
+			)
+		{
+			if (const auto _pfnSetThreadInformation = try_get_SetThreadInformation())
+			{
+				return _pfnSetThreadInformation(_hThread, _eThreadInformationClass, _pThreadInformation, _cbThreadInformationSize);
+			}
+
+			if (_pThreadInformation == nullptr || (DWORD)_eThreadInformationClass >= (DWORD)ThreadInformationClassMax)
+			{
+				SetLastError(ERROR_INVALID_PARAMETER);
+				return FALSE;
+			}
+
+			const auto _pfnNtSetInformationThread = try_get_NtSetInformationThread();
+			if (!_pfnNtSetInformationThread)
+			{
+				SetLastError(ERROR_NOT_SUPPORTED);
+				return FALSE;
+			}
+
+			NTSTATUS _Status;
+			if (_eThreadInformationClass == ThreadMemoryPriority)
+			{
+				if (_cbThreadInformationSize != sizeof(MEMORY_PRIORITY_INFORMATION))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+				_Status = _pfnNtSetInformationThread(_hThread, ThreadPagePriority, _pThreadInformation, sizeof(DWORD));
+			}
+			else if (_eThreadInformationClass == ThreadAbsoluteCpuPriority)
+			{
+				if (_cbThreadInformationSize != sizeof(DWORD))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+				_Status = _pfnNtSetInformationThread(_hThread, ThreadActualBasePriority, _pThreadInformation, sizeof(DWORD));
+			}
+			else
+			{
+				SetLastError(ERROR_NOT_SUPPORTED);
+				return FALSE;
+			}
+
+			if (_Status >= 0)
+				return TRUE;
+
+			internal::BaseSetLastNTError(_Status);
+			return FALSE;
+		}
+#endif
+
 	}//namespace Thunks
 
 } //namespace YY
