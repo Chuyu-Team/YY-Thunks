@@ -258,6 +258,10 @@
 | SetThreadStackGuarantee                    | 不存在时，调用VirtualAlloc。
 | SetCoalescableTimer                        | 不存在时，调用SetTimer。
 | EnumResourceLanguagesExW(A)                | 不存在时，调用EnumResourceLanguagesW(A)。
+| DiscardVirtualMemory                       | 不存在时，调用VirtualAlloc MEM_RESET。
+| OfferVirtualMemory                         | 不存在时，返回ERROR_SUCCESS。
+| ReclaimVirtualMemory                       | 不存在时，返回ERROR_SUCCESS。
+| PrefetchVirtualMemory                      | 不存在时，返回ERROR_SUCCESS。
 
 ## ole32.dll
 | 函数                                       | Fallback

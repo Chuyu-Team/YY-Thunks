@@ -444,5 +444,134 @@ namespace YY
 			return 0;
 		}
 #endif
+		
+#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+
+		// 最低受支持的客户端	Windows 8.1 更新[桌面应用 | UWP 应用]
+		// 最低受支持的服务器	Windows Server 2012 R2 更新[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		DWORD,
+		WINAPI,
+		DiscardVirtualMemory,
+			_Inout_updates_(_uSize) PVOID _pVirtualAddress,
+			_In_ SIZE_T _uSize
+			)
+		{
+			if (const auto _pfnDiscardVirtualMemory = try_get_DiscardVirtualMemory())
+			{
+				return _pfnDiscardVirtualMemory(_pVirtualAddress, _uSize);
+			}
+
+			if (!VirtualAlloc(_pVirtualAddress, _uSize, MEM_RESET, PAGE_NOACCESS))
+				return GetLastError();
+
+			return ERROR_SUCCESS;
+		}
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+
+		// 最低受支持的客户端	Windows 8.1 更新[桌面应用 | UWP 应用]
+		// 最低受支持的服务器	Windows Server 2012 R2 更新[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		12,
+		DWORD,
+		WINAPI,
+		OfferVirtualMemory,
+			_Inout_updates_(_uSize) PVOID _pVirtualAddress,
+			_In_ SIZE_T _uSize,
+			_In_ OFFER_PRIORITY _ePriority
+			)
+		{
+			if (const auto _pfnOfferVirtualMemory = try_get_OfferVirtualMemory())
+			{
+				return _pfnOfferVirtualMemory(_pVirtualAddress, _uSize, _ePriority);
+			}
+
+			// 低版本系统不支持这个机制，所以暂时假装内存充足，不触发回收
+			UNREFERENCED_PARAMETER(_ePriority);
+
+			MEMORY_BASIC_INFORMATION _Info;
+			if (VirtualQuery(_pVirtualAddress, &_Info, sizeof(_Info)) == 0)
+				return GetLastError();
+
+			if (_Info.State != MEM_COMMIT)
+				return ERROR_INVALID_PARAMETER;
+
+
+			if ((char*)_pVirtualAddress + _uSize > (char*)_Info.BaseAddress + _Info.RegionSize)
+				return ERROR_INVALID_PARAMETER;
+
+			return ERROR_SUCCESS;
+		}
+#endif
+		
+#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+
+		// 最低受支持的客户端	Windows 8.1 更新[桌面应用 | UWP 应用]
+		// 最低受支持的服务器	Windows Server 2012 R2 更新[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		DWORD,
+		WINAPI,
+		ReclaimVirtualMemory,
+			_In_reads_(_uSize) void const* _pVirtualAddress,
+			_In_ SIZE_T _uSize
+			)
+		{
+			if (const auto _pfnReclaimVirtualMemory = try_get_ReclaimVirtualMemory())
+			{
+				return _pfnReclaimVirtualMemory(_pVirtualAddress, _uSize);
+			}
+
+			MEMORY_BASIC_INFORMATION _Info;
+			if (VirtualQuery(_pVirtualAddress, &_Info, sizeof(_Info)) == 0)
+				return GetLastError();
+
+			if (_Info.State != MEM_COMMIT)
+				return ERROR_INVALID_PARAMETER;
+
+
+			if ((char*)_pVirtualAddress + _uSize > (char*)_Info.BaseAddress + _Info.RegionSize)
+				return ERROR_INVALID_PARAMETER;
+			
+			return ERROR_SUCCESS;
+		}
+#endif
+		
+#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+
+		// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+		// 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		BOOL,
+		WINAPI,
+		PrefetchVirtualMemory,
+			_In_ HANDLE _hProcess,
+			_In_ ULONG_PTR _uNumberOfEntries,
+			_In_reads_(_uNumberOfEntries) PWIN32_MEMORY_RANGE_ENTRY _pVirtualAddresses,
+			_In_ ULONG _fFlags
+			)
+		{
+			if (const auto _pfnPrefetchVirtualMemory = try_get_PrefetchVirtualMemory())
+			{
+				return _pfnPrefetchVirtualMemory(_hProcess, _uNumberOfEntries, _pVirtualAddresses, _fFlags);
+			}
+
+			UNREFERENCED_PARAMETER(_hProcess);
+			UNREFERENCED_PARAMETER(_uNumberOfEntries);
+			UNREFERENCED_PARAMETER(_pVirtualAddresses);
+			UNREFERENCED_PARAMETER(_fFlags);
+
+			// 假装自己预取成功
+			return TRUE;
+		}
+#endif
 	}
 }
