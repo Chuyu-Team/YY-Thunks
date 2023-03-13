@@ -303,6 +303,12 @@
 | ----                                       | -----------
 | PdhAddEnglishCounterW(A)                   | 不存在时，调用PdhAddCounterW(A)。
 
+## powrprof.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| PowerDeterminePlatformRole                 | 不存在时，返回PlatformRoleDesktop。
+| PowerDeterminePlatformRoleEx               | 不存在时，调用PlatformRoleDesktop。
+
 ## psapi.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
