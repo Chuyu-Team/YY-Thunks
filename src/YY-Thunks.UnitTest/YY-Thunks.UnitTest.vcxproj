@@ -161,6 +161,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="api-ms-win-power-base.UnitTest.cpp" />
     <ClCompile Include="bcrypt.UnitTest.cpp" />
     <ClCompile Include="Iphlpapi.UnitTest.cpp" />
     <ClCompile Include="pch.cpp">
@@ -188,12 +189,14 @@
     <ClInclude Include="..\Thunks\api-ms-win-power-base.hpp" />
     <ClInclude Include="..\Thunks\bcrypt.hpp" />
     <ClInclude Include="..\Thunks\bluetoothapis.hpp" />
+    <ClInclude Include="..\Thunks\ext-ms-win-ntuser-powermanagement.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-window.hpp" />
     <ClInclude Include="..\Thunks\Iphlpapi.hpp" />
     <ClInclude Include="..\Thunks\mfplat.hpp" />
     <ClInclude Include="..\Thunks\netapi32.hpp" />
     <ClInclude Include="..\Thunks\Pdh.hpp" />
     <ClInclude Include="..\Thunks\powrprof.hpp" />
+    <ClInclude Include="..\Thunks\ThreadRunner.h" />
     <ClInclude Include="..\Thunks\userenv.hpp" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="..\Thunks\api-ms-win-core-datetime.hpp" />

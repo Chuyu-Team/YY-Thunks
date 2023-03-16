@@ -308,6 +308,8 @@
 | ----                                       | -----------
 | PowerDeterminePlatformRole                 | 不存在时，返回PlatformRoleDesktop。
 | PowerDeterminePlatformRoleEx               | 不存在时，调用PlatformRoleDesktop。
+| PowerRegisterSuspendResumeNotification     | 不存在时，使用窗口模拟。
+| PowerUnregisterSuspendResumeNotification   | 内部实现。
 
 ## psapi.dll
 | 函数                                       | Fallback
@@ -364,6 +366,8 @@
 | GetSystemMetricsForDpi                     | 不存在时，调用GetSystemMetrics。
 | AdjustWindowRectExForDpi                   | 不存在时，调用AdjustWindowRectEx。
 | SystemParametersInfoForDpi                 | 不存在时，调用SystemParametersInfoW。
+| RegisterSuspendResumeNotification          | 不存在时，使用窗口模拟。
+| UnregisterSuspendResumeNotification        | 不存在时，内部实现。
 
 ## userenv.dll
 | 函数                                       | Fallback

@@ -60,6 +60,9 @@
     <ClCompile Include="Iphlpapi.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
+    <ClCompile Include="api-ms-win-power-base.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -205,6 +208,12 @@
     </ClInclude>
     <ClInclude Include="..\Thunks\powrprof.hpp">
       <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\ext-ms-win-ntuser-powermanagement.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\ThreadRunner.h">
+      <Filter>源文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -339,6 +339,8 @@ namespace YY
 
 } //namespace YY
 
+#include "ThreadRunner.h"
+
 //导入实际的实现
 #define YY_Thunks_Implemented
 #define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)     \
