@@ -278,6 +278,9 @@
 | SetProcessMitigationPolicy                 | 不存在时，调用NtSetInformationProcess。
 | SetProcessInformation                      | 不存在时，调用NtSetInformationProcess。
 | SetThreadInformation                       | 不存在时，调用NtSetInformationThread。
+| PowerCreateRequest                         | 不存在时，内部实现。
+| PowerSetRequest                            | 不存在时，调用 SetThreadExecutionState。
+| PowerClearRequest                          | 不存在时，调用 SetThreadExecutionState。
 
 ## mfplat.dll
 | 函数                                       | Fallback
