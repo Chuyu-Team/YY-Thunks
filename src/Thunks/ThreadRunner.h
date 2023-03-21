@@ -339,7 +339,7 @@ namespace YY
 						return false;
 
 					if (!AddRef())
-						return nullptr;
+						return false;
 
 					// 先添加到 pPendingCallbackList，然后工作线程会将结果合并到 pCallbackList
 					auto _pLast = (TaskItem*)pPendingCallbackList;
