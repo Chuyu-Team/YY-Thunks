@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 namespace YY
 {
@@ -49,8 +49,8 @@ namespace YY
 								}
 								else
 								{
-									// ±íÊ¾Ç¿ÖÆÇåÀí£¬ÕâÊ±ËäÈ»ÉÏÃæÊÍ·ÅÊ§°Ü£¬µ«ÊÇÎªÁË±ÜÃâ±ÀÀ£
-									// ÎÒÃÇ½ö½öÍ£Ö¹´°¿Ú¡£
+									// è¡¨ç¤ºå¼ºåˆ¶æ¸…ç†ï¼Œè¿™æ—¶è™½ç„¶ä¸Šé¢é‡Šæ”¾å¤±è´¥ï¼Œä½†æ˜¯ä¸ºäº†é¿å…å´©æºƒ
+									// æˆ‘ä»¬ä»…ä»…åœæ­¢çª—å£ã€‚
 									_pData->hWnd = NULL;
 								}
 							}
@@ -69,7 +69,7 @@ namespace YY
 						{
 							const auto _hProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
 
-							// ½øÐÐCallBack
+							// è¿›è¡ŒCallBack
 							TaskItem* _pLastCallbackPrev = (TaskItem*)&_pData->pCallbackList;
 							for (auto _pCallbackPrev = _pLastCallbackPrev; _pCallbackPrev;)
 							{
@@ -88,16 +88,16 @@ namespace YY
 								else
 								{
 									_pCallbackPrev->pNext = _pNext->pNext;
-									// ÐèÒªÒÆ³ý
+									// éœ€è¦ç§»é™¤
 									HeapFree(_hProcessHeap, 0, _pNext);
 								}								
 							}
 
-							// ºÏ²¢ pPendingCallbackList ÖÁ pCallbackList
+							// åˆå¹¶ pPendingCallbackList è‡³ pCallbackList
 							auto _pPendingCallbackList = (TaskItem*)InterlockedExchangePointer((PVOID*)&_pData->pPendingCallbackList, NULL);
 							if (_pPendingCallbackList)
 							{
-								// ½«Ë³Ðòµßµ¹´¦Àí£¬ÒòÎª²åÈëºóË³Ðò¾ÍÊÇµ¹µÄ
+								// å°†é¡ºåºé¢ å€’å¤„ç†ï¼Œå› ä¸ºæ’å…¥åŽé¡ºåºå°±æ˜¯å€’çš„
 								auto _pPendingCallbackListFirst = _pPendingCallbackList;
 								for (; _pPendingCallbackList->pNext; _pPendingCallbackList = _pPendingCallbackList->pNext)
 								{
@@ -108,7 +108,7 @@ namespace YY
 
 								_pLastCallbackPrev->pNext = _pPendingCallbackListFirst;
 
-								// ¿ªÊ¼±ãÀû ÐÂÔöµÄCallbackÔªËØ
+								// å¼€å§‹ä¾¿åˆ© æ–°å¢žçš„Callbackå…ƒç´ 
 								for (auto _pCallbackPrev = _pLastCallbackPrev; _pCallbackPrev;)
 								{
 									if (!_pCallbackPrev->pNext)
@@ -126,7 +126,7 @@ namespace YY
 									else
 									{
 										_pCallbackPrev->pNext = _pNext->pNext;
-										// ÐèÒªÒÆ³ý
+										// éœ€è¦ç§»é™¤
 										HeapFree(_hProcessHeap, 0, _pNext);
 									}
 								}								
@@ -152,7 +152,7 @@ namespace YY
 						}
 						else if (_uCurrentRef == 0)
 						{
-							// µÚÒ»´Î£¬³¢ÊÔ¼ÓËø
+							// ç¬¬ä¸€æ¬¡ï¼Œå°è¯•åŠ é”
 							const auto _uLastRef = InterlockedCompareExchange(&uRef, MAXUINT32, 0);
 							if (_uLastRef != 0)
 							{
@@ -178,7 +178,7 @@ namespace YY
 									break;
 								}
 
-								// ³É¹¦Ëø¶¨ ¿ªÊ¼´´½¨´´½¨
+								// æˆåŠŸé”å®š å¼€å§‹åˆ›å»ºåˆ›å»º
 								auto _hThread = CreateThread(
 									nullptr,
 									0,
@@ -251,10 +251,10 @@ namespace YY
 								switch (_uResult)
 								{
 								case WAIT_OBJECT_0:
-									// ³É¹¦³õÊ¼»¯Íê³É
+									// æˆåŠŸåˆå§‹åŒ–å®Œæˆ
 									break;
 								case WAIT_OBJECT_0 + 1:
-									// Ê§°Ü
+									// å¤±è´¥
 									_lStatus = ERROR_FUNCTION_FAILED;
 									GetExitCodeThread(_hThread, (DWORD*)&_lStatus);
 									break;
@@ -275,20 +275,20 @@ namespace YY
 
 							if (_lStatus == ERROR_SUCCESS)
 							{
-								// ³É¹¦´¦Àí£¡ÕâÀï¸ø´°¿Ú¶îÍâÔö¼ÓÒ»´ÎÒýÓÃ
+								// æˆåŠŸå¤„ç†ï¼è¿™é‡Œç»™çª—å£é¢å¤–å¢žåŠ ä¸€æ¬¡å¼•ç”¨
 								InterlockedExchange(&uRef, 2);
 								break;
 							}
 							else
 							{
-								// Ê§°Ü
+								// å¤±è´¥
 								InterlockedExchange(&uRef, 0);
 								return false;
 							}
 						}
 						else
 						{
-							// ³¢ÊÔÔö¼ÓÒ»´ÎÒýÓÃ
+							// å°è¯•å¢žåŠ ä¸€æ¬¡å¼•ç”¨
 							const auto _uLastRef = InterlockedCompareExchange(&uRef, _uCurrentRef + 1, _uCurrentRef);
 							if (_uLastRef != _uCurrentRef)
 							{
@@ -304,28 +304,28 @@ namespace YY
 
 				void Release()
 				{
-					// ³¢ÊÔËø¶¨
+					// å°è¯•é”å®š
 					auto _uCurrentRef = uRef;
 
 					for (;;)
 					{
 						if (_uCurrentRef == MAXUINT32)
 						{
-							// ÒÑ¾­Ëø¶¨£¬ÉÔºóÔÙÊÔ
+							// å·²ç»é”å®šï¼Œç¨åŽå†è¯•
 							SwitchToThread();
 							_uCurrentRef = uRef;
 						}
 						else if (_uCurrentRef == 0 || _uCurrentRef == 1)
 						{
-							// µ±Ç°Ã»ÓÐÒýÓÃ£¡£¡£¡
+							// å½“å‰æ²¡æœ‰å¼•ç”¨ï¼ï¼ï¼
 							break;
 						}
 						else
 						{
-							// ³É¹¦Ëø¶¨£¬Í¨ÖªÏß³ÌÊÍ·Å¡­¡­
+							// æˆåŠŸé”å®šï¼Œé€šçŸ¥çº¿ç¨‹é‡Šæ”¾â€¦â€¦
 							if (InterlockedDecrement(&uRef) == 1)
 							{
-								// ÒýÓÃ¹é 1£¬Òì²½Í¨Öª´°¿Ú³¢ÊÔÍË³ö¡£
+								// å¼•ç”¨å½’ 1ï¼Œå¼‚æ­¥é€šçŸ¥çª—å£å°è¯•é€€å‡ºã€‚
 								PostMessageW(hWnd, WM_CLOSE, 0, 0);
 							}
 							break;
@@ -339,9 +339,9 @@ namespace YY
 						return false;
 
 					if (!AddRef())
-						return nullptr;
+						return false;
 
-					// ÏÈÌí¼Óµ½ pPendingCallbackList£¬È»ºó¹¤×÷Ïß³Ì»á½«½á¹ûºÏ²¢µ½ pCallbackList
+					// å…ˆæ·»åŠ åˆ° pPendingCallbackListï¼Œç„¶åŽå·¥ä½œçº¿ç¨‹ä¼šå°†ç»“æžœåˆå¹¶åˆ° pCallbackList
 					auto _pLast = (TaskItem*)pPendingCallbackList;
 
 					for (;;)
@@ -365,7 +365,7 @@ namespace YY
 					if(!_pWork)
 						return ERROR_INVALID_PARAMETER;
 
-					// CallbackÉèÖÃÎª null ºóÔÙÊÊºÏµÄÊ±»ú»á×Ô¶¯É¾³ý
+					// Callbackè®¾ç½®ä¸º null åŽå†é€‚åˆçš„æ—¶æœºä¼šè‡ªåŠ¨åˆ é™¤
 					if (!InterlockedExchangePointer((PVOID*)&_pWork->pfnCallback, nullptr))
 						return ERROR_INVALID_PARAMETER;
 
@@ -378,21 +378,21 @@ namespace YY
 					const auto _uLastRef = InterlockedCompareExchange(&uRef, MAXUINT32, 1);
 					if (_uLastRef != 1)
 					{
-						// ÒýÓÃÒÑ¾­ÖØÐÂÔö¼Ó£¬ËùÒÔ²»ÐèÒªÉ¾³ýÁË¡£
+						// å¼•ç”¨å·²ç»é‡æ–°å¢žåŠ ï¼Œæ‰€ä»¥ä¸éœ€è¦åˆ é™¤äº†ã€‚
 						return false;
 					}
-					// ³É¹¦Ëø¶¨£¬½«Ò»Ð©¹Ø¼ü±äÁ¿ÖØÖÃ
+					// æˆåŠŸé”å®šï¼Œå°†ä¸€äº›å…³é”®å˜é‡é‡ç½®
 					auto _hWnd = hWnd;
 					hWnd = NULL;
 					auto _pCallbackList = (TaskItem*)InterlockedExchangePointer((PVOID*)&pCallbackList, nullptr);
 					auto _pPendingCallbackList = (TaskItem*)InterlockedExchangePointer((PVOID*)&pPendingCallbackList, nullptr);
 					SetWindowLongPtrW(_hWnd, GWLP_USERDATA, NULL);
-					// ½âËø
+					// è§£é”
 					InterlockedExchange(&uRef, 0);
 
 					const auto _hProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
 
-					// É¾³ýListÄÚ´æ
+					// åˆ é™¤Listå†…å­˜
 					for (; _pCallbackList; )
 					{
 						auto _pNext = _pCallbackList->pNext;
