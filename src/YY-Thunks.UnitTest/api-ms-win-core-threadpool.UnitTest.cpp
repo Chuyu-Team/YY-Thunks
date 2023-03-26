@@ -1209,7 +1209,7 @@ namespace api_ms_win_core_threadpool
 
 			//等待一个过去的时间
 			{
-				auto hEvent = CreateEventW(nullptr, TRUE, TRUE, nullptr);
+				auto hEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
 
 				Assert::IsNotNull(hEvent);
 
