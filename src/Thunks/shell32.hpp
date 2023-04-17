@@ -825,6 +825,29 @@ namespace YY
 		}
 #endif
 
+// NOTE: SHSetFolderPathW 实际在 Windows 2000 的 shell32.dll 中存在，只是没有名字导出，因此加载总是会成功
+#if (YY_Thunks_Support_Version < NTDDI_WINXP)
+
+		// Minimum supported client 	Windows XP [desktop apps only]
+		// Minimum supported server 	Windows Server 2003 [desktop apps only]
+		__DEFINE_THUNK_WN(
+		shell32,
+		16,
+		HRESULT,
+		STDAPICALLTYPE,
+		SHSetFolderPathW,
+		((LPCSTR)232),
+			_In_ int     csidl,
+			_In_ HANDLE  hToken,
+			_In_ DWORD   dwFlags,
+			_In_ LPCWSTR pszPath
+			)
+		{
+			const auto pSHSetFolderPathW = try_get_SHSetFolderPathW();
+			return pSHSetFolderPathW(csidl, hToken, dwFlags, pszPath);
+		}
+#endif
+
 	}//namespace Thunks
 
 } //namespace YY

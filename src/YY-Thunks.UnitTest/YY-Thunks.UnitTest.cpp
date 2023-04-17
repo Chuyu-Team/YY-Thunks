@@ -265,9 +265,13 @@ __if_not_exists(YY::Thunks::TopFix::_FUNCTION){decltype(::_FUNCTION)* _CRT_CONCA
 __declspec(allocate("TMP$__a")) LPCSTR _CRT_CONCATENATE(FunctionName, _FUNCTION) = #_FUNCTION; \
 __if_not_exists(_CRT_CONCATENATE(FunctionName, _FUNCTION))
 
+#define __DEFINE_THUNK_WN(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, _NAME, ...) \
+	__DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, __VA_ARGS__)
+
 
 #include "Thunks/YY_Thunks_List.hpp"
 
+#undef __DEFINE_THUNK_WN
 #undef __DEFINE_THUNK
 #pragma pop_macro("InterlockedCompareExchange64")
 

@@ -21,4 +21,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 	EXTERN_C _RETURN_ _CONVENTION_ _FUNCTION(__VA_ARGS__);                         \
 	__if_not_exists(_FUNCTION)
 
+#define __DEFINE_THUNK_WN(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, _NAME, ...) \
+	__DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, __VA_ARGS__)
+
 #endif //PCH_H
