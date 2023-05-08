@@ -52,7 +52,7 @@ namespace YY
 
 			for (auto& _Item : g_Map)
 			{
-				if (wcsicmp(_szAlgId, _Item.szAlgId) == 0)
+				if (__wcsnicmp_ascii(_szAlgId, _Item.szAlgId, (size_t)-1) == 0)
 					return &_Item;
 			}
 
