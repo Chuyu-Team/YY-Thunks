@@ -269,6 +269,7 @@
 | GetLargePageMinimum                        | 不存在时，假定为0 。
 | SetThreadStackGuarantee                    | 不存在时，调用VirtualAlloc。
 | SetCoalescableTimer                        | 不存在时，调用SetTimer。
+| SetWaitableTimerEx                         | 不存在时，调用SetWaitableTimer。
 | EnumResourceLanguagesExW(A)                | 不存在时，调用EnumResourceLanguagesW(A)。
 | DiscardVirtualMemory                       | 不存在时，调用VirtualAlloc MEM_RESET。
 | OfferVirtualMemory                         | 不存在时，返回ERROR_SUCCESS。
