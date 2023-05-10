@@ -9,6 +9,7 @@
 #include <Windows.h>
 #include <crtdbg.h>
 #include <intrin.h>
+#include <corecrt_startup.h>
 
 
 
@@ -471,7 +472,11 @@ static int __cdecl __YY_initialize_winapi_thunks()
 	_YY_initialize_winapi_thunks();
 
 	//只在节点位置插入 atexit 流程，避免CRT还没完全初始化好出现问题。
+#ifdef _CRTBLD
+	_crt_atexit(__YY_uninitialize_winapi_thunks);
+#else
 	atexit(__YY_uninitialize_winapi_thunks);
+#endif
 
 	return 0;
 }
