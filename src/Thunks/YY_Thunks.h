@@ -9,7 +9,6 @@
 #include <Windows.h>
 #include <crtdbg.h>
 #include <intrin.h>
-#include <corecrt_startup.h>
 
 
 
@@ -397,8 +396,16 @@ static void* __fastcall try_get_function(
 #undef _APPLY
 
 
+static bool g_bUninitialize/* = false*/;
+
 static void __cdecl __YY_uninitialize_winapi_thunks()
 {
+	// 值反初始化一次
+	if (g_bUninitialize)
+		return;
+
+	g_bUninitialize = true;
+
 	//当DLL被强行卸载时，我们什么都不做。
 	if (auto pRtlDllShutdownInProgress = (decltype(RtlDllShutdownInProgress)*)GetProcAddress(try_get_module_ntdll(), "RtlDllShutdownInProgress"))
 	{
@@ -467,23 +474,37 @@ static int __cdecl _YY_initialize_winapi_thunks()
 	return 0;
 }
 
+// 外部weak符号，用于判断当前是否静态
+EXTERN_C extern void* __acrt_atexit_table;
+
 static int __cdecl __YY_initialize_winapi_thunks()
 {
 	_YY_initialize_winapi_thunks();
 
-	//只在节点位置插入 atexit 流程，避免CRT还没完全初始化好出现问题。
-#ifdef _CRTBLD
-	_crt_atexit(__YY_uninitialize_winapi_thunks);
-#else
-	atexit(__YY_uninitialize_winapi_thunks);
-#endif
+	// 如果 == null，那么有2种情况：
+	//   1. 非UCRT，比如2008，VC6，这时，调用 atexit是安全的，因为atexit在 XIA初始化完成了。
+	//   2. UCRT 并且处于MD状态。这时 atexit初始化 会提与 XIA，这时也是没有问题的。
+	// 如果 != null：
+	//   那么说明UCRT处于静态状态（CRT DLL其实也是静态的一种）
+	//   这时，XTY是可以正确执行的，这时就不用调用atexit了
+	//   由于XTY晚于onexit，所以它是可靠的。
+	if (__acrt_atexit_table == nullptr)
+	{
+		atexit(__YY_uninitialize_winapi_thunks);
+	}
 
 	return 0;
 }
 
 
 typedef int(__cdecl* _PIFV)(void);
+typedef void(__cdecl* _PVFV)(void);
 
-#pragma section(".CRT$XID",    long, read) // CRT C Initializers
+// CRT C Initializers
+#pragma section(".CRT$XID",    long, read)
+// CRT C Terminators（仅稍微之后于XTZ），这是故意的。
+// YY-Thunks属于API底层理应尽可能的滞后，且反初始化工作不依赖与CRT
+#pragma section(".CRT$XTY",    long, read)
 
 __declspec(allocate(".CRT$XID")) static _PIFV ___Initialization = __YY_initialize_winapi_thunks;
+__declspec(allocate(".CRT$XTY")) static _PVFV ___Uninitialization = __YY_uninitialize_winapi_thunks;
