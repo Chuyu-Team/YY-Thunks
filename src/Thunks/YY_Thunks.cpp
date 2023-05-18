@@ -1,4 +1,6 @@
-﻿
+﻿// 忽略非标准的 0 数组警告。
+#pragma warning(disable:4200)
+
 #define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                                     \
     _APPLY(ntdll,                                        "ntdll"                              , USING_UNSAFE_LOAD ) \
     _APPLY(kernel32,                                     "kernel32"                           , USING_UNSAFE_LOAD ) \
@@ -146,6 +148,11 @@ namespace YY
 	{
 		namespace internal
 		{
+			__forceinline constexpr DWORD MakeVersion(DWORD _uMajorVersion, DWORD _uMinorVersion)
+			{
+				return (_uMajorVersion << 16) | _uMinorVersion;
+			}
+
 			//代码块，分割任务
 			template<class Callback, typename... Params>
 			auto __forceinline Block(Callback&& _Callback, Params&&... args) -> decltype(_Callback(args...))
