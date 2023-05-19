@@ -28,7 +28,30 @@ namespace YY
 			return CancelIo(hFile);
 		}
 #endif
+		
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		//Windows Vista [desktop apps | UWP apps]
+		//Windows Server 2008 [desktop apps | UWP apps]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		BOOL,
+		WINAPI,
+		CancelSynchronousIo,
+			_In_ HANDLE _hThread
+			)
+		{
+			if (const auto _pfnCancelSynchronousIo = try_get_CancelSynchronousIo())
+			{
+				return _pfnCancelSynchronousIo(_hThread);
+			}
+
+			SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+			return FALSE;
+		}
+#endif
 	}//namespace Thunks
 
 } //namespace YY
