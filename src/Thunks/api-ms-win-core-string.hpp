@@ -3,8 +3,8 @@
 
 namespace YY
 {
-	namespace Thunks
-	{
+    namespace Thunks
+    {
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -265,5 +265,95 @@ namespace YY
             return 0;
         }
 #endif
-	}
+
+
+#if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WINXP)
+        static bool IsSupportLOCALE_INVARIANT()
+        {
+            // 特意不考虑多线程支持，因为这里产生写入竞争并没有关系。
+            static int s_iStat = 0;
+            if (s_iStat == 0)
+            {
+                const auto _uMajorVersion = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->OSMajorVersion;
+                const auto _uMinorVersion = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->OSMinorVersion;
+
+                s_iStat = internal::MakeVersion(_uMajorVersion, _uMinorVersion) >= internal::MakeVersion(5, 1) ? 1 : -1;
+            }
+            return s_iStat == 1;
+        }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WINXP)
+
+        // Windows 2000 不支持 LOCALE_INVARIANT 参数特殊处理一下。
+        // Minimum supported client	Windows 2000 Professional [desktop apps only]
+        // Minimum supported server	Windows 2000 Server [desktop apps only]
+        __DEFINE_THUNK(
+        kernel32,
+        24,
+        int,
+        WINAPI,
+        CompareStringA,
+            _In_ LCID     Locale,
+            _In_ DWORD    dwCmpFlags,
+            _In_reads_(cchCount1) PCNZCH lpString1,
+            _In_ int      cchCount1,
+            _In_reads_(cchCount2) PCNZCH  lpString2,
+            _In_ int      cchCount2)
+        {
+            // 网友 海好蓝 提供，注意其原始出处来自早期的 stl winapisupp.cpp
+            const auto _pfnCompareStringA = try_get_CompareStringA();
+            if (!_pfnCompareStringA)
+            {
+                SetLastError(ERROR_NOT_SUPPORTED);
+                return 0;
+            }
+
+            if (Locale == LOCALE_INVARIANT && IsSupportLOCALE_INVARIANT() == false)
+            {
+                Locale = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+            }
+
+            return _pfnCompareStringA(Locale, dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2);
+        }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WINXP)
+
+        // Windows 2000 不支持 LOCALE_INVARIANT 参数特殊处理一下。
+        // Minimum supported client	Windows 2000 Professional [desktop apps only]
+        // Minimum supported server	Windows 2000 Server [desktop apps only]
+        __DEFINE_THUNK(
+        kernel32,
+        24,
+        int,
+        WINAPI,
+        CompareStringW,
+            _In_ LCID Locale,
+            _In_ DWORD dwCmpFlags,
+            _In_NLS_string_(cchCount1) PCNZWCH lpString1,
+            _In_ int cchCount1,
+            _In_NLS_string_(cchCount2) PCNZWCH lpString2,
+            _In_ int cchCount2
+            )
+        {
+            // 网友 海好蓝 提供，注意其原始出处来自早期的 stl winapisupp.cpp
+            const auto _pfnCompareStringW = try_get_CompareStringW();
+            if (!_pfnCompareStringW)
+            {
+                SetLastError(ERROR_NOT_SUPPORTED);
+                return 0;
+            }
+
+            if (Locale == LOCALE_INVARIANT && IsSupportLOCALE_INVARIANT() == false)
+            {
+                Locale = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+            }
+
+            return _pfnCompareStringW(Locale, dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2);
+        }
+#endif
+    }
 }
