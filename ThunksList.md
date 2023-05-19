@@ -192,6 +192,7 @@
 | *GetNumaNodeProcessorMaskEx                | 不存在时，调用GetNumaNodeProcessorMask。
 | *SetThreadGroupAffinity                    | 不存在时，调用SetThreadAffinityMask。
 | *CancelIoEx                                | 不存在时，调用CancelIo（会把此句柄的所有IO操作取消掉！）。
+| *CancelSynchronousIo                       | 不存在时，仅返回失败。
 | OpenFileById                               | 不存在时，调用NtCreateFile。
 | CreateSymbolicLinkW(A)                     | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
 | ReOpenFile                                 | 不存在时，调用NtCreateFile。
@@ -282,6 +283,8 @@
 | PowerCreateRequest                         | 不存在时，内部实现。
 | PowerSetRequest                            | 不存在时，调用 SetThreadExecutionState。
 | PowerClearRequest                          | 不存在时，调用 SetThreadExecutionState。
+| TzSpecificLocalTimeToSystemTime            | 不存在时，内部实现。
+| TzSpecificLocalTimeToSystemTimeEx          | 不存在时，内部实现。
 
 ## mfplat.dll
 | 函数                                       | Fallback

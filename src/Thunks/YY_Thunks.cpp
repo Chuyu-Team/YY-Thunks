@@ -55,6 +55,7 @@
     _APPLY(RtlWow64EnableFsRedirectionEx,                ntdll                                         ) \
     _APPLY(LdrLoadDll,                                   ntdll                                         ) \
     _APPLY(RtlDllShutdownInProgress,                     ntdll                                         ) \
+    _APPLY(RtlCutoverTimeToSystemTime,                   ntdll                                         ) \
     _APPLY(AddDllDirectory,                              kernel32                                      ) \
     _APPLY(SystemFunction036,                            advapi32                                      )
 
@@ -86,6 +87,16 @@ __stdcall
 SystemFunction036(
     _Out_writes_bytes_(RandomBufferLength) PVOID RandomBuffer,
     _In_ ULONG RandomBufferLength
+    );
+
+EXTERN_C
+BOOLEAN
+__stdcall
+RtlCutoverTimeToSystemTime(
+    PTIME_FIELDS CutoverTime,
+    PLARGE_INTEGER SystemTime,
+    PLARGE_INTEGER CurrentSystemTime,
+    BOOLEAN ThisYear
     );
 
 #include "YY_Thunks.h"

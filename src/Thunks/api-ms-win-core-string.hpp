@@ -302,7 +302,7 @@ namespace YY
             _In_reads_(cchCount2) PCNZCH  lpString2,
             _In_ int      cchCount2)
         {
-            // 网友 海好蓝 提供，注意其原始出处来自早期的 stl winapisupp.cpp
+            // 网友 海好蓝 提供
             const auto _pfnCompareStringA = try_get_CompareStringA();
             if (!_pfnCompareStringA)
             {
@@ -339,7 +339,7 @@ namespace YY
             _In_ int cchCount2
             )
         {
-            // 网友 海好蓝 提供，注意其原始出处来自早期的 stl winapisupp.cpp
+            // 网友 海好蓝 提供
             const auto _pfnCompareStringW = try_get_CompareStringW();
             if (!_pfnCompareStringW)
             {
