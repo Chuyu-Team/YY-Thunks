@@ -287,6 +287,10 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
 #define _APPLY(_MODULE, _NAME, _FLAGS)                                                         \
     static volatile HMODULE __fastcall _CRT_CONCATENATE(try_get_module_, _MODULE)() noexcept   \
     {                                                                                          \
+        __declspec(allocate(".YYThr$AAA")) static void* _CRT_CONCATENATE(pInit_ ,_MODULE) =    \
+              reinterpret_cast<void*>(&_CRT_CONCATENATE(try_get_module_, _MODULE));            \
+        /*为了避免编译器将 YYThr$AAA 节优化掉*/                                                \
+        __foreinclude(_CRT_CONCATENATE(pInit_ ,_MODULE));                                      \
         __declspec(allocate(".YYThu$AAA")) static volatile HMODULE hModule;                    \
         return try_get_module<_FLAGS>(&hModule, _CRT_CONCATENATE(module_name_, _MODULE));      \
     }
@@ -382,10 +386,6 @@ static void* __fastcall try_get_function(
     static _CRT_CONCATENATE(_FUNCTION, _pft) __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept \
     {                                                                                                 \
         __CHECK_UNIT_TEST_BOOL(_FUNCTION);                                                            \
-        __declspec(allocate(".YYThr$AAA")) static void* _CRT_CONCATENATE(pInit_ ,_FUNCTION) =         \
-              reinterpret_cast<void*>(&_CRT_CONCATENATE(try_get_, _FUNCTION));                        \
-        /*为了避免编译器将 YYThr$AAA 节优化掉*/                                                       \
-        __foreinclude(_CRT_CONCATENATE(pInit_ ,_FUNCTION));                                           \
         __declspec(allocate(".YYThu$AAB")) static void* _CRT_CONCATENATE( pFun_ ,_FUNCTION);          \
         return reinterpret_cast<_CRT_CONCATENATE(_FUNCTION, _pft)>(try_get_function(                  \
             &_CRT_CONCATENATE(pFun_ ,_FUNCTION),                                                      \
