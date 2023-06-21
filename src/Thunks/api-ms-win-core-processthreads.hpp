@@ -1026,6 +1026,58 @@ namespace YY
 		}
 #endif
 
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+		// 最低受支持的客户端	Windows 8 [桌面应用|UWP 应用]
+		// 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		BOOL,
+		WINAPI,
+		GetThreadInformation,
+			_In_ HANDLE _hThread,
+			_In_ THREAD_INFORMATION_CLASS _eThreadInformationClass,
+			_Out_writes_bytes_(_cbThreadInformationSize) LPVOID _pThreadInformation,
+			_In_ DWORD _cbThreadInformationSize
+			)
+		{
+			if (const auto _pfnGetThreadInformation = try_get_GetThreadInformation())
+			{
+				return _pfnGetThreadInformation(_hThread, _eThreadInformationClass, _pThreadInformation, _cbThreadInformationSize);
+			}
+
+			const auto _pfnNtQueryInformationThread = try_get_NtQueryInformationThread();
+			if (!_pfnNtQueryInformationThread)
+			{
+				SetLastError(ERROR_NOT_SUPPORTED);
+				return FALSE;
+			}
+
+			long _Status;
+			if (_eThreadInformationClass == ThreadMemoryPriority)
+			{
+				_Status = _pfnNtQueryInformationThread(_hThread, ThreadPagePriority, _pThreadInformation, _cbThreadInformationSize, nullptr);
+			}
+			else if (_eThreadInformationClass == ThreadAbsoluteCpuPriority)
+			{
+				_Status = _pfnNtQueryInformationThread(_hThread, ThreadActualBasePriority, _pThreadInformation, _cbThreadInformationSize, nullptr);
+			}
+			else
+			{
+				_Status = STATUS_INVALID_PARAMETER;
+			}
+
+			if (_Status < 0)
+			{
+				internal::BaseSetLastNTError(_Status);
+				return FALSE;
+			}
+
+			return TRUE;
+		}
+#endif
 	}//namespace Thunks
 
 } //namespace YY
