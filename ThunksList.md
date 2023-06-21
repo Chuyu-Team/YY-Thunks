@@ -285,6 +285,8 @@
 | PowerClearRequest                          | 不存在时，调用 SetThreadExecutionState。
 | TzSpecificLocalTimeToSystemTime            | 不存在时，内部实现。
 | TzSpecificLocalTimeToSystemTimeEx          | 不存在时，内部实现。
+| GetFirmwareType                            | 不存在时，调用NtQuerySystemInformation。
+| IsNativeVhdBoot                            | 不存在时，调用NtQuerySystemInformation。
 
 ## mfplat.dll
 | 函数                                       | Fallback
