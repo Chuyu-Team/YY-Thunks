@@ -279,12 +279,15 @@
 | GetProcessMitigationPolicy                 | 不存在时，调用NtQueryInformationProcess。
 | SetProcessMitigationPolicy                 | 不存在时，调用NtSetInformationProcess。
 | SetProcessInformation                      | 不存在时，调用NtSetInformationProcess。
+| GetThreadInformation                       | 不存在时，调用NtQueryInformationThread。
 | SetThreadInformation                       | 不存在时，调用NtSetInformationThread。
 | PowerCreateRequest                         | 不存在时，内部实现。
 | PowerSetRequest                            | 不存在时，调用 SetThreadExecutionState。
 | PowerClearRequest                          | 不存在时，调用 SetThreadExecutionState。
 | TzSpecificLocalTimeToSystemTime            | 不存在时，内部实现。
 | TzSpecificLocalTimeToSystemTimeEx          | 不存在时，内部实现。
+| GetFirmwareType                            | 不存在时，调用NtQuerySystemInformation。
+| IsNativeVhdBoot                            | 不存在时，调用NtQuerySystemInformation。
 
 ## mfplat.dll
 | 函数                                       | Fallback

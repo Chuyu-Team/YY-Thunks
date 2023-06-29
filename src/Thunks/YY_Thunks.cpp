@@ -35,6 +35,7 @@
     _APPLY(NtClose,                                      ntdll                                         ) \
     _APPLY(NtQueryDirectoryFile,                         ntdll                                         ) \
     _APPLY(NtQueryInformationFile,                       ntdll                                         ) \
+    _APPLY(NtQuerySystemInformation,                     ntdll                                         ) \
     _APPLY(NtSetInformationFile,                         ntdll                                         ) \
     _APPLY(RtlNtStatusToDosError,                        ntdll                                         ) \
     _APPLY(RtlDetermineDosPathNameType_U,                ntdll                                         ) \

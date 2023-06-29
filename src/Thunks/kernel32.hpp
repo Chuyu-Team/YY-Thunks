@@ -269,5 +269,139 @@ namespace YY
 			return MapViewOfFileEx(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap, lpBaseAddress);
 		}
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+		// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+		// 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		BOOL,
+		WINAPI,
+		GetFirmwareType,
+			_Inout_ PFIRMWARE_TYPE _peFirmwareType
+			)
+		{
+			if (const auto _pfnGetFirmwareType = try_get_GetFirmwareType())
+			{
+				return _pfnGetFirmwareType(_peFirmwareType);
+			}
+
+			if (!_peFirmwareType)
+			{
+				SetLastError(ERROR_INVALID_PARAMETER);
+				return FALSE;
+			}
+
+			if (auto _pfnNtQuerySystemInformation = try_get_NtQuerySystemInformation())
+			{
+				SYSTEM_BOOT_ENVIRONMENT_INFORMATION _Information;
+				const auto _Status = (long)_pfnNtQuerySystemInformation(SystemBootEnvironmentInformation, &_Information, sizeof(_Information), nullptr);
+
+				if (_Status >= 0)
+				{
+					*_peFirmwareType = _Information.FirmwareType;
+					return TRUE;
+				}
+				else if (_Status != STATUS_INVALID_INFO_CLASS && _Status != STATUS_NOT_IMPLEMENTED)
+				{
+					internal::BaseSetLastNTError(_Status);
+					return FALSE;
+				}
+				else
+				{
+					// 当前系统不支持 SystemBootEnvironmentInformation，应该是 Windows 2000。
+				}
+			}
+
+			// 理论上不可能走到这里，最大的可能就是Windows 2000或者更早的系统了。
+			// 所以我们这里兜底返回 FirmwareTypeBios，因为以前的系统只能是这个了。
+			*_peFirmwareType = FIRMWARE_TYPE::FirmwareTypeBios;
+			return TRUE;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+		// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+		// 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		BOOL,
+		WINAPI,
+		IsNativeVhdBoot,
+			_Out_ PBOOL _pbNativeVhdBoot
+			)
+		{
+			if (const auto _pfnIsNativeVhdBoot = try_get_IsNativeVhdBoot())
+			{
+				return _pfnIsNativeVhdBoot(_pbNativeVhdBoot);
+			}
+
+			if (!_pbNativeVhdBoot)
+			{
+				SetLastError(ERROR_INVALID_PARAMETER);
+				return FALSE;
+			}
+
+			// Windows 7支持VHD启动，但是没有这个接口，直接调用 NtQuerySystemInformation 兼容一下。
+			if (const auto _pfnNtQuerySystemInformation = try_get_NtQuerySystemInformation())
+			{
+				ULONG _uReturnLength = 0;
+				auto _Status = (long)_pfnNtQuerySystemInformation(SystemVhdBootInformation, nullptr, 0, &_uReturnLength);
+				if (_Status == STATUS_BUFFER_TOO_SMALL)
+				{
+					union
+					{
+						char Buffer[1024];
+						SYSTEM_VHD_BOOT_INFORMATION Info;
+					} _StaticBuffer;
+					
+					if (_uReturnLength > sizeof(_StaticBuffer))
+					{
+						const auto _hProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+						auto _pInformation = (SYSTEM_VHD_BOOT_INFORMATION*)HeapAlloc(_hProcessHeap, 0, _uReturnLength);
+						if (!_pInformation)
+						{
+							SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+							return FALSE;
+						}
+
+						_Status = (long)_pfnNtQuerySystemInformation(SystemVhdBootInformation, _pInformation, _uReturnLength, &_uReturnLength);
+						_StaticBuffer.Info.OsDiskIsVhd = _pInformation->OsDiskIsVhd;
+						HeapFree(_hProcessHeap, 0, _pInformation);
+					}
+					else
+					{
+						_Status = (long)_pfnNtQuerySystemInformation(SystemVhdBootInformation, &_StaticBuffer.Info, _uReturnLength, &_uReturnLength);
+					}
+
+					if (_Status >= 0)
+					{
+						*_pbNativeVhdBoot = _StaticBuffer.Info.OsDiskIsVhd;
+					}
+				}
+				else if (_Status != STATUS_INVALID_INFO_CLASS && _Status != STATUS_NOT_IMPLEMENTED)
+				{
+					internal::BaseSetLastNTError(_Status);
+					return FALSE;
+				}
+				else
+				{
+					// 当前系统不支持VHD，兜底处理。
+				}
+			}
+
+			// 兜底处理，现在是早期不支持VHD启动的系统。
+			// 注意：这里故意设置 ERROR_INVALID_PARAMETER，因为从微软的行为看
+			// 未使用VHD时，它将返回这个错误代码。
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return FALSE;
+		}
+#endif
 	}
 }
