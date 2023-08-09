@@ -190,6 +190,7 @@
 | *GetCurrentProcessorNumberEx               | 不存在时，调用GetCurrentProcessorNumber。
 | *GetNumaNodeProcessorMask                  | 不存在时，假定所有CPU都在当前Numa。
 | *GetNumaNodeProcessorMaskEx                | 不存在时，调用GetNumaNodeProcessorMask。
+| *GetThreadGroupAffinity                    | 不存在时，调用NtQueryInformationThread。
 | *SetThreadGroupAffinity                    | 不存在时，调用SetThreadAffinityMask。
 | *CancelIoEx                                | 不存在时，调用CancelIo（会把此句柄的所有IO操作取消掉！）。
 | *CancelSynchronousIo                       | 不存在时，仅返回失败。

@@ -82,6 +82,57 @@ namespace YY
 		}
 #endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		// Windows 7 [desktop apps only]
+		// Windows Server 2008 R2 [desktop apps only]
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+		WINAPI,
+		GetThreadGroupAffinity,
+		    _In_ HANDLE _hThread,
+		    _Out_ PGROUP_AFFINITY _pAffinity
+		    )
+		{
+			if (const auto _pfnGetThreadGroupAffinity = try_get_GetThreadGroupAffinity())
+			{
+				return _pfnGetThreadGroupAffinity(_hThread, _pAffinity);
+			}
+			else
+			{
+				if (!_pAffinity)
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+
+				const auto _pfnNtQueryInformationThread = try_get_NtQueryInformationThread();
+				if (!_pfnNtQueryInformationThread)
+				{
+					SetLastError(ERROR_INVALID_FUNCTION);
+					return FALSE;
+				}
+
+				THREAD_BASIC_INFORMATION _ThreadBasicInfo;
+				long _Status = _pfnNtQueryInformationThread(_hThread, ThreadBasicInformation, &_ThreadBasicInfo, sizeof(_ThreadBasicInfo), nullptr);
+
+				if (_Status < 0)
+				{
+					internal::BaseSetLastNTError(_Status);
+					return FALSE;
+				}
+
+				_pAffinity->Group = 0;
+				_pAffinity->Mask = _ThreadBasicInfo.AffinityMask;
+				_pAffinity->Reserved[0] = 0;
+				_pAffinity->Reserved[1] = 0;
+				_pAffinity->Reserved[2] = 0;
+				return TRUE;
+			}
+		}
+#endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
