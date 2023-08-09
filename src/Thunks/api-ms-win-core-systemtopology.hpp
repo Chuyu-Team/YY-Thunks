@@ -82,6 +82,38 @@ namespace YY
 		}
 #endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+		//Windows 7 [desktop apps only]
+		//Windows Server 2008 R2 [desktop apps only]
+		__DEFINE_THUNK(
+			kernel32,
+			8,
+			BOOL,
+			WINAPI,
+			GetThreadGroupAffinity,
+			_In_ HANDLE hThread,
+			_Out_ PGROUP_AFFINITY affinity
+		)
+		{
+			if (const auto pGetThreadGroupAffinity = try_get_GetThreadGroupAffinity())
+			{
+				return pGetThreadGroupAffinity(hThread, affinity);
+			}
+			else
+			{
+				// On operating systems older than Win7, we don't have access to the correct information about thread's affinity,
+				// so we will assume that the affinity is that of the process.
+				DWORD_PTR pProcessAffinityMask;
+				DWORD_PTR pSystemAffinityMask;
+
+				GetProcessAffinityMask(GetCurrentProcess(), &pProcessAffinityMask, &pSystemAffinityMask);
+				affinity->Group = 0;
+				affinity->Mask = pProcessAffinityMask;
+			}
+
+			return 1;
+		}
+#endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
