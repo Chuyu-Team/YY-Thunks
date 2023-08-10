@@ -289,6 +289,7 @@
 | TzSpecificLocalTimeToSystemTimeEx          | 不存在时，内部实现。
 | GetFirmwareType                            | 不存在时，调用NtQuerySystemInformation。
 | IsNativeVhdBoot                            | 不存在时，调用NtQuerySystemInformation。
+| RtlCaptureStackBackTrace                   | 调用ntdll.RtlCaptureStackBackTrace。
 
 ## mfplat.dll
 | 函数                                       | Fallback
