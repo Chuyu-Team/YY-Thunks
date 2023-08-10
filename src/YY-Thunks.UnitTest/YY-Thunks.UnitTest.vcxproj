@@ -193,6 +193,7 @@
   <ItemGroup>
     <ClInclude Include="..\Thunks\api-ms-win-core-com.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-kernel32-legacy.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-rtlsupport.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-eventing-provider.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-power-base.hpp" />
     <ClInclude Include="..\Thunks\bcrypt.hpp" />
