@@ -1222,6 +1222,84 @@ namespace YY
 		}
 #endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		// 最低受支持的客户端	Windows XP [桌面应用 |UWP 应用]
+		// 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		24,
+		HANDLE,
+		WINAPI,
+		FindFirstFileExW,
+			_In_ LPCWSTR lpFileName,
+			_In_ FINDEX_INFO_LEVELS fInfoLevelId,
+			_Out_writes_bytes_(sizeof(WIN32_FIND_DATAW)) LPVOID lpFindFileData,
+			_In_ FINDEX_SEARCH_OPS fSearchOp,
+			_Reserved_ LPVOID lpSearchFilter,
+			_In_ DWORD dwAdditionalFlags
+			)
+		{
+			if (const auto _pfnFindFirstFileExW = try_get_FindFirstFileExW())
+			{
+				const auto _uMajorVersion = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->OSMajorVersion;
+				const auto _uMinorVersion = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->OSMinorVersion;
+
+				if (internal::MakeVersion(_uMajorVersion, _uMinorVersion) < internal::MakeVersion(6, 1))
+				{
+					// dwAdditionalFlags : Windows 7开始才支持 FIND_FIRST_EX_LARGE_FETCH
+					dwAdditionalFlags &= (FIND_FIRST_EX_CASE_SENSITIVE | FIND_FIRST_EX_ON_DISK_ENTRIES_ONLY);
+					
+					// Windows 7开始才支持 FindExInfoBasic
+					fInfoLevelId = FindExInfoStandard;
+				}
+
+
+				return _pfnFindFirstFileExW(lpFileName, fInfoLevelId, lpFindFileData, fSearchOp, lpSearchFilter, dwAdditionalFlags);
+			}
+
+			return FindFirstFileW(lpFileName, (WIN32_FIND_DATAW*)lpFindFileData);
+		}
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		// 最低受支持的客户端	Windows XP [桌面应用 |UWP 应用]
+		// 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		24,
+		HANDLE,
+		WINAPI,
+		FindFirstFileExA,
+			_In_ LPCSTR lpFileName,
+			_In_ FINDEX_INFO_LEVELS fInfoLevelId,
+			_Out_writes_bytes_(sizeof(WIN32_FIND_DATAA)) LPVOID lpFindFileData,
+			_In_ FINDEX_SEARCH_OPS fSearchOp,
+			_Reserved_ LPVOID lpSearchFilter,
+			_In_ DWORD dwAdditionalFlags
+			)
+		{
+			if (const auto _pfnFindFirstFileExA = try_get_FindFirstFileExA())
+			{
+				const auto _uMajorVersion = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->OSMajorVersion;
+				const auto _uMinorVersion = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->OSMinorVersion;
+
+				if (internal::MakeVersion(_uMajorVersion, _uMinorVersion) < internal::MakeVersion(6, 1))
+				{
+					// dwAdditionalFlags : Windows 7开始才支持 FIND_FIRST_EX_LARGE_FETCH
+					dwAdditionalFlags &= (FIND_FIRST_EX_CASE_SENSITIVE | FIND_FIRST_EX_ON_DISK_ENTRIES_ONLY);
+					
+					// Windows 7开始才支持 FindExInfoBasic
+					fInfoLevelId = FindExInfoStandard;
+				}
+
+				return _pfnFindFirstFileExA(lpFileName, fInfoLevelId, lpFindFileData, fSearchOp, lpSearchFilter, dwAdditionalFlags);
+			}
+
+			return FindFirstFileA(lpFileName, (WIN32_FIND_DATAA*)lpFindFileData);
+		}
+#endif
 	}//namespace Thunks
 
 } //namespace YY

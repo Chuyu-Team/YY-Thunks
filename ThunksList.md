@@ -292,6 +292,7 @@
 | RtlCaptureStackBackTrace                   | 调用ntdll.RtlCaptureStackBackTrace。
 | SetFileCompletionNotificationModes         | 不存在时，什么也不做。
 | GetQueuedCompletionStatusEx                | 不存在时，调用 GetQueuedCompletionStatus，注意：丢失可警报状态支持。
+| FindFirstFileEx(W/A)                       | Windows XP、Vista兼容 FIND_FIRST_EX_LARGE_FETCH、FindExInfoStandard参数。
 
 ## mfplat.dll
 | 函数                                       | Fallback
