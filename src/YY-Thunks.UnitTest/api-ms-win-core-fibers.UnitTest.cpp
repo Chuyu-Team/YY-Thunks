@@ -65,7 +65,7 @@ namespace api_ms_win_core_fibers
 
 				for (auto hHandle : hHandles)
 				{
-					Assert::AreEqual(WaitForSingleObject(hHandle, 1000), WAIT_OBJECT_0);
+					Assert::AreEqual(WaitForSingleObject(hHandle, 1000), (DWORD)WAIT_OBJECT_0);
 
 					CloseHandle(hHandle);
 				}
@@ -158,7 +158,7 @@ namespace api_ms_win_core_fibers
 
 				for (auto hHandle : hHandles)
 				{
-					Assert::AreEqual(WaitForSingleObject(hHandle, 1000), WAIT_OBJECT_0);
+					Assert::AreEqual(WaitForSingleObject(hHandle, 1000), (DWORD)WAIT_OBJECT_0);
 
 					CloseHandle(hHandle);
 				}

@@ -7,10 +7,18 @@
 #ifndef PCH_H
 #define PCH_H
 
+#include <sal.h>
+
 // 添加要在此处预编译的标头
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+#define UMDF_USING_NTSTATUS
+#define _Disallow_YY_KM_Namespace
+#include <km.h>
+
 #include <Windows.h>
+
 #include <atltime.h>
+
 #include "CppUnitTest.h"
 #include <process.h>
 

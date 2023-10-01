@@ -98,7 +98,7 @@ namespace api_ms_win_core_synch
 
 			for (auto hThreadHandle : hThreadHandles)
 			{
-				Assert::AreEqual(WaitForSingleObject(hThreadHandle, 500), WAIT_OBJECT_0);
+				Assert::AreEqual(WaitForSingleObject(hThreadHandle, 500), (DWORD)WAIT_OBJECT_0);
 			}
 
 			Assert::AreEqual(100l, (long)Data.RunCount);
@@ -157,7 +157,7 @@ namespace api_ms_win_core_synch
 
 			for (auto hThreadHandle : hThreadHandles)
 			{
-				Assert::AreEqual(WaitForSingleObject(hThreadHandle, 500), WAIT_OBJECT_0);
+				Assert::AreEqual(WaitForSingleObject(hThreadHandle, 500), (DWORD)WAIT_OBJECT_0);
 			}
 
 			Assert::AreEqual(100l, (long)Data.RunCount);
@@ -205,7 +205,7 @@ namespace api_ms_win_core_synch
 			auto _nRet = WaitForSingleObject(_hThreadHandle, 5 * 1000);
 			::ReleaseSRWLockExclusive(&_SRWLock);
 
-			Assert::AreEqual(WAIT_OBJECT_0, _nRet);
+			Assert::AreEqual((DWORD)WAIT_OBJECT_0, _nRet);
 
 			DWORD _uCode = -1;
 			GetExitCodeThread(_hThreadHandle, &_uCode);
@@ -237,7 +237,7 @@ namespace api_ms_win_core_synch
 
 			auto _nRet = WaitForSingleObject(_hThreadHandle, 5 * 1000);
 
-			Assert::AreEqual(WAIT_OBJECT_0, _nRet);
+			Assert::AreEqual((DWORD)WAIT_OBJECT_0, _nRet);
 
 			DWORD _uCode = -1;
 			GetExitCodeThread(_hThreadHandle, &_uCode);

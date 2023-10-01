@@ -394,6 +394,31 @@ namespace YY
 		}
 #endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 支持的最低客户端	Windows Vista [桌面应用程序 |UWP 应用]
+		// 支持的最低服务器	Windows Server 2008 [桌面应用程序 |UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+		WINAPI,
+		SetFileCompletionNotificationModes,
+			_In_ HANDLE FileHandle,
+			_In_ UCHAR Flags
+			)
+		{
+			if (const auto _pfnSetFileCompletionNotificationModes = try_get_SetFileCompletionNotificationModes())
+			{
+				return _pfnSetFileCompletionNotificationModes(FileHandle, Flags);
+			}
+
+			// 初步看起来没有什么的，只是会降低完成端口的效率。
+			// 至少需要 Vista才支持 FileIoCompletionNotificationInformation
+			// 只能假定先返回成功。
+			return TRUE;
+		}
+#endif
 	}//namespace Thunks
 
 } //namespace YY

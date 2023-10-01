@@ -290,6 +290,8 @@
 | GetFirmwareType                            | 不存在时，调用NtQuerySystemInformation。
 | IsNativeVhdBoot                            | 不存在时，调用NtQuerySystemInformation。
 | RtlCaptureStackBackTrace                   | 调用ntdll.RtlCaptureStackBackTrace。
+| SetFileCompletionNotificationModes         | 不存在时，什么也不做。
+| GetQueuedCompletionStatusEx                | 不存在时，调用 GetQueuedCompletionStatus，注意：丢失可警报状态支持。
 
 ## mfplat.dll
 | 函数                                       | Fallback
@@ -304,6 +306,11 @@
 | ----                                       | -----------
 | NetGetAadJoinInformation                   | 不存在时，始终认为没有加入 Azure AD 帐户 账号。
 | NetFreeAadJoinInformation                  | 不存在时，什么也不做。
+
+## ntdll.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| NtCancelIoFileEx                           | 不存在时，调用 NtCancelIoFile。注意：将取消此文件的所有IO请求。
 
 ## ole32.dll
 | 函数                                       | Fallback

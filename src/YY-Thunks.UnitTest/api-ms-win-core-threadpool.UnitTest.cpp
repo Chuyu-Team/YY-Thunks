@@ -146,7 +146,7 @@ namespace api_ms_win_core_threadpool
 
 			Assert::IsNotNull(h);
 
-			Assert::AreEqual(WaitForSingleObject(h, 2 * 1000), WAIT_OBJECT_0, L"2秒内必须完成，这是预期。");
+			Assert::AreEqual(WaitForSingleObject(h, 2 * 1000), (DWORD)WAIT_OBJECT_0, L"2秒内必须完成，这是预期。");
 
 			CloseHandle(h);
 
@@ -165,7 +165,7 @@ namespace api_ms_win_core_threadpool
 
 			Assert::IsNotNull(h);
 
-			Assert::AreEqual(WaitForSingleObject(h, 6 * 1000), WAIT_OBJECT_0, L"6秒内必须完成，这是预期。");
+			Assert::AreEqual(WaitForSingleObject(h, 6 * 1000), (DWORD)WAIT_OBJECT_0, L"6秒内必须完成，这是预期。");
 
 			CloseHandle(h);
 
@@ -446,7 +446,7 @@ namespace api_ms_win_core_threadpool
 
 			::SetThreadpoolTimer(pTimer, &ftDueTime, 1'500, 0);
 
-			Assert::AreEqual(WaitForSingleObject(Data.hEvent, 1 * 1000), WAIT_OBJECT_0, L"1秒内必须完成，这是预期。");
+			Assert::AreEqual(WaitForSingleObject(Data.hEvent, 1 * 1000), (DWORD)WAIT_OBJECT_0, L"1秒内必须完成，这是预期。");
 
 			auto h = (HANDLE)_beginthreadex(nullptr, 0, [](void* Work) -> unsigned
 				{
@@ -457,7 +457,7 @@ namespace api_ms_win_core_threadpool
 
 			Assert::IsNotNull(h);
 
-			Assert::AreEqual(WaitForSingleObject(h, 30 * 1000), WAIT_OBJECT_0, L"6秒内必须完成，这是预期。");
+			Assert::AreEqual(WaitForSingleObject(h, 30 * 1000), (DWORD)WAIT_OBJECT_0, L"6秒内必须完成，这是预期。");
 			CloseHandle(h);
 
 			Assert::AreEqual(Data.RunCount, 1l);
@@ -522,7 +522,7 @@ namespace api_ms_win_core_threadpool
 
 			::SubmitThreadpoolWork(Work);
 
-			Assert::AreEqual(WaitForSingleObject(Data.hHandle, 5 * 1000), WAIT_OBJECT_0, L"5秒内句柄必须有信号");
+			Assert::AreEqual(WaitForSingleObject(Data.hHandle, 5 * 1000), (DWORD)WAIT_OBJECT_0, L"5秒内句柄必须有信号");
 			Assert::AreEqual(Data.RunCount, 1l);
 
 			CloseThreadpoolWork(Work);
@@ -550,7 +550,7 @@ namespace api_ms_win_core_threadpool
 			FILETIME ftDueTime = {};
 			::SetThreadpoolTimer(pTimer, &ftDueTime, 0, 0);
 
-			Assert::AreEqual(WaitForSingleObject(Data.hHandle, 5 * 1000), WAIT_OBJECT_0, L"5秒内句柄必须有信号");
+			Assert::AreEqual(WaitForSingleObject(Data.hHandle, 5 * 1000), (DWORD)WAIT_OBJECT_0, L"5秒内句柄必须有信号");
 			Assert::AreEqual(Data.RunCount, 1l);
 
 			::CloseThreadpoolTimer(pTimer);
@@ -612,7 +612,7 @@ namespace api_ms_win_core_threadpool
 
 			::SubmitThreadpoolWork(Work);
 
-			Assert::AreEqual(WaitForSingleObject(Data.hHandle, 5 * 1000), WAIT_OBJECT_0, L"5秒内句柄必须有信号");
+			Assert::AreEqual(WaitForSingleObject(Data.hHandle, 5 * 1000), (DWORD)WAIT_OBJECT_0, L"5秒内句柄必须有信号");
 			Assert::AreEqual(Data.RunCount, 1l);
 
 			CloseThreadpoolWork(Work);
@@ -644,7 +644,7 @@ namespace api_ms_win_core_threadpool
 			FILETIME ftDueTime = {};
 			::SetThreadpoolTimer(pTimer, &ftDueTime, 0, 0);
 
-			Assert::AreEqual(WaitForSingleObject(Data.hHandle, 5 * 1000), WAIT_OBJECT_0, L"5秒内句柄必须有信号");
+			Assert::AreEqual(WaitForSingleObject(Data.hHandle, 5 * 1000), (DWORD)WAIT_OBJECT_0, L"5秒内句柄必须有信号");
 			Assert::AreEqual(Data.RunCount, 1l);
 
 			::CloseThreadpoolTimer(pTimer);
@@ -698,7 +698,7 @@ namespace api_ms_win_core_threadpool
 					Assert::IsNotNull(Context);
 					auto& Data = *(UserData*)Context;
 					auto dwWaitResult = WaitForSingleObject(Data.hHandle, 1000);
-					Assert::AreEqual(dwWaitResult, WAIT_OBJECT_0);
+					Assert::AreEqual(dwWaitResult, (DWORD)WAIT_OBJECT_0);
 					::ReleaseMutexWhenCallbackReturns(Instance, Data.hHandle);
 					InterlockedIncrement(&Data.RunCount);
 
@@ -709,7 +709,7 @@ namespace api_ms_win_core_threadpool
 			::SubmitThreadpoolWork(Work);
 			Sleep(100);
 
-			Assert::AreEqual(WaitForSingleObject(Data.hHandle, 5 * 1000), WAIT_OBJECT_0, L"5秒内句柄必须有信号");
+			Assert::AreEqual(WaitForSingleObject(Data.hHandle, 5 * 1000), (DWORD)WAIT_OBJECT_0, L"5秒内句柄必须有信号");
 			Assert::AreEqual(Data.RunCount, 1l);
 
 			CloseThreadpoolWork(Work);
@@ -728,7 +728,7 @@ namespace api_ms_win_core_threadpool
 					Assert::IsNotNull(Context);
 					auto& Data = *(UserData*)Context;
 					auto dwWaitResult = WaitForSingleObject(Data.hHandle, 1000);
-					Assert::AreEqual(dwWaitResult, WAIT_OBJECT_0);
+					Assert::AreEqual(dwWaitResult, (DWORD)WAIT_OBJECT_0);
 					::ReleaseMutexWhenCallbackReturns(Instance, Data.hHandle);
 					InterlockedIncrement(&Data.RunCount);
 				}, &Data, nullptr);
@@ -739,7 +739,7 @@ namespace api_ms_win_core_threadpool
 			::SetThreadpoolTimer(pTimer, &ftDueTime, 0, 0);
 			Sleep(100);
 
-			Assert::AreEqual(WaitForSingleObject(Data.hHandle, 5 * 1000), WAIT_OBJECT_0, L"5秒内句柄必须有信号");
+			Assert::AreEqual(WaitForSingleObject(Data.hHandle, 5 * 1000), (DWORD)WAIT_OBJECT_0, L"5秒内句柄必须有信号");
 			Assert::AreEqual(Data.RunCount, 1l);
 
 			::CloseThreadpoolTimer(pTimer);
@@ -1040,7 +1040,7 @@ namespace api_ms_win_core_threadpool
 					_In_        TP_WAIT_RESULT        WaitResult
 					)
 				{
-					Assert::AreEqual(WaitResult, WAIT_OBJECT_0);
+					Assert::AreEqual(WaitResult, (DWORD)WAIT_OBJECT_0);
 
 					Assert::IsNotNull(Context);
 
@@ -1353,7 +1353,7 @@ namespace api_ms_win_core_threadpool
 
 				Assert::IsNotNull(h);
 
-				Assert::AreEqual(WaitForSingleObject(h, 10 * 1000), WAIT_OBJECT_0, L"10秒内必须完成，这是预期。");
+				Assert::AreEqual(WaitForSingleObject(h, 10 * 1000), (DWORD)WAIT_OBJECT_0, L"10秒内必须完成，这是预期。");
 
 				
 	

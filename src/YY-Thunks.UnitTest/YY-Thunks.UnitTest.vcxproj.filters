@@ -227,6 +227,9 @@
     <ClInclude Include="..\Thunks\api-ms-win-core-rtlsupport.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
+    <ClInclude Include="..\Thunks\ntdll.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\def\x86\PSAPI2Kernel32.def">

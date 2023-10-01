@@ -5104,6 +5104,15 @@ LdrAddRefDll(
 	IN PVOID  BaseAddress
 	);
 
+EXTERN_C NTSTATUS NTAPI NtCancelIoFileEx(HANDLE handle, IO_STATUS_BLOCK* io, IO_STATUS_BLOCK* io_status);
+
+EXTERN_C
+NTSTATUS
+NTAPI
+NtCancelIoFile(
+	IN HANDLE               FileHandle,
+	OUT PIO_STATUS_BLOCK    IoStatusBlock);
+
 #if defined __cplusplus && !defined _Disallow_YY_KM_Namespace
 } //namespace YY
 #endif
