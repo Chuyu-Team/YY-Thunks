@@ -86,13 +86,80 @@ namespace YY
 
 			auto& _Entry = lpCompletionPortEntries[0];
 			
-			// TODO: 已知问题：可警报状态丢失！（fAlertable）
-			auto _bRet = GetQueuedCompletionStatus(CompletionPort, &_Entry.dwNumberOfBytesTransferred, &_Entry.lpCompletionKey, &_Entry.lpOverlapped, dwMilliseconds);
-			if (_bRet)
-			{
-				*ulNumEntriesRemoved = 1;
-			}
-			return _bRet;
+            if (fAlertable)
+            {
+                // 使用 WaitForSingleObjectEx 进行等待触发 APC
+                auto _uStartTick = GetTickCount();
+                for (;;)
+                {
+                    const auto _uResult = WaitForSingleObjectEx(CompletionPort, dwMilliseconds, TRUE);
+                    if (_uResult == WAIT_OBJECT_0)
+                    {
+                        // 完成端口有数据了
+                        auto _bRet = GetQueuedCompletionStatus(CompletionPort, &_Entry.dwNumberOfBytesTransferred, &_Entry.lpCompletionKey, &_Entry.lpOverlapped, 0);
+                        if (_bRet)
+                        {
+                            *ulNumEntriesRemoved = 1;
+                            break;
+                        }
+
+                        if (GetLastError() != WAIT_TIMEOUT)
+                        {
+                            return FALSE;
+                        }
+
+                        // 无限等待时无脑继续等即可。
+                        if (dwMilliseconds == INFINITE)
+                        {
+                            continue;
+                        }
+
+                        // 计算剩余等待时间，如果剩余等待时间归零则返回
+                        const DWORD _uTickSpan = GetTickCount() - _uStartTick;
+                        if (_uTickSpan >= dwMilliseconds)
+                        {
+                            SetLastError(WAIT_TIMEOUT);
+                            return FALSE;
+                        }
+                        dwMilliseconds -= _uTickSpan;
+                        _uStartTick += _uTickSpan;
+                        continue;
+                    }
+                    else if (_uResult == WAIT_IO_COMPLETION || _uResult == WAIT_TIMEOUT)
+                    {
+                        // 很奇怪，微软原版遇到 APC唤醒直接会设置 LastError WAIT_IO_COMPLETION
+                        // 遇到超时，LastError WAIT_TIMEOUT（注意不是预期的 ERROR_TIMEOUT）不知道是故意还是有意。
+                        SetLastError(_uResult);
+                        return FALSE;
+                    }
+                    else if (_uResult == WAIT_ABANDONED)
+                    {
+                        SetLastError(ERROR_ABANDONED_WAIT_0);
+                        return FALSE;
+                    }
+                    else if (_uResult == WAIT_FAILED)
+                    {
+                        // LastError
+                        return FALSE;
+                    }
+                    else
+                    {
+                        // LastError ???
+                        return FALSE;
+                    }
+                }
+
+                return TRUE;
+            }
+            else
+            {
+                auto _bRet = GetQueuedCompletionStatus(CompletionPort, &_Entry.dwNumberOfBytesTransferred, &_Entry.lpCompletionKey, &_Entry.lpOverlapped, dwMilliseconds);
+                if (_bRet)
+                {
+                    *ulNumEntriesRemoved = 1;
+                }
+                return _bRet;
+            }
 		}
 #endif
 	}//namespace Thunks
