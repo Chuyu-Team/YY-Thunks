@@ -91,6 +91,11 @@
 | BluetoothGATTSetCharacteristicValue        | 不存在时，返回ERROR_NOT_SUPPORTED。
 | BluetoothGATTSetDescriptorValue            | 不存在时，返回ERROR_NOT_SUPPORTED。
 
+## dwmapi.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| DwmEnableBlurBehindWindow                  | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
+
 ## iphlpapi.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
@@ -388,6 +393,15 @@
 | SystemParametersInfoForDpi                 | 不存在时，调用SystemParametersInfoW。
 | RegisterSuspendResumeNotification          | 不存在时，使用窗口模拟。
 | UnregisterSuspendResumeNotification        | 不存在时，内部实现。
+| IsProcessDPIAware                          | 不存在时，返回 FALSE。
+| SetProcessDPIAware                         | 不存在时，什么都不做，假装成功。
+| GetWindowDisplayAffinity                   | 不存在时，TRUE，并报告窗口没有任何保护`WDA_NONE`。
+| SetWindowDisplayAffinity                   | 不存在时，什么都不做，假装成功。
+| RegisterTouchWindow                        | 不存在时，什么都不做，假装成功。
+| UnregisterTouchWindow                      | 不存在时，什么都不做，假装成功。
+| IsTouchWindow                              | 不存在时，始终报告非触摸窗口。
+| GetTouchInputInfo                          | 不存在时，报告错误 ERROR_INVALID_HANDLE。
+| CloseTouchInputHandle                      | 不存在时，报告错误 ERROR_INVALID_HANDLE。
 
 ## userenv.dll
 | 函数                                       | Fallback

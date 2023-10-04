@@ -5,6 +5,7 @@
 #define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                                     \
     _APPLY(ntdll,                                        "ntdll"                              , USING_UNSAFE_LOAD ) \
     _APPLY(kernel32,                                     "kernel32"                           , USING_UNSAFE_LOAD ) \
+    _APPLY(dwmapi,                                       "dwmapi"                             , 0                 ) \
     _APPLY(psapi,                                        "psapi"                              , 0                 ) \
     _APPLY(pdh,                                          "pdh"                                , 0                 ) \
     _APPLY(version,                                      "version"                            , 0                 ) \

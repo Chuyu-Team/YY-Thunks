@@ -1,0 +1,16 @@
+﻿# EditorConfig is awesome: https://EditorConfig.org
+
+
+# 代码文件尽可能的使用 UTF-8，因为英语字符占据大多数。
+# 数据文件比如 XML，json统一缩进 2，因为外部规范往往如此
+
+[*]
+end_of_line = crlf
+insert_final_newline = true
+charset = utf-8-bom
+indent_style = space
+indent_size = 4
+
+[*.{vcxproj,xml}]
+indent_style = space
+indent_size = 2

@@ -54,6 +54,29 @@ namespace YY
 			return FALSE;
 		}
 #endif
+		
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [仅限桌面应用]
+		// 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+		__DEFINE_THUNK(
+		user32,
+		0,
+		BOOL,
+		WINAPI,
+		IsProcessDPIAware,
+			void)
+		{
+			if (const auto _pfnIsProcessDPIAware = try_get_IsProcessDPIAware())
+			{
+				return _pfnIsProcessDPIAware();
+			}
+
+			// XP 无法感知DPI，返回的Rect始终被系统缩放了。
+			return FALSE;
+		}
+#endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
@@ -74,10 +97,8 @@ namespace YY
 				return pSetProcessDPIAware();
 			}
 
-			/*
-			 * 如果函数不存在，说明这个是一个XP或者更低版本，对于这种平台。
-			 * DPI感知是直接打开的，所以我们直接返回TRUE 即可。
-			 */
+			// 假装成功，其实我们都知道，我们没有成功……
+			// XP系统无法感知 DPI
 			return TRUE;
 		}
 #endif
@@ -448,6 +469,179 @@ namespace YY
 		}
 #endif
 
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		// 最低受支持的客户端	Windows 7 [仅限桌面应用]
+		// 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+		__DEFINE_THUNK(
+		user32,
+		8,
+		BOOL,
+		WINAPI,
+		GetWindowDisplayAffinity,
+			_In_ HWND _hWnd,
+			_Out_ DWORD* _pdwAffinity)
+		{
+			if (auto const _pfnGetWindowDisplayAffinity = try_get_GetWindowDisplayAffinity())
+			{
+				return _pfnGetWindowDisplayAffinity(_hWnd, _pdwAffinity);
+			}
+
+			if (!_pdwAffinity)
+			{
+				SetLastError(ERROR_INVALID_PARAMETER);
+				return FALSE;
+			}
+
+			// 系统不支持，假装自己不需要任何保护
+			*_pdwAffinity = WDA_NONE;
+			return TRUE;
+		}
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		// 最低受支持的客户端	Windows 7 [仅限桌面应用]
+		// 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+		__DEFINE_THUNK(
+		user32,
+		8,
+		BOOL,
+		WINAPI,
+		SetWindowDisplayAffinity,
+			_In_ HWND _hWnd,
+			_In_ DWORD _dwAffinity)
+		{
+			if (auto const _pfnSetWindowDisplayAffinity = try_get_SetWindowDisplayAffinity())
+			{
+				return _pfnSetWindowDisplayAffinity(_hWnd, _dwAffinity);
+			}
+
+			// 系统不支持，假装自己成功……
+			return TRUE;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		// 最低受支持的客户端	Windows 7 [仅限桌面应用]
+		// 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+		__DEFINE_THUNK(
+		user32,
+		8,
+		BOOL,
+		WINAPI,
+		RegisterTouchWindow,
+			_In_ HWND _hWnd,
+			_In_ ULONG _ulFlags)
+		{
+			if (auto const _pfnRegisterTouchWindow = try_get_RegisterTouchWindow())
+			{
+				return _pfnRegisterTouchWindow(_hWnd, _ulFlags);
+			}
+
+			return TRUE;
+		}
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		// 最低受支持的客户端	Windows 7 [仅限桌面应用]
+		// 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+		__DEFINE_THUNK(
+		user32,
+		4,
+		BOOL,
+		WINAPI,
+		UnregisterTouchWindow,
+			_In_ HWND _hWnd)
+		{
+			if (auto const _pfnUnregisterTouchWindow = try_get_UnregisterTouchWindow())
+			{
+				return _pfnUnregisterTouchWindow(_hWnd);
+			}
+
+			return TRUE;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		// 最低受支持的客户端	Windows 7 [仅限桌面应用]
+		// 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+		__DEFINE_THUNK(
+		user32,
+		8,
+		BOOL,
+		WINAPI,
+		IsTouchWindow,
+			_In_ HWND _hWnd,
+			_Out_opt_ PULONG _puFlags)
+		{
+			if (auto const _pfnIsTouchWindow = try_get_IsTouchWindow())
+			{
+				return _pfnIsTouchWindow(_hWnd, _puFlags);
+			}
+
+			if (_puFlags)
+				*_puFlags = 0;
+
+			return TRUE;
+		}
+#endif
+		
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		// 最低受支持的客户端	Windows 7 [仅限桌面应用]
+		// 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+		__DEFINE_THUNK(
+		user32,
+		16,
+		BOOL,
+		WINAPI,
+		GetTouchInputInfo,
+			_In_ HTOUCHINPUT _hTouchInput,
+			_In_ UINT _uInputs,
+			_Out_writes_(_uInputs) PTOUCHINPUT _pInputs,
+			_In_ int _cbSize)
+		{
+			if (auto const _pfnGetTouchInputInfo = try_get_GetTouchInputInfo())
+			{
+				return _pfnGetTouchInputInfo(_hTouchInput, _uInputs, _pInputs, _cbSize);
+			}
+
+			// 老版本系统没有触摸消息，_hTouchInput 必然无效
+			SetLastError(ERROR_INVALID_HANDLE);
+			return FALSE;
+		}
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		// 最低受支持的客户端	Windows 7 [仅限桌面应用]
+		// 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+		__DEFINE_THUNK(
+		user32,
+		4,
+		BOOL,
+		WINAPI,
+		CloseTouchInputHandle,
+			_In_ HTOUCHINPUT _hTouchInput)
+		{
+			if (auto const _pfnCloseTouchInputHandle = try_get_CloseTouchInputHandle())
+			{
+				return _pfnCloseTouchInputHandle(_hTouchInput);
+			}
+
+			// 老版本系统没有触摸消息，_hTouchInput 必然无效
+			SetLastError(ERROR_INVALID_HANDLE);
+			return FALSE;
+		}
+#endif
 	}//namespace Thunks
 
 } //namespace YY
