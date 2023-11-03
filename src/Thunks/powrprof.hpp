@@ -1,31 +1,33 @@
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+ï»¿#if (YY_Thunks_Support_Version < NTDDI_VISTA)
 #include <powrprof.h>
 #endif
 
-namespace YY
+#if (YY_Thunks_Support_Version < NTDDI_VISTA) && !defined(__Comment_Lib_powrProf)
+#define __Comment_Lib_powrProf
+#pragma comment(lib, "PowrProf.lib")
+#endif
+
+namespace YY::Thunks
 {
-	namespace Thunks
-	{
 #if (YY_Thunks_Support_Version < NTDDI_VISTA)
 
-		// ×îµÍÊÜÖ§³ÖµÄ¿Í»§¶Ë	Windows 8 [×ÀÃæÓ¦ÓÃ|UWP Ó¦ÓÃ]
-		// ×îµÍÊÜÖ§³ÖµÄ·þÎñÆ÷	Windows Server 2012[×ÀÃæÓ¦ÓÃ | UWP Ó¦ÓÃ]
-		__DEFINE_THUNK(
-		powrprof,
-		0,
-		POWER_PLATFORM_ROLE,
-		WINAPI,
-		PowerDeterminePlatformRole,
-			)
-		{
-			if (auto const _pfnPowerDeterminePlatformRole = try_get_PowerDeterminePlatformRole())
-			{
-				return _pfnPowerDeterminePlatformRole();
-			}
+    // æœ€ä½Žå—æ”¯æŒçš„å®¢æˆ·ç«¯    Windows 8 [æ¡Œé¢åº”ç”¨|UWP åº”ç”¨]
+    // æœ€ä½Žå—æ”¯æŒçš„æœåŠ¡å™¨    Windows Server 2012[æ¡Œé¢åº”ç”¨ | UWP åº”ç”¨]
+    __DEFINE_THUNK(
+    powrprof,
+    0,
+    POWER_PLATFORM_ROLE,
+    WINAPI,
+    PowerDeterminePlatformRole,
+        )
+    {
+        if (auto const _pfnPowerDeterminePlatformRole = try_get_PowerDeterminePlatformRole())
+        {
+            return _pfnPowerDeterminePlatformRole();
+        }
 
-			// ¼Ù¶¨×Ô¼ºÃ»ÓÐµç³Ø
-			return PlatformRoleDesktop;
-		}
+        // å‡å®šè‡ªå·±æ²¡æœ‰ç”µæ± 
+        return PlatformRoleDesktop;
+    }
 #endif
-	}
-}
+} // namespace YY::Thunks

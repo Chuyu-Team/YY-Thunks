@@ -1,118 +1,121 @@
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+ï»¿#if (YY_Thunks_Support_Version < NTDDI_WIN8)
 #include <mfapi.h>
 #endif
 
-namespace YY
+#if (YY_Thunks_Support_Version < NTDDI_WIN8) && !defined(__Comment_Lib_mfplat)
+#define __Comment_Lib_mfplat
+#pragma comment(lib, "Mfplat.lib")
+#endif
+
+namespace YY::Thunks
 {
-    namespace Thunks
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+    // æœ€ä½Žå—æ”¯æŒçš„å®¢æˆ·ç«¯    Windows 8 [æ¡Œé¢åº”ç”¨|UWP åº”ç”¨]
+    // æœ€ä½Žå—æ”¯æŒçš„æœåŠ¡å™¨    Windows Server 2012[æ¡Œé¢åº”ç”¨ | UWP åº”ç”¨]
+    __DEFINE_THUNK(
+    mfplat,
+    8,
+    HRESULT,
+    STDAPICALLTYPE,
+    MFCreateDXGIDeviceManager,
+        _Out_ UINT* _puResetToken,
+        _Outptr_ IMFDXGIDeviceManager** _ppDeviceManager
+        )
     {
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
-
-        // ×îµÍÊÜÖ§³ÖµÄ¿Í»§¶Ë	Windows 8 [×ÀÃæÓ¦ÓÃ|UWP Ó¦ÓÃ]
-        // ×îµÍÊÜÖ§³ÖµÄ·þÎñÆ÷	Windows Server 2012[×ÀÃæÓ¦ÓÃ | UWP Ó¦ÓÃ]
-        __DEFINE_THUNK(
-        mfplat,
-        8,
-        HRESULT,
-        STDAPICALLTYPE,
-        MFCreateDXGIDeviceManager,
-            _Out_ UINT* _puResetToken,
-            _Outptr_ IMFDXGIDeviceManager** _ppDeviceManager
-            )
+        if (const auto _pfnMFCreateDXGIDeviceManager = try_get_MFCreateDXGIDeviceManager())
         {
-            if (const auto _pfnMFCreateDXGIDeviceManager = try_get_MFCreateDXGIDeviceManager())
-            {
-                return _pfnMFCreateDXGIDeviceManager(_puResetToken, _ppDeviceManager);
-            }
-
-            if (_puResetToken)
-                *_puResetToken = 0;
-            if (_ppDeviceManager)
-                *_ppDeviceManager = nullptr;
-
-            if (_puResetToken == nullptr || _ppDeviceManager == nullptr)
-                return E_INVALIDARG;
-            return E_NOTIMPL;
+            return _pfnMFCreateDXGIDeviceManager(_puResetToken, _ppDeviceManager);
         }
-#endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+        if (_puResetToken)
+            *_puResetToken = 0;
+        if (_ppDeviceManager)
+            *_ppDeviceManager = nullptr;
 
-        // ×îµÍÊÜÖ§³ÖµÄ¿Í»§¶Ë	Windows 8 [×ÀÃæÓ¦ÓÃ|UWP Ó¦ÓÃ]
-        // ×îµÍÊÜÖ§³ÖµÄ·þÎñÆ÷	Windows Server 2012[×ÀÃæÓ¦ÓÃ | UWP Ó¦ÓÃ]
-        __DEFINE_THUNK(
-        mfplat,
-        20,
-        HRESULT,
-        STDAPICALLTYPE,
-        MFCreateDXGISurfaceBuffer,
-            _In_ REFIID _id,
-            _In_ IUnknown* _punkSurface,
-            _In_ UINT _uSubresourceIndex,
-            _In_ BOOL _bBottomUpWhenLinear,
-            _Outptr_ IMFMediaBuffer** _ppBuffer
-            )
-        {
-            if (const auto _pfnMFCreateDXGISurfaceBuffer = try_get_MFCreateDXGISurfaceBuffer())
-            {
-                return _pfnMFCreateDXGISurfaceBuffer(_id, _punkSurface, _uSubresourceIndex, _bBottomUpWhenLinear, _ppBuffer);
-            }
-
-            if(!_ppBuffer)
-                return E_INVALIDARG;
-            *_ppBuffer = nullptr;
-            return E_NOTIMPL;
-        }
-#endif
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
-
-        // ×îµÍÊÜÖ§³ÖµÄ¿Í»§¶Ë	Windows 8 [×ÀÃæÓ¦ÓÃ|UWP Ó¦ÓÃ]
-        // ×îµÍÊÜÖ§³ÖµÄ·þÎñÆ÷	Windows Server 2012[×ÀÃæÓ¦ÓÃ | UWP Ó¦ÓÃ]
-        __DEFINE_THUNK(
-        mfplat,
-        8,
-        HRESULT,
-        STDAPICALLTYPE,
-        MFLockDXGIDeviceManager,
-            _Out_opt_ UINT* _puResetToken,
-            _Outptr_ IMFDXGIDeviceManager** _ppManager
-            )
-        {
-            if (const auto _pfnMFLockDXGIDeviceManager = try_get_MFLockDXGIDeviceManager())
-            {
-                return _pfnMFLockDXGIDeviceManager(_puResetToken, _ppManager);
-            }
-
-            if (_puResetToken)
-                *_puResetToken = 0;
-            if (_ppManager)
-                *_ppManager = nullptr;
-            if(_puResetToken == nullptr || _ppManager == nullptr)
-                return E_INVALIDARG;
-            return E_NOTIMPL;
-        }
-#endif
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
-
-        // ×îµÍÊÜÖ§³ÖµÄ¿Í»§¶Ë	Windows 8 [×ÀÃæÓ¦ÓÃ|UWP Ó¦ÓÃ]
-        // ×îµÍÊÜÖ§³ÖµÄ·þÎñÆ÷	Windows Server 2012[×ÀÃæÓ¦ÓÃ | UWP Ó¦ÓÃ]
-        __DEFINE_THUNK(
-        mfplat,
-        0,
-        HRESULT,
-        STDAPICALLTYPE,
-        MFUnlockDXGIDeviceManager,
-            )
-        {
-            if (const auto _pfnMFUnlockDXGIDeviceManager = try_get_MFUnlockDXGIDeviceManager())
-            {
-                return _pfnMFUnlockDXGIDeviceManager();
-            }
-
-            return E_NOTIMPL;
-        }
-#endif
+        if (_puResetToken == nullptr || _ppDeviceManager == nullptr)
+            return E_INVALIDARG;
+        return E_NOTIMPL;
     }
-}
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+    // æœ€ä½Žå—æ”¯æŒçš„å®¢æˆ·ç«¯    Windows 8 [æ¡Œé¢åº”ç”¨|UWP åº”ç”¨]
+    // æœ€ä½Žå—æ”¯æŒçš„æœåŠ¡å™¨    Windows Server 2012[æ¡Œé¢åº”ç”¨ | UWP åº”ç”¨]
+    __DEFINE_THUNK(
+    mfplat,
+    20,
+    HRESULT,
+    STDAPICALLTYPE,
+    MFCreateDXGISurfaceBuffer,
+        _In_ REFIID _id,
+        _In_ IUnknown* _punkSurface,
+        _In_ UINT _uSubresourceIndex,
+        _In_ BOOL _bBottomUpWhenLinear,
+        _Outptr_ IMFMediaBuffer** _ppBuffer
+        )
+    {
+        if (const auto _pfnMFCreateDXGISurfaceBuffer = try_get_MFCreateDXGISurfaceBuffer())
+        {
+            return _pfnMFCreateDXGISurfaceBuffer(_id, _punkSurface, _uSubresourceIndex, _bBottomUpWhenLinear, _ppBuffer);
+        }
+
+        if(!_ppBuffer)
+            return E_INVALIDARG;
+        *_ppBuffer = nullptr;
+        return E_NOTIMPL;
+    }
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+    // æœ€ä½Žå—æ”¯æŒçš„å®¢æˆ·ç«¯    Windows 8 [æ¡Œé¢åº”ç”¨|UWP åº”ç”¨]
+    // æœ€ä½Žå—æ”¯æŒçš„æœåŠ¡å™¨    Windows Server 2012[æ¡Œé¢åº”ç”¨ | UWP åº”ç”¨]
+    __DEFINE_THUNK(
+    mfplat,
+    8,
+    HRESULT,
+    STDAPICALLTYPE,
+    MFLockDXGIDeviceManager,
+        _Out_opt_ UINT* _puResetToken,
+        _Outptr_ IMFDXGIDeviceManager** _ppManager
+        )
+    {
+        if (const auto _pfnMFLockDXGIDeviceManager = try_get_MFLockDXGIDeviceManager())
+        {
+            return _pfnMFLockDXGIDeviceManager(_puResetToken, _ppManager);
+        }
+
+        if (_puResetToken)
+            *_puResetToken = 0;
+        if (_ppManager)
+            *_ppManager = nullptr;
+        if(_puResetToken == nullptr || _ppManager == nullptr)
+            return E_INVALIDARG;
+        return E_NOTIMPL;
+    }
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+    // æœ€ä½Žå—æ”¯æŒçš„å®¢æˆ·ç«¯    Windows 8 [æ¡Œé¢åº”ç”¨|UWP åº”ç”¨]
+    // æœ€ä½Žå—æ”¯æŒçš„æœåŠ¡å™¨    Windows Server 2012[æ¡Œé¢åº”ç”¨ | UWP åº”ç”¨]
+    __DEFINE_THUNK(
+    mfplat,
+    0,
+    HRESULT,
+    STDAPICALLTYPE,
+    MFUnlockDXGIDeviceManager,
+        )
+    {
+        if (const auto _pfnMFUnlockDXGIDeviceManager = try_get_MFUnlockDXGIDeviceManager())
+        {
+            return _pfnMFUnlockDXGIDeviceManager();
+        }
+
+        return E_NOTIMPL;
+    }
+#endif
+
+} // namespace YY::Thunks

@@ -1,59 +1,62 @@
-#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+ï»¿#if (YY_Thunks_Support_Version < NTDDI_WIN10)
 #include <lmjoin.h>
 #endif
 
-namespace YY
+#if (YY_Thunks_Support_Version < NTDDI_WIN10) && !defined(__Comment_Lib_netapi32)
+#define __Comment_Lib_netapi32
+#pragma comment(lib, "Netapi32.lib")
+#endif
+
+namespace YY::Thunks
 {
-    namespace Thunks
+#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+
+    // æœ€ä½Žå—æ”¯æŒçš„å®¢æˆ·ç«¯    Windows 10 [ä»…é™æ¡Œé¢åº”ç”¨]
+    // æœ€ä½Žå—æ”¯æŒçš„æœåŠ¡å™¨    Windows Server 2016[ä»…é™æ¡Œé¢åº”ç”¨]
+    __DEFINE_THUNK(
+    netapi32,
+    8,
+    HRESULT,
+    NET_API_FUNCTION,
+    NetGetAadJoinInformation,
+        _In_opt_ LPCWSTR _szTenantId,
+        _Outptr_result_maybenull_ PDSREG_JOIN_INFO* _ppJoinInfo
+        )
     {
-#if (YY_Thunks_Support_Version < NTDDI_WIN10)
-
-        // ×îµÍÊÜÖ§³ÖµÄ¿Í»§¶Ë	Windows 10 [½öÏÞ×ÀÃæÓ¦ÓÃ]
-        // ×îµÍÊÜÖ§³ÖµÄ·þÎñÆ÷	Windows Server 2016[½öÏÞ×ÀÃæÓ¦ÓÃ]
-        __DEFINE_THUNK(
-        netapi32,
-        8,
-        HRESULT,
-        NET_API_FUNCTION,
-        NetGetAadJoinInformation,
-            _In_opt_ LPCWSTR _szTenantId,
-            _Outptr_result_maybenull_ PDSREG_JOIN_INFO* _ppJoinInfo
-            )
+        if (const auto _pfnNetGetAadJoinInformation = try_get_NetGetAadJoinInformation())
         {
-            if (const auto _pfnNetGetAadJoinInformation = try_get_NetGetAadJoinInformation())
-            {
-                return _pfnNetGetAadJoinInformation(_szTenantId, _ppJoinInfo);
-            }
-            if (!_ppJoinInfo)
-                return E_INVALIDARG;
-
-            // ×ÜÊÇÈÏÎª×Ô¼ºÃ»ÓÐ¼ÓÈë Azure AD ÕÊ»§¡£
-            *_ppJoinInfo = nullptr;
-            return S_OK;
+            return _pfnNetGetAadJoinInformation(_szTenantId, _ppJoinInfo);
         }
-#endif
-        
-#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+        if (!_ppJoinInfo)
+            return E_INVALIDARG;
 
-        // ×îµÍÊÜÖ§³ÖµÄ¿Í»§¶Ë	Windows 10 [½öÏÞ×ÀÃæÓ¦ÓÃ]
-        // ×îµÍÊÜÖ§³ÖµÄ·þÎñÆ÷	Windows Server 2016[½öÏÞ×ÀÃæÓ¦ÓÃ]
-        __DEFINE_THUNK(
-        netapi32,
-        8,
-        VOID,
-        NET_API_FUNCTION,
-        NetFreeAadJoinInformation,
-            _In_opt_ PDSREG_JOIN_INFO _pJoinInfo
-            )
-        {
-            if (const auto _pfnNetFreeAadJoinInformation = try_get_NetFreeAadJoinInformation())
-            {
-                return _pfnNetFreeAadJoinInformation(_pJoinInfo);
-            }
-
-            // Ê²Ã´Ò²²»×ö£¬ÀÏ°æ±¾ÏµÍ³²»¿ÉÄÜ»áÄÃµ½Õâ¸öÐÅÏ¢¡£
-            UNREFERENCED_PARAMETER(_pJoinInfo);
-        }
-#endif
+        // æ€»æ˜¯è®¤ä¸ºè‡ªå·±æ²¡æœ‰åŠ å…¥ Azure AD å¸æˆ·ã€‚
+        *_ppJoinInfo = nullptr;
+        return S_OK;
     }
-}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+
+    // æœ€ä½Žå—æ”¯æŒçš„å®¢æˆ·ç«¯    Windows 10 [ä»…é™æ¡Œé¢åº”ç”¨]
+    // æœ€ä½Žå—æ”¯æŒçš„æœåŠ¡å™¨    Windows Server 2016[ä»…é™æ¡Œé¢åº”ç”¨]
+    __DEFINE_THUNK(
+    netapi32,
+    8,
+    VOID,
+    NET_API_FUNCTION,
+    NetFreeAadJoinInformation,
+        _In_opt_ PDSREG_JOIN_INFO _pJoinInfo
+        )
+    {
+        if (const auto _pfnNetFreeAadJoinInformation = try_get_NetFreeAadJoinInformation())
+        {
+            return _pfnNetFreeAadJoinInformation(_pJoinInfo);
+        }
+
+        // ä»€ä¹ˆä¹Ÿä¸åšï¼Œè€ç‰ˆæœ¬ç³»ç»Ÿä¸å¯èƒ½ä¼šæ‹¿åˆ°è¿™ä¸ªä¿¡æ¯ã€‚
+        UNREFERENCED_PARAMETER(_pJoinInfo);
+    }
+#endif
+} // namespace YY::Thunks
