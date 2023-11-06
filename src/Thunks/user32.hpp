@@ -69,12 +69,12 @@ namespace YY::Thunks
         return FALSE;
     }
 #endif
-        
+
 
 #if (YY_Thunks_Target < __WindowsNT6)
 
-    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+    // 最低受支持的客户端    Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
     __DEFINE_THUNK(
     user32,
     0,
@@ -189,7 +189,7 @@ namespace YY::Thunks
 
         } while (false);
 
-            
+
         SetLastError(lStatus);
         return FALSE;
     }
@@ -266,7 +266,7 @@ namespace YY::Thunks
         {
             return pGetSystemMetricsForDpi(nIndex, dpi);
         }
-    
+
         auto nValue = GetSystemMetrics(nIndex);
 
         if (nValue != 0)
@@ -406,6 +406,10 @@ namespace YY::Thunks
 
             if (nDpiX != dpi)
             {
+                if (dpi == 0)
+                {
+                    dpi = nDpiX;
+                }
                 if (SPI_GETICONTITLELOGFONT == uiAction)
                 {
                     if (auto pInfo = (LOGFONTW*)pvParam)
@@ -487,8 +491,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6_1)
 
-    // 最低受支持的客户端	Windows 7 [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+    // 最低受支持的客户端    Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008 R2[仅限桌面应用]
     __DEFINE_THUNK(
     user32,
     8,
@@ -517,8 +521,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6_1)
 
-    // 最低受支持的客户端	Windows 7 [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+    // 最低受支持的客户端    Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008 R2[仅限桌面应用]
     __DEFINE_THUNK(
     user32,
     8,
@@ -541,8 +545,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6_1)
 
-    // 最低受支持的客户端	Windows 7 [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+    // 最低受支持的客户端    Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008 R2[仅限桌面应用]
     __DEFINE_THUNK(
     user32,
     8,
@@ -563,8 +567,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6_1)
 
-    // 最低受支持的客户端	Windows 7 [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+    // 最低受支持的客户端    Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008 R2[仅限桌面应用]
     __DEFINE_THUNK(
     user32,
     4,
@@ -585,8 +589,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6_1)
 
-    // 最低受支持的客户端	Windows 7 [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+    // 最低受支持的客户端    Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008 R2[仅限桌面应用]
     __DEFINE_THUNK(
     user32,
     8,
@@ -607,12 +611,12 @@ namespace YY::Thunks
         return TRUE;
     }
 #endif
-        
+
 
 #if (YY_Thunks_Target < __WindowsNT6_1)
 
-    // 最低受支持的客户端	Windows 7 [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+    // 最低受支持的客户端    Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008 R2[仅限桌面应用]
     __DEFINE_THUNK(
     user32,
     16,
@@ -638,8 +642,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6_1)
 
-    // 最低受支持的客户端	Windows 7 [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+    // 最低受支持的客户端    Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008 R2[仅限桌面应用]
     __DEFINE_THUNK(
     user32,
     4,
@@ -662,8 +666,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6)
 
-    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+    // 最低受支持的客户端    Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
     __DEFINE_THUNK(
     user32,
     8,
@@ -686,8 +690,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6)
 
-    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+    // 最低受支持的客户端    Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
     __DEFINE_THUNK(
     user32,
     8,
@@ -718,8 +722,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6)
 
-    // 最低受支持的客户端	Windows 2000 Professional [仅限桌面应用]
-    // 最低受支持的服务器	Windows 2000 Server[仅限桌面应用]
+    // 最低受支持的客户端    Windows 2000 Professional [仅限桌面应用]
+    // 最低受支持的服务器    Windows 2000 Server[仅限桌面应用]
     // 虽然 2000就支持，但是 SPI_GETNONCLIENTMETRICS 需要特殊处理。
     __DEFINE_THUNK(
     user32,
@@ -738,7 +742,7 @@ namespace YY::Thunks
         {
             SetLastError(ERROR_FUNCTION_FAILED);
             return FALSE;
-        } 
+        }
 
         if (_pParam && internal::GetSystemVersion() < internal::MakeVersion(6, 0))
         {
@@ -759,7 +763,7 @@ namespace YY::Thunks
                 }
             }
         }
-        
+
         return _pfnSystemParametersInfoW(_uAction, _uParam, _pParam, _fWinIni);
     }
 #endif
@@ -767,8 +771,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6)
 
-    // 最低受支持的客户端	Windows 2000 Professional [仅限桌面应用]
-    // 最低受支持的服务器	Windows 2000 Server[仅限桌面应用]
+    // 最低受支持的客户端    Windows 2000 Professional [仅限桌面应用]
+    // 最低受支持的服务器    Windows 2000 Server[仅限桌面应用]
     // 虽然 2000就支持，但是 SPI_GETNONCLIENTMETRICS 需要特殊处理。
     __DEFINE_THUNK(
     user32,
@@ -787,7 +791,7 @@ namespace YY::Thunks
         {
             SetLastError(ERROR_FUNCTION_FAILED);
             return FALSE;
-        } 
+        }
 
 #if (YY_Thunks_Target < __WindowsNT6)
         if (_pParam && internal::GetSystemVersion() < internal::MakeVersion(6, 0))
@@ -808,7 +812,7 @@ namespace YY::Thunks
                 }
             }
         }
-#endif        
+#endif
         return _pfnSystemParametersInfoA(_uAction, _uParam, _pParam, _fWinIni);
     }
 #endif
