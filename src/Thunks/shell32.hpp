@@ -16,8 +16,38 @@ namespace YY
 				const int csidl;
 			};
 
+            static _Success_(return != -1) _Check_return_ int __fastcall KnownFolderFlagsToCsidlFlags(_In_ DWORD _uKnownFolderFlags)
+            {
+                // 参数验证
+                // 1. KF_FLAG_NOT_PARENT_RELATIVE必须跟KF_FLAG_DEFAULT_PATH同时使用
+                if (((KF_FLAG_NOT_PARENT_RELATIVE | KF_FLAG_DEFAULT_PATH) & _uKnownFolderFlags) == KF_FLAG_NOT_PARENT_RELATIVE)
+                {
+                    return -1;
+                }
+
+                static_assert(KF_FLAG_CREATE == CSIDL_FLAG_CREATE, "");
+                static_assert(KF_FLAG_DONT_VERIFY == CSIDL_FLAG_DONT_VERIFY, "");
+                static_assert(KF_FLAG_DONT_UNEXPAND == CSIDL_FLAG_DONT_UNEXPAND, "");
+                static_assert(KF_FLAG_NO_ALIAS == CSIDL_FLAG_NO_ALIAS, "");
+                static_assert(KF_FLAG_INIT == CSIDL_FLAG_PER_USER_INIT, "");
+
+                constexpr auto kWindows2KSupportCsidlFlags = CSIDL_FLAG_CREATE | CSIDL_FLAG_DONT_VERIFY | CSIDL_FLAG_DONT_UNEXPAND;
+                constexpr auto kWindowsXPSupportCsidlFlags = kWindows2KSupportCsidlFlags | CSIDL_FLAG_NO_ALIAS | CSIDL_FLAG_PER_USER_INIT;
+
+#if (YY_Thunks_Support_Version < NTDDI_WINXP)
+                if (internal::GetSystemVersion() < internal::MakeVersion(5, 1))
+                {
+                    return static_cast<int>(_uKnownFolderFlags) & kWindows2KSupportCsidlFlags;
+                }
+                else
+#endif
+                {
+                    return static_cast<int>(_uKnownFolderFlags) & kWindowsXPSupportCsidlFlags;
+                }
+            }
+
 			//Vista以后的Shell32.dll 有个 kfapi::GetFolderIdByCSIDL，我们可以根据它可以反推出出 下面的KnownFoldersIdToCSIDL
-			static int __fastcall KnownFoldersIdToCSIDL(const GUID& rfid)
+			static _Success_(return != -1) _Check_return_ int __fastcall KnownFoldersIdToCSIDL(const GUID& rfid)
 			{
 
 				constexpr static const KnownFoldersIdKey KnownFoldersIdsMap[] =
@@ -227,7 +257,7 @@ namespace YY
 				_Outptr_opt_ PCUITEMID_CHILD *ppidlLast
 				)
 			{
-				*ppv = nullptr;
+                *ppv = nullptr;
 				if (ppidlLast)
 					*ppidlLast = nullptr;
 
@@ -440,22 +470,34 @@ namespace YY
 			{
 				return pSHGetKnownFolderPath(rfid, dwFlags, hToken, ppszPath);
 			}
+            if (!ppszPath)
+            {
+                return E_POINTER;
+            }
+			*ppszPath = nullptr;
 
-			if (ppszPath)
-				*ppszPath = nullptr;
-
-			const auto csidl = internal::KnownFoldersIdToCSIDL(rfid);
-
-			if (csidl == -1)
+            const auto _iCsidl = internal::KnownFoldersIdToCSIDL(rfid);
+			if (_iCsidl == -1)
 			{
 				return __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 			}
+
+            const auto _iCsidlFlags = internal::KnownFolderFlagsToCsidlFlags(dwFlags);
+            if (_iCsidlFlags == -1)
+            {
+                return E_INVALIDARG;
+            }
 
 			auto pPathBuffer = (wchar_t*)CoTaskMemAlloc(MAX_PATH * sizeof(wchar_t));
 			if (!pPathBuffer)
 				return E_OUTOFMEMORY;
 
-			auto hr = SHGetFolderPathW(nullptr, csidl, hToken, dwFlags | csidl, pPathBuffer);
+			auto hr = SHGetFolderPathW(
+                nullptr,
+                _iCsidl | _iCsidlFlags,
+                hToken,
+                (KF_FLAG_DEFAULT_PATH & dwFlags) ? SHGFP_TYPE_DEFAULT : SHGFP_TYPE_CURRENT,
+                pPathBuffer);
 			if (hr != S_OK)
 			{
 				CoTaskMemFree(pPathBuffer);
@@ -463,7 +505,6 @@ namespace YY
 			}
 
 			*ppszPath = pPathBuffer;
-
 			return S_OK;
 		}
 #endif
@@ -490,14 +531,18 @@ namespace YY
 				return pSHSetKnownFolderPath(rfid, dwFlags, hToken, pszPath);
 			}
 
-			const auto csidl = internal::KnownFoldersIdToCSIDL(rfid);
-
-			if (csidl == -1)
+			const auto _iCsidl = internal::KnownFoldersIdToCSIDL(rfid);
+			if (_iCsidl == -1)
 			{
 				return __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 			}
+            const auto _iCsidlFlags = internal::KnownFolderFlagsToCsidlFlags(dwFlags);
+            if (_iCsidlFlags == -1)
+            {
+                return E_INVALIDARG;
+            }
 
-			return SHSetFolderPathW(csidl, hToken, dwFlags, pszPath);
+			return SHSetFolderPathW(_iCsidl | _iCsidlFlags, hToken, 0u, pszPath);
 		}
 #endif
 
@@ -522,15 +567,23 @@ namespace YY
 			{
 				return pSHGetKnownFolderIDList(rfid, dwFlags, hToken, ppidl);
 			}
+            if (!ppidl)
+            {
+                return E_POINTER;
+            }
+            *ppidl = nullptr;
 
-			const auto csidl = internal::KnownFoldersIdToCSIDL(rfid);
-
-			if (csidl == -1)
+			const auto _iCsidl = internal::KnownFoldersIdToCSIDL(rfid);
+			if (_iCsidl == -1)
 			{
 				return __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 			}
-
-			return SHGetFolderLocation(nullptr, csidl, hToken, dwFlags, ppidl);
+            const auto _iCsidlFlags = internal::KnownFolderFlagsToCsidlFlags(dwFlags);
+            if (_iCsidlFlags == -1)
+            {
+                return E_INVALIDARG;
+            }
+			return SHGetFolderLocation(nullptr, _iCsidl | _iCsidlFlags, hToken, 0u, ppidl);
 		}
 #endif
 

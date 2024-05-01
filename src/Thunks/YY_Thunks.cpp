@@ -159,10 +159,16 @@ namespace YY
 	{
 		namespace internal
 		{
-			__forceinline constexpr DWORD MakeVersion(DWORD _uMajorVersion, DWORD _uMinorVersion)
+			__forceinline constexpr DWORD __fastcall MakeVersion(_In_ DWORD _uMajorVersion, _In_ DWORD _uMinorVersion)
 			{
 				return (_uMajorVersion << 16) | _uMinorVersion;
 			}
+
+            __forceinline DWORD __fastcall GetSystemVersion()
+            {
+                const auto _pPeb = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock;
+                return internal::MakeVersion(_pPeb->OSMajorVersion, _pPeb->OSMinorVersion);
+            }
 
 			//代码块，分割任务
 			template<class Callback, typename... Params>

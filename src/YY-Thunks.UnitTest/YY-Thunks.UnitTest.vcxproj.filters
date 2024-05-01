@@ -69,6 +69,9 @@
     <ClCompile Include="weak.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="shell32.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
