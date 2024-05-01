@@ -80,4 +80,4 @@ YY-Thunks（鸭船），存在的目的就是抹平不同系统的差异，编�
 
 ## 更新日志
 
-请参阅 [Changelog.md](https://github.com/Chuyu-Team/YY-Thunks/wiki)
+请参阅 [releases 更新日志](https://github.com/Chuyu-Team/YY-Thunks/releases)

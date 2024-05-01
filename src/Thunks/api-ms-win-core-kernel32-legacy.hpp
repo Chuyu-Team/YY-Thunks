@@ -394,7 +394,7 @@ namespace YY
 		}
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
 		// 支持的最低客户端	Windows Vista [桌面应用程序 |UWP 应用]
 		// 支持的最低服务器	Windows Server 2008 [桌面应用程序 |UWP 应用]
@@ -410,7 +410,23 @@ namespace YY
 		{
 			if (const auto _pfnSetFileCompletionNotificationModes = try_get_SetFileCompletionNotificationModes())
 			{
-				return _pfnSetFileCompletionNotificationModes(FileHandle, Flags);
+#if (YY_Thunks_Support_Version >= NTDDI_WIN7)
+                return _pfnSetFileCompletionNotificationModes(FileHandle, Flags);
+#else // (YY_Thunks_Support_Version < NTDDI_WIN7)
+                if (_pfnSetFileCompletionNotificationModes(FileHandle, Flags))
+                {
+                    return TRUE;
+                }
+
+                if (GetLastError() == ERROR_ACCESS_DENIED && internal::GetSystemVersion() <= internal::MakeVersion(6, 0))
+                {
+                    // https://github.com/Chuyu-Team/YY-Thunks/issues/70
+                    // 特殊行为定制：Vista系统可能返回拒绝访问，为了不影响一些库的逻辑，直接返回TRUE。
+                    // 毕竟这个函数本身没有太重要的功能。
+                    return TRUE;
+                }
+                return FALSE;
+#endif // (YY_Thunks_Support_Version < NTDDI_WIN7)
 			}
 
 			// 初步看起来没有什么的，只是会降低完成端口的效率。
