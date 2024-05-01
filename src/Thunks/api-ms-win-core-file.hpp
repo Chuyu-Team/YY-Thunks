@@ -1242,10 +1242,7 @@ namespace YY
 		{
 			if (const auto _pfnFindFirstFileExW = try_get_FindFirstFileExW())
 			{
-				const auto _uMajorVersion = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->OSMajorVersion;
-				const auto _uMinorVersion = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->OSMinorVersion;
-
-				if (internal::MakeVersion(_uMajorVersion, _uMinorVersion) < internal::MakeVersion(6, 1))
+				if (internal::GetSystemVersion() < internal::MakeVersion(6, 1))
 				{
 					// dwAdditionalFlags : Windows 7开始才支持 FIND_FIRST_EX_LARGE_FETCH
 					dwAdditionalFlags &= (FIND_FIRST_EX_CASE_SENSITIVE | FIND_FIRST_EX_ON_DISK_ENTRIES_ONLY);
@@ -1282,10 +1279,7 @@ namespace YY
 		{
 			if (const auto _pfnFindFirstFileExA = try_get_FindFirstFileExA())
 			{
-				const auto _uMajorVersion = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->OSMajorVersion;
-				const auto _uMinorVersion = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->OSMinorVersion;
-
-				if (internal::MakeVersion(_uMajorVersion, _uMinorVersion) < internal::MakeVersion(6, 1))
+				if (internal::GetSystemVersion() < internal::MakeVersion(6, 1))
 				{
 					// dwAdditionalFlags : Windows 7开始才支持 FIND_FIRST_EX_LARGE_FETCH
 					dwAdditionalFlags &= (FIND_FIRST_EX_CASE_SENSITIVE | FIND_FIRST_EX_ON_DISK_ENTRIES_ONLY);

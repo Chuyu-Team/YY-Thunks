@@ -367,6 +367,7 @@ namespace YY
 
 			//由于不支持这个接口，所以系统版本必然是XP或者以下
 			OSVERSIONINFOEXW VersionInfo = { sizeof(VersionInfo) };
+            #pragma warning(suppress:4996 28159)
 			if (GetVersionExW((LPOSVERSIONINFOW)&VersionInfo))
 			{
 				if (VersionInfo.wSuiteMask & VER_SUITE_ENTERPRISE)

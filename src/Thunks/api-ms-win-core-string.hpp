@@ -274,10 +274,7 @@ namespace YY
             static int s_iStat = 0;
             if (s_iStat == 0)
             {
-                const auto _uMajorVersion = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->OSMajorVersion;
-                const auto _uMinorVersion = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->OSMinorVersion;
-
-                s_iStat = internal::MakeVersion(_uMajorVersion, _uMinorVersion) >= internal::MakeVersion(5, 1) ? 1 : -1;
+                s_iStat = internal::GetSystemVersion() >= internal::MakeVersion(5, 1) ? 1 : -1;
             }
             return s_iStat == 1;
         }
