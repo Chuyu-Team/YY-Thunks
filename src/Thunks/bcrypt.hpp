@@ -139,7 +139,7 @@ namespace YY
 		WINAPI,
 		BCryptGenRandom,
 			_In_opt_                        BCRYPT_ALG_HANDLE _hAlgorithm,
-			_Out_writes_bytes_(cbBuffer)    PUCHAR _pbBuffer,
+			_Out_writes_bytes_(_cbBuffer)   PUCHAR _pbBuffer,
 			_In_                            ULONG _cbBuffer,
 			_In_                            ULONG _fFlags
 			)

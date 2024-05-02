@@ -80,6 +80,11 @@
 | BCryptCloseAlgorithmProvider               | 内部实现。
 | BCryptGenRandom                            | 不存在时调用，RtlGenRandom。
 
+## bcryptprimitives.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| ProcessPrng                                | 不存在时调用，RtlGenRandom。
+
 ## bluetoothapis.dll
 | 函数                                       | Fallback
 | ----                                       | -----------

@@ -11,6 +11,7 @@
     _APPLY(version,                                      "version"                            , 0                 ) \
 	_APPLY(advapi32,                                     "advapi32"                           , 0                 ) \
 	_APPLY(bcrypt,                                       "bcrypt"                             , 0                 ) \
+	_APPLY(bcryptprimitives,                             "bcryptprimitives"                   , 0                 ) \
     _APPLY(user32,                                       "user32"                             , 0                 ) \
     _APPLY(ws2_32,                                       "ws2_32"                             , 0                 ) \
     _APPLY(shell32,                                      "shell32"                            , 0                 ) \
