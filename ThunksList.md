@@ -95,6 +95,14 @@
 | 函数                                       | Fallback
 | ----                                       | -----------
 | DwmEnableBlurBehindWindow                  | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
+| DwmIsCompositionEnabled                    | 不存在时，总是返回组合层已关闭。
+| DwmEnableComposition                       | 不存在时，如果尝试开启组合，那么返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用），其他情况返回 S_OK_。
+| DwmExtendFrameIntoClientArea               | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
+| DwmDefWindowProc                           | 不存在时，返回 FALSE。
+| DwmGetColorizationColor                    | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
+| DwmGetWindowAttribute                      | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
+| DwmSetWindowAttribute                      | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
+| DwmFlush                                   | 不存在时，返回 `S_OK_`。
 
 ## iphlpapi.dll
 | 函数                                       | Fallback
