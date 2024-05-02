@@ -239,6 +239,12 @@
     <ClInclude Include="..\Thunks\BCryptPrimitives.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
+    <ClInclude Include="..\Thunks\api-ms-win-core-processtopology.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\api-ms-win-core-xstate.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\def\x86\PSAPI2Kernel32.def">

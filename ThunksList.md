@@ -311,6 +311,14 @@
 | SetFileCompletionNotificationModes         | 不存在时，什么也不做。
 | GetQueuedCompletionStatusEx                | 不存在时，调用 GetQueuedCompletionStatus。
 | FindFirstFileEx(W/A)                       | Windows XP、Vista兼容 FIND_FIRST_EX_LARGE_FETCH、FindExInfoStandard参数。
+| GetProcessGroupAffinity                    | 不存在时，始终认为只有一组CPU。
+| QueryUnbiasedInterruptTime                 | 不存在时，调用QueryPerformanceCounter。
+| FindStringOrdinal                          | 不存在时，调用CompareStringOrdinal。
+| GetEnabledXStateFeatures                   | 不存在时，调用IsProcessorFeaturePresent。
+| SetXStateFeaturesMask                      | 不存在时，内部实现。
+| InitializeContext                          | 不存在时，内部实现。
+| InitializeContext2                         | 不存在时，调用InitializeContext。
+| LocateXStateFeature                        | 不存在时，内部实现。
 
 ## mfplat.dll
 | 函数                                       | Fallback
