@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="DotNET_Import_YY_Thunks_907ECCAB-58CA-4C11-B809-B53585C6BFE1" BeforeTargets="SetupOSSpecificProps">
+    <PropertyGroup>
+      <YY_Thunks_File></YY_Thunks_File>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(RuntimeIdentifier)'=='win-x64'">
+      <YY_Thunks_File Condition="'$(YY_Thunks_File)' == '' and $([MSBuild]::VersionGreaterThanOrEquals($(TargetPlatformMinVersion), 6.0))">x64\YY_Thunks_for_Vista.obj</YY_Thunks_File>
+      <YY_Thunks_File Condition="'$(YY_Thunks_File)' == ''">x64\YY_Thunks_for_WinXP.obj</YY_Thunks_File>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(RuntimeIdentifier)'=='win-x86'">
+      <YY_Thunks_File Condition="'$(YY_Thunks_File)' == '' and $([MSBuild]::VersionGreaterThanOrEquals($(TargetPlatformMinVersion), 6.0))">x86\YY_Thunks_for_Vista.obj</YY_Thunks_File>
+      <YY_Thunks_File Condition="'$(YY_Thunks_File)' == '' and $([MSBuild]::VersionGreaterThanOrEquals($(TargetPlatformMinVersion), 5.1))">x86\YY_Thunks_for_WinXP.obj</YY_Thunks_File>
+      <YY_Thunks_File Condition="'$(YY_Thunks_File)' == ''">x86\YY_Thunks_for_Win2K.obj</YY_Thunks_File>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(YY_Thunks_File)' != ''">
+      <LinkerArg Include="$(MSBuildThisFileDirectory)..\native\objs\$(YY_Thunks_File)" />
+    </ItemGroup>
+  </Target>
+</Project>

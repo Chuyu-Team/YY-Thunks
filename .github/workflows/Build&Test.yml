@@ -73,7 +73,7 @@ jobs:
               git fetch --depth=1 origin +refs/tags/*:refs/tags/*
 
               $releaseNotes = & git tag -l --format='%(contents)' $env:GITHUB_REF.Remove(0, 10)
-              $content = [System.IO.File]::ReadAllText("YY-Thunks.nuspec")
+              $content = [System.IO.File]::ReadAllText("NuGet\YY-Thunks.nuspec")
               
               # 使用此文本替换 .nuspec 中的 releaseNotes
               # [System.IO.File]::WriteAllText("YY-Thunks-New.nuspec", $content)

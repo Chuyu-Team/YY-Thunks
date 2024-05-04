@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>YY-Thunks</id>
@@ -17,11 +17,16 @@
     <copyright>Copyright 2021</copyright>
     <tags>Chuyu YY-Thunks native nativepackage</tags>
     <repository type="git" url="https://github.com/Chuyu-Team/YY-Thunks.git" branch="master" commit="$commit$" />
+    <dependencies>
+      <group targetFramework="native">
+      </group>
+      <group targetFramework="net8.0-windows7.0">
+      </group>
+    </dependencies>
   </metadata>
   <files>
     <file src=".\objs\**" target="build\native\objs" />
     <file src=".\Bin\MinimumRequiredVersionHelper.exe" target="build\native\Bin\MinimumRequiredVersionHelper.exe" />
-    <file src=".\YY-Thunks.targets" target="build\native\YY-Thunks.targets" />
-    <file src=".\YY-Thunks_ui_D5D733D3-8829-4509-9C74-021E5685ED18.xml" target="build\native\YY-Thunks_ui_D5D733D3-8829-4509-9C74-021E5685ED18.xml" />
+    <file src=".\NuGet\build\**\*" target="build\"/>
   </files>
 </package>
