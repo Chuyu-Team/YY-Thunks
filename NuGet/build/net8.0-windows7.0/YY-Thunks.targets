@@ -14,6 +14,11 @@
       <YY_Thunks_File Condition="'$(YY_Thunks_File)' == '' and $([MSBuild]::VersionGreaterThanOrEquals($(TargetPlatformMinVersion), 5.1))">x86\YY_Thunks_for_WinXP.obj</YY_Thunks_File>
       <YY_Thunks_File Condition="'$(YY_Thunks_File)' == ''">x86\YY_Thunks_for_Win2K.obj</YY_Thunks_File>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(LinkerSubsystem)'=='WINDOWS' or '$(LinkerSubsystem)'=='CONSOLE'">
+      <LinkerSubsystem Condition="'$(YY_Thunks_File)'=='x64\YY_Thunks_for_WinXP.obj'">$(LinkerSubsystem),5.02</LinkerSubsystem>
+      <!--微软的链接器无法设置 5.0，一般人应该也不需要兼容Windows 2K，先统一设置为Windows XP吧。-->
+      <LinkerSubsystem Condition="'$(YY_Thunks_File)'=='x86\YY_Thunks_for_WinXP.obj' or '$(YY_Thunks_File)'=='x86\YY_Thunks_for_Win2K.obj'">$(LinkerSubsystem),5.01</LinkerSubsystem>
+    </PropertyGroup>
     <ItemGroup Condition="'$(YY_Thunks_File)' != ''">
       <LinkerArg Include="$(MSBuildThisFileDirectory)..\native\objs\$(YY_Thunks_File)" />
     </ItemGroup>
