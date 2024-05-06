@@ -200,5 +200,148 @@
             return InitializeContext(Buffer, ContextFlags, Context, ContextLength);
         }
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
+
+        // 最低受支持的客户端	Windows 7 SP1 [仅限桌面应用]
+        // 最低受支持的服务器	Windows Server 2008 R2 SP1[仅限桌面应用]
+        __DEFINE_THUNK(
+        kernel32,
+        12,
+        BOOL,
+        WINAPI,
+        CopyContext,
+            _Inout_ PCONTEXT _pDestination,
+            _In_ DWORD _uContextFlags,
+            _In_ PCONTEXT _pSource
+            )
+        {
+            if (auto const _pfnCopyContext = try_get_CopyContext())
+            {
+                return _pfnCopyContext(_pDestination, _uContextFlags, _pSource);
+            }
+            
+#if defined(_X86_)
+            constexpr auto kThreadContext = CONTEXT_i386;
+
+#elif defined(_AMD64_)
+            constexpr auto kThreadContext = CONTEXT_AMD64;
+#else
+#error unknow OS.
+#endif
+            if ((_uContextFlags & kThreadContext) == 0)
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return FALSE;
+            }
+
+            if ((CONTEXT_XSTATE & _uContextFlags) == CONTEXT_XSTATE)
+            {
+                // internal::BaseSetLastNTError(0xC00000BB);
+                SetLastError(ERROR_NOT_SUPPORTED);
+                return FALSE;
+            }
+
+            if ((_pSource->ContextFlags & kThreadContext) == 0 || (_pDestination->ContextFlags & kThreadContext) == 0)
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return FALSE;
+            }
+
+            if ((CONTEXT_DEBUG_REGISTERS & _uContextFlags) == CONTEXT_DEBUG_REGISTERS && (CONTEXT_DEBUG_REGISTERS & _pSource->ContextFlags) == CONTEXT_DEBUG_REGISTERS)
+            {
+                _pDestination->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+                _pDestination->Dr0 = _pSource->Dr0;
+                _pDestination->Dr1 = _pSource->Dr1;
+                _pDestination->Dr2 = _pSource->Dr2;
+                _pDestination->Dr3 = _pSource->Dr3;
+                _pDestination->Dr6 = _pSource->Dr6;
+                _pDestination->Dr7 = _pSource->Dr7;
+#if defined(_AMD64_)
+                _pDestination->LastBranchToRip = _pSource->LastBranchToRip;
+                _pDestination->LastBranchFromRip = _pSource->LastBranchFromRip;
+                _pDestination->LastExceptionToRip = _pSource->LastExceptionToRip;
+                _pDestination->LastExceptionFromRip = _pSource->LastExceptionFromRip;
+#endif
+            }
+
+            if ((CONTEXT_FLOATING_POINT & _uContextFlags) == CONTEXT_FLOATING_POINT && (CONTEXT_FLOATING_POINT & _pSource->ContextFlags) == CONTEXT_FLOATING_POINT)
+            {
+                _pDestination->ContextFlags |= CONTEXT_FLOATING_POINT;
+#if defined(_X86_)
+                memcpy(&_pDestination->FloatSave, &_pSource->FloatSave, sizeof(_pSource->FloatSave));
+#elif defined(_AMD64_)
+                _pDestination->MxCsr = _pSource->MxCsr;
+                memcpy(&_pDestination->FltSave, &_pSource->FltSave, sizeof(_pSource->FltSave));
+#else
+#error unknow OS.
+#endif
+            }
+
+            if ((CONTEXT_SEGMENTS & _uContextFlags) == CONTEXT_SEGMENTS && (CONTEXT_SEGMENTS & _pSource->ContextFlags) == CONTEXT_SEGMENTS)
+            {
+                _pDestination->ContextFlags |= CONTEXT_SEGMENTS;
+                _pDestination->SegGs = _pSource->SegGs;
+                _pDestination->SegFs = _pSource->SegFs;
+                _pDestination->SegEs = _pSource->SegEs;
+                _pDestination->SegDs = _pSource->SegDs;
+            }
+
+            if ((CONTEXT_INTEGER & _uContextFlags) == CONTEXT_INTEGER && (CONTEXT_INTEGER & _pSource->ContextFlags) == CONTEXT_INTEGER)
+            {
+                _pDestination->ContextFlags |= CONTEXT_INTEGER;
+#if defined(_X86_)
+                _pDestination->Edi = _pSource->Edi;
+                _pDestination->Esi = _pSource->Esi;
+                _pDestination->Ebx = _pSource->Ebx;
+                _pDestination->Edx = _pSource->Edx;
+                _pDestination->Ecx = _pSource->Ecx;
+                _pDestination->Eax = _pSource->Eax;
+#elif defined(_AMD64_)
+                _pDestination->Rax = _pSource->Rax;
+                _pDestination->Rcx = _pSource->Rcx;
+                _pDestination->Rdx = _pSource->Rdx;
+                _pDestination->Rbx = _pSource->Rbx;
+                _pDestination->Rbp = _pSource->Rbp;
+                _pDestination->Rsi = _pSource->Rsi;
+                _pDestination->Rdi = _pSource->Rdi;
+                _pDestination->R8 = _pSource->R8;
+                _pDestination->R9 = _pSource->R9;
+                _pDestination->R10 = _pSource->R10;
+                _pDestination->R11 = _pSource->R11;
+                _pDestination->R12 = _pSource->R12;
+                _pDestination->R13 = _pSource->R13;
+                _pDestination->R14 = _pSource->R14;
+                _pDestination->R15 = _pSource->R15;
+#else
+#error unknow OS.
+#endif
+            }
+
+            if ((CONTEXT_CONTROL & _uContextFlags) == CONTEXT_CONTROL && (CONTEXT_CONTROL & _pSource->ContextFlags) == CONTEXT_CONTROL)
+            {
+                _pDestination->ContextFlags |= CONTEXT_CONTROL;
+#if defined(_X86_)
+                _pDestination->Ebp = _pSource->Ebp;
+                _pDestination->Eip = _pSource->Eip;
+                _pDestination->SegCs = _pSource->SegCs;
+                _pDestination->EFlags = _pSource->EFlags;
+                _pDestination->Esp = _pSource->Esp;
+                _pDestination->SegSs = _pSource->SegSs;
+#elif defined(_AMD64_)
+                _pDestination->SegCs = _pSource->SegCs;
+                _pDestination->SegSs = _pSource->SegSs;
+                _pDestination->EFlags = _pSource->EFlags;
+                _pDestination->Rsp = _pSource->Rsp;
+                _pDestination->Rip = _pSource->Rip;
+#else
+#error unknow OS.
+#endif
+            }
+
+            return TRUE;
+        }
+#endif
     }
 }

@@ -359,6 +359,190 @@ namespace YY
 				_pId->Data4[7] = (CharToHex(_szInput[34]) << 4) | (CharToHex(_szInput[35]) << 0);
 				return TRUE;
 			}
+
+            template<typename Char1, typename Char2>
+            static bool __fastcall StringStartsWithI(_In_z_ const Char1* _szStr, _In_z_ const Char2* _szStartsWith, _Outptr_opt_result_z_ const Char1** _szEnd = nullptr)
+            {
+                if (_szEnd)
+                    *_szEnd = _szStr;
+
+                if (_szStr == (Char1*)_szStartsWith)
+                    return true;
+
+                if (_szStr == nullptr)
+                    return false;
+                if (_szStartsWith == nullptr)
+                    return false;
+
+                for (; *_szStartsWith;++_szStr, ++_szStartsWith)
+                {
+                    if (*_szStr == *_szStartsWith)
+                    {
+                        continue;
+                    }
+                    else if (__ascii_tolower(*_szStr) == __ascii_tolower(*_szStartsWith))
+                    {
+                        continue;
+                    }
+
+                    return false;
+                }
+                if (_szEnd)
+                    *_szEnd = _szStr;
+                return true;
+            }
+
+            template<typename Char>
+            static bool __fastcall StringToUint32(_In_z_ const Char* _szStr, _Out_ DWORD* _puResult, _Outptr_opt_result_z_ Char const** _pszEnd = nullptr)
+            {
+                auto _szEnd = _szStr;
+
+                if (_pszEnd)
+                    *_pszEnd = _szEnd;
+
+                *_puResult = 0;
+  
+                DWORD64 _uResult64 = 0;
+                for (;;++_szEnd)
+                {
+                    if (*_szEnd <= '9' && *_szEnd >= '0')
+                    {
+                        _uResult64 *= 10;
+                        _uResult64 += *_szEnd - '0';
+
+                        // 溢出
+                        if (_uResult64 > 0xFFFFFFFFull)
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                if (_szStr == _szEnd)
+                    return false;
+
+                *_puResult = static_cast<DWORD>(_uResult64);
+                if (_pszEnd)
+                    *_pszEnd = _szEnd;
+                return true;
+            }
+
+
+            template<typename Char>
+            class StringBuffer
+            {
+            public:
+                Char* szBuffer;
+                size_t uLength;
+                size_t uBufferLength;
+
+                StringBuffer()
+                    : szBuffer(nullptr)
+                    , uLength(0)
+                    , uBufferLength(0)
+                {
+                }
+
+                StringBuffer(Char* _szBuffer, size_t _uBufferLength)
+                    : szBuffer(_szBuffer)
+                    , uLength(0)
+                    , uBufferLength(_uBufferLength)
+                {
+                    if (uBufferLength)
+                    {
+                        *szBuffer = '\0';
+                    }
+                }
+
+                StringBuffer(const StringBuffer&) = delete;
+
+                template<typename Char2>
+                bool __fastcall AppendString(_In_z_ const Char2* _szSrc)
+                {
+                    if (_szSrc == nullptr || *_szSrc == '\0')
+                        return true;
+
+                    if (uLength == uBufferLength)
+                        return false;
+
+                    for (auto _uLengthNew = uLength; _uLengthNew != uBufferLength; ++_uLengthNew, ++_szSrc)
+                    {
+                        szBuffer[_uLengthNew] = *_szSrc;
+                        if (*_szSrc == '\0')
+                        {
+                            uLength = _uLengthNew;
+                            return true;
+                        }
+                    }
+
+                    szBuffer[uLength] = '\0';
+                    return false;
+                }
+
+                template<typename Char2>
+                bool __fastcall AppendChar(_In_z_ Char2 _Ch)
+                {
+                    if (_Ch == '\0')
+                        return true;
+
+                    const auto _uNew = uLength + 1;
+                    if (_uNew >= uBufferLength)
+                        return false;
+                    szBuffer[uLength] = _Ch;
+                    szBuffer[_uNew] = '\0';
+                    uLength = _uNew;
+                    return true;
+                }
+
+                bool __fastcall AppendUint32(_In_ DWORD _uAppdendData)
+                {
+                    if (uLength == uBufferLength)
+                        return false;
+
+                    auto _uLengthNew = uLength;
+                    for(; _uLengthNew != uBufferLength;)
+                    {
+                        const auto _uData = _uAppdendData % 10;
+                        _uAppdendData /= 10;
+
+                        szBuffer[_uLengthNew] = static_cast<Char>('0' + _uData);
+                        ++_uLengthNew;
+                        if (_uAppdendData == 0)
+                        {
+                            if (_uLengthNew == uBufferLength)
+                            {
+                                break;
+                            }
+                            szBuffer[_uLengthNew] = '\0';
+                            auto _szStart = szBuffer + uLength;
+                            auto _szLast = szBuffer + _uLengthNew;
+
+                            for (; _szStart < _szLast;)
+                            {
+                                --_szLast;
+                                const auto _ch = *_szLast;
+                                *_szLast = *_szStart;
+                                *_szStart = _ch;
+
+                                ++_szStart;
+                            }
+                            uLength = _uLengthNew;
+                            return true;
+                        }
+                    }
+
+                    *szBuffer = '\0';
+                    return false;
+                }
+            };
+
+
+
+
 		}
 	}//namespace Thunks
 

@@ -1078,6 +1078,84 @@ namespace YY
 			return TRUE;
 		}
 #endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		// 最低受支持的客户端	Windows 7 [桌面应用 |UWP 应用]
+        // 最低受支持的服务器	Windows Server 2008 R2[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		12,
+		BOOL,
+        WINAPI,
+        SetThreadIdealProcessorEx,
+            _In_ HANDLE _hThread,
+            _In_ PPROCESSOR_NUMBER _pIdealProcessor,
+            _Out_opt_ PPROCESSOR_NUMBER _pPreviousIdealProcessor
+			)
+		{
+			if (const auto _pfnSetThreadIdealProcessorEx = try_get_SetThreadIdealProcessorEx())
+			{
+				return _pfnSetThreadIdealProcessorEx(_hThread, _pIdealProcessor, _pPreviousIdealProcessor);
+			}
+
+            // 不支持的平台统一认为只有一组处理器
+            // 微软这里就没有检查 _pIdealProcessor
+            if (_pIdealProcessor->Group != 0 || _pIdealProcessor->Number >= MAXIMUM_PROCESSORS)
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return FALSE;
+            }
+
+            const auto _uPreviousIdealProcessor = SetThreadIdealProcessor(_hThread, _pIdealProcessor->Number);
+            if (_uPreviousIdealProcessor == static_cast<DWORD>(-1))
+            {
+                return FALSE;
+            }
+
+            if (_pPreviousIdealProcessor)
+            {
+                _pPreviousIdealProcessor->Group = 0;
+                _pPreviousIdealProcessor->Number = _uPreviousIdealProcessor;
+                _pPreviousIdealProcessor->Reserved = 0;
+            }
+            return TRUE;
+        }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+		// 最低受支持的客户端	Windows 7 [桌面应用 |UWP 应用]
+        // 最低受支持的服务器	Windows Server 2008 R2[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+        WINAPI,
+        GetThreadIdealProcessorEx,
+            _In_ HANDLE _hThread,
+            _Out_ PPROCESSOR_NUMBER _pIdealProcessor
+			)
+		{
+			if (const auto _pfnGetThreadIdealProcessorEx = try_get_GetThreadIdealProcessorEx())
+			{
+				return _pfnGetThreadIdealProcessorEx(_hThread, _pIdealProcessor);
+			}
+            
+            // 不支持的平台统一认为只有一组处理器
+            const auto _uPreviousIdealProcessor = SetThreadIdealProcessor(_hThread, MAXIMUM_PROCESSORS);
+            if (_uPreviousIdealProcessor == static_cast<DWORD>(-1))
+            {
+                return FALSE;
+            }
+
+            _pIdealProcessor->Group = 0;
+            _pIdealProcessor->Number = _uPreviousIdealProcessor;
+            _pIdealProcessor->Reserved = 0;
+            return TRUE;
+        }
+#endif
 	}//namespace Thunks
 
 } //namespace YY

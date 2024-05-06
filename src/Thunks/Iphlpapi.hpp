@@ -143,6 +143,55 @@ namespace YY
 			return _lStatus;
 		}
 
+        struct IfTypeToNameItem
+        {
+            IFTYPE uType;
+            const char* szName;
+        };
+
+        static const IfTypeToNameItem(&GetIfTypeMapItems(void))[9]
+        {
+            static const IfTypeToNameItem s_Map[] =
+            {
+                {IF_TYPE_OTHER, "other"},
+                {IF_TYPE_ETHERNET_CSMACD, "ethernet"},
+                {IF_TYPE_ISO88025_TOKENRING, "tokenring"},
+                {IF_TYPE_PPP, "ppp"},
+                {IF_TYPE_SOFTWARE_LOOPBACK, "loopback"},
+                {IF_TYPE_ATM, "atm"},
+                {IF_TYPE_IEEE80211, "wireless"},
+                {IF_TYPE_TUNNEL, "tunnel"},
+                {IF_TYPE_IEEE1394, "ieee1394"},
+            };
+
+            return s_Map;
+        }
+
+        static const char* __fastcall GetAnsiNameFormeIndex(IFTYPE _uType)
+        {
+            auto& _Map = GetIfTypeMapItems();
+
+            int bottom = 0;
+            int top = _countof(_Map) - 1;
+
+            while (bottom <= top)
+            {
+                int middle = (bottom + top) / 2;
+                int testIndex = _uType - _Map[middle].uType;
+
+                if (testIndex == 0)
+                {
+                    return _Map[middle].szName;
+                }
+
+                if (testIndex < 0)
+                    top = middle - 1;
+                else
+                    bottom = middle + 1;
+            }
+
+            return "other";
+        }
 #endif // (YY_Thunks_Support_Version < NTDDI_WIN6)
 #endif // !YY_Thunks_Implemented
 		
@@ -245,7 +294,7 @@ namespace YY
 			// 忽略Level，理论上说 多取了 Statistics信息也没有太大影响。
 			UNREFERENCED_PARAMETER(_eLevel);
 
-			return GetIfEntry2(_pRow);
+			return ::GetIfEntry2(_pRow);
 		}
 #endif
 
@@ -273,6 +322,346 @@ namespace YY
 				HeapFree(_hProcessHeap, 0, _pMemory);
 			}
 		}
+#endif
+
+        
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
+		// 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		iphlpapi,
+		8,
+		DWORD,
+        NETIOAPI_API_,
+        ConvertInterfaceIndexToLuid,
+            _In_ NET_IFINDEX InterfaceIndex,
+            _Out_ PNET_LUID InterfaceLuid
+            )
+		{
+			if (const auto _pfnConvertInterfaceIndexToLuid = try_get_ConvertInterfaceIndexToLuid())
+			{
+				return _pfnConvertInterfaceIndexToLuid(InterfaceIndex, InterfaceLuid);
+			}
+            
+            MIB_IFROW _IfRow;
+            _IfRow.dwIndex = InterfaceIndex;
+            auto _lStatus = GetIfEntry(&_IfRow);
+            if (_lStatus != ERROR_SUCCESS)
+            {
+                return _lStatus;
+            }
+
+            // 使用 InterfaceIndex 假冒 LuidIndex
+            InterfaceLuid->Info.IfType = _IfRow.dwType;
+            InterfaceLuid->Info.NetLuidIndex = InterfaceIndex;
+            InterfaceLuid->Info.Reserved = 0;
+            return ERROR_SUCCESS;
+        }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [仅限桌面应用]
+        // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+		__DEFINE_THUNK(
+		iphlpapi,
+		12,
+		DWORD,
+        NETIOAPI_API_,
+        ConvertInterfaceLuidToNameA,
+            _In_ CONST NET_LUID* InterfaceLuid,
+            _Out_writes_(Length) PSTR InterfaceName,
+            _In_ SIZE_T Length
+            )
+		{
+			if (const auto _pfnConvertInterfaceLuidToNameA = try_get_ConvertInterfaceLuidToNameA())
+			{
+				return _pfnConvertInterfaceLuidToNameA(InterfaceLuid, InterfaceName, Length);
+			}
+
+            internal::StringBuffer<char> _StringBuffer(InterfaceName, Length);
+            if (!_StringBuffer.AppendString(GetAnsiNameFormeIndex(InterfaceLuid->Info.IfType)))
+            {
+                return ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            if (!_StringBuffer.AppendChar('_'))
+            {
+                return ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            if (!_StringBuffer.AppendUint32(InterfaceLuid->Info.NetLuidIndex))
+            {
+                return ERROR_NOT_ENOUGH_MEMORY;
+            }
+            return ERROR_SUCCESS;
+        }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+		// 最低受支持的客户端	Windows Vista [仅限桌面应用]
+        // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+		__DEFINE_THUNK(
+		iphlpapi,
+		12,
+		DWORD,
+        NETIOAPI_API_,
+        ConvertInterfaceLuidToNameW,
+            _In_ CONST NET_LUID* InterfaceLuid,
+            _Out_writes_(Length) PWSTR InterfaceName,
+            _In_ SIZE_T Length
+            )
+		{
+			if (const auto _pfnConvertInterfaceLuidToNameW = try_get_ConvertInterfaceLuidToNameW())
+			{
+				return _pfnConvertInterfaceLuidToNameW(InterfaceLuid, InterfaceName, Length);
+			}
+
+            internal::StringBuffer<wchar_t> _StringBuffer(InterfaceName, Length);
+            if (!_StringBuffer.AppendString(GetAnsiNameFormeIndex(InterfaceLuid->Info.IfType)))
+            {
+                return ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            if (!_StringBuffer.AppendChar('_'))
+            {
+                return ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            if (!_StringBuffer.AppendUint32(InterfaceLuid->Info.NetLuidIndex))
+            {
+                return ERROR_NOT_ENOUGH_MEMORY;
+            }
+            return ERROR_SUCCESS;
+        }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [仅限桌面应用]
+        // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+		__DEFINE_THUNK(
+		iphlpapi,
+		8,
+		DWORD,
+        NETIOAPI_API_,
+        ConvertInterfaceNameToLuidA,
+            _In_z_ CONST CHAR* InterfaceName,
+            _Out_ NET_LUID* InterfaceLuid
+            )
+		{
+			if (const auto _pfnConvertInterfaceNameToLuidA = try_get_ConvertInterfaceNameToLuidA())
+			{
+				return _pfnConvertInterfaceNameToLuidA(InterfaceName, InterfaceLuid);
+			}
+
+            auto& _Map = GetIfTypeMapItems();
+
+            IFTYPE _uType = 0;
+            DWORD _uIfIndex;
+
+            for (auto& _Item : _Map)
+            {
+                const char* _szEnd;
+                if (internal::StringStartsWithI(InterfaceName, _Item.szName, &_szEnd))
+                {
+                    if (*_szEnd == '_')
+                    {
+                        ++_szEnd;
+                        if (internal::StringToUint32(_szEnd, &_uIfIndex, &_szEnd) && *_szEnd == '\0')
+                        {
+                            _uType = _Item.uType;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (_uType == 0)
+            {
+                return ERROR_INVALID_PARAMETER;
+            }
+
+            InterfaceLuid->Info.IfType = _uType;
+            InterfaceLuid->Info.NetLuidIndex = _uIfIndex;
+            InterfaceLuid->Info.Reserved = 0;
+            return ERROR_SUCCESS;
+        }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [仅限桌面应用]
+        // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+		__DEFINE_THUNK(
+		iphlpapi,
+		8,
+		DWORD,
+        NETIOAPI_API_,
+        ConvertInterfaceNameToLuidW,
+            _In_z_ CONST WCHAR* InterfaceName,
+            _Out_ NET_LUID* InterfaceLuid
+            )
+		{
+			if (const auto _pfnConvertInterfaceNameToLuidW = try_get_ConvertInterfaceNameToLuidW())
+			{
+				return _pfnConvertInterfaceNameToLuidW(InterfaceName, InterfaceLuid);
+			}
+
+            auto& _Map = GetIfTypeMapItems();
+
+            IFTYPE _uType = 0;
+            DWORD _uIfIndex;
+
+            for (auto& _Item : _Map)
+            {
+                const WCHAR* _szEnd;
+                if (internal::StringStartsWithI(InterfaceName, _Item.szName, &_szEnd))
+                {
+                    if (*_szEnd == '_')
+                    {
+                        ++_szEnd;
+                        if (internal::StringToUint32(_szEnd, &_uIfIndex, &_szEnd) && *_szEnd == '\0')
+                        {
+                            _uType = _Item.uType;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (_uType == 0)
+            {
+                return ERROR_INVALID_PARAMETER;
+            }
+
+            InterfaceLuid->Info.IfType = _uType;
+            InterfaceLuid->Info.NetLuidIndex = _uIfIndex;
+            InterfaceLuid->Info.Reserved = 0;
+            return ERROR_SUCCESS;
+        }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
+		// 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		iphlpapi,
+		4,
+		NET_IFINDEX,
+        NETIOAPI_API_,
+        if_nametoindex,
+            _In_ PCSTR _szInterfaceName
+            )
+		{
+			if (const auto _pfnif_nametoindex = try_get_if_nametoindex())
+			{
+				return _pfnif_nametoindex(_szInterfaceName);
+			}
+
+            auto& _Map = GetIfTypeMapItems();
+
+            IFTYPE _uType = 0;
+            MIB_IFROW _IfRow;
+
+            for (auto& _Item : _Map)
+            {
+                const char* _szEnd;
+                if (internal::StringStartsWithI(_szInterfaceName, _Item.szName, &_szEnd))
+                {
+                    if (*_szEnd == '_')
+                    {
+                        ++_szEnd;
+                        if (internal::StringToUint32(_szEnd, &_IfRow.dwIndex, &_szEnd) && *_szEnd == '\0')
+                        {
+                            _uType = _Item.uType;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (_uType == 0)
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return 0;
+            }
+
+            auto _lStatus = GetIfEntry(&_IfRow);
+            if (_lStatus != ERROR_SUCCESS)
+            {
+                SetLastError(_lStatus);
+                return 0;
+            }
+
+            if (_IfRow.dwType == _uType)
+            {
+                return _IfRow.dwIndex;
+            }
+            else if (_uType == IF_TYPE_OTHER)
+            {
+                for (auto& _Item : _Map)
+                {
+                    if (_Item.uType == _IfRow.dwType)
+                    {
+                        SetLastError(ERROR_INVALID_PARAMETER);
+                        return 0;
+                    }
+                }
+
+                return _IfRow.dwIndex;
+            }
+            
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return 0;
+		}
+#endif
+
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
+		// 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		iphlpapi,
+		8,
+		PCHAR,
+        NETIOAPI_API_,
+        if_indextoname,
+            _In_ NET_IFINDEX InterfaceIndex,
+            _Out_writes_(IF_NAMESIZE) PCHAR InterfaceName
+            )
+		{
+			if (const auto _pfnif_indextoname = try_get_if_indextoname())
+			{
+				return _pfnif_indextoname(InterfaceIndex, InterfaceName);
+			}
+
+            InterfaceName[0] = '\0';
+            NET_LUID InterfaceLuid;
+            auto _lStatus = ::ConvertInterfaceIndexToLuid(InterfaceIndex, &InterfaceLuid);
+            if (_lStatus != ERROR_SUCCESS)
+            {
+                SetLastError(_lStatus);
+                return nullptr;
+            }
+
+            _lStatus = ::ConvertInterfaceLuidToNameA(&InterfaceLuid, InterfaceName, IF_NAMESIZE);
+            if (_lStatus != ERROR_SUCCESS)
+            {
+                SetLastError(_lStatus);
+                return nullptr;
+            }
+            return InterfaceName;
+        }
 #endif
 	}
 }

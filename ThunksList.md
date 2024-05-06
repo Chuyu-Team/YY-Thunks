@@ -72,6 +72,14 @@
 | RegGetValueW(A)                            | 不存在时，调用RegQueryValueExW(A)。
 | RegCopyTreeW(A)                            | 不存在时，调用SHCopyKeyW(A)。
 | EventSetInformation                        | 不存在时，返回ERROR_NOT_SUPPORTED。
+| EventActivityIdControl                     | 不存在时，返回ERROR_NOT_SUPPORTED。
+| EventRegister                              | 不存在时，返回ERROR_NOT_SUPPORTED。
+| EventUnregister                            | 不存在时，返回ERROR_NOT_SUPPORTED。
+| EnumerateTraceGuidsEx                      | 不存在时，返回ERROR_NOT_SUPPORTED。
+| EventEnabled                               | 不存在时，返回ERROR_NOT_SUPPORTED。
+| EventWrite                                 | 不存在时，返回ERROR_NOT_SUPPORTED。
+| EventWriteTransfer                         | 不存在时，返回ERROR_NOT_SUPPORTED。
+| EventWriteEx                               | 不存在时，调用EventWriteTransfer。
 
 ## bcrypt.dll
 | 函数                                       | Fallback
@@ -112,11 +120,16 @@
 ## iphlpapi.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
-| GetIfTable2                                | 不存在时调用，GetIfTable，并使用HeapAlloc申请内存。
-| GetIfTable2Ex                              | 不存在时调用，GetIfTable，并使用HeapAlloc申请内存。
-| GetIfEntry2                                | 不存在时调用，GetIfEntry。
-| GetIfEntry2Ex                              | 不存在时调用，GetIfEntry2。
-| FreeMibTable                               | 不存在时调用，HeapFree。
+| GetIfTable2                                | 不存在时，调用GetIfTable，并使用HeapAlloc申请内存。
+| GetIfTable2Ex                              | 不存在时，调用GetIfTable，并使用HeapAlloc申请内存。
+| GetIfEntry2                                | 不存在时，调用GetIfEntry。
+| GetIfEntry2Ex                              | 不存在时，调用GetIfEntry2。
+| FreeMibTable                               | 不存在时，调用HeapFree。
+| ConvertInterfaceIndexToLuid                | 不存在时，调用GetIfEntry。
+| ConvertInterfaceLuidToNameW(A)             | 不存在时，内部实现。
+| ConvertInterfaceNameToLuidW(A)             | 不存在时，内部实现。
+| if_nametoindex                             | 不存在时，调用GetIfEntry。
+| if_indextoname                             | 不存在时，调用ConvertInterfaceIndexToLuid、ConvertInterfaceLuidToNameA。
 
 ## kernel32.dll
 | 函数                                       | Fallback
@@ -176,6 +189,7 @@
 | K32GetPerformanceInfo                      | 调用GetPerformanceInfo。
 | K32EnumPageFilesW(A)                       | 调用EnumPageFilesW(A)。
 | K32GetProcessImageFileNameW(A)             | 调用GetProcessImageFileNameW(A)。
+| K32GetProcessMemoryInfo                    | 调用GetProcessMemoryInfo。
 | QueryFullProcessImageNameW(A)              | 不存在时，调用GetProcessImageFileNameW(A) 或者 GetModuleFileNameExW(A)。
 | CreateFile2                                | 不存在时，调用CreateFileW。
 | CreateEventExW(A)                          | 不存在时，调用CreateEventW(A)。
@@ -319,6 +333,9 @@
 | InitializeContext                          | 不存在时，内部实现。
 | InitializeContext2                         | 不存在时，调用InitializeContext。
 | LocateXStateFeature                        | 不存在时，内部实现。
+| CopyContext                                | 不存在时，内部实现。
+| SetThreadIdealProcessorEx                  | 不存在时，调用SetThreadIdealProcessor。
+| GetThreadIdealProcessorEx                  | 不存在时，调用SetThreadIdealProcessor。
 
 ## mfplat.dll
 | 函数                                       | Fallback
