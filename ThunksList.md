@@ -197,6 +197,8 @@
 | K32EnumPageFilesW(A)                       | 调用EnumPageFilesW(A)。
 | K32GetProcessImageFileNameW(A)             | 调用GetProcessImageFileNameW(A)。
 | K32GetProcessMemoryInfo                    | 调用GetProcessMemoryInfo。
+| K32EnumProcesses                           | 调用EnumProcesses。
+| K32GetModuleInformation                    | 调用GetModuleInformation。
 | QueryFullProcessImageNameW(A)              | 不存在时，调用GetProcessImageFileNameW(A) 或者 GetModuleFileNameExW(A)。
 | CreateFile2                                | 不存在时，调用CreateFileW。
 | CreateEventExW(A)                          | 不存在时，调用CreateEventW(A)。
@@ -348,6 +350,8 @@
 | GetCalendarInfoEx                          | 不存在时，调用GetCalendarInfoW。
 | GetNLSVersionEx                            | 不存在时，返回一个假版本。
 | IsNLSDefinedString                         | 不存在时，调用GetStringTypeW。
+| SetProcessWorkingSetSizeEx                 | 不存在时，调用SetProcessWorkingSetSize。
+| GetProcessWorkingSetSizeEx                 | 不存在时，调用GetProcessWorkingSetSize。
 
 ## mfplat.dll
 | 函数                                       | Fallback

@@ -573,5 +573,58 @@ namespace YY
 			return TRUE;
 		}
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
+
+		// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+        // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+        BOOL,
+        WINAPI,
+        SetProcessWorkingSetSizeEx,
+            _In_ HANDLE _hProcess,
+            _In_ SIZE_T _uMinimumWorkingSetSize,
+            _In_ SIZE_T _uMaximumWorkingSetSize,
+            _In_ DWORD _fFlags
+			)
+		{
+			if (const auto _pfnSetProcessWorkingSetSizeEx = try_get_SetProcessWorkingSetSizeEx())
+			{
+				return _pfnSetProcessWorkingSetSizeEx(_hProcess, _uMinimumWorkingSetSize, _uMaximumWorkingSetSize, _fFlags);
+			}
+            
+			return SetProcessWorkingSetSize(_hProcess, _uMinimumWorkingSetSize, _uMaximumWorkingSetSize);
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WS03)
+
+		// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+        // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+        BOOL,
+        WINAPI,
+        GetProcessWorkingSetSizeEx,
+            _In_ HANDLE _hProcess,
+            _Out_ PSIZE_T _puMinimumWorkingSetSize,
+            _Out_ PSIZE_T _puMaximumWorkingSetSize,
+            _Out_ PDWORD _pfFlags
+			)
+		{
+			if (const auto _pfnGetProcessWorkingSetSizeEx = try_get_GetProcessWorkingSetSizeEx())
+			{
+				return _pfnGetProcessWorkingSetSizeEx(_hProcess, _puMinimumWorkingSetSize, _puMaximumWorkingSetSize, _pfFlags);
+			}
+            
+            *_pfFlags = 0;
+			return GetProcessWorkingSetSize(_hProcess, _puMinimumWorkingSetSize, _puMaximumWorkingSetSize);
+		}
+#endif
 	}
 }
