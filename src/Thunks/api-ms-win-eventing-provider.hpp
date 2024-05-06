@@ -241,5 +241,30 @@ namespace YY
 			return ::EventWriteTransfer(RegHandle, EventDescriptor, ActivityId, RelatedActivityId, UserDataCount, UserData);
 		}
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+        // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		advapi32,
+		24,
+        ULONG,
+        WINAPI,
+        EventWriteString,
+            _In_ REGHANDLE RegHandle,
+            _In_ UCHAR Level,
+            _In_ ULONGLONG Keyword,
+            _In_ PCWSTR String
+			)
+		{
+			if (auto const _pfnEventWriteString = try_get_EventWriteString())
+			{
+				return _pfnEventWriteString(RegHandle, Level, Keyword, String);
+			}
+            return ERROR_NOT_SUPPORTED;
+		}
+#endif
 	}
 }

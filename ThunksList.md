@@ -80,6 +80,7 @@
 | EventWrite                                 | 不存在时，返回ERROR_NOT_SUPPORTED。
 | EventWriteTransfer                         | 不存在时，返回ERROR_NOT_SUPPORTED。
 | EventWriteEx                               | 不存在时，调用EventWriteTransfer。
+| EventWriteString                           | 不存在时，返回ERROR_NOT_SUPPORTED。
 
 ## bcrypt.dll
 | 函数                                       | Fallback
@@ -103,6 +104,12 @@
 | BluetoothGATTRegisterEvent                 | 不存在时，返回ERROR_NOT_SUPPORTED。
 | BluetoothGATTSetCharacteristicValue        | 不存在时，返回ERROR_NOT_SUPPORTED。
 | BluetoothGATTSetDescriptorValue            | 不存在时，返回ERROR_NOT_SUPPORTED。
+
+## Crypt32.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| CryptProtectMemory                         | 不存在时，返回TRUE。
+| CryptUnprotectMemory                       | 不存在时，返回TRUE。
 
 ## dwmapi.dll
 | 函数                                       | Fallback
@@ -336,6 +343,11 @@
 | CopyContext                                | 不存在时，内部实现。
 | SetThreadIdealProcessorEx                  | 不存在时，调用SetThreadIdealProcessor。
 | GetThreadIdealProcessorEx                  | 不存在时，调用SetThreadIdealProcessor。
+| GetUserPreferredUILanguages                | 不存在时，调用GetThreadPreferredUILanguages。
+| EnumTimeFormatsEx                          | 不存在时，调用EnumTimeFormatsW。
+| GetCalendarInfoEx                          | 不存在时，调用GetCalendarInfoW。
+| GetNLSVersionEx                            | 不存在时，返回一个假版本。
+| IsNLSDefinedString                         | 不存在时，调用GetStringTypeW。
 
 ## mfplat.dll
 | 函数                                       | Fallback

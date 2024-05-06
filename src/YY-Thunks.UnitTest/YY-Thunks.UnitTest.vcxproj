@@ -206,6 +206,7 @@
     <ClInclude Include="..\Thunks\bcrypt.hpp" />
     <ClInclude Include="..\Thunks\BCryptPrimitives.hpp" />
     <ClInclude Include="..\Thunks\bluetoothapis.hpp" />
+    <ClInclude Include="..\Thunks\Crypt32.hpp" />
     <ClInclude Include="..\Thunks\dwmapi.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-powermanagement.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-window.hpp" />
