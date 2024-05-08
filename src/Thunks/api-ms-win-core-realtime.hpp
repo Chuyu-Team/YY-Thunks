@@ -108,24 +108,9 @@ namespace YY
                 return FALSE;
             }
 
-            // 使用中断时间模拟非中断时间，先合凑合吧……
-            static LARGE_INTEGER _Frequency;
-            if (_Frequency.QuadPart == 0ll)
-            {
-                if (!QueryPerformanceFrequency(&_Frequency))
-                {
-                    return FALSE;
-                }
-            }
-
-            LARGE_INTEGER _PerformanceCount;
-            if (!QueryPerformanceCounter(&_PerformanceCount))
-            {
-                return FALSE;
-            }
-
-            // 单位需要转换到 100纳秒
-            *_puUnbiasedTime = _PerformanceCount.QuadPart * 1'000'000'0 / _Frequency.QuadPart;
+            //USER_SHARED_DATA
+            const ULONGLONG uUnbiasedTime = *((PULONGLONG)0x7ffe0008);           
+            *_puUnbiasedTime = uUnbiasedTime;   
             return TRUE;
         }
 #endif
