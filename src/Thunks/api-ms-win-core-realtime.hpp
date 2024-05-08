@@ -1,10 +1,27 @@
-﻿
+﻿ 
 
 namespace YY
 {
 	namespace Thunks
 	{
+#if !defined(_USER_SHARED_DATA_LITE_DEFINED)
+#define _USER_SHARED_DATA_LITE_DEFINED 1
+typedef struct _KSYSTEM_TIME_LITE 
+{
+	ULONG LowPart;
+	LONG High1Time;
+	LONG High2Time;
+} KSYSTEM_TIME_LITE, *PKSYSTEM_TIME_LITE;
 
+typedef struct _KUSER_SHARED_DATA_LITE 
+{
+	ULONG TickCountLowDeprecated;
+	ULONG TickCountMultiplier;
+	volatile KSYSTEM_TIME_LITE InterruptTime;
+	volatile KSYSTEM_TIME_LITE SystemTime;
+	volatile KSYSTEM_TIME_LITE TimeZoneBias;
+} KUSER_SHARED_DATA_LITE, *PKUSER_SHARED_DATA_LITE;
+#endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -108,9 +125,20 @@ namespace YY
                 return FALSE;
             }
 
-            //USER_SHARED_DATA
-            const ULONGLONG uUnbiasedTime = *((PULONGLONG)0x7ffe0008);           
-            *_puUnbiasedTime = uUnbiasedTime;   
+            //Read InterruptTime from SharedUserData at address 0x7ffe0000;
+            ULONG HighPart = 0, LowPart = 0;
+            const PKUSER_SHARED_DATA_LITE SharedUserData = (PKUSER_SHARED_DATA_LITE)0x7ffe0000;
+
+            while (TRUE) 
+            {
+                HighPart = SharedUserData->InterruptTime.High1Time;
+                LowPart = SharedUserData->InterruptTime.LowPart;
+                if (HighPart == SharedUserData->InterruptTime.High2Time) 
+                {
+                  break;
+                }
+            }
+            *_puUnbiasedTime = (ULONGLONG)HighPart << 32 | LowPart;
             return TRUE;
         }
 #endif
