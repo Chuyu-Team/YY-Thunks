@@ -2087,7 +2087,8 @@ namespace YY
 				}
 
 				//让字符串正常截断
-				pwszLanguagesBuffer[0] = L'\0';
+                if(pwszLanguagesBuffer)
+				    pwszLanguagesBuffer[0] = L'\0';
 				if(cchLanguagesBuffer >= 2)
 					pwszLanguagesBuffer[1] = L'\0';
 
