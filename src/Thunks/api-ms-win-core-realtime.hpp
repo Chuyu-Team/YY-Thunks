@@ -1,10 +1,29 @@
-﻿
+﻿ 
 
 namespace YY
 {
 	namespace Thunks
 	{
+#if (YY_Thunks_Support_Version < NTDDI_WIN7) && defined(YY_Thunks_Implemented)
+        static VOID WINAPI QueryInterruptTimeDownlevel(
+            _Out_ PULONGLONG _puInterruptTime
+			)
+		{
+            ULARGE_INTEGER _uInterruptTime;
+            while (true)
+            {
+                _uInterruptTime.HighPart = SharedUserData->InterruptTime.High1Time;
+                _uInterruptTime.LowPart = SharedUserData->InterruptTime.LowPart;
+                if (_uInterruptTime.HighPart == SharedUserData->InterruptTime.High2Time)
+                {
+                    break;
+                }
 
+                YieldProcessor();
+            }
+            *_puInterruptTime = _uInterruptTime.QuadPart;
+        }
+#endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -108,24 +127,8 @@ namespace YY
                 return FALSE;
             }
 
-            // 使用中断时间模拟非中断时间，先合凑合吧……
-            static LARGE_INTEGER _Frequency;
-            if (_Frequency.QuadPart == 0ll)
-            {
-                if (!QueryPerformanceFrequency(&_Frequency))
-                {
-                    return FALSE;
-                }
-            }
-
-            LARGE_INTEGER _PerformanceCount;
-            if (!QueryPerformanceCounter(&_PerformanceCount))
-            {
-                return FALSE;
-            }
-
-            // 单位需要转换到 100纳秒
-            *_puUnbiasedTime = _PerformanceCount.QuadPart * 1'000'000'0 / _Frequency.QuadPart;
+            // 用中断时间模拟非中断时间，凑合一下吧。
+            QueryInterruptTimeDownlevel(_puUnbiasedTime);
             return TRUE;
         }
 #endif

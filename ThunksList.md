@@ -335,7 +335,7 @@
 | GetQueuedCompletionStatusEx                | 不存在时，调用 GetQueuedCompletionStatus。
 | FindFirstFileEx(W/A)                       | Windows XP、Vista兼容 FIND_FIRST_EX_LARGE_FETCH、FindExInfoStandard参数。
 | GetProcessGroupAffinity                    | 不存在时，始终认为只有一组CPU。
-| QueryUnbiasedInterruptTime                 | 不存在时，调用QueryPerformanceCounter。
+| QueryUnbiasedInterruptTime                 | 不存在时，读取KUSER_SHARED_DATA::InterruptTime值模拟UnbiasedInterruptTime。
 | FindStringOrdinal                          | 不存在时，调用CompareStringOrdinal。
 | GetEnabledXStateFeatures                   | 不存在时，调用IsProcessorFeaturePresent。
 | SetXStateFeaturesMask                      | 不存在时，内部实现。
