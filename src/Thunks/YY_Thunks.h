@@ -32,6 +32,16 @@
         = reinterpret_cast<void const*>(_FUNCTION)
 #endif
 
+#if defined(_M_IX86)
+// 根据 https://github.com/Chuyu-Team/YY-Thunks/issues/78 修正一下rust raw-dylib引用规则
+#define _YY_THUNKS_DEFINE_RUST_RAW_DYLIB_IAT_SYMBOL(_FUNCTION, _SIZE)                                    \
+    __pragma(warning(suppress:4483))                                                                     \
+    extern "C" __declspec(selectany) void const* const __identifier(_CRT_STRINGIZE_(_imp_ ## _FUNCTION)) \
+        = reinterpret_cast<void const*>(_FUNCTION)
+#else
+#define _YY_THUNKS_DEFINE_RUST_RAW_DYLIB_IAT_SYMBOL(_FUNCTION, _SIZE)
+#endif
+
 #ifdef __YY_Thunks_Unit_Test
 	#define __APPLY_UNIT_TEST_BOOL(_FUNCTION) bool _CRT_CONCATENATE(aways_null_try_get_, _FUNCTION) = false
 	#define __CHECK_UNIT_TEST_BOOL(_FUNCTION) if(_CRT_CONCATENATE(aways_null_try_get_, _FUNCTION)) return nullptr

@@ -556,6 +556,7 @@ namespace YY
 #define YY_Thunks_Implemented
 #define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)     \
     _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION, _SIZE);                                     \
+    _YY_THUNKS_DEFINE_RUST_RAW_DYLIB_IAT_SYMBOL(_FUNCTION, _SIZE);                 \
     EXTERN_C _RETURN_ _CONVENTION_ _FUNCTION(__VA_ARGS__)
 
 #include "YY_Thunks_List.hpp"
