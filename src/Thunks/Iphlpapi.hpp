@@ -262,7 +262,7 @@ namespace YY
 				return ERROR_INVALID_PARAMETER;
 
 			MIB_IFROW _IfRow;
-			_IfRow.dwIndex = _pRow->InterfaceLuid.Value ? _pRow->InterfaceLuid.Info.NetLuidIndex : _pRow->InterfaceIndex;
+			_IfRow.dwIndex = _pRow->InterfaceLuid.Value ? static_cast<ULONG>(_pRow->InterfaceLuid.Info.NetLuidIndex) : _pRow->InterfaceIndex;
 
 			auto _lStatus = GetIfEntry(&_IfRow);
 			if (NO_ERROR != _lStatus)

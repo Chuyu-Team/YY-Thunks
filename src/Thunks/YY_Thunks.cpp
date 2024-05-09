@@ -162,6 +162,37 @@ namespace YY
 	{
 		namespace internal
 		{
+            inline UINT8 __fastcall BitsCount(ULONG32 _fBitMask)
+            {
+#if defined(_M_IX86) || defined(_M_AMD64)
+                return static_cast<UINT8>(__popcnt(_fBitMask));
+#else
+                _fBitMask = (_fBitMask & 0x55555555) + ((_fBitMask >> 1) & 0x55555555);
+                _fBitMask = (_fBitMask & 0x33333333) + ((_fBitMask >> 2) & 0x33333333);
+                _fBitMask = (_fBitMask & 0x0f0f0f0f) + ((_fBitMask >> 4) & 0x0f0f0f0f);
+                _fBitMask = (_fBitMask & 0x00ff00ff) + ((_fBitMask >> 8) & 0x00ff00ff);
+                _fBitMask = (_fBitMask & 0x0000ffff) + ((_fBitMask >> 16) & 0x0000ffff);
+                return static_cast<UINT8>(_fBitMask);
+#endif
+            }
+
+            inline UINT8 __fastcall BitsCount(ULONG64 _fBitMask)
+            {
+#if defined(_M_IX86)
+                return static_cast<UINT8>(__popcnt(static_cast<ULONG32>(_fBitMask)) + __popcnt(static_cast<ULONG32>(_fBitMask >> 32)));
+#elif defined(_M_AMD64)
+                return static_cast<UINT8>(__popcnt64(_fBitMask));
+#else
+                _fBitMask = (_fBitMask & 0x55555555'55555555) + ((_fBitMask >> 1) & 0x55555555'55555555);
+                _fBitMask = (_fBitMask & 0x33333333'33333333) + ((_fBitMask >> 2) & 0x33333333'33333333);
+                _fBitMask = (_fBitMask & 0x0f0f0f0f'0f0f0f0f) + ((_fBitMask >> 4) & 0x0f0f0f0f'0f0f0f0f);
+                _fBitMask = (_fBitMask & 0x00ff00ff'00ff00ff) + ((_fBitMask >> 8) & 0x00ff00ff'00ff00ff);
+                _fBitMask = (_fBitMask & 0x0000ffff'0000ffff) + ((_fBitMask >> 16) & 0x0000ffff'0000ffff);
+                _fBitMask = (_fBitMask & 0x00000000'ffffffff) + ((_fBitMask >> 32) & 0x00000000'ffffffff);
+                return static_cast<UINT8>(_fBitMask);
+#endif
+            }
+
 			__forceinline constexpr DWORD __fastcall MakeVersion(_In_ DWORD _uMajorVersion, _In_ DWORD _uMinorVersion)
 			{
 				return (_uMajorVersion << 16) | _uMinorVersion;
@@ -234,13 +265,17 @@ namespace YY
 				const UINT CodePage = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 
 				auto cchDst = MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, Src, -1, pDst->Buffer, pDst->MaximumLength / sizeof(wchar_t));
-				if (cchDst == 0)
+				if (cchDst <= 0)
 				{
 					return GetLastError();
 				}
+                cchDst *= sizeof(wchar_t);
+                if (cchDst > MAXUINT16)
+                {
+                    return ERROR_BAD_PATHNAME;
+                }
 
-				pDst->Length = cchDst * sizeof(wchar_t);
-
+				pDst->Length = static_cast<USHORT>(cchDst);
 				return ERROR_SUCCESS;
 			}
 

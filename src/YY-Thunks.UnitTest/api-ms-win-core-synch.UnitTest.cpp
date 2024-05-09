@@ -222,10 +222,10 @@ namespace api_ms_win_core_synch
 			auto _hThreadHandle = (HANDLE)_beginthreadex(nullptr, 0,
 				[](void* pMyData) -> unsigned
 				{
-					auto _uStart = GetTickCount64();
+					const auto _uStart = GetTickCount64();
 					::AcquireSRWLockExclusive((SRWLOCK*)pMyData);
 
-					return GetTickCount64() - _uStart;
+					return static_cast<DWORD>(GetTickCount64() - _uStart);
 				},
 				&_SRWLock,
 				0,

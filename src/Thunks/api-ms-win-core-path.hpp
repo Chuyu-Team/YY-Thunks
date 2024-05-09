@@ -1247,7 +1247,7 @@ namespace YY
 				//处于长命名模式中，如果规范化后的路径有效部分小于 MAX_PATH，那么删除长命名前缀
 				if (ulReservedSize)
 				{
-					if (pTempOut - pszPathOut <= ulReservedSize + MAX_PATH)
+					if (size_t(pTempOut - pszPathOut) <= ulReservedSize + MAX_PATH)
 					{
 						if (bUNC)
 						{

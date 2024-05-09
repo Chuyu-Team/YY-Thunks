@@ -153,11 +153,11 @@ namespace YY
                         return 0;
                     }
 
-                    DWORD cchLength = min(__cchCount1, __cchCount2);
+                    size_t cchLength = min(__cchCount1, __cchCount2);
 
                     if (bIgnoreCase)
                     {
-                        for (DWORD Index = 0; Index != cchLength; ++Index)
+                        for (size_t Index = 0; Index != cchLength; ++Index)
                         {
                             auto ch1 = lpString1[Index];
                             auto ch2 = lpString2[Index];
@@ -180,7 +180,7 @@ namespace YY
                     }
                     else
                     {
-                        for (DWORD Index = 0; Index != cchLength; ++Index)
+                        for (size_t Index = 0; Index != cchLength; ++Index)
                         {
                             auto ch1 = lpString1[Index];
                             auto ch2 = lpString2[Index];

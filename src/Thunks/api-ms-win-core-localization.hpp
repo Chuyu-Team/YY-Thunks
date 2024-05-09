@@ -2137,7 +2137,7 @@ namespace YY
 
 					if (dwFlags & MUI_MERGE_SYSTEM_FALLBACK)
 					{
-						for (; LangID = internal::DownlevelGetFallbackLocaleLCID(LangID);)
+						for (; LangID = (LANGID)internal::DownlevelGetFallbackLocaleLCID(LangID);)
 						{
 							internal::AddLangIDToBuffer(LanguageIds, _countof(LanguageIds), ulNumLanguages, LangID);
 						}
@@ -2151,7 +2151,7 @@ namespace YY
 					internal::AddLangIDToBuffer(LanguageIds, _countof(LanguageIds), ulNumLanguages, LangID);
 
 					
-					for (; LangID = internal::DownlevelGetFallbackLocaleLCID(LangID);)
+					for (; LangID = (LANGID)internal::DownlevelGetFallbackLocaleLCID(LangID);)
 					{
 						internal::AddLangIDToBuffer(LanguageIds, _countof(LanguageIds), ulNumLanguages, LangID);
 					}
@@ -2163,7 +2163,7 @@ namespace YY
 					internal::AddLangIDToBuffer(LanguageIds, _countof(LanguageIds), ulNumLanguages, LangID);
 
 					
-					for (; LangID = internal::DownlevelGetFallbackLocaleLCID(LangID);)
+					for (; LangID = (LANGID)internal::DownlevelGetFallbackLocaleLCID(LangID);)
 					{
 						internal::AddLangIDToBuffer(LanguageIds, _countof(LanguageIds), ulNumLanguages, LangID);
 					}
@@ -2238,7 +2238,7 @@ namespace YY
 
 						*pTmp++ = L'\0';
 
-						cchLanguagesBufferNeed = pTmp - pBuffer;
+						cchLanguagesBufferNeed = static_cast<ULONG>(pTmp - pBuffer);
 
 						*pcchLanguagesBuffer = cchLanguagesBufferNeed;
 
@@ -2267,7 +2267,7 @@ namespace YY
 
 								if (result <= LOCALE_NAME_MAX_LENGTH)
 								{
-									cchLanguagesBufferNeed += result;
+									cchLanguagesBufferNeed += static_cast<ULONG>(result);
 								}
 							}
 						}
@@ -2306,12 +2306,12 @@ namespace YY
 			void
 			)
 		{
-			if (auto const pGetThreadUILanguage = try_get_GetThreadUILanguage())
+			if (auto const _pfnGetThreadUILanguage = try_get_GetThreadUILanguage())
 			{
-				return pGetThreadUILanguage();
+				return _pfnGetThreadUILanguage();
 			}
 
-			return GetThreadLocale();
+			return (LANGID)GetThreadLocale();
 		}
 #endif
 
@@ -2678,7 +2678,7 @@ namespace YY
             }
 
             if (_cchStr < 0)
-                _cchStr = wcslen(_szString);
+                _cchStr = (int)wcslen(_szString);
 
 
             for (; _cchStr;--_cchStr, ++_szString)

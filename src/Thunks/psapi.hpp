@@ -106,14 +106,19 @@ namespace YY
 				//确定实际个数
 				const auto pWatchInfoMax = (PPSAPI_WS_WATCH_INFORMATION)((byte*)pWatchInfo + cbWatchInfo);
 				auto pWatchInfoTerminated = pWatchInfo;
-				for (; pWatchInfoTerminated < pWatchInfoMax && pWatchInfoTerminated->FaultingPc != nullptr; pWatchInfoTerminated += sizeof(pWatchInfoTerminated[0]));
+				for (; pWatchInfoTerminated < pWatchInfoMax && pWatchInfoTerminated->FaultingPc != nullptr; ++pWatchInfoTerminated);
 
 				auto ccWatchInfo = pWatchInfoTerminated - pWatchInfo;
 
 				auto cbWatchInfoExRequest = (ccWatchInfo + 1) * sizeof(lpWatchInfoEx[0]);
+                if (cbWatchInfoExRequest > MAXUINT32)
+                {
+                    lStatus = ERROR_FUNCTION_FAILED;
+                    break;
+                }
 
 				auto cbBuffer = *cb;
-				*cb = cbWatchInfoExRequest;
+				*cb = static_cast<DWORD>(cbWatchInfoExRequest);
 
 				if (cbBuffer < cbWatchInfoExRequest)
 				{

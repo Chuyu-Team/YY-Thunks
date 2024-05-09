@@ -63,12 +63,17 @@ namespace YY
 			}
 			else
 			{
-				ULONGLONG ullProcessorMask;
-				auto bRet = GetNumaNodeProcessorMask(Node, &ullProcessorMask);
+                if (Node > MAXUINT8)
+                {
+                    SetLastError(ERROR_INVALID_PARAMETER);
+                    return FALSE;
+                }
 
+				ULONGLONG ullProcessorMask;
+				auto bRet = GetNumaNodeProcessorMask(static_cast<UINT8>(Node), &ullProcessorMask);
 				if (bRet)
 				{
-					ProcessorMask->Mask = ullProcessorMask;
+					ProcessorMask->Mask = static_cast<KAFFINITY>(ullProcessorMask);
 					//假定只有一组CPU
 					ProcessorMask->Group = 0;
 					ProcessorMask->Reserved[0] = 0;

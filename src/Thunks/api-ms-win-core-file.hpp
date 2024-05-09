@@ -253,7 +253,7 @@ namespace YY
 							return FALSE;
 						}
 
-						auto dwNewBufferSize = sizeof(FILE_RENAME_INFO) + NtName.Length;
+						DWORD dwNewBufferSize = sizeof(FILE_RENAME_INFO) + NtName.Length;
 
 						auto NewRenameInfo = (FILE_RENAME_INFO*)HeapAlloc(ProcessHeap, 0, dwNewBufferSize);
 						if (!NewRenameInfo)
@@ -533,8 +533,14 @@ namespace YY
 				goto __Exit;
 			}
 
+            const auto _uNewLength = pObjectName->Name.Length - pFileNameInfo->FileNameLength + sizeof(wchar_t);
+            if (_uNewLength > MAXUINT16)
+            {
+                lStatus = ERROR_BAD_PATHNAME;
+                goto __Exit;
+            }
 			VolumeNtName.Buffer = pObjectName->Name.Buffer;
-			VolumeNtName.Length = VolumeNtName.MaximumLength = pObjectName->Name.Length - pFileNameInfo->FileNameLength + sizeof(wchar_t);
+			VolumeNtName.Length = VolumeNtName.MaximumLength = static_cast<USHORT>(_uNewLength);
 
 
 			if (VOLUME_NAME_NT & dwFlags)
@@ -568,8 +574,14 @@ namespace YY
 					}
 				}
 
+                const auto _uNewLength = (wcslen(szVolumeRoot) - 1) * sizeof(szVolumeRoot[0]);
+                if (_uNewLength > MAXUINT16)
+                {
+                    lStatus = ERROR_BAD_PATHNAME;
+                    goto __Exit;
+                }
 				TargetVolumeName.Buffer = szVolumeRoot;
-				TargetVolumeName.Length = TargetVolumeName.MaximumLength = (wcslen(szVolumeRoot) - 1) * sizeof(szVolumeRoot[0]);
+				TargetVolumeName.Length = TargetVolumeName.MaximumLength = static_cast<USHORT>(_uNewLength);
 			}
 
 			//将路径进行规范化
@@ -597,7 +609,14 @@ namespace YY
 						}
 					}
 
-					cbszVolumeRoot = (wcslen(szVolumeRoot) - 1) * sizeof(szVolumeRoot[0]);
+                    const auto _cbData = (wcslen(szVolumeRoot) - 1) * sizeof(szVolumeRoot[0]);
+                    if (_cbData > MAXUINT16)
+                    {
+                        lStatus = ERROR_BAD_PATHNAME;
+                        goto __Exit;
+                    }
+
+					cbszVolumeRoot = static_cast<DWORD>(_cbData);
 				}
 
 
@@ -611,7 +630,7 @@ namespace YY
 					goto __Exit;
 				}
 
-				auto cchLongPathNameBufferSize = cbLongPathNameBufferSize / sizeof(szLongPathNameBuffer[0]);
+				DWORD cchLongPathNameBufferSize = cbLongPathNameBufferSize / sizeof(szLongPathNameBuffer[0]);
 
 				memcpy(szLongPathNameBuffer, szVolumeRoot, cbszVolumeRoot);
 				memcpy((char*)szLongPathNameBuffer + cbszVolumeRoot, pFileNameInfo->FileName, pFileNameInfo->FileNameLength);
@@ -643,18 +662,31 @@ namespace YY
 					}
 					else
 					{
+                        const auto _uNewLength = result * sizeof(wchar_t) - cbszVolumeRoot;
+                        if (_uNewLength > MAXUINT16)
+                        {
+                            lStatus = ERROR_BAD_PATHNAME;
+                            goto __Exit;
+                        }
+
 						//转换成功
 						TargetFileName.Buffer = (wchar_t*)((char*)szLongPathNameBuffer + cbszVolumeRoot);
-						TargetFileName.Length = TargetFileName.MaximumLength = result * sizeof(wchar_t) - cbszVolumeRoot;
+						TargetFileName.Length = TargetFileName.MaximumLength = static_cast<USHORT>(_uNewLength);
 						break;
 					}
 				}
 			}
 			else
 			{
+                if (pFileNameInfo->FileNameLength > MAXUINT16)
+                {
+                    lStatus = ERROR_BAD_PATHNAME;
+                    goto __Exit;
+                }
+
 				//直接返回原始路径
 				TargetFileName.Buffer = pFileNameInfo->FileName;
-				TargetFileName.Length = TargetFileName.MaximumLength = pFileNameInfo->FileNameLength;
+				TargetFileName.Length = TargetFileName.MaximumLength = static_cast<USHORT>(pFileNameInfo->FileNameLength);
 			}
 
 
@@ -769,11 +801,11 @@ namespace YY
 
 					auto cchReturnANSI = WideCharToMultiByte(CodePage, WC_NO_BEST_FIT_CHARS, szFilePathUnicode, cchReturn, nullptr, 0, nullptr, nullptr);
 
-					if (0 == cchReturnANSI)
+					if (cchReturnANSI <= 0)
 					{
 						goto __Error;
 					}
-					else if (cchReturnANSI >= cchFilePath)
+					else if (static_cast<DWORD>(cchReturnANSI) >= cchFilePath)
 					{
 						//长度不足
 						++cchReturnANSI;

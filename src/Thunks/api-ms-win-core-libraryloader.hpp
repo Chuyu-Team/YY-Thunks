@@ -509,7 +509,7 @@ namespace YY
 
 				if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_APPLICATION_DIR)
 				{
-					const auto nBufferMax = _countof(szFilePathBuffer) - nSize;
+					const DWORD nBufferMax = _countof(szFilePathBuffer) - nSize;
 
 					auto nBuffer = GetModuleFileNameW(NULL, szFilePathBuffer + nSize, nBufferMax);
 
@@ -544,7 +544,7 @@ namespace YY
 
 				if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_SYSTEM32)
 				{
-					const auto nBufferMax = _countof(szFilePathBuffer) - nSize;
+					const DWORD nBufferMax = _countof(szFilePathBuffer) - nSize;
 
 					auto nBuffer = GetSystemDirectoryW(szFilePathBuffer + nSize, nBufferMax);
 
@@ -563,8 +563,14 @@ namespace YY
 				ModuleFileName.Buffer = (PWSTR)lpLibFileName;
 
 				for (; *lpLibFileName; ++lpLibFileName);
+                const auto _uNewLength = (lpLibFileName - ModuleFileName.Buffer) * sizeof(lpLibFileName[0]);
+                if (_uNewLength + sizeof(lpLibFileName[0]) > MAXUINT16)
+                {
+                    SetLastError(ERROR_INVALID_PARAMETER);
+                    return nullptr;
+                }
 
-				ModuleFileName.Length = (lpLibFileName - ModuleFileName.Buffer) * sizeof(lpLibFileName[0]);
+				ModuleFileName.Length = static_cast<USHORT>(_uNewLength);
 				ModuleFileName.MaximumLength = ModuleFileName.Length + sizeof(lpLibFileName[0]);
 
 				HMODULE hModule = NULL;
@@ -772,7 +778,7 @@ namespace YY
 
             if (_cchSource == -1)
             {
-                _cchSource = wcslen(_pStringSource);
+                _cchSource = (int)wcslen(_pStringSource);
             }
 
             if (_cchSource == 0)
@@ -782,7 +788,7 @@ namespace YY
 
             if (_cchValue == -1)
             {
-                _cchValue = wcslen(_pStringValue);
+                _cchValue = (int)wcslen(_pStringValue);
             }
 
             if (_cchValue == 0 || _cchValue > _cchSource)
@@ -798,7 +804,7 @@ namespace YY
                 {
                     if (CompareStringOrdinal(_pStart, _cchValue, _pStringValue, _cchValue, _bIgnoreCase) == CSTR_EQUAL)
                     {
-                        return _pStart - _pStringSource;
+                        return static_cast<int>(_pStart - _pStringSource);
                     }
                 }
                 return -1;
@@ -808,7 +814,7 @@ namespace YY
                 {
                     if (CompareStringOrdinal(_pStart, _cchValue, _pStringValue, _cchValue, _bIgnoreCase) == CSTR_EQUAL)
                     {
-                        return _pStart - _pStringSource;
+                        return static_cast<int>(_pStart - _pStringSource);
                     }
                 }
                 return -1;

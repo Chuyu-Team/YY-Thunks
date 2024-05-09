@@ -121,7 +121,7 @@ namespace YY
 			{
 				//不支持GetCurrentProcessorNumberEx时假定用户只有一组CPU
 				ProcNumber->Group = 0;
-				ProcNumber->Number = GetCurrentProcessorNumber();
+				ProcNumber->Number = static_cast<BYTE>(GetCurrentProcessorNumber());
 				ProcNumber->Reserved = 0;
 			}
 		}
@@ -800,7 +800,7 @@ namespace YY
 					return FALSE;
 				}
 
-				YY_ProcessPolicyInfo _Info = { _eMitigationPolicy };
+				YY_ProcessPolicyInfo _Info = { static_cast<DWORD>(_eMitigationPolicy) };
 				NTSTATUS _Status = _pfnNtQueryInformationProcess(_hProcess, YY_ProcessPolicy, &_Info, sizeof(_Info), nullptr);
 				if (_Status >= 0)
 				{
@@ -897,7 +897,7 @@ namespace YY
 					return FALSE;
 				}
 
-				YY_ProcessPolicyInfo _Info = { _eMitigationPolicy, *(DWORD*)_pBuffer };
+				YY_ProcessPolicyInfo _Info = { static_cast<DWORD>(_eMitigationPolicy), *(DWORD*)_pBuffer };
 				_Status = _pfnNtSetInformationProcess(NtCurrentProcess(), YY_ProcessPolicy, &_Info, sizeof(_Info));
 			}
 
@@ -1129,7 +1129,7 @@ namespace YY
             if (_pPreviousIdealProcessor)
             {
                 _pPreviousIdealProcessor->Group = 0;
-                _pPreviousIdealProcessor->Number = _uPreviousIdealProcessor;
+                _pPreviousIdealProcessor->Number = static_cast<BYTE>(_uPreviousIdealProcessor);
                 _pPreviousIdealProcessor->Reserved = 0;
             }
             return TRUE;
@@ -1164,7 +1164,7 @@ namespace YY
             }
 
             _pIdealProcessor->Group = 0;
-            _pIdealProcessor->Number = _uPreviousIdealProcessor;
+            _pIdealProcessor->Number = static_cast<BYTE>(_uPreviousIdealProcessor);
             _pIdealProcessor->Reserved = 0;
             return TRUE;
         }

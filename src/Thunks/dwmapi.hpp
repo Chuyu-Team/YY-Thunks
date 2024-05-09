@@ -1,5 +1,8 @@
 ﻿#include <dwmapi.h>
 
+// 忽略deprecated，因为是Thunks项目肯定是需要调用老接口的。
+#pragma warning(disable:4995)
+
 namespace YY
 {
 	namespace Thunks

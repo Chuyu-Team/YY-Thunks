@@ -245,7 +245,7 @@ namespace YY
 					}
 					else
 					{
-						auto NewStatus = InterlockedCompareExchange((volatile LONG *)SRWLock, Status & ~YY_SRWLOCK_Waking, Status);
+						auto NewStatus = InterlockedCompareExchange((volatile size_t*)SRWLock, Status & ~YY_SRWLOCK_Waking, Status);
 						if (NewStatus == Status)
 							return;
 

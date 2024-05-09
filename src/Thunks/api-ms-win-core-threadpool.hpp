@@ -968,7 +968,7 @@ namespace YY
 			if (lDueTime.QuadPart < 0)
 			{
 				//相对时间
-				DueTime = lDueTime.QuadPart / -10'000;
+				DueTime = static_cast<DWORD>(lDueTime.QuadPart / -10'000);
 			}
 			else if (lDueTime.QuadPart > 0)
 			{
@@ -981,7 +981,7 @@ namespace YY
 
 				if (lDueTime.QuadPart > lCurrentTime.QuadPart)
 				{
-					DueTime = (lDueTime.QuadPart - lCurrentTime.QuadPart) / 10'000;
+					DueTime = static_cast<DWORD>((lDueTime.QuadPart - lCurrentTime.QuadPart) / 10'000);
 				}
 			}
 
@@ -1534,7 +1534,7 @@ namespace YY
 				if (Time.QuadPart < 0)
 				{
 					//这是一个相对时间
-					dwMilliseconds = Time.QuadPart / -10'000;
+					dwMilliseconds = static_cast<ULONG>(Time.QuadPart / -10'000);
 				}
 				else if (Time.QuadPart == 0)
 				{
@@ -1551,7 +1551,7 @@ namespace YY
 
 					if (Time.QuadPart > lCurrentTime.QuadPart)
 					{
-						dwMilliseconds = (Time.QuadPart - lCurrentTime.QuadPart) / 10'000;
+						dwMilliseconds = static_cast<ULONG>((Time.QuadPart - lCurrentTime.QuadPart) / 10'000);
 					}
 					else
 					{
