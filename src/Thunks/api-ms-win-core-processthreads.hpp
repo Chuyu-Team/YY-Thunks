@@ -75,14 +75,27 @@ namespace YY
 			VOID
 			)
 		{
-			if (auto pGetCurrentProcessorNumber = try_get_GetCurrentProcessorNumber())
+			if (const auto _pfnGetCurrentProcessorNumber = try_get_GetCurrentProcessorNumber())
 			{
-				return pGetCurrentProcessorNumber();
+				return _pfnGetCurrentProcessorNumber();
 			}
 			else
 			{
-				//如果不支持此接口，那么假定是单核
-				return 0;
+                // Reference: https://www.cs.tcd.ie/Jeremy.Jones/GetCurrentProcessorNumberXP.htm
+                //
+                // The GetCurrentProcessorNumber() function is not available in XP. 
+                // Here is a VC++ version of the function that works with Windows XP on Intel x86 single, hyperthreaded, multicore 
+                // and multi-socket systems. It makes use of the APIC ID returned by the CPUID instruction. 
+                // This is in the range 0 .. N-1, where N is the number of logical CPUs.
+
+                __asm
+                {
+                    mov eax, 1
+                    cpuid
+                    shr ebx, 24
+                    // eax 返回值
+                    mov eax, ebx
+                }
 			}
 		}
 #endif

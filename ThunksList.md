@@ -2,7 +2,7 @@
 
 此表展示了YY-Thunks（鸭船）可以解决的函数不存在问题，欢迎大家扩充！
 
-> 开头带`*`的函数并不建议使用，仅用于编译通过处理，如果使用可能导致老版本系统无法充分发挥性能。
+> 开头带`*`的函数并不建议使用，存在一些较大负面影响，仅用于编译通过处理，具体负面影响可参考注释内容。
 
 ## api-ms-win-core-path-l1-1-0.dll
 | 函数                                       | Fallback
@@ -227,14 +227,14 @@
 | WaitOnAddress                              | 不存在时，调用NtWaitForKeyedEvent。警告，此函数请勿跨模块使用！！！
 | WakeByAddressSingle                        | 不存在时，调用NtReleaseKeyedEvent。警告，此函数请勿跨模块使用！！！
 | WakeByAddressAll                           | 不存在时，调用NtReleaseKeyedEvent。警告，此函数请勿跨模块使用！！！
-| *GetCurrentProcessorNumber                 | 不存在时，返回0。
-| *GetCurrentProcessorNumberEx               | 不存在时，调用GetCurrentProcessorNumber。
-| *GetNumaNodeProcessorMask                  | 不存在时，假定所有CPU都在当前Numa。
-| *GetNumaNodeProcessorMaskEx                | 不存在时，调用GetNumaNodeProcessorMask。
-| *GetThreadGroupAffinity                    | 不存在时，调用NtQueryInformationThread。
-| *SetThreadGroupAffinity                    | 不存在时，调用SetThreadAffinityMask。
-| *CancelIoEx                                | 不存在时，调用CancelIo（会把此句柄的所有IO操作取消掉！）。
-| *CancelSynchronousIo                       | 不存在时，仅返回失败。
+| GetCurrentProcessorNumber                  | 不存在时，调用cpuid。
+| GetCurrentProcessorNumberEx                | 不存在时，调用GetCurrentProcessorNumber。
+| GetNumaNodeProcessorMask                   | 不存在时，假定所有CPU都在当前Numa。
+| GetNumaNodeProcessorMaskEx                 | 不存在时，调用GetNumaNodeProcessorMask。
+| GetThreadGroupAffinity                     | 不存在时，调用NtQueryInformationThread。
+| SetThreadGroupAffinity                     | 不存在时，调用SetThreadAffinityMask。
+| *CancelIoEx                                | 不存在时，调用CancelIo。警告，会把此句柄的所有IO操作取消掉！
+| *CancelSynchronousIo                       | 不存在时，仅返回失败。警告，实际无法取消！
 | OpenFileById                               | 不存在时，调用NtCreateFile。
 | CreateSymbolicLinkW(A)                     | 不存在时，返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
 | ReOpenFile                                 | 不存在时，调用NtCreateFile。
