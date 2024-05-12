@@ -5,11 +5,13 @@ namespace api_ms_win_power_base
 {
 	TEST_CLASS(PowerRegisterSuspendResumeNotification)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PowerRegisterSuspendResumeNotification()
 		{
-			YY::Thunks::aways_null_try_get_PowerRegisterSuspendResumeNotification = true;
-			YY::Thunks::aways_null_try_get_PowerUnregisterSuspendResumeNotification = true;
+            Guard |= YY::Thunks::aways_null_try_get_PowerRegisterSuspendResumeNotification;
+            Guard |= YY::Thunks::aways_null_try_get_PowerUnregisterSuspendResumeNotification;
 		}
 
 		TEST_METHOD(创建然后关闭)

@@ -7,15 +7,12 @@ namespace shell32
     {
         TEST_CLASS(SHGetKnownFolderPath)
         {
+            AwaysNullGuard Guard;
+
         public:
             SHGetKnownFolderPath()
             {
-                YY::Thunks::aways_null_try_get_SHGetKnownFolderPath = true;
-            }
-
-            ~SHGetKnownFolderPath()
-            {
-                YY::Thunks::aways_null_try_get_SHGetKnownFolderPath = false;
+                Guard |= YY::Thunks::aways_null_try_get_SHGetKnownFolderPath;
             }
 
             TEST_METHOD(基本验证)
@@ -55,15 +52,12 @@ namespace shell32
     {
         TEST_CLASS(SHGetKnownFolderIDList)
         {
+            AwaysNullGuard Guard;
+
         public:
             SHGetKnownFolderIDList()
             {
-                YY::Thunks::aways_null_try_get_SHGetKnownFolderIDList = true;
-            }
-
-            ~SHGetKnownFolderIDList()
-            {
-                YY::Thunks::aways_null_try_get_SHGetKnownFolderIDList = false;
+                Guard |= YY::Thunks::aways_null_try_get_SHGetKnownFolderIDList;
             }
 
             TEST_METHOD(基本验证)

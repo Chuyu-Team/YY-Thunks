@@ -21,6 +21,8 @@
 
 #include "CppUnitTest.h"
 #include <process.h>
+#include <vector>
+#include <string>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -28,5 +30,38 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
     extern bool _CRT_CONCATENATE(aways_null_try_get_, _FUNCTION);                  \
 	EXTERN_C _RETURN_ _CONVENTION_ _FUNCTION(__VA_ARGS__);                         \
 	__if_not_exists(_FUNCTION)
+
+class AwaysNullGuard
+{
+private:
+    std::vector<bool*> GuardAddress;
+
+public:
+
+    ~AwaysNullGuard()
+    {
+        for (auto& _pValue : GuardAddress)
+        {
+            *_pValue = false;
+        }
+    }
+
+    void Add(bool& _bValue)
+    {
+        if (_bValue)
+        {
+            // 已经是true
+            return;
+        }
+        _bValue = true;
+        GuardAddress.push_back(&_bValue);
+    }
+
+    void operator|=(bool& _bValue)
+    {
+        Add(_bValue);
+    }
+};
+
 
 #endif //PCH_H

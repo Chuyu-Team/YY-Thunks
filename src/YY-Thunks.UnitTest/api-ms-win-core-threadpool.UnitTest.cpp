@@ -6,15 +6,17 @@ namespace api_ms_win_core_threadpool
 {
 	TEST_CLASS(SubmitThreadpoolWork)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		SubmitThreadpoolWork()
 		{
-			YY::Thunks::aways_null_try_get_CreateThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_SubmitThreadpoolWork = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_SubmitThreadpoolWork;
 
-			YY::Thunks::aways_null_try_get_SetEventWhenCallbackReturns = true;
-			YY::Thunks::aways_null_try_get_ReleaseSemaphoreWhenCallbackReturns = true;
+            Guard |= YY::Thunks::aways_null_try_get_SetEventWhenCallbackReturns;
+            Guard |= YY::Thunks::aways_null_try_get_ReleaseSemaphoreWhenCallbackReturns;
 		}
 
 		TEST_METHOD(一般行为验证)
@@ -57,10 +59,12 @@ namespace api_ms_win_core_threadpool
 
 	TEST_CLASS(TrySubmitThreadpoolCallback)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		TrySubmitThreadpoolCallback()
 		{
-			YY::Thunks::aways_null_try_get_TrySubmitThreadpoolCallback = true;
+            Guard |= YY::Thunks::aways_null_try_get_TrySubmitThreadpoolCallback;
 		}
 
 		TEST_METHOD(一般行为验证)
@@ -107,13 +111,15 @@ namespace api_ms_win_core_threadpool
 
 	TEST_CLASS(WaitForThreadpoolWorkCallbacks)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		WaitForThreadpoolWorkCallbacks()
 		{
-			YY::Thunks::aways_null_try_get_CreateThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_SubmitThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_WaitForThreadpoolWorkCallbacks = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_SubmitThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_WaitForThreadpoolWorkCallbacks;
 		}
 
 		TEST_METHOD(一般行为验证)
@@ -180,12 +186,14 @@ namespace api_ms_win_core_threadpool
 
 	TEST_CLASS(SetThreadpoolTimer)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		SetThreadpoolTimer()
 		{
-			YY::Thunks::aways_null_try_get_CreateThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_SetThreadpoolTimer = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_SetThreadpoolTimer;
 		}
 
 		TEST_METHOD(当DueTime数值为0时)
@@ -399,13 +407,15 @@ namespace api_ms_win_core_threadpool
 
 	TEST_CLASS(WaitForThreadpoolTimerCallbacks)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		WaitForThreadpoolTimerCallbacks()
 		{
-			YY::Thunks::aways_null_try_get_CreateThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_SetThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_WaitForThreadpoolTimerCallbacks = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_SetThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_WaitForThreadpoolTimerCallbacks;
 		}
 
 		
@@ -470,19 +480,20 @@ namespace api_ms_win_core_threadpool
 
 	TEST_CLASS(SetEventWhenCallbackReturns)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		SetEventWhenCallbackReturns()
 		{
-			YY::Thunks::aways_null_try_get_CreateThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_SubmitThreadpoolWork = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_SubmitThreadpoolWork;
 
-			YY::Thunks::aways_null_try_get_CreateThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_SetThreadpoolTimer = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_SetThreadpoolTimer;
 
-			YY::Thunks::aways_null_try_get_SetEventWhenCallbackReturns = true;
-			//YY::Thunks::aways_null_try_get_ReleaseSemaphoreWhenCallbackReturns = true;
+            Guard |= YY::Thunks::aways_null_try_get_SetEventWhenCallbackReturns;
 		}
 
 		struct UserData
@@ -559,18 +570,20 @@ namespace api_ms_win_core_threadpool
 
 	TEST_CLASS(ReleaseSemaphoreWhenCallbackReturns)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		ReleaseSemaphoreWhenCallbackReturns()
 		{
-			YY::Thunks::aways_null_try_get_CreateThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_SubmitThreadpoolWork = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_SubmitThreadpoolWork;
 
-			YY::Thunks::aways_null_try_get_CreateThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_SetThreadpoolTimer = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_SetThreadpoolTimer;
 
-			YY::Thunks::aways_null_try_get_ReleaseSemaphoreWhenCallbackReturns = true;
+            Guard |= YY::Thunks::aways_null_try_get_ReleaseSemaphoreWhenCallbackReturns;
 		}
 
 		struct UserData
@@ -654,18 +667,20 @@ namespace api_ms_win_core_threadpool
 
 	TEST_CLASS(ReleaseMutexWhenCallbackReturns)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		ReleaseMutexWhenCallbackReturns()
 		{
-			YY::Thunks::aways_null_try_get_CreateThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_SubmitThreadpoolWork = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_SubmitThreadpoolWork;
 
-			YY::Thunks::aways_null_try_get_CreateThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_SetThreadpoolTimer = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_SetThreadpoolTimer;
 
-			YY::Thunks::aways_null_try_get_ReleaseMutexWhenCallbackReturns = true;
+            Guard |= YY::Thunks::aways_null_try_get_ReleaseMutexWhenCallbackReturns;
 		}
 
 		struct UserData
@@ -749,18 +764,20 @@ namespace api_ms_win_core_threadpool
 
 	TEST_CLASS(LeaveCriticalSectionWhenCallbackReturns)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		LeaveCriticalSectionWhenCallbackReturns()
 		{
-			YY::Thunks::aways_null_try_get_CreateThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_SubmitThreadpoolWork = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_SubmitThreadpoolWork;
 
-			YY::Thunks::aways_null_try_get_CreateThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_SetThreadpoolTimer = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_SetThreadpoolTimer;
 
-			YY::Thunks::aways_null_try_get_LeaveCriticalSectionWhenCallbackReturns = true;
+            Guard |= YY::Thunks::aways_null_try_get_LeaveCriticalSectionWhenCallbackReturns;
 		}
 
 		struct UserData
@@ -877,18 +894,20 @@ namespace api_ms_win_core_threadpool
 
 	TEST_CLASS(FreeLibraryWhenCallbackReturns)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		FreeLibraryWhenCallbackReturns()
 		{
-			YY::Thunks::aways_null_try_get_CreateThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolWork = true;
-			YY::Thunks::aways_null_try_get_SubmitThreadpoolWork = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_SubmitThreadpoolWork;
 
-			YY::Thunks::aways_null_try_get_CreateThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolTimer = true;
-			YY::Thunks::aways_null_try_get_SetThreadpoolTimer = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolTimer;
+            Guard |= YY::Thunks::aways_null_try_get_SetThreadpoolTimer;
 
-			YY::Thunks::aways_null_try_get_FreeLibraryWhenCallbackReturns = true;
+            Guard |= YY::Thunks::aways_null_try_get_FreeLibraryWhenCallbackReturns;
 		}
 
 		struct UserData
@@ -1016,12 +1035,14 @@ namespace api_ms_win_core_threadpool
 
 	TEST_CLASS(SetThreadpoolWait)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		SetThreadpoolWait()
 		{
-			YY::Thunks::aways_null_try_get_CreateThreadpoolWait = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolWait = true;
-			YY::Thunks::aways_null_try_get_SetThreadpoolWait = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolWait;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolWait;
+            Guard |= YY::Thunks::aways_null_try_get_SetThreadpoolWait;
 		}
 
 
@@ -1301,13 +1322,15 @@ namespace api_ms_win_core_threadpool
 
 	TEST_CLASS(WaitForThreadpoolWaitCallbacks)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		WaitForThreadpoolWaitCallbacks()
 		{
-			YY::Thunks::aways_null_try_get_CreateThreadpoolWait = true;
-			YY::Thunks::aways_null_try_get_CloseThreadpoolWait = true;
-			YY::Thunks::aways_null_try_get_SetThreadpoolWait = true;
-			YY::Thunks::aways_null_try_get_WaitForThreadpoolWaitCallbacks = true;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolWait;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolWait;
+            Guard |= YY::Thunks::aways_null_try_get_SetThreadpoolWait;
+            Guard |= YY::Thunks::aways_null_try_get_WaitForThreadpoolWaitCallbacks;
 		}
 
 		TEST_METHOD(一般行为验证)

@@ -6,11 +6,13 @@ namespace api_ms_win_core_synch
 {
 	TEST_CLASS(WaitOnAddress)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		WaitOnAddress()
 		{
-			YY::Thunks::aways_null_try_get_WaitOnAddress = true;
-			YY::Thunks::aways_null_try_get_WakeByAddressSingle = true;
+            Guard |= YY::Thunks::aways_null_try_get_WaitOnAddress;
+            Guard |= YY::Thunks::aways_null_try_get_WakeByAddressSingle;
 		}
 
 		TEST_METHOD(结果本身不同)
@@ -39,11 +41,13 @@ namespace api_ms_win_core_synch
 
 	TEST_CLASS(WakeByAddressSingle)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		WakeByAddressSingle()
 		{
-			YY::Thunks::aways_null_try_get_WaitOnAddress = true;
-			YY::Thunks::aways_null_try_get_WakeByAddressSingle = true;
+            Guard |= YY::Thunks::aways_null_try_get_WaitOnAddress;
+            Guard |= YY::Thunks::aways_null_try_get_WakeByAddressSingle;
 		}
 
 		TEST_METHOD(只唤醒了一个线程)
@@ -109,11 +113,13 @@ namespace api_ms_win_core_synch
 
 	TEST_CLASS(WakeByAddressAll)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		WakeByAddressAll()
 		{
-			YY::Thunks::aways_null_try_get_WaitOnAddress = true;
-			YY::Thunks::aways_null_try_get_WakeByAddressAll = true;
+            Guard |= YY::Thunks::aways_null_try_get_WaitOnAddress;
+            Guard |= YY::Thunks::aways_null_try_get_WakeByAddressAll;
 		}
 
 		TEST_METHOD(唤醒所有线程)
@@ -168,12 +174,14 @@ namespace api_ms_win_core_synch
 
 	TEST_CLASS(TryAcquireSRWLockExclusive)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		TryAcquireSRWLockExclusive()
 		{
-			YY::Thunks::aways_null_try_get_TryAcquireSRWLockExclusive = true;
-			YY::Thunks::aways_null_try_get_AcquireSRWLockExclusive = true;
-			YY::Thunks::aways_null_try_get_ReleaseSRWLockExclusive = true;
+            Guard |= YY::Thunks::aways_null_try_get_TryAcquireSRWLockExclusive;
+            Guard |= YY::Thunks::aways_null_try_get_AcquireSRWLockExclusive;
+            Guard |= YY::Thunks::aways_null_try_get_ReleaseSRWLockExclusive;
 		}
 
 		TEST_METHOD(首次肯定成功)

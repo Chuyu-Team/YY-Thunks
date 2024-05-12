@@ -10,12 +10,14 @@ namespace api_ms_win_core_kernel32_legacy
 {
 	TEST_CLASS(PowerRequest)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PowerRequest()
 		{
-			YY::Thunks::aways_null_try_get_PowerCreateRequest = true;
-			YY::Thunks::aways_null_try_get_PowerSetRequest = true;
-			YY::Thunks::aways_null_try_get_PowerClearRequest = true;
+            Guard |= YY::Thunks::aways_null_try_get_PowerCreateRequest;
+            Guard |= YY::Thunks::aways_null_try_get_PowerSetRequest;
+            Guard |= YY::Thunks::aways_null_try_get_PowerClearRequest;
 		}
 
 		TEST_METHOD(Set然后Clear)

@@ -8,13 +8,15 @@ namespace api_ms_win_core_fibers
 	{
 		TEST_CLASS(FlsGet_SetValue)
 		{
+            AwaysNullGuard Guard;
+
 		public:
 			FlsGet_SetValue()
 			{
-				YY::Thunks::aways_null_try_get_FlsAlloc = true;
-				YY::Thunks::aways_null_try_get_FlsFree = true;
-				YY::Thunks::aways_null_try_get_FlsGetValue = true;
-				YY::Thunks::aways_null_try_get_FlsSetValue = true;
+                Guard |= YY::Thunks::aways_null_try_get_FlsAlloc;
+                Guard |= YY::Thunks::aways_null_try_get_FlsFree;
+                Guard |= YY::Thunks::aways_null_try_get_FlsGetValue;
+                Guard |= YY::Thunks::aways_null_try_get_FlsSetValue;
 			}
 
 			TEST_METHOD(单线程验证)

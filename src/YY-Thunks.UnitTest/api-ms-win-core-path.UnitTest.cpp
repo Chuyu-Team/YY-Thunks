@@ -11,10 +11,12 @@ namespace api_ms_win_core_path
 {
 	TEST_CLASS(PathIsUNCEx)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathIsUNCEx()
 		{
-			YY::Thunks::aways_null_try_get_PathIsUNCEx = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathIsUNCEx;
 		}
 
 		TEST_METHOD(传统UNC路径分割)
@@ -53,10 +55,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchIsRoot)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchIsRoot()
 		{
-			YY::Thunks::aways_null_try_get_PathCchIsRoot = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchIsRoot;
 		}
 
 		TEST_METHOD(Dos路径测试)
@@ -138,10 +142,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchAddBackslashEx)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchAddBackslashEx()
 		{
-			YY::Thunks::aways_null_try_get_PathCchAddBackslashEx = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchAddBackslashEx;
 		}
 
 		TEST_METHOD(基础功能测试)
@@ -197,10 +203,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchRemoveBackslashEx)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchRemoveBackslashEx()
 		{
-			YY::Thunks::aways_null_try_get_PathCchRemoveBackslashEx = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchRemoveBackslashEx;
 		}
 
 		TEST_METHOD(Dos路径测试)
@@ -592,10 +600,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchSkipRoot)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchSkipRoot()
 		{
-			YY::Thunks::aways_null_try_get_PathCchSkipRoot = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchSkipRoot;
 		}
 
 		TEST_METHOD(Dos路径)
@@ -870,10 +880,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchStripToRoot)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchStripToRoot()
 		{
-			YY::Thunks::aways_null_try_get_PathCchStripToRoot = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchStripToRoot;
 		}
 
 		TEST_METHOD(Dos路径测试)
@@ -1114,10 +1126,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchRemoveFileSpec)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchRemoveFileSpec()
 		{
-			YY::Thunks::aways_null_try_get_PathCchRemoveFileSpec = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchRemoveFileSpec;
 		}
 
 		TEST_METHOD(Dos路径测试)
@@ -1446,10 +1460,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchFindExtension)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchFindExtension()
 		{
-			YY::Thunks::aways_null_try_get_PathCchFindExtension = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchFindExtension;
 		}
 
 		TEST_METHOD(常规后缀提取)
@@ -1532,10 +1548,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchAddExtension)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchAddExtension()
 		{
-			YY::Thunks::aways_null_try_get_PathCchAddExtension = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchAddExtension;
 		}
 
 		TEST_METHOD(常规的添加)
@@ -1710,10 +1728,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchRenameExtension)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchRenameExtension()
 		{
-			YY::Thunks::aways_null_try_get_PathCchRenameExtension = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchRenameExtension;
 		}
 
 		TEST_METHOD(添加后缀)
@@ -1790,10 +1810,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchRemoveExtension)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchRemoveExtension()
 		{
-			YY::Thunks::aways_null_try_get_PathCchRemoveExtension = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchRemoveExtension;
 		}
 
 		TEST_METHOD(基础功能验证)
@@ -1824,10 +1846,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchCanonicalizeEx)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchCanonicalizeEx()
 		{
-			YY::Thunks::aways_null_try_get_PathCchCanonicalizeEx = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchCanonicalizeEx;
 		}
 
 		TEST_METHOD(基础功能验证)
@@ -1934,10 +1958,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchCombineEx)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchCombineEx()
 		{
-			YY::Thunks::aways_null_try_get_PathCchCombineEx = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchCombineEx;
 		}
 
 		TEST_METHOD(基础功能验证)
@@ -2023,10 +2049,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchAppendEx)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchAppendEx()
 		{
-			YY::Thunks::aways_null_try_get_PathCchAppendEx = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchAppendEx;
 		}
 
 		TEST_METHOD(基础功能验证)
@@ -2110,10 +2138,12 @@ namespace api_ms_win_core_path
 
 	TEST_CLASS(PathCchStripPrefix)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		PathCchStripPrefix()
 		{
-			YY::Thunks::aways_null_try_get_PathCchStripPrefix = true;
+            Guard |= YY::Thunks::aways_null_try_get_PathCchStripPrefix;
 		}
 
 		TEST_METHOD(Dos路径)

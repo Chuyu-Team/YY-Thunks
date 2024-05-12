@@ -6,12 +6,14 @@ namespace Iphlpapi
 {
     TEST_CLASS(GetIfTable2)
     {
+        AwaysNullGuard Guard;
+
     public:
         GetIfTable2()
         {
-            YY::Thunks::aways_null_try_get_GetIfEntry2 = true;
-            YY::Thunks::aways_null_try_get_GetIfTable2 = true;
-            YY::Thunks::aways_null_try_get_FreeMibTable = true;
+            Guard |= YY::Thunks::aways_null_try_get_GetIfEntry2;
+            Guard |= YY::Thunks::aways_null_try_get_GetIfTable2;
+            Guard |= YY::Thunks::aways_null_try_get_FreeMibTable;
         }
 
         TEST_METHOD(GetIfTable2简单验证)
@@ -49,17 +51,13 @@ namespace Iphlpapi
             ULONG64 NetLuidIndex;
         };
 
+        AwaysNullGuard Guard;
+
     public:
         ConvertInterfaceNameToLuid()
         {
-            YY::Thunks::aways_null_try_get_ConvertInterfaceNameToLuidA = true;
-            YY::Thunks::aways_null_try_get_ConvertInterfaceNameToLuidW = true;
-        }
-
-        ~ConvertInterfaceNameToLuid()
-        {
-            YY::Thunks::aways_null_try_get_ConvertInterfaceNameToLuidA = false;
-            YY::Thunks::aways_null_try_get_ConvertInterfaceNameToLuidW = false;
+            Guard |= YY::Thunks::aways_null_try_get_ConvertInterfaceNameToLuidA = true;
+            Guard |= YY::Thunks::aways_null_try_get_ConvertInterfaceNameToLuidW = true;
         }
 
         TEST_METHOD(输入验证)
@@ -163,17 +161,13 @@ namespace Iphlpapi
             ULONG64 NetLuidIndex;
         };
 
+        AwaysNullGuard Guard;
+
     public:
         ConvertInterfaceLuidToName()
         {
-            YY::Thunks::aways_null_try_get_ConvertInterfaceLuidToNameA = true;
-            YY::Thunks::aways_null_try_get_ConvertInterfaceLuidToNameW = true;
-        }
-
-        ~ConvertInterfaceLuidToName()
-        {
-            YY::Thunks::aways_null_try_get_ConvertInterfaceLuidToNameA = false;
-            YY::Thunks::aways_null_try_get_ConvertInterfaceLuidToNameW = false;
+            Guard |= YY::Thunks::aways_null_try_get_ConvertInterfaceLuidToNameA;
+            Guard |= YY::Thunks::aways_null_try_get_ConvertInterfaceLuidToNameW;
         }
 
         TEST_METHOD(输入验证)
@@ -239,21 +233,15 @@ namespace Iphlpapi
 
     TEST_CLASS(if_nametoindex与if_indextoname)
     {
+        AwaysNullGuard Guard;
+
     public:
         if_nametoindex与if_indextoname()
         {
-            YY::Thunks::aways_null_try_get_if_nametoindex = true;
-            YY::Thunks::aways_null_try_get_if_indextoname = true;
-            YY::Thunks::aways_null_try_get_ConvertInterfaceIndexToLuid = true;
-            YY::Thunks::aways_null_try_get_ConvertInterfaceLuidToNameA = true;
-        }
-
-        ~if_nametoindex与if_indextoname()
-        {
-            YY::Thunks::aways_null_try_get_if_nametoindex = false;
-            YY::Thunks::aways_null_try_get_if_indextoname = false;
-            YY::Thunks::aways_null_try_get_ConvertInterfaceIndexToLuid = false;
-            YY::Thunks::aways_null_try_get_ConvertInterfaceLuidToNameA = false;
+            Guard |= YY::Thunks::aways_null_try_get_if_nametoindex;
+            Guard |= YY::Thunks::aways_null_try_get_if_indextoname;
+            Guard |= YY::Thunks::aways_null_try_get_ConvertInterfaceIndexToLuid;
+            Guard |= YY::Thunks::aways_null_try_get_ConvertInterfaceLuidToNameA;
         }
 
         TEST_METHOD(交叉验证)

@@ -7,15 +7,12 @@ namespace api_ms_win_core_localization
 {
     TEST_CLASS(LocaleNameToLCID)
     {
+        AwaysNullGuard Guard;
+
     public:
         LocaleNameToLCID()
         {
             YY::Thunks::aways_null_try_get_LocaleNameToLCID = true;
-        }
-
-        ~LocaleNameToLCID()
-        {
-            YY::Thunks::aways_null_try_get_LocaleNameToLCID = false;
         }
 
         TEST_METHOD(映射表验证)
@@ -416,10 +413,12 @@ namespace api_ms_win_core_localization
 
 	TEST_CLASS(GetThreadPreferredUILanguages)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		GetThreadPreferredUILanguages()
 		{
-			YY::Thunks::aways_null_try_get_GetThreadPreferredUILanguages = true;
+            Guard |= YY::Thunks::aways_null_try_get_GetThreadPreferredUILanguages;
 		}
 
 		TEST_METHOD(无效参数验证)
@@ -604,10 +603,12 @@ namespace api_ms_win_core_localization
 
 	TEST_CLASS(ResolveLocaleName)
 	{
+        AwaysNullGuard Guard;
+
 	public:
 		ResolveLocaleName()
 		{
-			YY::Thunks::aways_null_try_get_ResolveLocaleName = true;
+            Guard |= YY::Thunks::aways_null_try_get_ResolveLocaleName;
 		}
 
 		TEST_METHOD(中性语言验证)

@@ -30,6 +30,13 @@
 | PathAllocCombine                           | 不存在时，调用PathCchCombineEx。
 | PathAllocCanonicalize                      | 不存在时，调用PathCchCanonicalizeEx。
 
+## api-ms-win-core-realtime-l1-1-1.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| QueryUnbiasedInterruptTimePrecise          | 不存在时，调用QueryUnbiasedInterruptTime。
+| QueryInterruptTime                         | 不存在时，读取KUSER_SHARED_DATA::InterruptTime值。
+| QueryInterruptTimePrecise                  | 不存在时，读取KUSER_SHARED_DATA::InterruptTime值。
+
 ## api-ms-win-core-winrt-l1-1-0.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
@@ -85,9 +92,16 @@
 ## bcrypt.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
-| BCryptOpenAlgorithmProvider                | 内部实现。
-| BCryptCloseAlgorithmProvider               | 内部实现。
-| BCryptGenRandom                            | 不存在时调用，RtlGenRandom。
+| BCryptOpenAlgorithmProvider                | 不存在时，调用CryptAcquireContextW。
+| BCryptCloseAlgorithmProvider               | 不存在时，调用CryptReleaseContext。
+| BCryptGenRandom                            | 不存在时，调用RtlGenRandom。
+| BCryptGetProperty                          | 不存在时，内部实现。
+| BCryptCreateHash                           | 不存在时，调用CryptCreateHash。
+| BCryptDestroyHash                          | 不存在时，调用CryptDestroyHash。
+| BCryptHashData                             | 不存在时，调用CryptHashData。
+| BCryptFinishHash                           | 不存在时，调用CryptGetHashParam。
+| BCryptDeriveKeyPBKDF2                      | 不存在时，调用CryptCreateHash、CryptHashData。
+| BCryptDeriveKeyCapi                        | 不存在时，调用CryptCreateHash、CryptHashData。
 
 ## bcryptprimitives.dll
 | 函数                                       | Fallback
@@ -335,10 +349,7 @@
 | GetQueuedCompletionStatusEx                | 不存在时，调用 GetQueuedCompletionStatus。
 | FindFirstFileEx(W/A)                       | Windows XP、Vista兼容 FIND_FIRST_EX_LARGE_FETCH、FindExInfoStandard参数。
 | GetProcessGroupAffinity                    | 不存在时，始终认为只有一组CPU。
-| QueryInterruptTime                         | 不存在时，读取KUSER_SHARED_DATA::InterruptTime值。
-| QueryInterruptTimePrecise                  | 不存在时，读取KUSER_SHARED_DATA::InterruptTime值。
 | QueryUnbiasedInterruptTime                 | 不存在时，读取KUSER_SHARED_DATA::InterruptTime值模拟UnbiasedInterruptTime。
-| QueryUnbiasedInterruptTimePrecise          | 不存在时，调用QueryUnbiasedInterruptTime。
 | FindStringOrdinal                          | 不存在时，调用CompareStringOrdinal。
 | GetEnabledXStateFeatures                   | 不存在时，调用IsProcessorFeaturePresent。
 | SetXStateFeaturesMask                      | 不存在时，内部实现。
