@@ -276,5 +276,206 @@ namespace YY
 			return FileTimeToSystemTime((LPFILETIME)&_CurrentLocalTime, _pUniversalTime);
 		}
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_VISTASP1)
+
+		// 最低受支持的客户端	Windows Vista SP1 [桌面应用 |UWP 应用]
+        // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		12,
+		BOOL,
+        WINAPI,
+        GetTimeZoneInformationForYear,
+            _In_ USHORT _uYear,
+            _In_opt_ PDYNAMIC_TIME_ZONE_INFORMATION _pDynamicTimeZoneInfo,
+            _Out_ LPTIME_ZONE_INFORMATION _pTimeZoneInfo
+			)
+		{
+			if (const auto _pfnGetTimeZoneInformationForYear = try_get_GetTimeZoneInformationForYear())
+			{
+				return _pfnGetTimeZoneInformationForYear(_uYear, _pDynamicTimeZoneInfo, _pTimeZoneInfo);
+			}
+            
+            DYNAMIC_TIME_ZONE_INFORMATION _DynamicTimeZoneInfoBuffer;
+            if (!_pDynamicTimeZoneInfo)
+            {
+                if (::GetDynamicTimeZoneInformation(&_DynamicTimeZoneInfoBuffer) == TIME_ZONE_ID_INVALID)
+                    return FALSE;
+
+                _pDynamicTimeZoneInfo = &_DynamicTimeZoneInfoBuffer;
+            }
+
+            if (_pDynamicTimeZoneInfo->DynamicDaylightTimeDisabled)
+            {
+                memcpy(_pTimeZoneInfo, _pDynamicTimeZoneInfo, sizeof(*_pTimeZoneInfo));
+                return TRUE;
+            }
+
+#pragma pack(push, 1)
+            struct TZI
+            {
+                LONG Bias;
+                LONG StandardBias;
+                LONG DaylightBias;
+                SYSTEMTIME StandardDate;
+                SYSTEMTIME DaylightDate;
+            };
+#pragma pack(pop)
+
+            LSTATUS _lStatus;
+            HKEY _hTimeZoneRootKey = NULL;
+            HKEY _hTimeZoneKey = NULL;
+            do
+            {
+                _lStatus = RegOpenKeyExW(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones)", 0, KEY_READ, &_hTimeZoneRootKey);
+                if (_lStatus)
+                {
+                    break;
+                }
+
+                _lStatus = RegOpenKeyExW(_hTimeZoneRootKey, _pDynamicTimeZoneInfo->TimeZoneKeyName, 0, KEY_READ, &_hTimeZoneKey);
+                if (_lStatus)
+                {
+                    break;
+                }
+
+                TZI _Tzi;
+                DWORD _cdData = 0;
+                HKEY _hDynamicDSTKey = NULL;
+                _lStatus = RegOpenKeyExW(_hTimeZoneKey, L"Dynamic DST", 0, KEY_READ, &_hDynamicDSTKey);
+                if (_lStatus == ERROR_SUCCESS)
+                {
+                    wchar_t _szStaticStringBuffer[64];
+                    internal::StringBuffer<wchar_t> _szStringBuffer(_szStaticStringBuffer, _countof(_szStaticStringBuffer));
+                    _szStringBuffer.AppendUint32(_uYear);
+                    _cdData = sizeof(_Tzi);
+                    _lStatus = RegQueryValueExW(_hDynamicDSTKey, _szStringBuffer.GetC_String(), nullptr, nullptr, (BYTE*)&_Tzi, &_cdData);
+                    RegCloseKey(_hDynamicDSTKey);
+                }
+
+                if (_lStatus || _cdData != sizeof(_Tzi))
+                {
+                    _cdData = sizeof(_Tzi);
+                    _lStatus = RegQueryValueExW(_hTimeZoneKey, L"TZI", nullptr, nullptr, (BYTE*)&_Tzi, &_cdData);
+
+                    if (_lStatus || _cdData != sizeof(_Tzi))
+                    {
+                        _lStatus = ERROR_NOT_FOUND;
+                        break;
+                    }
+                }
+
+                memcpy(_pTimeZoneInfo, _pDynamicTimeZoneInfo, sizeof(*_pTimeZoneInfo));
+                _pTimeZoneInfo->Bias = _Tzi.Bias;
+                _pTimeZoneInfo->StandardBias = _Tzi.StandardBias;
+                _pTimeZoneInfo->DaylightBias = _Tzi.DaylightBias;
+                _pTimeZoneInfo->StandardDate = _Tzi.StandardDate;
+                _pTimeZoneInfo->DaylightDate = _Tzi.DaylightDate;
+                
+            } while (false);
+
+            if (_hTimeZoneKey)
+                RegCloseKey(_hTimeZoneKey);
+
+            if (_hTimeZoneRootKey)
+                RegCloseKey(_hTimeZoneRootKey);
+
+            if (_lStatus)
+            {
+                SetLastError(_lStatus);
+                return FALSE;
+            }
+            return TRUE;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+		// 最低受支持的客户端	Windows 8 [桌面应用 |UWP 应用]
+        // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		advapi32,
+		12,
+		DWORD,
+        WINAPI,
+        GetDynamicTimeZoneInformationEffectiveYears,
+            _In_ CONST PDYNAMIC_TIME_ZONE_INFORMATION _pTimeZoneInformation,
+            _Out_ LPDWORD _puFirstYear,
+            _Out_ LPDWORD _puLastYear
+			)
+		{
+			if (const auto _pfnGetDynamicTimeZoneInformationEffectiveYears = try_get_GetDynamicTimeZoneInformationEffectiveYears())
+			{
+				return _pfnGetDynamicTimeZoneInformationEffectiveYears(_pTimeZoneInformation, _puFirstYear, _puLastYear);
+			}
+            
+            if (!_pTimeZoneInformation)
+            {
+                return ERROR_INVALID_PARAMETER;
+            }
+
+            LSTATUS _lStatus;
+            HKEY _hTimeZoneRootKey = NULL;
+            HKEY _hTimeZoneKey = NULL;
+            HKEY _hDynamicDSTKey = NULL;
+
+            do
+            {
+                _lStatus = RegOpenKeyExW(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones)", 0, KEY_READ, &_hTimeZoneRootKey);
+                if (_lStatus)
+                {
+                    break;
+                }
+
+                _lStatus = RegOpenKeyExW(_hTimeZoneRootKey, _pTimeZoneInformation->TimeZoneKeyName, 0, KEY_READ, &_hTimeZoneKey);
+                if (_lStatus)
+                {
+                    break;
+                }
+
+                _lStatus = RegOpenKeyExW(_hTimeZoneKey, L"Dynamic DST", 0, KEY_READ, &_hDynamicDSTKey);
+                if (_lStatus)
+                {
+                    break;
+                }
+
+                // KernalBase.GetFirstAndLastEntryValues
+                DWORD _uFirstYear = 0, _uLastYear = 0;
+                DWORD _cdData = sizeof(_uFirstYear);
+                // 注意：微软原版这里就没有检查注册表的返回长度以及类型
+                _lStatus = RegQueryValueExW(_hDynamicDSTKey, L"FirstEntry", nullptr, nullptr, (BYTE*)&_uFirstYear, &_cdData);
+                if (_lStatus)
+                {
+                    _lStatus = ERROR_NOT_FOUND;
+                    break;
+                }
+
+                _cdData = sizeof(_uLastYear);
+                _lStatus = RegQueryValueExW(_hDynamicDSTKey, L"LastEntry", nullptr, nullptr, (BYTE*)&_uLastYear, &_cdData);
+                if (_lStatus)
+                {
+                    _lStatus = ERROR_NOT_FOUND;
+                    break;
+                }
+
+                *_puFirstYear = _uFirstYear;
+                *_puLastYear = _uLastYear;
+            } while (false);
+
+            if (_hDynamicDSTKey)
+                RegCloseKey(_hDynamicDSTKey);
+
+            if (_hTimeZoneKey)
+                RegCloseKey(_hTimeZoneKey);
+
+            if (_hTimeZoneRootKey)
+                RegCloseKey(_hTimeZoneRootKey);
+
+            return _lStatus;
+		}
+#endif
 	}
 }

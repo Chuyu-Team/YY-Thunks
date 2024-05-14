@@ -88,6 +88,7 @@
 | EventWriteTransfer                         | 不存在时，返回ERROR_NOT_SUPPORTED。
 | EventWriteEx                               | 不存在时，调用EventWriteTransfer。
 | EventWriteString                           | 不存在时，返回ERROR_NOT_SUPPORTED。
+| GetDynamicTimeZoneInformationEffectiveYears| 不存在时，直接读取`Time Zones`注册表。
 
 ## bcrypt.dll
 | 函数                                       | Fallback
@@ -367,6 +368,7 @@
 | IsNLSDefinedString                         | 不存在时，调用GetStringTypeW。
 | SetProcessWorkingSetSizeEx                 | 不存在时，调用SetProcessWorkingSetSize。
 | GetProcessWorkingSetSizeEx                 | 不存在时，调用GetProcessWorkingSetSize。
+| GetTimeZoneInformationForYear              | 不存在时，直接读取`Time Zones`注册表。
 
 ## mfplat.dll
 | 函数                                       | Fallback
