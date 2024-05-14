@@ -13,6 +13,7 @@
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 #define UMDF_USING_NTSTATUS
 #define _Disallow_YY_KM_Namespace
+#define _WINSOCK_DEPRECATED_NO_WARNINGS 1
 #include <km.h>
 
 #include <Windows.h>

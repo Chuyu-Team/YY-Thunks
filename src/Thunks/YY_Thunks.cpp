@@ -73,11 +73,21 @@
 #define YY_Thunks_Support_Version WDK_NTDDI_VERSION
 #endif
 
+#ifndef _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#endif
+
 #define _WINSOCKAPI_
 #define PSAPI_VERSION 1
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 #define INITKNOWNFOLDERS
+#endif
+
+#ifndef __WarningMessage__
+#define STRING2(x) #x
+#define STRING(x) STRING2(x)
+#define __WarningMessage__(msg) __pragma(message (__FILE__ "(" STRING(__LINE__) "): warning Thunks: " # msg))
 #endif
 
 #define _Disallow_YY_KM_Namespace
@@ -202,6 +212,36 @@ namespace YY
             {
                 const auto _pPeb = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock;
                 return internal::MakeVersion(_pPeb->OSMajorVersion, _pPeb->OSMinorVersion);
+            }
+
+            _Check_return_
+            _Ret_maybenull_
+            _Post_writable_byte_size_(_cbBytes)
+            static void* __fastcall Alloc(_In_ size_t _cbBytes)
+            {
+                return HeapAlloc(((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap, 0, _cbBytes);
+            }
+
+            _Check_return_
+            _Ret_maybenull_
+            _Post_writable_byte_size_(_cbBytes)
+            static void* __fastcall ReAlloc(_Pre_maybenull_ _Post_invalid_ void* _pAddress, _In_ size_t _cbBytes)
+            {
+                auto _hProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+                if (_pAddress)
+                {
+                    return HeapReAlloc(_hProcessHeap, 0, _pAddress, _cbBytes);
+                }
+                else
+                {
+                    return HeapAlloc(_hProcessHeap, 0, _cbBytes);
+                }
+            }
+
+            static void __fastcall Free(_Pre_maybenull_ _Post_invalid_ void* _pAddress)
+            {
+                if(_pAddress)
+                    HeapFree(((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap, 0, _pAddress);
             }
 
 			//代码块，分割任务
@@ -473,18 +513,29 @@ namespace YY
             class StringBuffer
             {
             public:
-                Char* szBuffer;
-                size_t uLength;
-                size_t uBufferLength;
+                Char* szBuffer = nullptr;
+                size_t uLength = 0;
+                size_t uBufferLength = 0;
+                bool bCanFree = false;
 
-                StringBuffer()
-                    : szBuffer(nullptr)
-                    , uLength(0)
-                    , uBufferLength(0)
+                constexpr StringBuffer()
+                    : bCanFree(true)
                 {
                 }
 
-                StringBuffer(Char* _szBuffer, size_t _uBufferLength)
+                constexpr StringBuffer(StringBuffer&& _Other) noexcept
+                    : szBuffer(_Other.szBuffer)
+                    , uLength(_Other.uLength)
+                    , uBufferLength(_Other.uBufferLength)
+                    , bCanFree(_Other.bCanFree)
+                {
+                    _Other.szBuffer = nullptr;
+                    _Other.uLength = 0;
+                    _Other.uBufferLength = 0;
+                }
+
+
+                constexpr StringBuffer(Char* _szBuffer, size_t _uBufferLength)
                     : szBuffer(_szBuffer)
                     , uLength(0)
                     , uBufferLength(_uBufferLength)
@@ -497,11 +548,21 @@ namespace YY
 
                 StringBuffer(const StringBuffer&) = delete;
 
+                ~StringBuffer()
+                {
+                    if (bCanFree)
+                    {
+                        internal::Free(szBuffer);
+                    }
+                }
+
                 template<typename Char2>
                 bool __fastcall AppendString(_In_z_ const Char2* _szSrc)
                 {
                     if (_szSrc == nullptr || *_szSrc == '\0')
                         return true;
+
+                    TryBuy(128);
 
                     if (uLength == uBufferLength)
                         return false;
@@ -514,6 +575,7 @@ namespace YY
                             uLength = _uLengthNew;
                             return true;
                         }
+                        TryBuy();
                     }
 
                     szBuffer[uLength] = '\0';
@@ -525,7 +587,7 @@ namespace YY
                 {
                     if (_Ch == '\0')
                         return true;
-
+                    TryBuy();
                     const auto _uNew = uLength + 1;
                     if (_uNew >= uBufferLength)
                         return false;
@@ -537,6 +599,8 @@ namespace YY
 
                 bool __fastcall AppendUint32(_In_ DWORD _uAppdendData)
                 {
+                    TryBuy(32);
+
                     if (uLength == uBufferLength)
                         return false;
 
@@ -575,10 +639,89 @@ namespace YY
                     *szBuffer = '\0';
                     return false;
                 }
+
+                _Ret_z_ const Char* __fastcall GetC_String() const
+                {
+                    return szBuffer ? szBuffer : (Char*)L"";
+                }
+
+                _Ret_maybenull_ Char* __fastcall GetBuffer(size_t _cNewBufferLength)
+                {
+                    // 字符串有一个末尾 0
+                    ++_cNewBufferLength;
+                    if (uBufferLength > _cNewBufferLength)
+                        return szBuffer;
+
+                    if (!bCanFree)
+                        return nullptr;
+
+                    auto _szNewBuffer = (Char*)internal::ReAlloc(szBuffer, _cNewBufferLength);
+                    if (!_szNewBuffer)
+                        return nullptr;
+
+                    szBuffer = _szNewBuffer;
+                    uBufferLength = _cNewBufferLength;
+                    return _szNewBuffer;
+                }
+
+                void __fastcall SetLength(size_t _cNewLength)
+                {
+                    if (_cNewLength == uLength)
+                    {
+                        return;
+                    }
+                    else if (uBufferLength <= _cNewLength)
+                    {
+                        __debugbreak();
+                        return;
+                    }
+
+                    uLength = _cNewLength;
+                    szBuffer[uLength] = '\0';
+                }
+
+                void TryBuy(DWORD _uAppdendData = 1)
+                {
+                    if (bCanFree ==false || _uAppdendData == 0)
+                        return;
+
+                    auto _uNew = uLength + _uAppdendData;
+                    if (_uNew >= uBufferLength)
+                    {
+                        GetBuffer(max(uBufferLength * 2, _uNew));
+                    }
+                }
             };
 
+            static LSTATUS Convert(_In_NLS_string_(_cchSrc) LPCWSTR _szSrc, _In_ int _cchSrc, StringBuffer<char>* _pBuffer)
+            {
+                _pBuffer->SetLength(0);
+                if (_cchSrc == 0)
+                    return ERROR_SUCCESS;
 
+                if (_cchSrc < 0)
+                {
+                    const auto _cchLength = _szSrc ? wcslen(_szSrc) : size_t(0);
+                    if(_cchLength > MAXINT32)
+                        return ERROR_NOT_ENOUGH_MEMORY;
 
+                    _cchSrc = static_cast<int>(_cchLength);
+                    if (_cchSrc == 0)
+                        return ERROR_SUCCESS;
+                }
+
+                const auto _cchDst = WideCharToMultiByte(CP_ACP, 0, _szSrc, _cchSrc, nullptr, 0, nullptr, nullptr);
+                if (_cchDst > 0)
+                {
+                    auto _szDst = _pBuffer->GetBuffer(_cchDst);
+                    if (!_szDst)
+                        return ERROR_NOT_ENOUGH_MEMORY;
+
+                    WideCharToMultiByte(CP_ACP, 0, _szSrc, _cchSrc, _szDst, _cchDst, nullptr, nullptr);
+                    _pBuffer->SetLength(_cchDst);
+                }
+                return ERROR_SUCCESS;
+            }
 
 		}
 	}//namespace Thunks
