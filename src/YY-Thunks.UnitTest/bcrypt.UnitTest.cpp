@@ -72,7 +72,7 @@ namespace bcrypt
             Assert::IsTrue(_Status >= 0);
             Assert::IsNotNull(_hHash);
 
-            _Status = ::BCryptHashData(_hHash, reinterpret_cast<PUCHAR>((char*)"123"), 3, 0);
+            _Status = ::BCryptHashData(_hHash, (PUCHAR)"123", 3, 0);
             Assert::IsTrue(_Status >= 0);
 
             byte _ShaCurrent[kTargetShaLength] = {};
