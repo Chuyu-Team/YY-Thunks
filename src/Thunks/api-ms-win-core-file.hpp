@@ -533,14 +533,16 @@ namespace YY
 				goto __Exit;
 			}
 
-            const auto _uNewLength = pObjectName->Name.Length - pFileNameInfo->FileNameLength + sizeof(wchar_t);
-            if (_uNewLength > MAXUINT16)
             {
-                lStatus = ERROR_BAD_PATHNAME;
-                goto __Exit;
+                const auto _uNewLength = pObjectName->Name.Length - pFileNameInfo->FileNameLength + sizeof(wchar_t);
+                if (_uNewLength > MAXUINT16)
+                {
+                    lStatus = ERROR_BAD_PATHNAME;
+                    goto __Exit;
+                }
+                VolumeNtName.Buffer = pObjectName->Name.Buffer;
+                VolumeNtName.Length = VolumeNtName.MaximumLength = static_cast<USHORT>(_uNewLength);
             }
-			VolumeNtName.Buffer = pObjectName->Name.Buffer;
-			VolumeNtName.Length = VolumeNtName.MaximumLength = static_cast<USHORT>(_uNewLength);
 
 
 			if (VOLUME_NAME_NT & dwFlags)
