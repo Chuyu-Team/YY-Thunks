@@ -234,6 +234,65 @@ namespace YY
             return QueryIdleProcessorCycleTime(_puBufferLength, _puProcessorIdleCycleTime);
         }
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [仅限桌面应用]
+        // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+        WINAPI,
+        QueryIdleProcessorCycleTime,
+            _Inout_ PULONG _pBufferLength,
+            _Out_writes_bytes_opt_(*_pBufferLength) PULONG64 _pProcessorIdleCycleTime
+			)
+		{
+			if (const auto _pfnQueryIdleProcessorCycleTime = try_get_QueryIdleProcessorCycleTime())
+			{
+				return _pfnQueryIdleProcessorCycleTime(_pBufferLength, _pProcessorIdleCycleTime);
+			}
+            
+            // Windows Vista开始才支持：SystemProcessorIdleCycleTimeInformation，目前只能自己实现一份。
+            // 目前随便写一个值，表示现在的空闲时间，一般情况下随便写没有太大问题
+
+            const auto _uNumberOfProcessors = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->NumberOfProcessors;
+            auto _cBuffer = *_pBufferLength / sizeof(_pProcessorIdleCycleTime[0]);
+            *_pBufferLength = _uNumberOfProcessors * sizeof(_pProcessorIdleCycleTime[0]);
+
+            // 仅返回 BufferLength
+            if (!_pProcessorIdleCycleTime)
+            {
+                return TRUE;
+            }
+
+            if (_cBuffer < _uNumberOfProcessors)
+            {
+                // 没有错，缓冲区不足时也填充缓冲区。微软原版就是这样的。
+                while (_cBuffer)
+                {
+                    *_pProcessorIdleCycleTime = 568556351955196ll;
+                    ++_pProcessorIdleCycleTime;
+                    --_cBuffer;
+                }
+                SetLastError(ERROR_BAD_LENGTH);
+                return FALSE;
+            }
+            else
+            {
+                _cBuffer = _uNumberOfProcessors;
+                while (_cBuffer)
+                {
+                    *_pProcessorIdleCycleTime = 568556351955196ll;
+                    ++_pProcessorIdleCycleTime;
+                    --_cBuffer;
+                }
+                return TRUE;
+            }
+        }
+#endif
 	}//namespace Thunks
 
 } //namespace YY
