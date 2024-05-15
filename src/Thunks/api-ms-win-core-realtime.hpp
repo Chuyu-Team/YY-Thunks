@@ -255,21 +255,40 @@ namespace YY
 				return _pfnQueryIdleProcessorCycleTime(_pBufferLength, _pProcessorIdleCycleTime);
 			}
             
-            const auto _pfnNtQuerySystemInformation = try_get_NtQuerySystemInformation();
-            if (!_pfnNtQuerySystemInformation)
+            // Windows Vista开始才支持：SystemProcessorIdleCycleTimeInformation，目前只能自己实现一份。
+            // 目前随便写一个值，表示现在的空闲时间，一般情况下随便写没有太大问题
+
+            const auto _uNumberOfProcessors = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->NumberOfProcessors;
+            auto _cBuffer = *_pBufferLength / sizeof(_pProcessorIdleCycleTime[0]);
+            *_pBufferLength = _uNumberOfProcessors * sizeof(_pProcessorIdleCycleTime[0]);
+
+            // 仅返回 BufferLength
+            if (!_pProcessorIdleCycleTime)
             {
-                SetLastError(ERROR_NOT_SUPPORTED);
-                return FALSE;
+                return TRUE;
             }
 
-            long _Status = _pfnNtQuerySystemInformation(SystemProcessorIdleCycleTimeInformation, _pProcessorIdleCycleTime, *_pBufferLength, _pBufferLength);
-            if (_Status < 0 && _pProcessorIdleCycleTime)
+            if (_cBuffer < _uNumberOfProcessors)
             {
-                internal::BaseSetLastNTError(_Status);
+                // 没有错，缓冲区不足时也填充缓冲区。微软原版就是这样的。
+                while (_cBuffer)
+                {
+                    *_pProcessorIdleCycleTime = 568556351955196ll;
+                    ++_pProcessorIdleCycleTime;
+                    --_cBuffer;
+                }
+                SetLastError(ERROR_BAD_LENGTH);
                 return FALSE;
             }
             else
             {
+                _cBuffer = _uNumberOfProcessors;
+                while (_cBuffer)
+                {
+                    *_pProcessorIdleCycleTime = 568556351955196ll;
+                    ++_pProcessorIdleCycleTime;
+                    --_cBuffer;
+                }
                 return TRUE;
             }
         }

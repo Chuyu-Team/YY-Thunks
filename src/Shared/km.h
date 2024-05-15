@@ -1235,6 +1235,7 @@ enum SYSTEM_INFORMATION_CLASS
 	SystemEmulationProcessorInformation = 0x3f,
 	SystemExtendedHandleInformation = 0x40,
 	SystemLostDelayedWriteInformation = 0x41,
+    MaxSystemInfoClassWindows2003, // Windows 2003最大位置
 	SystemBigPoolInformation = 0x42,
 	SystemSessionPoolTagInformation = 0x43,
 	SystemSessionMappedViewInformation = 0x44,
@@ -1267,7 +1268,6 @@ enum SYSTEM_INFORMATION_CLASS
 	SystemCoverageInformation = 0x5f,
 	SystemPrefetchPatchInformation = 0x60,
 	SystemVerifierFaultsInformation = 0x61,
-	MaxSystemInfoClassWinXP,                 //WinXP最大支持到此处
 	SystemSystemPartitionInformation = 0x62,	//用于获取系统分区信息，其结构为UNICODE_STRING
 	SystemSystemDiskInformation = 0x63,
 	SystemProcessorPerformanceDistribution = 0x64,
@@ -2948,7 +2948,8 @@ NtQueryDirectoryFile (
 		ThreadSetTlsArrayAddress,   // Obsolete
 		ThreadIsIoPending,
 		ThreadHideFromDebugger,
-		ThreadBreakOnTermination,
+        MaxThreadInfoClassWindows2003, // Windows 2003最大位置
+		ThreadBreakOnTermination = 18,
 		ThreadSwitchLegacyState,
 		ThreadIsTerminated,
 		ThreadLastSystemCall,
