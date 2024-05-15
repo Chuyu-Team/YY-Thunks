@@ -359,6 +359,7 @@
 | LocateXStateFeature                        | 不存在时，内部实现。
 | CopyContext                                | 不存在时，内部实现。
 | QueryIdleProcessorCycleTimeEx              | 不存在时，调用QueryIdleProcessorCycleTime。
+| QueryIdleProcessorCycleTime                | 不存在时，调用NtQuerySystemInformation。
 | SetThreadIdealProcessorEx                  | 不存在时，调用SetThreadIdealProcessor。
 | GetThreadIdealProcessorEx                  | 不存在时，调用SetThreadIdealProcessor。
 | GetUserPreferredUILanguages                | 不存在时，调用GetThreadPreferredUILanguages。

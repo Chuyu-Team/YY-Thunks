@@ -234,6 +234,46 @@ namespace YY
             return QueryIdleProcessorCycleTime(_puBufferLength, _puProcessorIdleCycleTime);
         }
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [仅限桌面应用]
+        // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		BOOL,
+        WINAPI,
+        QueryIdleProcessorCycleTime,
+            _Inout_ PULONG _pBufferLength,
+            _Out_writes_bytes_opt_(*_pBufferLength) PULONG64 _pProcessorIdleCycleTime
+			)
+		{
+			if (const auto _pfnQueryIdleProcessorCycleTime = try_get_QueryIdleProcessorCycleTime())
+			{
+				return _pfnQueryIdleProcessorCycleTime(_pBufferLength, _pProcessorIdleCycleTime);
+			}
+            
+            const auto _pfnNtQuerySystemInformation = try_get_NtQuerySystemInformation();
+            if (!_pfnNtQuerySystemInformation)
+            {
+                SetLastError(ERROR_NOT_SUPPORTED);
+                return FALSE;
+            }
+
+            long _Status = _pfnNtQuerySystemInformation(SystemProcessorIdleCycleTimeInformation, _pProcessorIdleCycleTime, *_pBufferLength, _pBufferLength);
+            if (_Status < 0 && _pProcessorIdleCycleTime)
+            {
+                internal::BaseSetLastNTError(_Status);
+                return FALSE;
+            }
+            else
+            {
+                return TRUE;
+            }
+        }
+#endif
 	}//namespace Thunks
 
 } //namespace YY
