@@ -64,5 +64,31 @@ public:
     }
 };
 
+inline std::string ToHexString(const void* _pData, size_t _cbData)
+{
+    std::string _szResult;
+    _szResult.reserve(_cbData * 2);
+    constexpr const char kHex[] = "0123456789ABCDEF";
+
+    for (auto _pItem = reinterpret_cast<const BYTE*>(_pData); _cbData; --_cbData, ++_pItem)
+    {
+        _szResult += kHex[*_pItem >> 4];
+        _szResult += kHex[*_pItem & 0xFu];
+    }
+
+    return _szResult;
+}
+
+inline std::string ToHexString(const std::vector<BYTE> _Data)
+{
+    return ToHexString(_Data.data(), _Data.size());
+}
+
+template<size_t kDataLength>
+inline std::string ToHexString(const BYTE (&_Data)[kDataLength])
+{
+    return ToHexString(_Data, kDataLength);
+}
+
 
 #endif //PCH_H

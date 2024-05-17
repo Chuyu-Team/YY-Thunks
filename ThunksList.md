@@ -93,16 +93,23 @@
 ## bcrypt.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
-| BCryptOpenAlgorithmProvider                | 不存在时，调用CryptAcquireContextW。
+| BCryptOpenAlgorithmProvider                | 不存在时，调用CryptAcquireContextW。目前支持的算法有：RC2、RC4、AES、DES、3DES、3DES-112、MD2、MD4、MD5、SHA1、SHA256、SHA384、SHA512、RNG、FIPS186DSARNG、DUALECRNG。
 | BCryptCloseAlgorithmProvider               | 不存在时，调用CryptReleaseContext。
 | BCryptGenRandom                            | 不存在时，调用RtlGenRandom。
-| BCryptGetProperty                          | 不存在时，内部实现。
+| BCryptGetProperty                          | 不存在时，调用CryptGetKeyParam。
+| BCryptSetProperty                          | 不存在时，调用CryptSetKeyParam。
 | BCryptCreateHash                           | 不存在时，调用CryptCreateHash。
 | BCryptDestroyHash                          | 不存在时，调用CryptDestroyHash。
 | BCryptHashData                             | 不存在时，调用CryptHashData。
 | BCryptFinishHash                           | 不存在时，调用CryptGetHashParam。
-| BCryptDeriveKeyPBKDF2                      | 不存在时，调用CryptCreateHash、CryptHashData。
-| BCryptDeriveKeyCapi                        | 不存在时，调用CryptCreateHash、CryptHashData。
+| BCryptDeriveKeyPBKDF2                      | 不存在时，调用BCryptHashData。
+| BCryptDeriveKeyCapi                        | 不存在时，调用BCryptHashData。
+| BCryptEncrypt                              | 不存在时，调用CryptEncrypt。
+| BCryptDecrypt                              | 不存在时，调用CryptDecrypt。
+| BCryptGenerateSymmetricKey                 | 不存在时，调用CryptImportKey。
+| BCryptDestroyKey                           | 不存在时，调用CryptDestroyKey。
+| BCryptExportKey                            | 不存在时，调用CryptExportKey。
+| BCryptImportKey                            | 不存在时，调用CryptImportKey。
 
 ## bcryptprimitives.dll
 | 函数                                       | Fallback
