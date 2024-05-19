@@ -506,6 +506,14 @@
 | GetFileVersionInfoExW(A)                   | 不存在时，调用GetFileVersionInfoW(A)。
 | GetFileVersionInfoSizeExW(A)               | 不存在时，调用GetFileVersionInfoSizeW(A)。
 
+## WinHttp.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| WinHttpCreateProxyResolver                 | 不存在时，内部实现。
+| WinHttpGetProxyForUrlEx                    | 不存在时，异步调用WinHttpGetProxyForUrl。
+| WinHttpGetProxyResult                      | 不存在时，内部实现。
+| WinHttpFreeProxyResult                     | 不存在时，内部实现。
+
 ## ws2_32.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
