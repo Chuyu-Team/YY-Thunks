@@ -1292,6 +1292,8 @@ namespace YY
         template<typename BCryptAlgorithmType, typename BCryptKeyType, DWORD kDefaultCryptMode, DWORD kDefaultBlockSize>
         struct BCryptKeyAlgorithm : public BCryptAlgorithmByCryptoAPI<BCryptAlgorithmType>
         {
+            DWORD& uCryptMode = BCryptAlgorithm::uCryptMode;
+            DWORD& uEffectiveKeyBitCount = BCryptAlgorithm::uEffectiveKeyBitCount;
             BCryptKeyAlgorithm()
             {
                 uCryptMode = kDefaultCryptMode;
