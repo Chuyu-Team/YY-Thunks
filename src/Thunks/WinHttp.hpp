@@ -1,5 +1,7 @@
 ﻿#include <winhttp.h>
 
+#pragma comment(lib, "winhttp.lib")
+
 namespace YY
 {
     namespace Thunks

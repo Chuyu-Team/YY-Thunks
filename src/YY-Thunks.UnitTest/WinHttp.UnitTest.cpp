@@ -1,8 +1,6 @@
 ﻿#include "pch.h"
 #include "Thunks/WinHttp.hpp"
 
-#pragma comment(lib, "winhttp.lib")
-
 namespace WinHppt
 {
     std::wstring ToString(const WINHTTP_PROXY_RESULT_ENTRY& _Item)
