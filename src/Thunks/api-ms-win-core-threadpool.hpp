@@ -6,18 +6,20 @@
 struct _TP_CLEANUP_GROUP_FUNCS
 {
 	//0
-	void (__fastcall* pTppWorkpFree)(_TP_WORK* Work);
+	void (__fastcall* pfnTppWorkpFree)(_TP_WORK* Work);
 	//4
-	void* pTppWorkCallbackEpilog;
+    void (__fastcall *pfnTppWorkCallbackEpilog)(_TP_WORK* _pWork);
+
 	//8
 	SRWLOCK srwLock;
 	//C
-	void* pTppWorkCancelPendingCallbacks;
+    void(__fastcall* pfnTppWorkCancelPendingCallbacks)(_TP_WORK* _pWork);
 	//0x10
 };
 
-struct TaskVFuncs
+union TaskVFuncs
 {
+    void* pfnCallback;
 	void(__fastcall* pExecuteCallback)(PTP_CALLBACK_INSTANCE Instance, _TP_WORK* Work);
 };
 
@@ -99,6 +101,7 @@ struct _TP_WORK
 	DWORD un4C;
 	//0x50  TP_CALLBACK_ENVIRON 中的 Flags
 	// 0x10000 已经调用Release
+    // 0x30000 WaitForThreadpoolIoCallbacks里用了，含义未知
 	long uFlags1;
 	//0x54 似乎保存了 TpAllocWork 函数的返回地址意义暂时不明
 	void* retaddr;
@@ -109,23 +112,150 @@ struct _TP_WORK
 	//0x60
 	const TaskVFuncs* pTaskVFuncs;
 	//0x64
-	volatile DWORD uFlags;
+    union
+    {
+        volatile DWORD uFlags;
+        struct
+        {
+            // 作用未知
+            DWORD uBit1 : 1;
+            // 投递的任务数量
+            DWORD uPendingCount : 31;
+            // 正在调用的任务（YY-Thunks 自身扩展，微软原版没有）
+            DWORD uWorkingCount;
+        };
+
+        volatile ULONGLONG uFlags64;
+    };
 	//0x68
 	//附加字段，微软原版没有
 	//当没有任务时，改句柄将处于激活状态
 	HANDLE hEvent;
+
+    void AddRef()
+    {
+        InterlockedIncrement(&nRef);
+    }
+
+    void Release()
+    {
+        if (InterlockedDecrement(&nRef) == 0)
+        {
+            VFuncs->pfnTppWorkpFree(this);
+        }
+    }
+
+    void AddPendingCount()
+    {
+        if (InterlockedAdd((volatile LONG*)&uFlags, 2) < 4)
+        {
+            ResetEvent(hEvent);
+        }
+    }
+
+    bool TryReleasePendingount()
+    {
+        ULARGE_INTEGER _uLast;
+        for (_uLast.QuadPart = uFlags64;;)
+        {
+            ULARGE_INTEGER _uNew = _uLast;
+            if (_uNew.LowPart < 2)
+                return false;
+
+            _uNew.LowPart -= 2;
+
+            auto _uResult = InterlockedCompareExchange64((volatile LONG64*)&uFlags64, _uNew.QuadPart, _uLast.QuadPart);
+            if (_uResult == _uLast.QuadPart)
+            {
+                //计数为 0，唤醒等待
+                if (_uNew.QuadPart < 2ull)
+                {
+                    SetEvent(hEvent);
+                }
+                return true;
+            }
+
+            _uLast.QuadPart = _uResult;
+        }
+    }
+
+    bool TryReleaseWorkingCountAddWorkingCount()
+    {
+        ULARGE_INTEGER _uLast;
+        for (_uLast.QuadPart = uFlags64;;)
+        {
+            ULARGE_INTEGER _uNew = _uLast;
+            if (_uNew.LowPart < 2)
+            {
+                return false;
+            }
+            else
+            {
+                _uNew.LowPart -= 2;
+            }
+
+            _uNew.HighPart += 1;
+
+            auto _uResult = InterlockedCompareExchange64((volatile LONG64*)&uFlags64, _uNew.QuadPart, _uLast.QuadPart);
+            if (_uResult == _uLast.QuadPart)
+            {
+                return true;
+            }
+
+            _uLast.QuadPart = _uResult;
+        }
+    }
+
+    void ReleaseWorkingCount()
+    {
+        ULARGE_INTEGER _uLast;
+        for (_uLast.QuadPart = uFlags64;;)
+        {
+            ULARGE_INTEGER _uNew = _uLast;
+            _uNew.HighPart -= 1;
+
+            auto _uResult = InterlockedCompareExchange64((volatile LONG64*)&uFlags64, _uNew.QuadPart, _uLast.QuadPart);
+            if (_uResult == _uLast.QuadPart)
+            {
+                //计数为 0，唤醒等待
+                if (_uNew.QuadPart < 2ull)
+                {
+                    SetEvent(hEvent);
+                }
+                return;
+            }
+
+            _uLast.QuadPart = _uResult;
+        }
+    }
 };
 
 //0xD8
 struct _TP_TIMER : public _TP_WORK
 {
+    // 以下为YY-Thunks扩展属性
 	HANDLE hQueueTimer;
+    SRWLOCK QueueTimerLock;
 };
 
 //0xA0
 struct _TP_WAIT : public _TP_WORK
 {
+    // 以下为YY-Thunks扩展属性
 	HANDLE hWaitObject;
+    SRWLOCK WaitObjectLock;
+};
+
+struct _TP_IO : public _TP_WORK
+{
+    // 0x68, StartThreadpoolIo的调用次数，YY-Thunk中复用 uPendingCount
+    // volatile DWORD uStartAsyncIoRef;
+
+    // 与微软原版相比稍微做一些些改变，CreateThreadpoolIo直接在TP_IO保存上下文。
+    HANDLE hFile;
+    //PTP_WIN32_IO_CALLBACK pfnIoCallback;
+    //PVOID pUserData;
+    YY::Thunks::internal::HookThunkData* pThunkData;
 };
 
 //不完善的定义，我们用多少，处理多少。
@@ -193,19 +323,19 @@ namespace YY
 				}
 			}
 
-			static void __fastcall TppWorkCallbackEpilog(void* p)
+			static void __fastcall TppWorkCallbackEpilog(_TP_WORK* _pWork)
 			{
 
 			}
 
-			static void __fastcall TppWorkCancelPendingCallbacks(void* p)
+			static void __fastcall TppWorkCancelPendingCallbacks(_TP_WORK* _pWork)
 			{
 
 			}
 
 			static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppWorkpCleanupGroupMemberVFuncs()
 			{
-				static const _TP_CLEANUP_GROUP_FUNCS TppWorkpCleanupGroupMemberVFuncs = { &TppWorkpFree, &TppWorkCallbackEpilog, 0, &TppWorkCancelPendingCallbacks };
+				static _TP_CLEANUP_GROUP_FUNCS TppWorkpCleanupGroupMemberVFuncs = { &TppWorkpFree, &TppWorkCallbackEpilog, 0, &TppWorkCancelPendingCallbacks };
 				return &TppWorkpCleanupGroupMemberVFuncs;
 			}
 
@@ -214,12 +344,49 @@ namespace YY
 				((PTP_WORK_CALLBACK)Work->Callback)(Instance, Work->Context, Work);
 			}
 
-			
 			static const TaskVFuncs* __fastcall GetTppWorkpTaskVFuncs()
 			{
 				static TaskVFuncs TppWorkpTaskVFuncs = { &TppWorkpExecuteCallback };
 				return &TppWorkpTaskVFuncs;
 			}
+
+            static void __fastcall TppCleanupGroupMemberWait(_TP_WORK* _pWork, ULONG _uCancelledCallbackCount)
+            {
+                if(_pWork->uFlags64 & (~1ull))
+                    WaitForSingleObject(_pWork->hEvent, INFINITE);
+            }
+
+            static void __fastcall TppWorkWait(_TP_WORK* _pWork, BOOL _bCancelPendingCallbacks, bool bReleaseRef = false)
+            {
+                ULONG _uCancelledCallbackCount = 0;
+                if (_bCancelPendingCallbacks)
+                {
+                    for (auto _uLast = _pWork->uFlags;;)
+                    {
+                        _uCancelledCallbackCount = _uLast >> 1;
+                        if (_uCancelledCallbackCount == 0)
+                            break;
+
+                        const auto _uResult = InterlockedCompareExchange(&_pWork->uFlags, _uLast & 1, _uLast);
+                        if (_uResult == _uLast)
+                        {
+                            break;
+                        }
+
+                        _uLast = _uResult;
+                    }
+                }
+
+                TppCleanupGroupMemberWait(_pWork, _uCancelledCallbackCount);
+
+                if (bReleaseRef)
+                {
+                    if (InterlockedAdd((volatile LONG*)&_pWork->nRef, -LONG(_uCancelledCallbackCount)) == 0)
+                    {
+                        _pWork->VFuncs->pfnTppWorkpFree(_pWork);
+                    }
+                }
+            }
 
 			static
 			NTSTATUS
@@ -410,71 +577,24 @@ namespace YY
 
 			static void __fastcall TppWorkPost(_TP_WORK* pwk)
 			{
-				//增加一次引用。
-				auto uFlags = pwk->uFlags;
-
-				for (;;)
-				{
-					auto uNewFlags = (uFlags & 0xFFFFFFFEu) + 2;
-					auto uOrgFlags = InterlockedCompareExchange(&pwk->uFlags, uNewFlags, uFlags);
-
-					if (uOrgFlags == uFlags)
-					{
-						uFlags = uNewFlags;
-						break;
-					}
-
-					uFlags = uOrgFlags;
-				}
-
-				InterlockedExchangeAdd(&pwk->nRef, 1);
-
-				ResetEvent(pwk->hEvent);
+				//增加一次引用。 
+                pwk->AddRef();
+                pwk->AddPendingCount();
 
 				auto bRet = QueueUserWorkItem([](LPVOID lpThreadParameter) -> DWORD
 					{
 						auto pwk = (PTP_WORK)lpThreadParameter;
 
-						if ((pwk->uFlags & 0x1) == 0)
-						{
-							TP_CALLBACK_INSTANCE Instance = {};
+                        if (pwk->TryReleaseWorkingCountAddWorkingCount())
+                        {
+                            TP_CALLBACK_INSTANCE Instance = {};
+                            pwk->pTaskVFuncs->pExecuteCallback(&Instance, pwk);
+                            Fallback::DoWhenCallbackReturns(&Instance);
 
-							pwk->pTaskVFuncs->pExecuteCallback(&Instance, pwk);
+                            pwk->ReleaseWorkingCount();
+                        }
 
-							Fallback::DoWhenCallbackReturns(&Instance);
-						}
-
-
-						auto uFlags = pwk->uFlags;
-
-						for (;;)
-						{
-							auto uNewFlags = uFlags - 2;
-
-
-							auto uOrgFlags = InterlockedCompareExchange(&pwk->uFlags, uNewFlags, uFlags);
-
-							if (uOrgFlags == uFlags)
-							{
-								uFlags = uNewFlags;
-								break;
-							}
-
-							uFlags = uOrgFlags;
-						}
-
-						if ((uFlags & 0xFFFFFFFEu) == 0)
-						{
-							//计数为 0，唤醒等待
-							SetEvent(pwk->hEvent);
-						}
-
-						if (InterlockedExchangeAdd(&pwk->nRef, -1) == 0)
-						{
-							pwk->VFuncs->pTppWorkpFree(pwk);
-						}
-
-
+                        pwk->Release();
 						return 0;
 
 					}, pwk, 0);
@@ -482,32 +602,8 @@ namespace YY
 				if (!bRet)
 				{
 					//QueueUserWorkItem失败，重新减少引用计数
-
-					for (;;)
-					{
-						auto uNewFlags = uFlags - 2;
-
-						auto uOrgFlags = InterlockedCompareExchange(&pwk->uFlags, uNewFlags, uFlags);
-
-						if (uOrgFlags == uFlags)
-						{
-							uFlags = uNewFlags;
-							break;
-						}
-
-						uFlags = uOrgFlags;
-					}
-
-					if ((uFlags & 0xFFFFFFFEu) == 0)
-					{
-						//计数为 0，唤醒等待
-						SetEvent(pwk->hEvent);
-					}
-
-					if (InterlockedExchangeAdd(&pwk->nRef, -1) == 0)
-					{
-						pwk->VFuncs->pTppWorkpFree(pwk);
-					}
+                    pwk->TryReleasePendingount();
+                    pwk->Release();
 				}
 			}
 
@@ -526,6 +622,54 @@ namespace YY
 				static TaskVFuncs TppWorkpTaskVFuncs = { &TppSimplepExecuteCallback };
 				return &TppWorkpTaskVFuncs;
 			}
+
+            static void __fastcall TppIopExecuteCallback(_TP_IO* _pIoWork, DWORD _lStatus, DWORD _cbNumberOfBytesTransfered, LPOVERLAPPED _pOverlapped)
+            {
+                auto _pfnIoCallback = reinterpret_cast<PTP_WIN32_IO_CALLBACK>(_pIoWork->Callback);
+
+                if (_pIoWork->TryReleaseWorkingCountAddWorkingCount())
+                {
+                    _TP_CALLBACK_INSTANCE _Instance = {};
+                    _pfnIoCallback(&_Instance, _pIoWork->Context, _pOverlapped, _lStatus, _cbNumberOfBytesTransfered, _pIoWork);
+                    DoWhenCallbackReturns(&_Instance);
+
+                    _pIoWork->ReleaseWorkingCount();
+                    _pIoWork->Release();
+                }
+            }
+
+            static const TaskVFuncs* __fastcall GetTppIopExecuteCallback()
+            {
+                static TaskVFuncs TppWorkpTaskVFuncs = { &TppIopExecuteCallback};
+                return &TppWorkpTaskVFuncs;
+            }
+
+            static void __fastcall TppIopFree(_TP_WORK* _pWork)
+            {
+                if (auto _pIoWork = static_cast<_TP_IO*>(_pWork))
+                {
+                    if (_pIoWork->pThunkData)
+                        _pIoWork->pThunkData->Free();
+
+                    internal::Free(_pWork);
+                }
+            }
+
+            static void __fastcall TppIopCallbackEpilog(_TP_WORK* _pWork)
+            {
+
+            }
+
+            static void __fastcall TppIopCancelPendingCallbacks(_TP_WORK* _pWork)
+            {
+            }
+
+            static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppIopCleanupGroupMemberVFuncs()
+            {
+                static _TP_CLEANUP_GROUP_FUNCS TppWorkpCleanupGroupMemberVFuncs = { &TppIopFree, &TppWorkCallbackEpilog, 0, &TppIopCancelPendingCallbacks };
+                return &TppWorkpCleanupGroupMemberVFuncs;
+            }
+
 
 			static
 			NTSTATUS
@@ -618,7 +762,7 @@ namespace YY
 
 					if (InterlockedExchangeAdd(&Work->nRef, -1) == 0)
 					{
-						Work->VFuncs->pTppWorkpFree(Work);
+						Work->VFuncs->pfnTppWorkpFree(Work);
 					}
 				}
 			}
@@ -634,7 +778,7 @@ namespace YY
 
 			static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppTimerpCleanupGroupMemberVFuncs()
 			{
-				static const _TP_CLEANUP_GROUP_FUNCS TppTimerpCleanupGroupMemberVFuncs = { &TppTimerpFree };
+				static _TP_CLEANUP_GROUP_FUNCS TppTimerpCleanupGroupMemberVFuncs = { &TppTimerpFree };
 				return &TppTimerpCleanupGroupMemberVFuncs;
 			}
 
@@ -644,10 +788,9 @@ namespace YY
 				((PTP_TIMER_CALLBACK)Work->Callback)(Instance, Work->Context, (PTP_TIMER)Work);
 			}
 
-			//作用暂时不知道，目前用不到
 			static const TaskVFuncs* __fastcall GetTppTimerpTaskVFuncs()
 			{
-				static constexpr TaskVFuncs TppTimerpTaskVFuncs = { &TppTimerpExecuteCallback };
+				static TaskVFuncs TppTimerpTaskVFuncs = { &TppTimerpExecuteCallback };
 
 				return &TppTimerpTaskVFuncs;
 			}
@@ -811,7 +954,7 @@ namespace YY
 				|| (pwk->uFlags1 & 0x30000)
 				|| pwk->VFuncs != Fallback::GetTppWorkpCleanupGroupMemberVFuncs())
 			{
-				//0xC000000D 参数错误
+                internal::RaiseStatus(STATUS_INVALID_PARAMETER);
 				return;
 			}
 
@@ -844,34 +987,11 @@ namespace YY
 				|| (pwk->uFlags1 & 0x30000)
 				|| (pwk->VFuncs != Fallback::GetTppWorkpCleanupGroupMemberVFuncs()))
 			{
-				//0xC000000D 参数错误
+                internal::RaiseStatus(STATUS_INVALID_PARAMETER);
 				return;
 			}
 
-			DWORD Count = 0;
-
-			if (fCancelPendingCallbacks)
-			{
-				for (auto uFlags = pwk->uFlags; Count = uFlags >> 1;)
-				{
-					//添加取消任务标志
-					auto uOrgFlags = InterlockedCompareExchange(&pwk->uFlags, uFlags | 0x1, uFlags);
-
-					if (uOrgFlags == uFlags)
-						break;
-
-					uFlags = uOrgFlags;
-				}
-			}
-
-
-			if ((pwk->uFlags & 0xFFFFFFFEu) == 0)
-			{
-				//等待计数为 0，直接返回即可
-				return;
-			}
-
-			WaitForSingleObject(pwk->hEvent, INFINITE);
+            Fallback::TppWorkWait(pwk, fCancelPendingCallbacks);
 		}
 
 #endif
@@ -944,21 +1064,17 @@ namespace YY
 
 			if (pftDueTime == nullptr)
 			{
-				if (auto hOrgQueueTimer = InterlockedExchangePointer(&pti->hQueueTimer, nullptr))
-				{
-					//销毁计数器
-					DeleteTimerQueueTimer(nullptr, hOrgQueueTimer, nullptr);
-
-					if (InterlockedExchangeAdd(&pti->nRef, -1) == 0)
-					{
-						pti->VFuncs->pTppWorkpFree(pti);
-					}
-				}
-
+                if (auto hOrgQueueTimer = InterlockedExchangePointer(&pti->hQueueTimer, nullptr))
+                {
+                    //销毁计数器
+                    DeleteTimerQueueTimer(nullptr, hOrgQueueTimer, INVALID_HANDLE_VALUE);
+                    SetEvent(pti->hEvent);
+                    pti->Release();
+                }
 				return;
 			}
 
-			InterlockedIncrement(&pti->nRef);
+            pti->AddRef();
 
 			DWORD DueTime = 0;
 			LARGE_INTEGER lDueTime;
@@ -985,76 +1101,36 @@ namespace YY
 				}
 			}
 
-			HANDLE hQueueTimer;
-			auto bRet = CreateTimerQueueTimer(&hQueueTimer, nullptr, [](PVOID Parameter, BOOLEAN)
+            // Timer 比较特殊，因为始终只有一个句柄，hEvent不需要引用计数。
+            ::AcquireSRWLockExclusive(&pti->QueueTimerLock);
+            if (auto hOrgQueueTimer = InterlockedExchangePointer(&pti->hQueueTimer, nullptr))
+            {
+                //销毁计数器
+                DeleteTimerQueueTimer(nullptr, hOrgQueueTimer, INVALID_HANDLE_VALUE);
+                pti->Release();
+            }
+            ResetEvent(pti->hEvent);
+			auto bRet = CreateTimerQueueTimer(&pti->hQueueTimer, nullptr, [](PVOID Parameter, BOOLEAN)
 				{
-					auto Timer = (PTP_TIMER)Parameter;
-
-					ResetEvent(Timer->hEvent);
-
-					//增加一次引用。
-					auto uFlags = Timer->uFlags;
-					for (;;)
-					{
-						auto uNewFlags = (uFlags & 0xFFFFFFFEu) + 2;
-						auto uOrgFlags = InterlockedCompareExchange(&Timer->uFlags, uNewFlags, uFlags);
-
-						if (uOrgFlags == uFlags)
-						{
-							uFlags = uNewFlags;
-							break;
-						}
-
-						uFlags = uOrgFlags;
-					}
-
+					auto _pTimer = (PTP_TIMER)Parameter;
 					TP_CALLBACK_INSTANCE Instance = {};
 
-					Timer->pTaskVFuncs->pExecuteCallback(&Instance, Timer);
+                    _pTimer->pTaskVFuncs->pExecuteCallback(&Instance, _pTimer);
 
 					Fallback::DoWhenCallbackReturns(&Instance);
-
-
-					uFlags = Timer->uFlags;
-					for (;;)
-					{
-						auto uNewFlags = uFlags - 2;
-
-						auto uOrgFlags = InterlockedCompareExchange(&Timer->uFlags, uNewFlags, uFlags);
-
-						if (uOrgFlags == uFlags)
-						{
-							uFlags = uNewFlags;
-							break;
-						}
-
-						uFlags = uOrgFlags;
-					}
-
-					if ((uFlags & 0xFFFFFFFEu) == 0)
-					{
-						//计数为 0，唤醒等待
-						SetEvent(Timer->hEvent);
-					}
+                    
+                   SetEvent(_pTimer->hEvent);
 
 				}, pti, DueTime, msPeriod, 0);
+            
+            ::ReleaseSRWLockExclusive(&pti->QueueTimerLock);
 
-			if (bRet)
+			if (!bRet)
 			{
-				auto hOrgQueueTimer = InterlockedExchangePointer(&pti->hQueueTimer, hQueueTimer);
-
-				if (!hOrgQueueTimer)
-				{
-					return;
-				}
-
-				DeleteTimerQueueTimer(nullptr, hOrgQueueTimer, nullptr);
-			}
-
-			if (InterlockedExchangeAdd(&pti->nRef, -1) == 0)
-			{
-				pti->VFuncs->pTppWorkpFree(pti);
-			}
+                // 创建失败了，所以把之前的内存块引用计数撤销
+                SetEvent(pti->hEvent);
+                pti->Release();
+			}       
 		}
 #endif
 
@@ -1087,15 +1163,23 @@ namespace YY
 				return;
 			}
 
-			//CancelPendingCallbacks 无法支持
-
-			if ((Timer->uFlags & 0xFFFFFFFEu) == 0)
-			{
-				//等待计数为 0，直接返回即可
-				return;
-			}
-
-			WaitForSingleObject(Timer->hEvent, INFINITE);
+            if (CancelPendingCallbacks)
+            {
+                if (auto hOrgQueueTimer = InterlockedExchangePointer(&Timer->hQueueTimer, NULL))
+                {
+                    DeleteTimerQueueTimer(nullptr, hOrgQueueTimer, INVALID_HANDLE_VALUE);
+                    SetEvent(Timer->hEvent);
+                    Timer->Release();
+                }
+                return;
+            }
+            else
+            {
+                if (Timer->hQueueTimer)
+                {
+                    WaitForSingleObject(Timer->hEvent, INFINITE);
+                }
+            }
 		}
 #endif
 
@@ -1134,16 +1218,12 @@ namespace YY
 				{
 					//销毁计数器
 					DeleteTimerQueueTimer(nullptr, hOrgQueueTimer, INVALID_HANDLE_VALUE);
-
-					InterlockedExchangeAdd(&Timer->nRef, -1);
+                    SetEvent(Timer->hEvent);
+                    Timer->Release();
 				}
 
-				if(InterlockedExchangeAdd(&Timer->nRef, -1) == 0)
-				{
-					Timer->VFuncs->pTppWorkpFree(Timer);
-				}
+                Timer->Release();
 			}
-
 		}
 #endif
 
@@ -1464,13 +1544,13 @@ namespace YY
 
 					if (InterlockedExchangeAdd(&Wait->nRef, -1) == 0)
 					{
-						Wait->VFuncs->pTppWorkpFree(Wait);
+						Wait->VFuncs->pfnTppWorkpFree(Wait);
 					}
 				}
 
 				if (InterlockedExchangeAdd(&Wait->nRef, -1) == 0)
 				{
-					Wait->VFuncs->pTppWorkpFree(Wait);
+					Wait->VFuncs->pfnTppWorkpFree(Wait);
 				}
 			}
 		}
@@ -1508,12 +1588,9 @@ namespace YY
 				//停止
 				if (auto hOrgWaitObject = InterlockedExchangePointer(&Wait->hWaitObject, nullptr))
 				{
-					UnregisterWait(hOrgWaitObject);
-
-					if (InterlockedExchangeAdd(&Wait->nRef, -1) == 0)
-					{
-						Wait->VFuncs->pTppWorkpFree(Wait);
-					}
+                    UnregisterWaitEx(hOrgWaitObject, INVALID_HANDLE_VALUE);
+                    SetEvent(Wait->hEvent);
+                    Wait->Release();
 				}
 
 				return;
@@ -1560,12 +1637,19 @@ namespace YY
 				}
 			}
 
-			InterlockedExchangeAdd(&Wait->nRef, 1);
+            Wait->AddRef();
 
-			HANDLE hWaitObject;
-
+            // Wait 比较特殊，因为始终只有一个句柄，hEvent不需要引用计数。
+            ::AcquireSRWLockExclusive(&Wait->WaitObjectLock);
+            if (auto hOrgWaitObject = InterlockedExchangePointer(&Wait->hWaitObject, nullptr))
+            {
+                UnregisterWaitEx(hOrgWaitObject, INVALID_HANDLE_VALUE);
+                
+                Wait->Release();
+            }
+            ResetEvent(Wait->hEvent);
 			auto bRet = RegisterWaitForSingleObject(
-				&hWaitObject,
+				&Wait->hWaitObject,
 				Handle,
 				[](
 					PVOID lpParameter,
@@ -1574,76 +1658,26 @@ namespace YY
 				{
 					auto Wait = (PTP_WAIT)lpParameter;
 
-					ResetEvent(Wait->hEvent);
+                    // 准备开始调用，增加一次Working计数
+                    TP_CALLBACK_INSTANCE Instance = {};
 
-					//增加一次引用。
-					auto uFlags = Wait->uFlags;
-					for (;;)
-					{
-						auto uNewFlags = (uFlags & 0xFFFFFFFEu) + 2;
-						auto uOrgFlags = InterlockedCompareExchange(&Wait->uFlags, uNewFlags, uFlags);
+                    //Timer->pTaskVFuncs->pExecuteCallback(&Instance, Timer);
+                    //暂时这样硬编码……
+                    ((PTP_WAIT_CALLBACK)Wait->Callback)(&Instance, Wait->Context, Wait, TimerOrWaitFired ? WAIT_TIMEOUT : WAIT_OBJECT_0);
 
-						if (uOrgFlags == uFlags)
-						{
-							uFlags = uNewFlags;
-							break;
-						}
+                    Fallback::DoWhenCallbackReturns(&Instance);
 
-						uFlags = uOrgFlags;
-					}
-
-					TP_CALLBACK_INSTANCE Instance = {};
-
-					//Timer->pTaskVFuncs->pExecuteCallback(&Instance, Timer);
-					//暂时这样硬编码……
-					((PTP_WAIT_CALLBACK)Wait->Callback)(&Instance, Wait->Context, Wait, TimerOrWaitFired ? WAIT_TIMEOUT : WAIT_OBJECT_0);
-
-					Fallback::DoWhenCallbackReturns(&Instance);
-
-
-					uFlags = Wait->uFlags;
-					for (;;)
-					{
-						auto uNewFlags = uFlags - 2;
-
-						auto uOrgFlags = InterlockedCompareExchange(&Wait->uFlags, uNewFlags, uFlags);
-
-						if (uOrgFlags == uFlags)
-						{
-							uFlags = uNewFlags;
-							break;
-						}
-
-						uFlags = uOrgFlags;
-					}
-
-					if ((uFlags & 0xFFFFFFFEu) == 0)
-					{
-						//计数为 0，唤醒等待
-						SetEvent(Wait->hEvent);
-					}
+                    SetEvent(Wait->hEvent);
 				},
 				Wait,
 				dwMilliseconds,
 				WT_EXECUTEONLYONCE);
+            ::ReleaseSRWLockExclusive(&Wait->WaitObjectLock);
 
-			if (bRet)
+			if (!bRet)
 			{
-				auto hOrgWaitObject = InterlockedExchangePointer(&Wait->hWaitObject, hWaitObject);
-
-				if (hOrgWaitObject == NULL)
-				{
-					return;
-				}
-
-				//释放历史
-				UnregisterWait(hOrgWaitObject);
-			}
-
-			
-			if (InterlockedExchangeAdd(&Wait->nRef, -1) == 0)
-			{
-				Wait->VFuncs->pTppWorkpFree(Wait);
+                SetEvent(Wait->hEvent);
+                Wait->Release();
 			}
 		}
 #endif
@@ -1676,16 +1710,253 @@ namespace YY
 				return;
 			}
 
-			//CancelPendingCallbacks 无法支持
+            if (CancelPendingCallbacks)
+            {
+                if (auto hOrgWaitObject = InterlockedExchangePointer(&Wait->hWaitObject, nullptr))
+                {
+                    UnregisterWaitEx(hOrgWaitObject, INVALID_HANDLE_VALUE);
+                    SetEvent(Wait->hEvent);
+                    Wait->Release();
+                }
+            }
+            else
+            {
+                if (Wait->hWaitObject)
+                {
+                    WaitForSingleObject(Wait->hEvent, INFINITE);
+                }
+            }
+		}
+#endif
 
-			if ((Wait->uFlags & 0xFFFFFFFEu) == 0)
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+        // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		16,
+		PTP_IO,
+        WINAPI,
+        CreateThreadpoolIo,
+            _In_ HANDLE _hFile,
+            _In_ PTP_WIN32_IO_CALLBACK _pfnIoCallback,
+            _Inout_opt_ PVOID _pUserData,
+            _In_opt_ PTP_CALLBACK_ENVIRON _pCallbackEnviron
+            )
+		{
+			if (auto const _pfnCreateThreadpoolIo = try_get_CreateThreadpoolIo())
 			{
-				//等待计数为 0，直接返回即可
-				return;
+				return _pfnCreateThreadpoolIo(_hFile, _pfnIoCallback, _pUserData, _pCallbackEnviron);
+			}
+            
+            /////////////////////////////////////////////////////////
+            // TpAllocIoCompletion
+            if (_hFile == NULL || _pfnIoCallback == NULL)
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return nullptr;
+            }
+
+            auto _pThunkData = internal::HookThunkData::Alloc();
+            if (!_pThunkData)
+            {
+                SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+                return nullptr;
+            }
+
+            auto _pIo = (_TP_IO*)internal::Alloc(sizeof(_TP_IO), HEAP_ZERO_MEMORY);
+            if (!_pIo)
+                return nullptr;
+
+            _pIo->retaddr = _ReturnAddress();
+            LONG _Status = Fallback::TppCleanupGroupMemberInitialize(_pIo, _pUserData, _pCallbackEnviron, _pCallbackEnviron ? _pCallbackEnviron->u.Flags : 0, Fallback::GetTppIopCleanupGroupMemberVFuncs());
+            if (_Status >= 0)
+            {
+                _pIo->pTaskVFuncs = Fallback::GetTppIopExecuteCallback();
+                _pIo->Callback = _pfnIoCallback;
+                _pIo->hFile = _hFile;
+
+                // void WINAPI IoCompletionCallbackWinXP(DWORD _lStatus, DWORD _cbNumberOfBytesTransfered, LPOVERLAPPED _pOverlapped)
+                // {
+                //    // fastcall
+                //     _pIo->pTaskVFuncs->pExecuteCallback(_pIo, _lStatus, _cbNumberOfBytesTransfered, _pOverlapped);
+                // }
+#if defined(_X86_)
+                constexpr auto kOffsetToTpIo = 1;
+                static const unsigned char kIoCompletionCallbackWinXPShellCode[] =
+                {
+                    // _lStatus[ebp + 4]
+                    // _cbNumberOfBytesTransfered[ebp + 8]
+                    // _pOverlapped[ebp + 0xC]
+                    0xB9, 0x00, 0x00, 0x00, 0x00, // mov         ecx,00000000h; _pIo
+                    0xFF, 0x74, 0x24, 0x0C,       // push        dword ptr[esp + 0Ch] ; _pOverlapped
+                    0x8B, 0x54, 0x24, 0x08,       // mov         edx,dword ptr[esp + 8] ;_lStatus
+                    0xFF, 0x74, 0x24, 0x0C,       // push        dword ptr[esp + 0Ch] ; _cbNumberOfBytesTransfered
+                    0x8B, 0x41, 0x60,             // mov         eax,dword ptr[ecx + 60h] ; _pIo->pTaskVFuncs->pExecuteCallback
+                    0xFF, 0x10,                   // call        dword ptr[eax]
+                    0xC2, 0x0C, 0x00,             // ret         0Ch
+                };
+#elif defined(_AMD64_)
+                constexpr auto kOffsetToTpIo = 10;
+                static const unsigned char kIoCompletionCallbackWinXPShellCode[] =
+                {
+                    // _lStatus : ecx
+                    // _cbNumberOfBytesTransfered : edx
+                    // _pOverlapped : r8
+                    0x4D, 0x8B, 0xC8,                                           // mov         r9,r8 ; _pOverlapped
+                    0x44, 0x8B, 0xC2,                                           // mov         r8d,edx ; _cbNumberOfBytesTransfered
+                    0x8B, 0xD1,                                                 // mov         edx,ecx ; _lStatus
+                    0x48, 0xB9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov         rcx,0000000000000000h ; _pIo
+                    0x48, 0x8B, 0x81, 0xB0, 0x00, 0x00, 0x00,                   // mov         rax,qword ptr[rcx + 0B0h] ; _pIo->pTaskVFuncs->pExecuteCallback
+                    0x48, 0x8B, 0x00,                                           // mov         rax,qword ptr[rax]
+                    0xFF, 0xE0,                                                 // jmp         rax
+                };
+#else
+#error "不应该走到这里。"
+#endif
+                static_assert(sizeof(kIoCompletionCallbackWinXPShellCode) <= sizeof(_pThunkData->ShellCode), "");
+                memcpy(_pThunkData->ShellCode, kIoCompletionCallbackWinXPShellCode, sizeof(kIoCompletionCallbackWinXPShellCode));
+                *(_TP_IO**)(_pThunkData->ShellCode + kOffsetToTpIo) = _pIo;
+                _pIo->pThunkData = _pThunkData;
+
+                if (_pCallbackEnviron)
+                {
+                    _pIo->FinalizationCallback = _pCallbackEnviron->FinalizationCallback;
+                }
+
+                if (_pIo->CleanupGroup)
+                {
+                    Fallback::TppCleanupGroupAddMember(_pIo);
+                }
+
+                if (!BindIoCompletionCallback(_pIo->hFile,
+                    reinterpret_cast<LPOVERLAPPED_COMPLETION_ROUTINE>(_pIo->pThunkData), 0))
+                {
+                    _pIo->Release();
+                    return nullptr;
+                }
+            }
+            //
+            ////////////////////////////////////////////////////////
+
+            if (_Status >= 0)
+            {
+                return _pIo;
+            }
+            // pThunkData
+
+            _pIo->Release();
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return nullptr;
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+        // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+        WINAPI,
+        StartThreadpoolIo,
+            _Inout_ PTP_IO _pIo
+            )
+		{
+			if (auto const _pfnStartThreadpoolIo = try_get_StartThreadpoolIo())
+			{
+				return _pfnStartThreadpoolIo(_pIo);
 			}
 
-			WaitForSingleObject(Wait->hEvent, INFINITE);
+            _pIo->AddRef();
+            _pIo->AddPendingCount();
+		}
+#endif
 
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+        // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+        WINAPI,
+        CancelThreadpoolIo,
+            _Inout_ PTP_IO _pIo
+            )
+		{
+			if (auto const _pfnCancelThreadpoolIo = try_get_CancelThreadpoolIo())
+			{
+				return _pfnCancelThreadpoolIo(_pIo);
+			}
+            
+            _pIo->TryReleasePendingount();
+            _pIo->Release();
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+        // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		VOID,
+        WINAPI,
+        CloseThreadpoolIo,
+            _Inout_ PTP_IO _pIo
+            )
+		{
+			if (auto const _pfnCloseThreadpoolIo = try_get_CloseThreadpoolIo())
+			{
+				return _pfnCloseThreadpoolIo(_pIo);
+			}
+            // TpReleaseIoCompletion
+
+            if (Fallback::TppCleanupGroupMemberRelease(_pIo, 1))
+            {
+                _pIo->un58 = _ReturnAddress();
+                _pIo->Release();
+            }
+		}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+        // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+		__DEFINE_THUNK(
+		kernel32,
+		8,
+		VOID,
+        WINAPI,
+        WaitForThreadpoolIoCallbacks,
+            _Inout_ PTP_IO _pIo,
+            _In_ BOOL _bCancelPendingCallbacks
+            )
+		{
+			if (auto const _pfnWaitForThreadpoolIoCallbacks = try_get_WaitForThreadpoolIoCallbacks())
+			{
+				return _pfnWaitForThreadpoolIoCallbacks(_pIo, _bCancelPendingCallbacks);
+			}
+            
+            // TpWaitForIoCompletion
+            if (_pIo == nullptr || (_pIo->uFlags1 & 0x30000) || _pIo->VFuncs != Fallback::GetTppIopCleanupGroupMemberVFuncs())
+            {
+                internal::RaiseStatus(STATUS_INVALID_PARAMETER);
+                return;
+            }
+            
+            Fallback::TppWorkWait(_pIo, _bCancelPendingCallbacks, true);
 		}
 #endif
 	}

@@ -28,6 +28,9 @@
     <Filter Include="源文件\def\x64">
       <UniqueIdentifier>{d6cf9186-955d-44be-b803-54333f18d63d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shared">
+      <UniqueIdentifier>{95ed93c5-b5db-4021-b71e-91b48c16e83d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -250,6 +253,12 @@
     </ClInclude>
     <ClInclude Include="..\Thunks\Crypt32.hpp">
       <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\km.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\HookThunk.h">
+      <Filter>Shared</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

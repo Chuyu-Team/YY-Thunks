@@ -1390,4 +1390,483 @@ namespace api_ms_win_core_threadpool
 			}
 		}
 	};
+
+    TEST_CLASS(StartThreadpoolIo)
+    {
+        AwaysNullGuard Guard;
+
+    public:
+        StartThreadpoolIo()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolIo;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolIo;
+            Guard |= YY::Thunks::aways_null_try_get_StartThreadpoolIo;
+            Guard |= YY::Thunks::aways_null_try_get_CancelThreadpoolIo;
+        }
+
+        TEST_METHOD(如果不调用StartThreadpoolIo那么Claaback一直不会触发)
+        {
+            auto _hFile = CreateFileW(LR"(C:\Windows\System32\ntdll.dll)", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+
+            struct TestInfo
+            {
+                DWORD uRef;
+                PVOID Context;
+                PVOID Overlapped;
+                ULONG_PTR NumberOfBytesTransferred;
+                PTP_IO Io;
+                HANDLE hEvent;
+            };
+
+            TestInfo _TestData = {};
+            _TestData.hEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+            auto _pIo = CreateThreadpoolIo(_hFile, [](_Inout_     PTP_CALLBACK_INSTANCE Instance,
+                _Inout_opt_ PVOID                 Context,
+                _Inout_opt_ PVOID                 Overlapped,
+                _In_        ULONG                 IoResult,
+                _In_        ULONG_PTR             NumberOfBytesTransferred,
+                _Inout_     PTP_IO                Io)
+                {
+
+                    auto _pTestInfo = (TestInfo*)Context;
+                    InterlockedIncrement(&_pTestInfo->uRef);
+                    _pTestInfo->Context = Context;
+                    _pTestInfo->Overlapped = Overlapped;
+                    _pTestInfo->NumberOfBytesTransferred = NumberOfBytesTransferred;
+                    SetEvent(_pTestInfo->hEvent);
+                }, &_TestData, nullptr);
+
+            Assert::IsNotNull(_pIo);
+
+            char Buffer1[100];
+            OVERLAPPED _Overlapped = {};
+            if (!ReadFile(_hFile, Buffer1, sizeof(Buffer1), nullptr, &_Overlapped) && GetLastError() == ERROR_IO_PENDING)
+            {
+                auto _uResult = WaitForSingleObject(_TestData.hEvent, 100);
+                Assert::AreEqual(_uResult, (DWORD)WAIT_TIMEOUT);
+                Assert::AreEqual(_TestData.uRef, 0ul);
+            }
+            ::CloseThreadpoolIo(_pIo);
+        }
+
+        TEST_METHOD(StartThreadpoolIo一次)
+        {
+            auto _hFile = CreateFileW(LR"(C:\Windows\System32\ntdll.dll)", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+
+            struct TestInfo
+            {
+                DWORD uRef;
+                PVOID Context;
+                PVOID Overlapped;
+                ULONG_PTR NumberOfBytesTransferred;
+                PTP_IO Io;
+                HANDLE hEvent;
+            };
+
+            TestInfo _TestData = {};
+            _TestData.hEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+            auto _pIo = CreateThreadpoolIo(_hFile, [](_Inout_     PTP_CALLBACK_INSTANCE Instance,
+                _Inout_opt_ PVOID                 Context,
+                _Inout_opt_ PVOID                 Overlapped,
+                _In_        ULONG                 IoResult,
+                _In_        ULONG_PTR             NumberOfBytesTransferred,
+                _Inout_     PTP_IO                Io)
+                {
+
+                    auto _pTestInfo = (TestInfo*)Context;
+                    InterlockedIncrement(&_pTestInfo->uRef);
+                    _pTestInfo->Context = Context;
+                    _pTestInfo->Overlapped = Overlapped;
+                    _pTestInfo->NumberOfBytesTransferred = NumberOfBytesTransferred;
+                    _pTestInfo->Io = Io;
+                    SetEvent(_pTestInfo->hEvent);;
+                }, &_TestData, nullptr);
+
+            Assert::IsNotNull(_pIo);
+
+            ::StartThreadpoolIo(_pIo);
+            char Buffer1[100];
+            {
+                OVERLAPPED _Overlapped = {};
+                if (!ReadFile(_hFile, Buffer1, sizeof(Buffer1), nullptr, &_Overlapped) && GetLastError() == ERROR_IO_PENDING)
+                {
+                    auto _uResult = WaitForSingleObject(_TestData.hEvent, 5 * 1000);
+                    Assert::AreEqual(_uResult, (DWORD)WAIT_OBJECT_0);
+                    Assert::AreEqual(_TestData.uRef, 1ul);
+
+                    Assert::AreEqual(_TestData.Context, (PVOID)&_TestData);
+                    Assert::AreEqual((void*)_TestData.Io, (void*)_pIo);
+                    Assert::AreEqual(_TestData.NumberOfBytesTransferred, (ULONG_PTR)sizeof(Buffer1));
+                    Assert::AreEqual(_TestData.Overlapped, (LPVOID)&_Overlapped);
+                }
+                else
+                {
+                    ::CancelThreadpoolIo(_pIo);
+                }
+            }
+            {
+                OVERLAPPED _Overlapped = {};
+                if (!ReadFile(_hFile, Buffer1, sizeof(Buffer1), nullptr, &_Overlapped) && GetLastError() == ERROR_IO_PENDING)
+                {
+                    auto _uResult = WaitForSingleObject(_TestData.hEvent, 100);
+                    Assert::AreEqual(_uResult, (DWORD)WAIT_TIMEOUT);
+                }
+            }
+            Assert::AreEqual(_TestData.uRef, 1ul);
+            ::CloseThreadpoolIo(_pIo);
+        }
+
+        TEST_METHOD(StartThreadpoolIo二次)
+        {
+            auto _hFile = CreateFileW(LR"(C:\Windows\System32\ntdll.dll)", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+
+            struct TestInfo
+            {
+                DWORD uRef;
+                PVOID Context;
+                PVOID Overlapped;
+                ULONG_PTR NumberOfBytesTransferred;
+                PTP_IO Io;
+                HANDLE hEvent;
+            };
+
+            TestInfo _TestData = {};
+            _TestData.hEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+            auto _pIo = CreateThreadpoolIo(_hFile, [](_Inout_     PTP_CALLBACK_INSTANCE Instance,
+                _Inout_opt_ PVOID                 Context,
+                _Inout_opt_ PVOID                 Overlapped,
+                _In_        ULONG                 IoResult,
+                _In_        ULONG_PTR             NumberOfBytesTransferred,
+                _Inout_     PTP_IO                Io)
+                {
+
+                    auto _pTestInfo = (TestInfo*)Context;
+                    InterlockedIncrement(&_pTestInfo->uRef);
+                    _pTestInfo->Context = Context;
+                    _pTestInfo->Overlapped = Overlapped;
+                    _pTestInfo->NumberOfBytesTransferred = NumberOfBytesTransferred;
+                    _pTestInfo->Io = Io;
+                    SetEvent(_pTestInfo->hEvent);
+                }, &_TestData, nullptr);
+
+            Assert::IsNotNull(_pIo);
+
+            ::StartThreadpoolIo(_pIo);
+            ::StartThreadpoolIo(_pIo);
+            
+            {
+                char Buffer1[100];
+                OVERLAPPED _Overlapped = {};
+                if (!ReadFile(_hFile, Buffer1, sizeof(Buffer1), nullptr, &_Overlapped) && GetLastError() == ERROR_IO_PENDING)
+                {
+                    auto _uResult = WaitForSingleObject(_TestData.hEvent, 5 * 1000);
+                    Assert::AreEqual(_uResult, (DWORD)WAIT_OBJECT_0);
+                    Assert::AreEqual(_TestData.uRef, 1ul);
+
+                    Assert::AreEqual(_TestData.Context, (PVOID)&_TestData);
+                    Assert::AreEqual((void*)_TestData.Io, (void*)_pIo);
+                    Assert::AreEqual(_TestData.NumberOfBytesTransferred, (ULONG_PTR)sizeof(Buffer1));
+                    Assert::AreEqual(_TestData.Overlapped, (LPVOID)&_Overlapped);
+                }
+                else
+                {
+                    ::CancelThreadpoolIo(_pIo);
+                }
+            }
+            {
+                char Buffer1[200];
+                OVERLAPPED _Overlapped = {};
+                if (!ReadFile(_hFile, Buffer1, sizeof(Buffer1), nullptr, &_Overlapped) && GetLastError() == ERROR_IO_PENDING)
+                {
+
+                    auto _uResult = WaitForSingleObject(_TestData.hEvent, 5 * 1000);
+                    Assert::AreEqual(_uResult, (DWORD)WAIT_OBJECT_0);
+
+                    Assert::AreEqual(_TestData.uRef, 2ul);
+                    Assert::AreEqual(_TestData.Context, (PVOID)&_TestData);
+                    Assert::AreEqual((void*)_TestData.Io, (void*)_pIo);
+                    Assert::AreEqual(_TestData.NumberOfBytesTransferred, (ULONG_PTR)sizeof(Buffer1));
+                    Assert::AreEqual(_TestData.Overlapped, (LPVOID)&_Overlapped);
+                }
+                else
+                {
+                    ::CancelThreadpoolIo(_pIo);
+                }
+            }
+            
+            ::CloseThreadpoolIo(_pIo);
+        }
+
+    };
+
+    TEST_CLASS(CancelThreadpoolIo)
+    {
+        AwaysNullGuard Guard;
+
+    public:
+        CancelThreadpoolIo()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolIo;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolIo;
+            Guard |= YY::Thunks::aways_null_try_get_StartThreadpoolIo;
+            Guard |= YY::Thunks::aways_null_try_get_CancelThreadpoolIo;
+        }
+
+        TEST_METHOD(彻底取消后不会再触发)
+        {
+            auto _hFile = CreateFileW(LR"(C:\Windows\System32\ntdll.dll)", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+
+            struct TestInfo
+            {
+                DWORD uRef;
+                PVOID Context;
+                PVOID Overlapped;
+                ULONG_PTR NumberOfBytesTransferred;
+                PTP_IO Io;
+                HANDLE hEvent;
+            };
+
+            TestInfo _TestData = {};
+            _TestData.hEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+            auto _pIo = CreateThreadpoolIo(_hFile, [](_Inout_     PTP_CALLBACK_INSTANCE Instance,
+                _Inout_opt_ PVOID                 Context,
+                _Inout_opt_ PVOID                 Overlapped,
+                _In_        ULONG                 IoResult,
+                _In_        ULONG_PTR             NumberOfBytesTransferred,
+                _Inout_     PTP_IO                Io)
+                {
+
+                    auto _pTestInfo = (TestInfo*)Context;
+                    InterlockedIncrement(&_pTestInfo->uRef);
+                    _pTestInfo->Context = Context;
+                    _pTestInfo->Overlapped = Overlapped;
+                    _pTestInfo->NumberOfBytesTransferred = NumberOfBytesTransferred;
+                    _pTestInfo->Io = Io;
+                    SetEvent(_pTestInfo->hEvent);
+                }, &_TestData, nullptr);
+
+            Assert::IsNotNull(_pIo);
+
+            ::StartThreadpoolIo(_pIo);
+            ::CancelThreadpoolIo(_pIo);
+            char Buffer1[100];
+            {
+                OVERLAPPED _Overlapped = {};
+                if (!ReadFile(_hFile, Buffer1, sizeof(Buffer1), nullptr, &_Overlapped) && GetLastError() == ERROR_IO_PENDING)
+                {
+                    auto _uResult = WaitForSingleObject(_TestData.hEvent, 300);
+                    Assert::AreEqual(_uResult, (DWORD)WAIT_TIMEOUT);
+                    Assert::AreEqual(_TestData.uRef, 0ul);
+                }
+            }
+            ::CloseThreadpoolIo(_pIo);
+        }
+
+        TEST_METHOD(没有彻底取消时任然可以收到特定次数)
+        {
+            auto _hFile = CreateFileW(LR"(C:\Windows\System32\ntdll.dll)", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+
+            struct TestInfo
+            {
+                DWORD uRef;
+                PVOID Context;
+                PVOID Overlapped;
+                ULONG_PTR NumberOfBytesTransferred;
+                PTP_IO Io;
+                HANDLE hEvent;
+            };
+
+            TestInfo _TestData = {};
+            _TestData.hEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+            auto _pIo = CreateThreadpoolIo(_hFile, [](_Inout_     PTP_CALLBACK_INSTANCE Instance,
+                _Inout_opt_ PVOID                 Context,
+                _Inout_opt_ PVOID                 Overlapped,
+                _In_        ULONG                 IoResult,
+                _In_        ULONG_PTR             NumberOfBytesTransferred,
+                _Inout_     PTP_IO                Io)
+                {
+
+                    auto _pTestInfo = (TestInfo*)Context;
+                    InterlockedIncrement(&_pTestInfo->uRef);
+                    _pTestInfo->Context = Context;
+                    _pTestInfo->Overlapped = Overlapped;
+                    _pTestInfo->NumberOfBytesTransferred = NumberOfBytesTransferred;
+                    _pTestInfo->Io = Io;
+                    SetEvent(_pTestInfo->hEvent);
+                }, &_TestData, nullptr);
+
+            Assert::IsNotNull(_pIo);
+
+            ::StartThreadpoolIo(_pIo);
+            ::StartThreadpoolIo(_pIo);
+            ::CancelThreadpoolIo(_pIo);
+
+            {
+                char Buffer1[100];
+                OVERLAPPED _Overlapped = {};
+                if (!ReadFile(_hFile, Buffer1, sizeof(Buffer1), nullptr, &_Overlapped) && GetLastError() == ERROR_IO_PENDING)
+                {
+                    auto _uResult = WaitForSingleObject(_TestData.hEvent, 100);
+                    Assert::AreEqual(_uResult, (DWORD)WAIT_OBJECT_0);
+                    Assert::AreEqual(_TestData.uRef, 1ul);
+
+                    Assert::AreEqual(_TestData.Context, (PVOID)&_TestData);
+                    Assert::AreEqual((void*)_TestData.Io, (void*)_pIo);
+                    Assert::AreEqual(_TestData.NumberOfBytesTransferred, (ULONG_PTR)sizeof(Buffer1));
+                    Assert::AreEqual(_TestData.Overlapped, (LPVOID)&_Overlapped);
+                }
+                else
+                {
+                    ::CancelThreadpoolIo(_pIo);
+                }
+            }
+            {
+                char Buffer1[200];
+                OVERLAPPED _Overlapped = {};
+                if (!ReadFile(_hFile, Buffer1, sizeof(Buffer1), nullptr, &_Overlapped) && GetLastError() == ERROR_IO_PENDING)
+                {
+                    auto _uResult = WaitForSingleObject(_TestData.hEvent, 100);
+                    Assert::AreEqual(_uResult, (DWORD)WAIT_TIMEOUT);
+
+                    Assert::AreEqual(_TestData.uRef, 1ul);
+                }
+            }
+
+            ::CloseThreadpoolIo(_pIo);
+        }
+
+    };
+
+    TEST_CLASS(WaitForThreadpoolIoCallbacks)
+    {
+        AwaysNullGuard Guard;
+
+    public:
+        WaitForThreadpoolIoCallbacks()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolIo;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolIo;
+            Guard |= YY::Thunks::aways_null_try_get_StartThreadpoolIo;
+            Guard |= YY::Thunks::aways_null_try_get_CancelThreadpoolIo;
+            Guard |= YY::Thunks::aways_null_try_get_WaitForThreadpoolIoCallbacks;
+        }
+
+        TEST_METHOD(任务完成后可以收到信号)
+        {
+            auto _hFile = CreateFileW(LR"(C:\Windows\System32\ntdll.dll)", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+
+            struct TestInfo
+            {
+                DWORD uRef;
+                PVOID Context;
+                PVOID Overlapped;
+                ULONG_PTR NumberOfBytesTransferred;
+                PTP_IO Io;
+            };
+
+            TestInfo _TestData = {};
+
+            auto _pIo = CreateThreadpoolIo(_hFile, [](_Inout_     PTP_CALLBACK_INSTANCE Instance,
+                _Inout_opt_ PVOID                 Context,
+                _Inout_opt_ PVOID                 Overlapped,
+                _In_        ULONG                 IoResult,
+                _In_        ULONG_PTR             NumberOfBytesTransferred,
+                _Inout_     PTP_IO                Io)
+                {
+                    Sleep(500);
+                    auto _pTestInfo = (TestInfo*)Context;
+                    InterlockedIncrement(&_pTestInfo->uRef);
+                    _pTestInfo->Context = Context;
+                    _pTestInfo->Overlapped = Overlapped;
+                    _pTestInfo->NumberOfBytesTransferred = NumberOfBytesTransferred;
+
+
+                    _pTestInfo->Io = Io;
+                }, &_TestData, nullptr);
+
+            Assert::IsNotNull(_pIo);
+
+            ::StartThreadpoolIo(_pIo);
+
+            {
+                char Buffer1[100];
+                OVERLAPPED _Overlapped = {};
+                if (!ReadFile(_hFile, Buffer1, sizeof(Buffer1), nullptr, &_Overlapped) && GetLastError() == ERROR_IO_PENDING)
+                {
+                    ::WaitForThreadpoolIoCallbacks(_pIo, FALSE);
+
+                    Assert::AreEqual(_TestData.uRef, 1ul);
+
+                    Assert::AreEqual(_TestData.Context, (PVOID)&_TestData);
+                    Assert::AreEqual((void*)_TestData.Io, (void*)_pIo);
+                    Assert::AreEqual(_TestData.NumberOfBytesTransferred, (ULONG_PTR)sizeof(Buffer1));
+                    Assert::AreEqual(_TestData.Overlapped, (LPVOID)&_Overlapped);
+                }
+                else
+                {
+                    ::CancelThreadpoolIo(_pIo);
+                }
+            }
+            
+
+            ::CloseThreadpoolIo(_pIo);
+        }
+
+        TEST_METHOD(取消任务后回调没有信息)
+        {
+            auto _hFile = CreateFileW(LR"(C:\Windows\System32\ntdll.dll)", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+
+            struct TestInfo
+            {
+                DWORD uRef;
+                PVOID Context;
+                PVOID Overlapped;
+                ULONG_PTR NumberOfBytesTransferred;
+                PTP_IO Io;
+                HANDLE hEvent;
+            };
+
+            TestInfo _TestData = {};
+            _TestData.hEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+            auto _pIo = CreateThreadpoolIo(_hFile, [](_Inout_     PTP_CALLBACK_INSTANCE Instance,
+                _Inout_opt_ PVOID                 Context,
+                _Inout_opt_ PVOID                 Overlapped,
+                _In_        ULONG                 IoResult,
+                _In_        ULONG_PTR             NumberOfBytesTransferred,
+                _Inout_     PTP_IO                Io)
+                {
+                    auto _pTestInfo = (TestInfo*)Context;
+                    InterlockedIncrement(&_pTestInfo->uRef);
+                    _pTestInfo->Context = Context;
+                    _pTestInfo->Overlapped = Overlapped;
+                    _pTestInfo->NumberOfBytesTransferred = NumberOfBytesTransferred;
+                    _pTestInfo->Io = Io;
+                    SetEvent(_pTestInfo->hEvent);
+                }, &_TestData, nullptr);
+
+            Assert::IsNotNull(_pIo);
+
+            ::StartThreadpoolIo(_pIo);
+            {
+                char Buffer1[100];
+                OVERLAPPED _Overlapped = {};
+                if (!ReadFile(_hFile, Buffer1, sizeof(Buffer1), nullptr, &_Overlapped) && GetLastError() == ERROR_IO_PENDING)
+                {
+                    ::WaitForThreadpoolIoCallbacks(_pIo, TRUE);
+                    WaitForSingleObject(_TestData.hEvent, 100);
+
+                    Assert::AreEqual(_TestData.uRef, 0ul);
+                }
+                else
+                {
+                    ::CancelThreadpoolIo(_pIo);
+                }
+            }
+
+            ::CloseThreadpoolIo(_pIo);
+        }
+    };
 }

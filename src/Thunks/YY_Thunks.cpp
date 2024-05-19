@@ -146,6 +146,8 @@ RtlCutoverTimeToSystemTime(
 #pragma comment(lib, "User32.lib")
 #endif
 
+#include <HookThunk.h>
+
 //展开函数的所有的 声明 以及 try_get_ 函数
 #define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                 \
     __APPLY_UNIT_TEST_BOOL(_FUNCTION);                                                         \
@@ -217,9 +219,9 @@ namespace YY
             _Check_return_
             _Ret_maybenull_
             _Post_writable_byte_size_(_cbBytes)
-            static void* __fastcall Alloc(_In_ size_t _cbBytes)
+            static void* __fastcall Alloc(_In_ size_t _cbBytes, DWORD _fFlags = 0)
             {
-                return HeapAlloc(((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap, 0, _cbBytes);
+                return HeapAlloc(((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap, _fFlags, _cbBytes);
             }
 
             _Check_return_
