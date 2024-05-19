@@ -644,7 +644,7 @@ namespace bcrypt
                 (PUCHAR)rgbIV,
                 sizeof(rgbIV),
                 vecCipherText.data(),
-                vecCipherText.size(),
+                (ULONG)vecCipherText.size(),
                 &cbCipherText,
                 BCRYPT_BLOCK_PADDING);
             Assert::IsTrue(_Status >= 0);
@@ -734,7 +734,7 @@ namespace bcrypt
                 (PUCHAR)rgbIV,
                 sizeof(rgbIV),
                 vecCipherText.data(),
-                vecCipherText.size(),
+                (ULONG)vecCipherText.size(),
                 &cbCipherText,
                 BCRYPT_BLOCK_PADDING);
 
@@ -817,7 +817,7 @@ namespace bcrypt
                 (PUCHAR)rgbIV,
                 sizeof(rgbIV),
                 vecCipherText.data(),
-                vecCipherText.size(),
+                (ULONG)vecCipherText.size(),
                 &cbCipherText,
                 BCRYPT_BLOCK_PADDING);
 
@@ -891,7 +891,7 @@ namespace bcrypt
                 nullptr,
                 0,
                 vecCipherText.data(),
-                vecCipherText.size(),
+                (ULONG)vecCipherText.size(),
                 &cbCipherText,
                 BCRYPT_BLOCK_PADDING);
 
@@ -973,7 +973,7 @@ namespace bcrypt
                 nullptr,
                 0,
                 vecCipherText.data(),
-                vecCipherText.size(),
+                (ULONG)vecCipherText.size(),
                 &cbCipherText,
                 BCRYPT_BLOCK_PADDING);
 
@@ -1055,7 +1055,7 @@ namespace bcrypt
                 nullptr,
                 0,
                 vecCipherText.data(),
-                vecCipherText.size(),
+                (ULONG)vecCipherText.size(),
                 &cbCipherText,
                 BCRYPT_BLOCK_PADDING);
 
@@ -1157,7 +1157,7 @@ namespace bcrypt
                 (PUCHAR)rgbIV,
                 sizeof(rgbIV),
                 vecPlainText.data(),
-                vecPlainText.size(),
+                (ULONG)vecPlainText.size(),
                 &cbPlainText,
                 BCRYPT_BLOCK_PADDING);
             Assert::IsTrue(_Status >= 0);
@@ -1225,7 +1225,7 @@ namespace bcrypt
             Assert::IsTrue(_Status >= 0);
 
             std::vector<BYTE> _KeyDataBlobBuffer(_cbResult);
-            _Status = ::BCryptExportKey(hKey, NULL, BCRYPT_KEY_DATA_BLOB, _KeyDataBlobBuffer.data(), _KeyDataBlobBuffer.size(), &_cbResult, 0);
+            _Status = ::BCryptExportKey(hKey, NULL, BCRYPT_KEY_DATA_BLOB, _KeyDataBlobBuffer.data(), (ULONG)_KeyDataBlobBuffer.size(), &_cbResult, 0);
             Assert::IsTrue(_Status >= 0);
             _KeyDataBlobBuffer.resize(_cbResult);
             _Status = ::BCryptCloseAlgorithmProvider(hAlgorithm, 0);
@@ -1327,7 +1327,7 @@ namespace bcrypt
                 (PUCHAR)rgbIV,
                 sizeof(rgbIV),
                 vecCipherText.data(),
-                vecCipherText.size(),
+                (ULONG)vecCipherText.size(),
                 &cbCipherText,
                 BCRYPT_BLOCK_PADDING);
             Assert::IsTrue(_Status >= 0);
