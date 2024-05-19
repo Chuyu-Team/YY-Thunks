@@ -99,6 +99,8 @@
 #include <psapi.h>
 #include <winnls.h>
 
+#include <utility>
+
 EXTERN_C
 BOOLEAN
 __stdcall

@@ -133,7 +133,7 @@ namespace WinHppt
         {
             static const WINHTTP_PROXY_RESULT_ENTRY kTargetEntries[] =
             {
-                {1, 0, INTERNET_SCHEME_HTTP, L"192.168.18.193", 1081 },
+                {1, 0, INTERNET_SCHEME_HTTP, (PWSTR)L"192.168.18.193", 1081 },
             };
 
             struct TestInfo
@@ -192,8 +192,8 @@ namespace WinHppt
         {
             static const WINHTTP_PROXY_RESULT_ENTRY kTargetEntries[] =
             {
-                {1, 0, INTERNET_SCHEME_HTTP, L"192.168.18.193", 80 },
-                {1, 0, INTERNET_SCHEME_HTTP, L"192.168.18.194", 100 },
+                {1, 0, INTERNET_SCHEME_HTTP, (PWSTR)L"192.168.18.193", 80 },
+                {1, 0, INTERNET_SCHEME_HTTP, (PWSTR)L"192.168.18.194", 100 },
             };
 
             struct TestInfo
@@ -252,7 +252,7 @@ namespace WinHppt
         {
             static const WINHTTP_PROXY_RESULT_ENTRY kTargetEntries[] =
             {
-                {1, 0, INTERNET_SCHEME_HTTPS, L"192.168.18.193", 80 },
+                {1, 0, INTERNET_SCHEME_HTTPS, (PWSTR)L"192.168.18.193", 80 },
             };
 
             struct TestInfo
@@ -312,9 +312,9 @@ namespace WinHppt
         {
             static const WINHTTP_PROXY_RESULT_ENTRY kTargetEntries[] =
             {
-                {1, 0, INTERNET_SCHEME_HTTPS, L"192.168.18.193", 80 },
-                {1, 0, INTERNET_SCHEME_HTTPS, L"192.168.18.194", 102 },
-                {1, 0, INTERNET_SCHEME_HTTP, L"192.168.18.195", 103 },
+                {1, 0, INTERNET_SCHEME_HTTPS, (PWSTR)L"192.168.18.193", 80 },
+                {1, 0, INTERNET_SCHEME_HTTPS, (PWSTR)L"192.168.18.194", 102 },
+                {1, 0, INTERNET_SCHEME_HTTP, (PWSTR)L"192.168.18.195", 103 },
             };
 
             struct TestInfo
