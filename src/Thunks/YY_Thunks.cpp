@@ -26,6 +26,7 @@
     _APPLY(bluetoothapis,                                "bluetoothapis"                      , 0                 ) \
     _APPLY(netapi32,                                     "netapi32"                           , 0                 ) \
     _APPLY(powrprof,                                     "powrprof"                           , 0                 ) \
+    _APPLY(winhttp,                                      "winhttp"                            , 0                 ) \
     _APPLY(api_ms_win_core_realtime_l1_1_1,              "api-ms-win-core-realtime-l1-1-1"    , 0                 ) \
     _APPLY(api_ms_win_core_winrt_l1_1_0,                 "api-ms-win-core-winrt-l1-1-0"       , 0                 ) \
     _APPLY(api_ms_win_core_winrt_string_l1_1_0,          "api-ms-win-core-winrt-string-l1-1-0", 0                 ) \
@@ -244,6 +245,28 @@ namespace YY
             {
                 if(_pAddress)
                     HeapFree(((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap, 0, _pAddress);
+            }
+            
+            template<typename Type, typename... Args>
+            _Success_(return != NULL) _Check_return_ _Ret_maybenull_
+            _CRTALLOCATOR
+            inline Type* __fastcall New(Args&&... args)
+            {
+                Type* _pType = (Type*)Alloc(sizeof(Type));
+                if (_pType)
+                    new (_pType) Type(std::forward<Args>(args)...);
+
+                return _pType;
+            }
+
+            template<typename T>
+            inline void __fastcall Delete(_Pre_maybenull_ _Post_invalid_ T* _p)
+            {
+                if (_p)
+                {
+                    _p->~T();
+                    Free(_p);
+                }
             }
 
 			//代码块，分割任务

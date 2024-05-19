@@ -189,6 +189,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="WinHttp.UnitTest.cpp" />
     <ClCompile Include="WS2_32.UintTest.cpp" />
     <ClCompile Include="YY-Thunks.UnitTest.cpp" />
     <ClCompile Include="..\Thunks\YY_Thunks.cpp">
@@ -223,6 +224,8 @@
     <ClInclude Include="..\Thunks\powrprof.hpp" />
     <ClInclude Include="..\Thunks\ThreadRunner.h" />
     <ClInclude Include="..\Thunks\userenv.hpp" />
+    <ClInclude Include="..\Thunks\WinHttp.hpp" />
+    <ClInclude Include="..\Thunks\YY_Thunks.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="..\Thunks\api-ms-win-core-datetime.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-errorhandling.hpp" />
@@ -263,6 +266,7 @@
   <ItemGroup>
     <None Include="..\def\x64\PSAPI2Kernel32.def" />
     <None Include="..\def\x86\PSAPI2Kernel32.def" />
+    <None Include="proxy.pac" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

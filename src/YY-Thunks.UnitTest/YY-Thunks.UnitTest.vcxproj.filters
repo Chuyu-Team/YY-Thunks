@@ -78,6 +78,9 @@
     <ClCompile Include="WS2_32.UintTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
+    <ClCompile Include="WinHttp.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -260,6 +263,12 @@
     <ClInclude Include="..\Shared\HookThunk.h">
       <Filter>Shared</Filter>
     </ClInclude>
+    <ClInclude Include="..\Thunks\WinHttp.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\YY_Thunks.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\def\x86\PSAPI2Kernel32.def">
@@ -267,6 +276,9 @@
     </None>
     <None Include="..\def\x64\PSAPI2Kernel32.def">
       <Filter>源文件\def\x64</Filter>
+    </None>
+    <None Include="proxy.pac">
+      <Filter>资源文件</Filter>
     </None>
   </ItemGroup>
 </Project>
