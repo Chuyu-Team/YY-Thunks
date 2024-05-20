@@ -1,8 +1,8 @@
-@echo off
+ï»¿@echo off
 setlocal
 
-::ÐèÒªÉèÖÃLibMaker.exeÂ·¾¶µ½»·¾³±äÁ¿Path¡£
-::Èç¹ûÄãÐèÒªLibMaker.exe£¬Çë×ÔÐÐµ½ ³õÓê¿ªÔ´ÏîÄ¿½»Á÷QQÈº£¨633710173£©ÈºÎÄ¼þÖÐÏÂÔØ¡£
+::éœ€è¦è®¾ç½®LibMaker.exeè·¯å¾„åˆ°çŽ¯å¢ƒå˜é‡Pathã€‚
+::å¦‚æžœä½ éœ€è¦LibMaker.exeï¼Œè¯·è‡ªè¡Œåˆ° åˆé›¨å¼€æºé¡¹ç›®äº¤æµQQç¾¤ï¼ˆ633710173ï¼‰ç¾¤æ–‡ä»¶ä¸­ä¸‹è½½ã€‚
 
 pushd "%~dp0.."
 
@@ -12,7 +12,7 @@ if "%Platform%"=="" set Platform=x86
 
 md "objs\\%Platform%"
 
-::ÏÈÉú³É YY_Thunks_List.hpp
+::å…ˆç”Ÿæˆ YY_Thunks_List.hpp
 msbuild "%~dp0YY-Thunks.UnitTest\YY-Thunks.UnitTest.vcxproj" -t:Build_YY_Thunks_List_hpp
 
 call:Build%Platform%
@@ -24,9 +24,9 @@ goto:eof
 
 :: BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6
 :BuildObj
-cl /O1 /Os /Oi /GS- /arch:IA32 /Z7 /MT /Fo"objs\\%Platform%\\%1" /Zl /c /D "NDEBUG" /D "YY_Thunks_Support_Version=%2" "%~dp0Thunks\YY_Thunks.cpp"
+cl /O1 /Os /Oi /GS- /std:c++17 /arch:IA32 /Z7 /MT /Fo"objs\\%Platform%\\%1" /Zl /c /D "NDEBUG" /D "YY_Thunks_Support_Version=%2" "%~dp0Thunks\YY_Thunks.cpp"
 
-::½øÐÐº¯ÊýÃû³Æ½øÐÐÐÞÕý __imp__%s_%u -> __imp__%s@%u
+::è¿›è¡Œå‡½æ•°åç§°è¿›è¡Œä¿®æ­£ __imp__%s_%u -> __imp__%s@%u
 LibMaker.exe FixObj "%~dp0..\\objs\\%Platform%\\%1" /WeakExternFix:__security_cookie=%PointType% /WeakExternFix:__YY_Thunks_Process_Terminating=4 /WeakExternFix:__acrt_atexit_table=%PointType%
 
 LibMaker.exe AppendWeak /MACHINE:%Platform% /DEF:"%~dp0def\\%Platform%\\PSAPI2Kernel32.def" /OUT:"%~dp0..\\objs\\%Platform%\\%1"

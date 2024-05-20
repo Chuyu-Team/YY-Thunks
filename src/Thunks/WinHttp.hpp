@@ -4,12 +4,12 @@
 #pragma comment(lib, "winhttp.lib")
 #endif
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
 #if (YY_Thunks_Support_Version < NTDDI_WIN8) && defined(YY_Thunks_Implemented)
-        namespace internal
+    namespace Fallback
+    {
+        namespace 
         {
             struct WinHttpProxyResolver
             {
@@ -60,7 +60,7 @@ namespace YY
                 {
                     if (InterlockedDecrement(&uRef) == 0)
                     {
-                        auto _pResult = (internal::WinHttpProxyResolver::Request*)InterlockedExchange((volatile uintptr_t*)&pResult, (uintptr_t)nullptr);
+                        auto _pResult = (WinHttpProxyResolver::Request*)InterlockedExchange((volatile uintptr_t*)&pResult, (uintptr_t)nullptr);
                         if (_pResult)
                         {
                             _pResult->Release();
@@ -82,10 +82,10 @@ namespace YY
 
                 void SetResult(Request* _pResult)
                 {
-                    if(_pResult)
+                    if (_pResult)
                         _pResult->AddRef();
                     ::AcquireSRWLockExclusive(&Lock);
-                    auto _p = (internal::WinHttpProxyResolver::Request*)InterlockedExchange((volatile uintptr_t*)&pResult, (uintptr_t)_pResult);
+                    auto _p = (WinHttpProxyResolver::Request*)InterlockedExchange((volatile uintptr_t*)&pResult, (uintptr_t)_pResult);
                     ::ReleaseSRWLockExclusive(&Lock);
                     if (_p)
                     {
@@ -266,7 +266,7 @@ namespace YY
                         }
                         ++_szProxy;
                     }
-                    
+
                 __Exit:
                     *_pszProxy = _szProxy;
                     return true;
@@ -335,7 +335,7 @@ namespace YY
                     for (; *_szProxy == L' '; ++_szProxy);
 
                     DWORD _uPort = 0;
-                    if (!StringToUint32(_szProxy, &_uPort, &_szProxy))
+                    if (!internal::StringToUint32(_szProxy, &_uPort, &_szProxy))
                         return false;
 
                     if (_uPort > MAXUINT16)
@@ -355,327 +355,326 @@ namespace YY
                     *_pszProxy = _szProxy;
                     return true;
                 }
-            };   
+            };
         }
+    }
 #endif
-
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-		// 最低受支持的客户端	Windows 8 [仅限桌面应用]
-        // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
-		__DEFINE_THUNK(
-		winhttp,
-		8,
-		DWORD,
-        WINAPI,
-        WinHttpCreateProxyResolver,
-            _In_ HINTERNET _hSession,
-            _Out_ HINTERNET* _phResolver
-            )
+	// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
+	__DEFINE_THUNK(
+	winhttp,
+	8,
+	DWORD,
+    WINAPI,
+    WinHttpCreateProxyResolver,
+        _In_ HINTERNET _hSession,
+        _Out_ HINTERNET* _phResolver
+        )
+	{
+		if (const auto _pfnWinHttpCreateProxyResolver = try_get_WinHttpCreateProxyResolver())
 		{
-			if (const auto _pfnWinHttpCreateProxyResolver = try_get_WinHttpCreateProxyResolver())
-			{
-				return _pfnWinHttpCreateProxyResolver(_hSession, _phResolver);
-			}
+			return _pfnWinHttpCreateProxyResolver(_hSession, _phResolver);
+		}
             
-            // WinHttpConnect接口不会实际访问网络，这里调用以下主要是2个目的
-            // 1. 维持 _hSession 的引用计数，避免hResolver存在期间调用者就主动关闭了hSession。
-            // 2. 顺道还可以检测以下这个hSession是否合法。
-            auto _hConnect = ::WinHttpConnect(_hSession, L"127.0.0.1", INTERNET_DEFAULT_HTTPS_PORT, 0);
-            if (NULL == _hConnect)
-            {
-                return GetLastError();
-            }
+        // WinHttpConnect接口不会实际访问网络，这里调用以下主要是2个目的
+        // 1. 维持 _hSession 的引用计数，避免hResolver存在期间调用者就主动关闭了hSession。
+        // 2. 顺道还可以检测以下这个hSession是否合法。
+        auto _hConnect = ::WinHttpConnect(_hSession, L"127.0.0.1", INTERNET_DEFAULT_HTTPS_PORT, 0);
+        if (NULL == _hConnect)
+        {
+            return GetLastError();
+        }
 
-            auto _pResolver = internal::New<internal::WinHttpProxyResolver>();
-            if (!_pResolver)
-            {
-                return ERROR_NOT_ENOUGH_MEMORY;
-            }
-            _pResolver->hSession = _hSession;
-            _pResolver->hConnect = _hConnect;
-            *_phResolver = reinterpret_cast<HINTERNET>(_pResolver);
-			return ERROR_SUCCESS;
-		}
+        auto _pResolver = internal::New<Fallback::WinHttpProxyResolver>();
+        if (!_pResolver)
+        {
+            return ERROR_NOT_ENOUGH_MEMORY;
+        }
+        _pResolver->hSession = _hSession;
+        _pResolver->hConnect = _hConnect;
+        *_phResolver = reinterpret_cast<HINTERNET>(_pResolver);
+		return ERROR_SUCCESS;
+	}
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-		// 最低受支持的客户端	Windows XP、Windows 2000 Professional SP3 [仅限桌面应用]
-        // 最低受支持的服务器	Windows Server 2003、Windows 2000 Server SP3[仅限桌面应用]
-        // 1. 额外修正了Windows 8新增的ProxyResolver特性。
-		__DEFINE_THUNK(
-		winhttp,
-		4,
-		BOOL,
-        WINAPI,
-        WinHttpCloseHandle,
-            IN HINTERNET _hInternet
-            )
-		{
-            if (!internal::Is<internal::WinHttpProxyResolver>(_hInternet))
+	// 最低受支持的客户端	Windows XP、Windows 2000 Professional SP3 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2003、Windows 2000 Server SP3[仅限桌面应用]
+    // 1. 额外修正了Windows 8新增的ProxyResolver特性。
+	__DEFINE_THUNK(
+	winhttp,
+	4,
+	BOOL,
+    WINAPI,
+    WinHttpCloseHandle,
+        IN HINTERNET _hInternet
+        )
+	{
+        if (!Fallback::Is<Fallback::WinHttpProxyResolver>(_hInternet))
+        {
+            if (const auto _pfnWinHttpCloseHandle = try_get_WinHttpCloseHandle())
             {
-                if (const auto _pfnWinHttpCloseHandle = try_get_WinHttpCloseHandle())
-                {
-                    return _pfnWinHttpCloseHandle(_hInternet);
-                }
-                else
-                {
-                    SetLastError(ERROR_FUNCTION_FAILED);
-                    return FALSE;
-                }
+                return _pfnWinHttpCloseHandle(_hInternet);
             }
+            else
+            {
+                SetLastError(ERROR_FUNCTION_FAILED);
+                return FALSE;
+            }
+        }
 			
-            reinterpret_cast<internal::WinHttpProxyResolver*>(_hInternet)->Release();
-            return TRUE;            
-		}
+        reinterpret_cast<Fallback::WinHttpProxyResolver*>(_hInternet)->Release();
+        return TRUE;            
+	}
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-		// 最低受支持的客户端	Windows XP、Windows 2000 Professional 和 SP3 [仅限桌面应用]
-        // 最低受支持的服务器	Windows Server 2003、Windows 2000 Server SP3[仅限桌面应用]
-        // 1. 额外修正了Windows 8新增的ProxyResolver特性。
-		__DEFINE_THUNK(
-		winhttp,
-		16,
-		WINHTTP_STATUS_CALLBACK,
-        WINAPI,
-        WinHttpSetStatusCallback,
-            IN HINTERNET _hInternet,
-            IN WINHTTP_STATUS_CALLBACK _pfnInternetCallback,
-            IN DWORD _fNotificationFlags,
-            IN DWORD_PTR _uReserved
-            )
-		{
-            if (!internal::Is<internal::WinHttpProxyResolver>(_hInternet))
+	// 最低受支持的客户端	Windows XP、Windows 2000 Professional 和 SP3 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2003、Windows 2000 Server SP3[仅限桌面应用]
+    // 1. 额外修正了Windows 8新增的ProxyResolver特性。
+	__DEFINE_THUNK(
+	winhttp,
+	16,
+	WINHTTP_STATUS_CALLBACK,
+    WINAPI,
+    WinHttpSetStatusCallback,
+        IN HINTERNET _hInternet,
+        IN WINHTTP_STATUS_CALLBACK _pfnInternetCallback,
+        IN DWORD _fNotificationFlags,
+        IN DWORD_PTR _uReserved
+        )
+	{
+        if (!Fallback::Is<Fallback::WinHttpProxyResolver>(_hInternet))
+        {
+            if (const auto _pfnWinHttpSetStatusCallback = try_get_WinHttpSetStatusCallback())
             {
-                if (const auto _pfnWinHttpSetStatusCallback = try_get_WinHttpSetStatusCallback())
-                {
-                    return _pfnWinHttpSetStatusCallback(_hInternet, _pfnInternetCallback, _fNotificationFlags, _uReserved);
-                }
-                else
-                {
-                    SetLastError(ERROR_FUNCTION_FAILED);
-                    return WINHTTP_INVALID_STATUS_CALLBACK;
-                }
+                return _pfnWinHttpSetStatusCallback(_hInternet, _pfnInternetCallback, _fNotificationFlags, _uReserved);
             }
-
-            if (((WINHTTP_CALLBACK_FLAG_GETPROXYFORURL_COMPLETE | WINHTTP_CALLBACK_FLAG_REQUEST_ERROR) & _fNotificationFlags) == 0)
+            else
             {
-                SetLastError(ERROR_WINHTTP_INTERNAL_ERROR);
+                SetLastError(ERROR_FUNCTION_FAILED);
                 return WINHTTP_INVALID_STATUS_CALLBACK;
             }
+        }
 
-            // ProxyResolver修正代码
-            auto _pResolver = reinterpret_cast<internal::WinHttpProxyResolver*>(_hInternet);
-            _pResolver->fNotificationFlags = _fNotificationFlags;
-            return (WINHTTP_STATUS_CALLBACK)InterlockedExchange((uintptr_t*)&_pResolver->pfnGetProxyForUrlCallback, (uintptr_t)_pfnInternetCallback);
-		}
+        if (((WINHTTP_CALLBACK_FLAG_GETPROXYFORURL_COMPLETE | WINHTTP_CALLBACK_FLAG_REQUEST_ERROR) & _fNotificationFlags) == 0)
+        {
+            SetLastError(ERROR_WINHTTP_INTERNAL_ERROR);
+            return WINHTTP_INVALID_STATUS_CALLBACK;
+        }
+
+        // ProxyResolver修正代码
+        auto _pResolver = reinterpret_cast<Fallback::WinHttpProxyResolver*>(_hInternet);
+        _pResolver->fNotificationFlags = _fNotificationFlags;
+        return (WINHTTP_STATUS_CALLBACK)InterlockedExchange((uintptr_t*)&_pResolver->pfnGetProxyForUrlCallback, (uintptr_t)_pfnInternetCallback);
+	}
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-		// 最低受支持的客户端	Windows 8 [仅限桌面应用]
-        // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
-		__DEFINE_THUNK(
-		winhttp,
-		16,
-		DWORD,
-        WINAPI,
-        WinHttpGetProxyForUrlEx,
-            _In_ HINTERNET _hResolver,
-            _In_ PCWSTR _szUrl,
-            _In_ WINHTTP_AUTOPROXY_OPTIONS* _pAutoProxyOptions,
-            _In_opt_ DWORD_PTR _pContext
-            )
+	// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
+	__DEFINE_THUNK(
+	winhttp,
+	16,
+	DWORD,
+    WINAPI,
+    WinHttpGetProxyForUrlEx,
+        _In_ HINTERNET _hResolver,
+        _In_ PCWSTR _szUrl,
+        _In_ WINHTTP_AUTOPROXY_OPTIONS* _pAutoProxyOptions,
+        _In_opt_ DWORD_PTR _pContext
+        )
+	{
+		if (const auto _pfnWinHttpGetProxyForUrlEx = try_get_WinHttpGetProxyForUrlEx())
 		{
-			if (const auto _pfnWinHttpGetProxyForUrlEx = try_get_WinHttpGetProxyForUrlEx())
-			{
-				return _pfnWinHttpGetProxyForUrlEx(_hResolver, _szUrl, _pAutoProxyOptions, _pContext);
-			}
+			return _pfnWinHttpGetProxyForUrlEx(_hResolver, _szUrl, _pAutoProxyOptions, _pContext);
+		}
 
-            if (_szUrl == NULL)
-                return ERROR_WINHTTP_INVALID_URL;
+        if (_szUrl == NULL)
+            return ERROR_WINHTTP_INVALID_URL;
 
-            if (!internal::Is<internal::WinHttpProxyResolver>(_hResolver))
-                return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;
+        if (!Fallback::Is<Fallback::WinHttpProxyResolver>(_hResolver))
+            return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;
 
-            auto _pResolver = reinterpret_cast<internal::WinHttpProxyResolver*>(_hResolver);
+        auto _pResolver = reinterpret_cast<Fallback::WinHttpProxyResolver*>(_hResolver);
 
-            const auto _cbUrl = (wcslen(_szUrl) + 1) * sizeof(WCHAR);
+        const auto _cbUrl = (wcslen(_szUrl) + 1) * sizeof(WCHAR);
 
-            auto _pRequest = (internal::WinHttpProxyResolver::Request*)internal::Alloc(sizeof(internal::WinHttpProxyResolver::Request) + _cbUrl, HEAP_ZERO_MEMORY);
-            if (!_pRequest)
+        auto _pRequest = (Fallback::WinHttpProxyResolver::Request*)internal::Alloc(sizeof(Fallback::WinHttpProxyResolver::Request) + _cbUrl, HEAP_ZERO_MEMORY);
+        if (!_pRequest)
+        {
+            return ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        _pResolver->AddRef();
+        _pRequest->uRef = 1;
+        _pRequest->pProxyResolver = _pResolver;
+        _pRequest->pContext = _pContext;
+        _pRequest->AutoProxyOptions = *_pAutoProxyOptions;
+        memcpy(_pRequest->szUrl, _szUrl, _cbUrl);
+
+        auto _bRet = ::TrySubmitThreadpoolCallback(
+            [](_Inout_ PTP_CALLBACK_INSTANCE Instance,
+                _Inout_ PVOID Context)
             {
-                return ERROR_NOT_ENOUGH_MEMORY;
-            }
-
-            _pResolver->AddRef();
-            _pRequest->uRef = 1;
-            _pRequest->pProxyResolver = _pResolver;
-            _pRequest->pContext = _pContext;
-            _pRequest->AutoProxyOptions = *_pAutoProxyOptions;
-            memcpy(_pRequest->szUrl, _szUrl, _cbUrl);
-
-            auto _bRet = ::TrySubmitThreadpoolCallback(
-                [](_Inout_ PTP_CALLBACK_INSTANCE Instance,
-                    _Inout_ PVOID Context)
+                auto _pRequest = reinterpret_cast<Fallback::WinHttpProxyResolver::Request*>(Context);
+                if (WinHttpGetProxyForUrl(_pRequest->pProxyResolver->hSession, _pRequest->szUrl, &_pRequest->AutoProxyOptions, &_pRequest->ProxyInfo))
                 {
-                    auto _pRequest = reinterpret_cast<internal::WinHttpProxyResolver::Request*>(Context);
-                    if (WinHttpGetProxyForUrl(_pRequest->pProxyResolver->hSession, _pRequest->szUrl, &_pRequest->AutoProxyOptions, &_pRequest->ProxyInfo))
+                    if (_pRequest->pProxyResolver->fNotificationFlags & WINHTTP_CALLBACK_FLAG_GETPROXYFORURL_COMPLETE)
                     {
-                        if (_pRequest->pProxyResolver->fNotificationFlags & WINHTTP_CALLBACK_FLAG_GETPROXYFORURL_COMPLETE)
-                        {
-                            _pRequest->pProxyResolver->SetResult(_pRequest);
-                            _pRequest->pProxyResolver->pfnGetProxyForUrlCallback((HINTERNET)_pRequest->pProxyResolver, _pRequest->pContext, WINHTTP_CALLBACK_FLAG_GETPROXYFORURL_COMPLETE, nullptr, 0);
-                        }
+                        _pRequest->pProxyResolver->SetResult(_pRequest);
+                        _pRequest->pProxyResolver->pfnGetProxyForUrlCallback((HINTERNET)_pRequest->pProxyResolver, _pRequest->pContext, WINHTTP_CALLBACK_FLAG_GETPROXYFORURL_COMPLETE, nullptr, 0);
                     }
-                    else
+                }
+                else
+                {
+                    if (_pRequest->pProxyResolver->fNotificationFlags & WINHTTP_CALLBACK_FLAG_REQUEST_ERROR)
                     {
-                        if (_pRequest->pProxyResolver->fNotificationFlags & WINHTTP_CALLBACK_FLAG_REQUEST_ERROR)
-                        {
-                            WINHTTP_ASYNC_RESULT _AsyncResult = { API_GET_PROXY_FOR_URL, GetLastError()};
-                            _pRequest->pProxyResolver->pfnGetProxyForUrlCallback((HINTERNET)_pRequest->pProxyResolver, _pRequest->pContext, WINHTTP_CALLBACK_FLAG_REQUEST_ERROR, &_AsyncResult, sizeof(_AsyncResult));
-                        }
+                        WINHTTP_ASYNC_RESULT _AsyncResult = { API_GET_PROXY_FOR_URL, GetLastError()};
+                        _pRequest->pProxyResolver->pfnGetProxyForUrlCallback((HINTERNET)_pRequest->pProxyResolver, _pRequest->pContext, WINHTTP_CALLBACK_FLAG_REQUEST_ERROR, &_AsyncResult, sizeof(_AsyncResult));
                     }
-                    _pRequest->pProxyResolver->Release();
-                    _pRequest->Release();
-                }, _pRequest, nullptr);
-
-            if (!_bRet)
-            {
+                }
                 _pRequest->pProxyResolver->Release();
                 _pRequest->Release();
-                return ERROR_NOT_ENOUGH_MEMORY;
-            }
+            }, _pRequest, nullptr);
+
+        if (!_bRet)
+        {
+            _pRequest->pProxyResolver->Release();
+            _pRequest->Release();
+            return ERROR_NOT_ENOUGH_MEMORY;
+        }
             
-			return ERROR_IO_PENDING;
-		}
+		return ERROR_IO_PENDING;
+	}
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-		// 最低受支持的客户端	Windows 8 [仅限桌面应用]
-        // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
-		__DEFINE_THUNK(
-		winhttp,
-		8,
-		DWORD,
-        WINAPI,
-        WinHttpGetProxyResult,
-            _In_ HINTERNET _hResolver,
-            _Out_ WINHTTP_PROXY_RESULT* _pProxyResult
-            )
-		{
-            if (const auto _pfnWinHttpGetProxyResult = try_get_WinHttpGetProxyResult())
+	// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
+	__DEFINE_THUNK(
+	winhttp,
+	8,
+	DWORD,
+    WINAPI,
+    WinHttpGetProxyResult,
+        _In_ HINTERNET _hResolver,
+        _Out_ WINHTTP_PROXY_RESULT* _pProxyResult
+        )
+	{
+        if (const auto _pfnWinHttpGetProxyResult = try_get_WinHttpGetProxyResult())
+        {
+            return _pfnWinHttpGetProxyResult(_hResolver, _pProxyResult);
+        }
+
+        if (!Fallback::Is<Fallback::WinHttpProxyResolver>(_hResolver))
+        {
+            return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;
+        }
+
+        auto _pResult = reinterpret_cast<Fallback::WinHttpProxyResolver*>(_hResolver)->GetResult();
+        if (!_pResult)
+        {
+            return ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+        }
+
+        LSTATUS _lStatus = ERROR_SUCCESS;
+
+        do
+        {
+            const auto _cbMaxBuffer = Fallback::ProxyResultEntry::GetMaxBufferCount(_pResult->ProxyInfo.lpszProxy) + Fallback::ProxyResultEntry::GetMaxBufferCount(_pResult->ProxyInfo.lpszProxyBypass);
+
+            auto _pEntries = (WINHTTP_PROXY_RESULT_ENTRY*)internal::Alloc(_cbMaxBuffer);
+            if (!_pEntries)
             {
-                return _pfnWinHttpGetProxyResult(_hResolver, _pProxyResult);
+                _lStatus = ERROR_NOT_ENOUGH_MEMORY;
+                break;
             }
 
-            if (!internal::Is<internal::WinHttpProxyResolver>(_hResolver))
+            auto _pBuffer = reinterpret_cast<wchar_t*>((uintptr_t)_pEntries + _cbMaxBuffer);
+
+            DWORD _uCount = 0;
+            Fallback::ProxyResultEntry _TmpEntrie;
+
+            if (_pResult->ProxyInfo.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
             {
-                return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;
+                auto& _pEntry = _pEntries[_uCount++];
+                _pEntry.fProxy = FALSE;
+                _pEntry.fBypass = TRUE;
+                _pEntry.ProxyScheme = 0;
+                _pEntry.pwszProxy = nullptr;
+                _pEntry.ProxyPort = 0;
             }
-
-            auto _pResult = reinterpret_cast<internal::WinHttpProxyResolver*>(_hResolver)->GetResult();
-            if (!_pResult)
+            else if (_pResult->ProxyInfo.dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY)
             {
-                return ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
-            }
-
-            LSTATUS _lStatus = ERROR_SUCCESS;
-
-            do
-            {
-                const auto _cbMaxBuffer = internal::ProxyResultEntry::GetMaxBufferCount(_pResult->ProxyInfo.lpszProxy) + internal::ProxyResultEntry::GetMaxBufferCount(_pResult->ProxyInfo.lpszProxyBypass);
-
-                auto _pEntries = (WINHTTP_PROXY_RESULT_ENTRY*)internal::Alloc(_cbMaxBuffer);
-                if (!_pEntries)
+                if (LPCWSTR _szProxy = _pResult->ProxyInfo.lpszProxy)
                 {
-                    _lStatus = ERROR_NOT_ENOUGH_MEMORY;
-                    break;
-                }
-
-                auto _pBuffer = reinterpret_cast<wchar_t*>((uintptr_t)_pEntries + _cbMaxBuffer);
-
-                DWORD _uCount = 0;
-                internal::ProxyResultEntry _TmpEntrie;
-
-                if (_pResult->ProxyInfo.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
-                {
-                    auto& _pEntry = _pEntries[_uCount++];
-                    _pEntry.fProxy = FALSE;
-                    _pEntry.fBypass = TRUE;
-                    _pEntry.ProxyScheme = 0;
-                    _pEntry.pwszProxy = nullptr;
-                    _pEntry.ProxyPort = 0;
-                }
-                else if (_pResult->ProxyInfo.dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY)
-                {
-                    if (LPCWSTR _szProxy = _pResult->ProxyInfo.lpszProxy)
+                    for (; *_szProxy;)
                     {
-                        for (; *_szProxy;)
+                        _TmpEntrie.bProxy = true;
+                        _TmpEntrie.bBypass = false;
+
+                        if (_TmpEntrie.Parse(&_szProxy))
                         {
-                            _TmpEntrie.bProxy = true;
-                            _TmpEntrie.bBypass = false;
+                            _TmpEntrie.To(&_pEntries[_uCount++], &_pBuffer);
+                            continue;
+                        }
 
-                            if (_TmpEntrie.Parse(&_szProxy))
+                        // 解析失败，直接跳过到下一行
+                        for (; *_szProxy; ++_szProxy)
+                        {
+                            if (*_szProxy == ';')
                             {
-                                _TmpEntrie.To(&_pEntries[_uCount++], &_pBuffer);
-                                continue;
-                            }
-
-                            // 解析失败，直接跳过到下一行
-                            for (; *_szProxy; ++_szProxy)
-                            {
-                                if (*_szProxy == ';')
-                                {
-                                    ++_szProxy;
-                                    break;
-                                }
+                                ++_szProxy;
+                                break;
                             }
                         }
                     }
                 }
+            }
 
-                _pProxyResult->cEntries = _uCount;
-                _pProxyResult->pEntries = _pEntries;
-            } while (false);
-            _pResult->Release();
+            _pProxyResult->cEntries = _uCount;
+            _pProxyResult->pEntries = _pEntries;
+        } while (false);
+        _pResult->Release();
 
-            return _lStatus;
-		}
+        return _lStatus;
+	}
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-		// 最低受支持的客户端	Windows 8 [仅限桌面应用]
-        // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
-		__DEFINE_THUNK(
-		winhttp,
-		4,
-		VOID,
-        WINAPI,
-        WinHttpFreeProxyResult,
-            _Inout_ WINHTTP_PROXY_RESULT* _pProxyResult
-            )
+	// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
+	__DEFINE_THUNK(
+	winhttp,
+	4,
+	VOID,
+    WINAPI,
+    WinHttpFreeProxyResult,
+        _Inout_ WINHTTP_PROXY_RESULT* _pProxyResult
+        )
+	{
+		if (const auto _pfnWinHttpFreeProxyResult = try_get_WinHttpFreeProxyResult())
 		{
-			if (const auto _pfnWinHttpFreeProxyResult = try_get_WinHttpFreeProxyResult())
-			{
-				return _pfnWinHttpFreeProxyResult(_pProxyResult);
-			}
-            
-            if(_pProxyResult)
-                internal::Free(_pProxyResult->pEntries);
-			return;
+			return _pfnWinHttpFreeProxyResult(_pProxyResult);
 		}
+            
+        if(_pProxyResult)
+            internal::Free(_pProxyResult->pEntries);
+		return;
+	}
 #endif
-    }
 }
