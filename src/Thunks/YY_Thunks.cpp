@@ -7,7 +7,14 @@
     _APPLY(kernel32,                                     "kernel32"                           , USING_UNSAFE_LOAD ) \
     _APPLY(crypt32,                                      "crypt32"                            , 0                 ) \
     _APPLY(dwmapi,                                       "dwmapi"                             , 0                 ) \
+    _APPLY(d3d9,                                         "d3d9"                               , 0                 ) \
+    _APPLY(d3d11,                                        "d3d11"                              , 0                 ) \
     _APPLY(dbghelp,                                      "dbghelp"                            , USING_UNSAFE_LOAD ) \
+    _APPLY(dxgi,                                         "dxgi"                               , 0                 ) \
+    _APPLY(dwrite,                                       "dwrite"                             , 0                 ) \
+    _APPLY(dxva2,                                        "dxva2"                              , 0                 ) \
+    _APPLY(uxtheme,                                      "uxtheme"                            , 0                 ) \
+    _APPLY(uiautomationcore,                             "uiautomationcore"                   , 0                 ) \
     _APPLY(psapi,                                        "psapi"                              , 0                 ) \
     _APPLY(pdh,                                          "pdh"                                , 0                 ) \
     _APPLY(version,                                      "version"                            , 0                 ) \

@@ -219,8 +219,13 @@
     <ClInclude Include="..\Thunks\BCryptPrimitives.hpp" />
     <ClInclude Include="..\Thunks\bluetoothapis.hpp" />
     <ClInclude Include="..\Thunks\Crypt32.hpp" />
+    <ClInclude Include="..\Thunks\d3d11.hpp" />
+    <ClInclude Include="..\Thunks\d3d9.hpp" />
     <ClInclude Include="..\Thunks\dbghelp.hpp" />
     <ClInclude Include="..\Thunks\dwmapi.hpp" />
+    <ClInclude Include="..\Thunks\dwrite.hpp" />
+    <ClInclude Include="..\Thunks\dxgi.hpp" />
+    <ClInclude Include="..\Thunks\dxva2.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-gui.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-misc.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-powermanagement.hpp" />
@@ -233,7 +238,9 @@
     <ClInclude Include="..\Thunks\Pdh.hpp" />
     <ClInclude Include="..\Thunks\powrprof.hpp" />
     <ClInclude Include="..\Thunks\ThreadRunner.h" />
+    <ClInclude Include="..\Thunks\UIAutomationCore.hpp" />
     <ClInclude Include="..\Thunks\userenv.hpp" />
+    <ClInclude Include="..\Thunks\uxtheme.hpp" />
     <ClInclude Include="..\Thunks\WinHttp.hpp" />
     <ClInclude Include="..\Thunks\YY_Thunks.h" />
     <ClInclude Include="pch.h" />

@@ -281,7 +281,28 @@
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-gui.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
+    <ClInclude Include="..\Thunks\dxgi.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\d3d11.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\dwrite.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\dxva2.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\d3d9.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-sysparams-ext.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\uxtheme.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\UIAutomationCore.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
     <ClInclude Include="..\Thunks\dbghelp.hpp">

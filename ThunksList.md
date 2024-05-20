@@ -165,6 +165,16 @@
 | CryptProtectMemory                         | 不存在时，返回TRUE。
 | CryptUnprotectMemory                       | 不存在时，返回TRUE。
 
+## d3d9.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| Direct3DCreate9Ex                          | 不存在时，返回 `D3DERR_NOTAVAILABLE`。
+
+## d3d11.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| D3D11CreateDevice                          | 不存在时，返回 `E_NOINTERFACE`。
+
 ## DbgHelp.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
@@ -183,6 +193,21 @@
 | DwmGetWindowAttribute                      | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
 | DwmSetWindowAttribute                      | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
 | DwmFlush                                   | 不存在时，返回 `S_OK_`。
+
+## dwrite.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| DWriteCreateFactory                        | 不存在时，返回 `E_NOINTERFACE`。
+
+## dxgi.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| CreateDXGIFactory1                         | 不存在时，返回 `E_NOINTERFACE`。
+
+## dxva2.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| DXVA2CreateVideoService                    | 不存在时，返回 `E_NOINTERFACE`。
 
 ## iphlpapi.dll
 | 函数                                       | Fallback
@@ -484,6 +509,15 @@
 | ----                                       | -----------
 | StrToInt64ExW(A)                           | 不存在时，手工解析字符串。
 
+## UIAutomationCore.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| UiaClientsAreListening                     | 不存在时，假装没有人在监听。
+| UiaHostProviderFromHwnd                    | 存在时，报告错误 E_NOTIMPL。
+| UiaRaiseAutomationEvent                    | 存在时，报告错误 E_NOTIMPL。
+| UiaRaiseAutomationPropertyChangedEvent     | 存在时，报告错误 E_NOTIMPL。
+| UiaReturnRawElementProvider                | 存在时，报告错误 E_NOTIMPL。
+
 ## user32.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
@@ -524,6 +558,13 @@
 | DeriveAppContainerSidFromAppContainerName  | 不存在时，返回E_NOTIMPL。
 | GetAppContainerFolderPath                  | 不存在时，返回E_NOTIMPL。
 | GetAppContainerRegistryLocation            | 不存在时，返回E_NOTIMPL。
+
+## uxtheme.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| DrawThemeTextEx                            | 不存在时，调用DrawThemeText。
+| GetThemeTransitionDuration                 | 不存在时，返回E_NOTIMPL。
+| SetWindowThemeAttribute                    | 不存在时，返回E_NOTIMPL。
 
 ## version.dll
 | 函数                                       | Fallback
