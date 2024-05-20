@@ -275,6 +275,15 @@
     <ClInclude Include="..\Shared\Heap.h">
       <Filter>Shared</Filter>
     </ClInclude>
+    <ClInclude Include="..\Thunks\ext-ms-win-ntuser-misc.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\ext-ms-win-ntuser-gui.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\ext-ms-win-ntuser-sysparams-ext.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
     <ClInclude Include="..\Thunks\dbghelp.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>

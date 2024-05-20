@@ -403,5 +403,97 @@ namespace YY
 			return FALSE;
 		}
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
+
+		// 最低受支持的客户端	Windows Vista SP1、Windows XP SP3 [仅限桌面应用]
+        // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+		__DEFINE_THUNK(
+		kernel32,
+		4,
+		BOOL,
+		WINAPI,
+		SetProcessDEPPolicy,
+            _In_ DWORD dwFlags
+			)
+		{
+			if (const auto _pfnSetProcessDEPPolicy = try_get_SetProcessDEPPolicy())
+			{
+				return _pfnSetProcessDEPPolicy(dwFlags);
+			}
+
+#if defined(_AMD64_)
+            // https://learn.microsoft.com/zh-cn/windows/win32/api/winbase/nf-winbase-setprocessdeppolicy
+            // 微软文档说明，这个函数只限于x64进程调用。
+            SetLastError(ERROR_NOT_SUPPORTED);
+            return FALSE;
+#elif defined(_X86_)
+            if (dwFlags & (~(PROCESS_DEP_ENABLE | PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION)))
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return FALSE;
+            }
+
+            DWORD _uInfo = 0;
+            if (dwFlags == 0)
+            {
+                _uInfo = 2;
+            }
+            else if (dwFlags & PROCESS_DEP_ENABLE)
+            {
+                _uInfo = (dwFlags & PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION) ? 13 : 9;
+            }
+            else
+            {
+                internal::BaseSetLastNTError(0xC0000030);
+                return FALSE;
+            }
+
+            const auto _pfnNtSetInformationProcess = try_get_NtSetInformationProcess();
+            if (!_pfnNtSetInformationProcess)
+            {
+                SetLastError(ERROR_NOT_SUPPORTED);
+                return FALSE;
+            }
+
+            LONG _Status = _pfnNtSetInformationProcess(NtCurrentProcess(), PROCESSINFOCLASS::ProcessExecuteFlags, &_uInfo, sizeof(_uInfo));
+            if (_Status >=0 || STATUS_INVALID_INFO_CLASS == _Status || STATUS_NOT_SUPPORTED == _Status)
+            {
+                // 如果不支持这个接口，那么也认为是成功的。反正不支持DEP。
+                return TRUE;
+            }
+            else
+            {
+                internal::BaseSetLastNTError(_Status);
+                return FALSE;
+            }
+#else
+#error 未知系统？
+#endif
+		}
+#endif // (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
+
+		// 最低受支持的客户端	带 SP1 的 Windows Vista、带 SP3 的 Windows XP [仅限桌面应用]
+        // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+		__DEFINE_THUNK(
+		kernel32,
+		0,
+		DEP_SYSTEM_POLICY_TYPE,
+		WINAPI,
+		GetSystemDEPPolicy,
+			)
+		{
+			if (const auto _pfnGetSystemDEPPolicy = try_get_GetSystemDEPPolicy())
+			{
+				return _pfnGetSystemDEPPolicy();
+			}
+
+            return DEP_SYSTEM_POLICY_TYPE::DEPPolicyAlwaysOff;
+		}
+#endif // (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
 	}
 }

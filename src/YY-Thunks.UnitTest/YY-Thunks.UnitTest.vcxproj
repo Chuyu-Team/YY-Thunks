@@ -221,7 +221,10 @@
     <ClInclude Include="..\Thunks\Crypt32.hpp" />
     <ClInclude Include="..\Thunks\dbghelp.hpp" />
     <ClInclude Include="..\Thunks\dwmapi.hpp" />
+    <ClInclude Include="..\Thunks\ext-ms-win-ntuser-gui.hpp" />
+    <ClInclude Include="..\Thunks\ext-ms-win-ntuser-misc.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-powermanagement.hpp" />
+    <ClInclude Include="..\Thunks\ext-ms-win-ntuser-sysparams-ext.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-window.hpp" />
     <ClInclude Include="..\Thunks\Iphlpapi.hpp" />
     <ClInclude Include="..\Thunks\mfplat.hpp" />

@@ -642,6 +642,62 @@ namespace YY
 			return FALSE;
 		}
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    8,
+    BOOL,
+    WINAPI,
+    ChangeWindowMessageFilter,
+        _In_ UINT _uMessage,
+        _In_ DWORD _fFlag
+        )
+    {
+        if (const auto _pfnChangeWindowMessageFilter = try_get_ChangeWindowMessageFilter())
+        {
+            return _pfnChangeWindowMessageFilter(_uMessage, _fFlag);
+        }
+
+        return TRUE;
+    }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    8,
+    BOOL,
+    WINAPI,
+    UpdateLayeredWindowIndirect,
+        _In_ HWND hWnd,
+        _In_ const UPDATELAYEREDWINDOWINFO* pULWInfo
+        )
+    {
+        if (const auto _pfnUpdateLayeredWindowIndirect = try_get_UpdateLayeredWindowIndirect())
+        {
+            return _pfnUpdateLayeredWindowIndirect(hWnd, pULWInfo);
+        }
+
+        return UpdateLayeredWindow(
+            hWnd,
+            pULWInfo->hdcDst,
+            const_cast<POINT*>(pULWInfo->pptDst),
+            const_cast<SIZE*>(pULWInfo->psize),
+            pULWInfo->hdcSrc,
+            const_cast<POINT*>(pULWInfo->pptSrc),
+            pULWInfo->crKey,
+            const_cast<BLENDFUNCTION*>(pULWInfo->pblend), pULWInfo->dwFlags);
+    }
+#endif
 	}//namespace Thunks
 
 } //namespace YY

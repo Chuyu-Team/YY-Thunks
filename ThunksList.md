@@ -399,6 +399,8 @@
 | SetProcessWorkingSetSizeEx                 | 不存在时，调用SetProcessWorkingSetSize。
 | GetProcessWorkingSetSizeEx                 | 不存在时，调用GetProcessWorkingSetSize。
 | GetTimeZoneInformationForYear              | 不存在时，直接读取`Time Zones`注册表。
+| SetProcessDEPPolicy                        | 不存在时，调用NtSetInformationProcess。
+| GetSystemDEPPolicy                         | 不存在时，返回总是关闭。
 
 ## mfplat.dll
 | 函数                                       | Fallback
@@ -503,6 +505,16 @@
 | IsTouchWindow                              | 不存在时，始终报告非触摸窗口。
 | GetTouchInputInfo                          | 不存在时，报告错误 ERROR_INVALID_HANDLE。
 | CloseTouchInputHandle                      | 不存在时，报告错误 ERROR_INVALID_HANDLE。
+| *ChangeWindowMessageFilterEx               | 不存在时，调用ChangeWindowMessageFilter。温馨提示：将影响该进程的所有窗口。
+| ChangeWindowMessageFilter                  | 不存在时，什么都不做，假装成功。
+| UpdateLayeredWindowIndirect                | 不存在时，调用UpdateLayeredWindow。
+| AddClipboardFormatListener                 | 不存在时，什么都不做，假装成功。
+| RemoveClipboardFormatListener              | 不存在时，什么都不做，假装成功。
+| RegisterPowerSettingNotification           | 不存在时，什么都不做，假装成功。
+| UnregisterPowerSettingNotification         | 不存在时，什么都不做，假装成功。
+| DisplayConfigGetDeviceInfo                 | 不存在时，报告没有安装驱动。
+| GetDisplayConfigBufferSizes                | 不存在时，报告没有安装驱动。
+| QueryDisplayConfig                         | 不存在时，报告没有安装驱动。
 
 ## userenv.dll
 | 函数                                       | Fallback
