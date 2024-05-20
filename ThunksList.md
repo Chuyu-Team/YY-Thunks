@@ -165,6 +165,12 @@
 | CryptProtectMemory                         | 不存在时，返回TRUE。
 | CryptUnprotectMemory                       | 不存在时，返回TRUE。
 
+## DbgHelp.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| SymSetSearchPathW                          | 不存在时，调用SymSetSearchPath。
+| SymGetSearchPathW                          | 不存在时，调用SymGetSearchPath。
+
 ## dwmapi.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
