@@ -625,7 +625,6 @@ namespace YY
 #endif
 
 
-
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
 		// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
@@ -661,6 +660,77 @@ namespace YY
                 return nullptr;
             }
             return InterfaceName;
+        }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [仅限桌面应用]
+        // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+		__DEFINE_THUNK(
+		iphlpapi,
+		8,
+        NETIO_STATUS,
+        NETIOAPI_API_,
+        ConvertInterfaceLuidToGuid,
+            _In_ CONST NET_LUID* _pInterfaceLuid,
+            _Out_ GUID* _pInterfaceGuid
+            )
+		{
+			if (const auto _pfnConvertInterfaceLuidToGuid = try_get_ConvertInterfaceLuidToGuid())
+			{
+				return _pfnConvertInterfaceLuidToGuid(_pInterfaceLuid, _pInterfaceGuid);
+			}
+            
+            if (_pInterfaceLuid == nullptr || _pInterfaceGuid == nullptr)
+            {
+                return ERROR_INVALID_PARAMETER;
+            }        
+
+            MIB_IFROW _IfRow;
+            _IfRow.dwIndex = _pInterfaceLuid->Info.NetLuidIndex;
+
+            auto _lStatus = GetIfEntry(&_IfRow);
+            if (NO_ERROR != _lStatus)
+                return _lStatus;
+
+            if (!internal::StringToGuid(wcsrchr(_IfRow.wszName, L'{'), _pInterfaceGuid))
+            {
+                return ERROR_BAD_FORMAT;
+            }
+
+            return ERROR_SUCCESS;
+        }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+		// 最低受支持的客户端	Windows Vista [仅限桌面应用]
+        // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+		__DEFINE_THUNK(
+		iphlpapi,
+		8,
+        NETIO_STATUS,
+        NETIOAPI_API_,
+        ConvertInterfaceLuidToIndex,
+            _In_ CONST NET_LUID* _pInterfaceLuid,
+            _Out_ PNET_IFINDEX _pInterfaceIndex
+            )
+		{
+			if (const auto _pfnConvertInterfaceLuidToIndex = try_get_ConvertInterfaceLuidToIndex())
+			{
+				return _pfnConvertInterfaceLuidToIndex(_pInterfaceLuid, _pInterfaceIndex);
+			}
+            
+            if (_pInterfaceLuid == nullptr || _pInterfaceIndex == nullptr)
+            {
+                return ERROR_INVALID_PARAMETER;
+            }        
+
+            *_pInterfaceIndex = _pInterfaceLuid->Info.NetLuidIndex;
+            return ERROR_SUCCESS;
         }
 #endif
 	}

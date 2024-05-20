@@ -90,5 +90,18 @@ inline std::string ToHexString(const BYTE (&_Data)[kDataLength])
     return ToHexString(_Data, kDataLength);
 }
 
+namespace Microsoft::VisualStudio::CppUnitTestFramework
+{
+    template<>
+    inline std::wstring ToString<GUID>(const GUID& t)
+    {
+        wchar_t _szResult[128] = {};
+
+        swprintf_s(_szResult, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x", t.Data1, t.Data2, t.Data3,
+            t.Data4[0], t.Data4[1], t.Data4[2], t.Data4[3], t.Data4[4], t.Data4[5], t.Data4[7], t.Data4[7]);
+
+        return _szResult;
+    }
+}
 
 #endif //PCH_H

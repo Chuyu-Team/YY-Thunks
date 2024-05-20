@@ -197,6 +197,8 @@
 | ConvertInterfaceNameToLuidW(A)             | 不存在时，内部实现。
 | if_nametoindex                             | 不存在时，调用GetIfEntry。
 | if_indextoname                             | 不存在时，调用ConvertInterfaceIndexToLuid、ConvertInterfaceLuidToNameA。
+| ConvertInterfaceLuidToGuid                 | 不存在时，调用GetIfEntry。
+| ConvertInterfaceLuidToIndex                | 不存在时，内部实现。
 
 ## kernel32.dll
 | 函数                                       | Fallback

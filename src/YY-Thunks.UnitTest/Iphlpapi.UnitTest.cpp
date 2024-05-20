@@ -254,4 +254,38 @@ namespace Iphlpapi
             Assert::AreEqual(_uResultIndex, NET_IFINDEX(1));
         }
     };
+
+
+    TEST_CLASS(ConvertInterfaceLuidToGuid)
+    {
+    public:
+        ConvertInterfaceLuidToGuid()
+        {
+        }
+
+        TEST_METHOD(交叉验证)
+        {
+            NET_LUID InterfaceLuid;
+            auto _lStatus =  ConvertInterfaceIndexToLuid(1, &InterfaceLuid);
+            Assert::AreEqual(_lStatus, (DWORD)ERROR_SUCCESS);
+
+            GUID InterfaceGuid1;
+            _lStatus = ::ConvertInterfaceLuidToGuid(&InterfaceLuid, &InterfaceGuid1);
+            Assert::AreEqual(_lStatus, (DWORD)ERROR_SUCCESS);
+
+            {
+                AwaysNullGuard Guard;
+                Guard |= YY::Thunks::aways_null_try_get_ConvertInterfaceLuidToGuid;
+
+                GUID InterfaceGuid2;
+                NET_LUID InterfaceLuid = {};
+                InterfaceLuid.Info.NetLuidIndex = 1;
+                _lStatus = ::ConvertInterfaceLuidToGuid(&InterfaceLuid, &InterfaceGuid2);
+                Assert::AreEqual(_lStatus, (DWORD)ERROR_SUCCESS);
+
+                Assert::AreEqual(InterfaceGuid1, InterfaceGuid2);
+
+            }
+        }
+    };
 }
