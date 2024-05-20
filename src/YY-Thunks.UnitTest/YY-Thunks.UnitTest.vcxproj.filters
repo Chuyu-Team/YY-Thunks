@@ -269,6 +269,12 @@
     <ClInclude Include="..\Thunks\YY_Thunks.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\Shared\InterlockedQueue.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\Heap.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\def\x86\PSAPI2Kernel32.def">

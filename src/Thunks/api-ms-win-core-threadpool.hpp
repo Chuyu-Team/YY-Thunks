@@ -2,6 +2,7 @@
 #include <threadpoolapiset.h>
 
 #ifdef YY_Thunks_Implemented
+#include <InterlockedQueue.h>
 
 struct _TP_CLEANUP_GROUP_FUNCS
 {
@@ -164,6 +165,9 @@ struct _TP_IO : public _TP_WORK
 //不完善的定义，我们用多少，处理多少。
 struct _TP_CALLBACK_INSTANCE
 {
+    //0x25, TpCallbackMayRunLong会修改这个值
+    bool bCallbackMayRunLong;
+
 	//0x40
 	PCRITICAL_SECTION CriticalSection;
 	//0x44
@@ -293,6 +297,260 @@ namespace YY::Thunks
             using TP_Io = TP_BASE<_TP_IO>;
             using TP_Timer = TP_BASE<_TP_TIMER>;
             using TP_Wait = TP_BASE<_TP_WAIT>;
+
+            static void __fastcall DoWhenCallbackReturns(_TP_CALLBACK_INSTANCE* Instance);
+
+            // XP系统默认值是500，我们难以知道
+            volatile LONG uAvailableWorkerCount = 500;
+
+            // 结构跟微软完全不同！！！
+            class TP_Pool
+            {
+                static constexpr DWORD kDefaultParallelMaximum = 200;
+
+                volatile ULONG uRef = 1;
+
+                // 允许并行执行的最大个数，0代表默认值，Vista系统默认值为200。
+                volatile DWORD uParallelMaximum = 0;
+
+                internal::InterlockedQueue<TP_Work, 1024> oTaskQueue;
+
+                // |uWeakCount| bPushLock | bStopWakeup | bPushLock |
+                // | 31  ~  3 |    2      |     1       |    0      |
+                union TaskRunnerFlagsType
+                {
+                    uint64_t fFlags64;
+                    uint32_t uWakeupCountAndPushLock;
+
+                    struct
+                    {
+                        volatile uint32_t bPushLock : 1;
+                        volatile uint32_t bStopWakeup : 1;
+                        volatile uint32_t bPopLock : 1;
+                        int32_t uWakeupCount : 29;
+                        // 当前已经启动的线程数
+                        uint32_t uParallelCurrent;
+                    };
+                };
+                TaskRunnerFlagsType TaskRunnerFlags = { 0 };
+                enum : uint32_t
+                {
+                    LockedQueuePushBitIndex = 0,
+                    StopWakeupBitIndex,
+                    LockedQueuePopBitIndex,
+                    WakeupCountStartBitIndex,
+                    WakeupOnceRaw = 1 << WakeupCountStartBitIndex,
+                    UnlockQueuePushLockBitAndWakeupOnceRaw = WakeupOnceRaw - (1u << LockedQueuePushBitIndex),
+                };
+
+                static_assert(sizeof(TaskRunnerFlags) == sizeof(uint64_t));
+
+            public:
+                TP_Pool(bool _bDefault = false)
+                    : uRef(_bDefault? UINT32_MAX : 1)
+                {
+                }
+
+                TP_Pool(const TP_Pool&) = delete;
+
+                bool __fastcall PostWork(_In_ TP_Work* _pWork) noexcept
+                {
+                    if (TaskRunnerFlags.bStopWakeup)
+                    {
+                        return false;
+                    }
+
+                    _pWork->AddRef();
+                    _pWork->AddPendingCount();
+                    auto _uParallelMaximum = uParallelMaximum;
+                    if (_uParallelMaximum == 0)
+                        _uParallelMaximum = kDefaultParallelMaximum;
+
+                    // 将任务提交到任务队列
+                    AddRef();
+                    for (;;)
+                    {
+                        if (!_interlockedbittestandset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePushBitIndex))
+                        {
+                            oTaskQueue.Push(_pWork);
+
+                            // 后面交换略
+                            _interlockedbittestandreset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePushBitIndex);
+                            break;
+                        }
+                    }
+
+                    // 解除锁定，并且 WeakupCount + 1，也尝试提升 uParallelCurrent
+                    TaskRunnerFlagsType _uOldFlags = TaskRunnerFlags;
+                    TaskRunnerFlagsType _uNewFlags;
+                    for (;;)
+                    {
+                        _uNewFlags = _uOldFlags;
+                        _uNewFlags.uWakeupCountAndPushLock += WakeupOnceRaw;
+
+                        if (_uNewFlags.uParallelCurrent < _uParallelMaximum && _uNewFlags.uWakeupCount >= (int32_t)_uNewFlags.uParallelCurrent)
+                        {
+                            _uNewFlags.uParallelCurrent += 1;
+                        }
+
+                        auto _uLast = InterlockedCompareExchange(&TaskRunnerFlags.fFlags64, _uNewFlags.fFlags64, _uOldFlags.fFlags64);
+                        if (_uLast == _uOldFlags.fFlags64)
+                            break;
+
+                        _uOldFlags.fFlags64 = _uLast;
+                    }
+
+                    // 并发送数量没有提升，所以无需从线程池拉发起新任务
+                    if (_uOldFlags.uParallelCurrent == _uNewFlags.uParallelCurrent)
+                        return true;
+
+                    // 如果是第一次那么再额外 AddRef，避免ExecuteTaskRunner调用时 TP_Pool 被释放了
+                    // ExecuteTaskRunner内部负责重新减少引用计数
+                    if (_uOldFlags.uParallelCurrent == 0u)
+                    {
+                        AddRef();
+                    }
+
+                    InterlockedDecrement(&uAvailableWorkerCount);
+                    auto _bRet = QueueUserWorkItem([](LPVOID lpThreadParameter) -> DWORD
+                        {
+                            auto _pPool = (TP_Pool*)lpThreadParameter;
+
+                            _pPool->ExecuteTaskRunner();
+                            InterlockedIncrement(&uAvailableWorkerCount);
+                            return 0;
+
+                        }, this, 0);
+
+                    if (!_bRet)
+                    {
+                        InterlockedIncrement(&uAvailableWorkerCount);
+                        Release();
+                    }
+
+                    return true;
+                }
+
+                static _Ret_notnull_ TP_Pool* __fastcall GetDefaultPool() noexcept
+                {
+                    static TP_Pool s_Pool(true);
+                    return &s_Pool;
+                }
+
+                void __fastcall AddRef() noexcept
+                {
+                    if (uRef != UINT32_MAX)
+                    {
+                        InterlockedIncrement(&uRef);
+                    }
+                }
+
+                void __fastcall Release() noexcept
+                {
+                    if (uRef != UINT32_MAX)
+                    {
+                        if (InterlockedDecrement(&uRef) == 0)
+                        {
+                            internal::Delete(this);
+                        }
+                    }
+                }
+
+                void __fastcall Close() noexcept
+                {
+                    if (_interlockedbittestandset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, StopWakeupBitIndex))
+                    {
+                        return;
+                    }
+                    
+                    for (;;)
+                    {
+                        auto _pTask = PopTask();
+                        if (!_pTask)
+                            break;
+
+                        _pTask->TryReleasePendingount();
+                        _pTask->Release();
+                        Release();
+                        if (InterlockedAdd((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, -(LONG)WakeupOnceRaw) < WakeupOnceRaw)
+                            break;
+                    }
+
+                    Release();
+                }
+
+                void __fastcall SetParallelMaximum(DWORD _uParallelMaximum)
+                {
+                    uParallelMaximum = _uParallelMaximum;
+                }
+
+            private:
+                _Ret_maybenull_ TP_Work* __fastcall PopTask() noexcept
+                {
+                    for (;;)
+                    {
+                        if (!_interlockedbittestandset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePopBitIndex))
+                        {
+                            auto _pWork = oTaskQueue.Pop();
+
+                            _interlockedbittestandreset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePopBitIndex);
+                            return _pWork;
+                        }
+                    }
+                }
+
+                void __fastcall ExecuteTaskRunner() noexcept
+                {
+                __START:
+                    for (;;)
+                    {
+                        auto _pWork = PopTask();
+                        if (!_pWork)
+                            break;
+
+                        if (_pWork->TryReleaseWorkingCountAddWorkingCount())
+                        {
+                            TP_CALLBACK_INSTANCE Instance = {};
+                            _pWork->pTaskVFuncs->pExecuteCallback(&Instance, _pWork);
+                            Fallback::DoWhenCallbackReturns(&Instance);
+
+                            _pWork->ReleaseWorkingCount();
+                        }
+
+                        _pWork->Release();
+                        Release();
+                        if (InterlockedAdd((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, -(LONG)WakeupOnceRaw) < WakeupOnceRaw)
+                            break;
+                    }
+
+                    // 尝试释放 uParallelCurrent
+                    TaskRunnerFlagsType _uOldFlags = TaskRunnerFlags;
+                    TaskRunnerFlagsType _uNewFlags;
+                    for (;;)
+                    {
+                        // 任然有任务，重新执行 ExecuteTaskRunner
+                        if (_uOldFlags.uWakeupCount > 0)
+                        {
+                            goto __START;
+                        }
+
+                        _uNewFlags = _uOldFlags;
+                        _uNewFlags.uParallelCurrent -= 1;
+
+                        auto _uLast = InterlockedCompareExchange(&TaskRunnerFlags.fFlags64, _uNewFlags.fFlags64, _uOldFlags.fFlags64);
+                        if (_uLast == _uOldFlags.fFlags64)
+                            break;
+
+                        _uOldFlags.fFlags64 = _uLast;
+                    }
+
+                    if (_uNewFlags.uParallelCurrent == 0u)
+                    {
+                        // 对应上面 QueueUserWorkItem 的AddRef();
+                        Release();
+                    }
+                }
+            };
 
             static void __fastcall DoWhenCallbackReturns(_TP_CALLBACK_INSTANCE* Instance)
             {
@@ -583,36 +841,10 @@ namespace YY::Thunks
                 return &TppWorkpTaskVFuncs;
             }
 
-            static void __fastcall TppWorkPost(TP_Work* pwk)
+            static void __fastcall TppWorkPost(TP_Work* _pWork)
             {
-                //增加一次引用。 
-                pwk->AddRef();
-                pwk->AddPendingCount();
-
-                auto bRet = QueueUserWorkItem([](LPVOID lpThreadParameter) -> DWORD
-                    {
-                        auto pwk = (TP_Work*)lpThreadParameter;
-
-                        if (pwk->TryReleaseWorkingCountAddWorkingCount())
-                        {
-                            TP_CALLBACK_INSTANCE Instance = {};
-                            pwk->pTaskVFuncs->pExecuteCallback(&Instance, pwk);
-                            Fallback::DoWhenCallbackReturns(&Instance);
-
-                            pwk->ReleaseWorkingCount();
-                        }
-
-                        pwk->Release();
-                        return 0;
-
-                    }, pwk, 0);
-
-                if (!bRet)
-                {
-                    //QueueUserWorkItem失败，重新减少引用计数
-                    pwk->TryReleasePendingount();
-                    pwk->Release();
-                }
+                auto _pPool = _pWork->Pool ? reinterpret_cast<TP_Pool*>(_pWork->Pool) : TP_Pool::GetDefaultPool();
+                _pPool->PostWork(_pWork);
             }
 
             //暂时我们不需要实现 GetTppSimplepCleanupGroupMemberVFuncs
@@ -756,7 +988,7 @@ namespace YY::Thunks
                 void
                 WINAPI
                 TpReleaseWork(
-                    _TP_WORK* Work)
+                    TP_Work* Work)
             {
                 if (Work == nullptr || (Work->uFlags1 & 0x10000) || Work->VFuncs != Fallback::GetTppWorkpCleanupGroupMemberVFuncs())
                 {
@@ -768,10 +1000,7 @@ namespace YY::Thunks
                 {
                     Work->un58 = _ReturnAddress();
 
-                    if (InterlockedExchangeAdd(&Work->nRef, -1) == 0)
-                    {
-                        Work->VFuncs->pfnTppWorkpFree(Work);
-                    }
+                    Work->Release();
                 }
             }
 
@@ -876,7 +1105,6 @@ namespace YY::Thunks
 
                 return Status;
             }
-
         }
     }
 #endif
@@ -935,7 +1163,7 @@ namespace YY::Thunks
 			return pCloseThreadpoolWork(pwk);
 		}
 
-		Fallback::TpReleaseWork(pwk);
+		Fallback::TpReleaseWork(static_cast<Fallback::TP_Work*>(pwk));
 	}
 
 #endif
@@ -1540,30 +1768,25 @@ namespace YY::Thunks
 			return pCloseThreadpoolWait(Wait);
 		}
 
-		if (Wait == nullptr || (Wait->uFlags1 & 0x10000) || Wait->VFuncs != Fallback::GetTppWaitpCleanupGroupMemberVFuncs())
+        auto _pWait = static_cast<Fallback::TP_Wait*>(Wait);
+		if (_pWait == nullptr || (_pWait->uFlags1 & 0x10000) || _pWait->VFuncs != Fallback::GetTppWaitpCleanupGroupMemberVFuncs())
 		{
 			internal::RaiseStatus(STATUS_INVALID_PARAMETER);
 			return;
 		}
 
-		if (Fallback::TppCleanupGroupMemberRelease(Wait, true))
+		if (Fallback::TppCleanupGroupMemberRelease(_pWait, true))
 		{
-			Wait->un58 = _ReturnAddress();
+            _pWait->un58 = _ReturnAddress();
 
-			if (auto hOrgWaitObject = InterlockedExchangePointer(&Wait->hWaitObject, nullptr))
+			if (auto hOrgWaitObject = InterlockedExchangePointer(&_pWait->hWaitObject, nullptr))
 			{
 				UnregisterWait(hOrgWaitObject);
 
-				if (InterlockedExchangeAdd(&Wait->nRef, -1) == 0)
-				{
-					Wait->VFuncs->pfnTppWorkpFree(Wait);
-				}
+                _pWait->Release();
 			}
 
-			if (InterlockedExchangeAdd(&Wait->nRef, -1) == 0)
-			{
-				Wait->VFuncs->pfnTppWorkpFree(Wait);
-			}
+            _pWait->Release();
 		}
 	}
 #endif
@@ -1975,6 +2198,145 @@ namespace YY::Thunks
         }
             
         Fallback::TppWorkWait(_pIo, _bCancelPendingCallbacks, true);
+	}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+	__DEFINE_THUNK(
+	kernel32,
+	4,
+	PTP_POOL,
+    WINAPI,
+    CreateThreadpool,
+        _Reserved_ PVOID _pReserved
+        )
+	{
+		if (auto const _pfnCreateThreadpool = try_get_CreateThreadpool())
+		{
+			return _pfnCreateThreadpool(_pReserved);
+		}
+            
+        auto _pPool = internal::New<Fallback::TP_Pool>();
+        if (!_pPool)
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        }
+        return reinterpret_cast<PTP_POOL>(_pPool);
+	}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+	__DEFINE_THUNK(
+	kernel32,
+	4,
+	VOID,
+    WINAPI,
+    CloseThreadpool,
+        _Inout_ PTP_POOL _pPool2
+        )
+	{
+		if (auto const _pfnCloseThreadpool = try_get_CloseThreadpool())
+		{
+			return _pfnCloseThreadpool(_pPool2);
+		}
+        auto _pPool = reinterpret_cast<Fallback::TP_Pool*>(_pPool2);
+        if (_pPool)
+        {
+            _pPool->Close();
+        }
+	}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+	__DEFINE_THUNK(
+	kernel32,
+	8,
+	VOID,
+    WINAPI,
+    SetThreadpoolThreadMaximum,
+        _Inout_ PTP_POOL _pPool2,
+        _In_ DWORD _cthrdMost
+        )
+	{
+		if (auto const _pfnSetThreadpoolThreadMaximum = try_get_SetThreadpoolThreadMaximum())
+		{
+			return _pfnSetThreadpoolThreadMaximum(_pPool2, _cthrdMost);
+		}
+        
+        auto _pPool = reinterpret_cast<Fallback::TP_Pool*>(_pPool2);
+        if (!_pPool)
+            _pPool = Fallback::TP_Pool::GetDefaultPool();
+
+        _pPool->SetParallelMaximum(_cthrdMost);
+	}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+	__DEFINE_THUNK(
+	kernel32,
+	8,
+	BOOL,
+    WINAPI,
+    SetThreadpoolThreadMinimum,
+        _Inout_ PTP_POOL _pPool2,
+        _In_ DWORD _cthrdMic
+        )
+	{
+		if (auto const _pfnSetThreadpoolThreadMinimum = try_get_SetThreadpoolThreadMinimum())
+		{
+			return _pfnSetThreadpoolThreadMinimum(_pPool2, _cthrdMic);
+		}
+
+        // YY-Thunks因为底层调用的是QueueUserWorkItem
+        // 无法限制最小线程数量，先忽略把……
+        return TRUE;
+	}
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+	__DEFINE_THUNK(
+	kernel32,
+	4,
+	BOOL,
+    WINAPI,
+    CallbackMayRunLong,
+        _Inout_ PTP_CALLBACK_INSTANCE pci
+        )
+	{
+		if (auto const _pfnCallbackMayRunLong = try_get_CallbackMayRunLong())
+		{
+			return _pfnCallbackMayRunLong(pci);
+		}
+        
+        if (pci == nullptr || pci->bCallbackMayRunLong)
+        {
+            internal::RaiseStatus(STATUS_INVALID_PARAMETER);
+        }
+
+        pci->bCallbackMayRunLong = true;
+        // 底层调用的是QueueUserWorkItem，我们无法完全知道现在可用的线程情况
+        // 自己记录一个 AvailableWorkerCount凑合用吧……
+        return Fallback::uAvailableWorkerCount > 0;
 	}
 #endif
 }

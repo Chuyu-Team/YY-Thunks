@@ -132,13 +132,13 @@ jobs:
           
           $RunFaild = 0
 
-          &vstest.console src\Release\YY-Thunks.UnitTest.dll "/logger:trx;LogFileName=UnitTestWin32.trx" --Parallel "/Blame:CollectDump;CollectAlways=false;DumpType=full"
+          &vstest.console src\Release\YY-Thunks.UnitTest.dll "/logger:trx;LogFileName=UnitTestWin32.trx" "/Blame:CollectDump;CollectAlways=false;DumpType=full /Diag:TestResults\Win32.log"
           if($lastexitcode -ne 0)
           {
               $RunFaild = 1
           }
           
-          &vstest.console src\x64\Release\YY-Thunks.UnitTest.dll "/logger:trx;LogFileName=UnitTestWin64.trx" --Parallel "/Blame:CollectDump;CollectAlways=false;DumpType=full"
+          &vstest.console src\x64\Release\YY-Thunks.UnitTest.dll "/logger:trx;LogFileName=UnitTestWin64.trx" "/Blame:CollectDump;CollectAlways=false;DumpType=full /Diag:TestResults\Win64.log"
           if($lastexitcode -ne 0)
           {
               $RunFaild = 1
@@ -179,8 +179,7 @@ jobs:
       with:
         name: ErrorLog
         path: |
-            TestResults/**/*.dmp
-            TestResults/**/Sequence_*.xml
+            TestResults\**\*.*
             src\Release\YY-Thunks.UnitTest.dll
             src\Release\YY-Thunks.UnitTest.pdb
             src\Release\*.log

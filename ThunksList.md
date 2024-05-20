@@ -63,6 +63,11 @@
 | StartThreadpoolIo                          | 不存在时，内部实现。
 | CancelThreadpoolIo                         | 不存在时，内部实现。
 | WaitForThreadpoolIoCallbacks               | 不存在时，调用WaitForSingleObject。
+| CreateThreadpool                           | 不存在时，内部实现。
+| CloseThreadpool                            | 不存在时，内部实现。
+| SetThreadpoolThreadMaximum                 | 不存在时，内部实现，自己控制最大并行数量。
+| SetThreadpoolThreadMinimum                 | 不存在时，忽略，并总是返回成功。
+| CallbackMayRunLong                         | 不存在时，自己估算系统剩余可用线程数。
 
 ## api-ms-win-core-winrt-l1-1-0.dll
 | 函数                                       | Fallback

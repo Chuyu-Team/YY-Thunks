@@ -1869,4 +1869,88 @@ namespace api_ms_win_core_threadpool
             ::CloseThreadpoolIo(_pIo);
         }
     };
+
+
+    TEST_CLASS(SetThreadpoolThreadMaximum)
+    {
+        AwaysNullGuard Guard;
+
+    public:
+        SetThreadpoolThreadMaximum()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpool;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpool;
+            Guard |= YY::Thunks::aways_null_try_get_SetThreadpoolThreadMaximum;
+            Guard |= YY::Thunks::aways_null_try_get_CreateThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_CloseThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_SubmitThreadpoolWork;
+            Guard |= YY::Thunks::aways_null_try_get_WaitForThreadpoolWorkCallbacks;
+        }
+
+        TEST_METHOD(最大上限测试)
+        {
+            constexpr DWORD kThreadMaximum = 3;
+            constexpr DWORD kWorkPostCount = 100;
+
+            struct TestInfo
+            {
+                volatile DWORD uCount = 0;
+                volatile DWORD uMax = 0;
+                volatile DWORD uRunCount = 0;
+            };
+
+            TestInfo _TestInfo;
+
+            auto _pPool = ::CreateThreadpool(nullptr);
+            Assert::IsNotNull(_pPool);
+
+
+            ::SetThreadpoolThreadMaximum(_pPool, kThreadMaximum);
+            TP_CALLBACK_ENVIRON CallbackEnviron;
+            ::InitializeThreadpoolEnvironment(&CallbackEnviron);
+            ::SetThreadpoolCallbackPool(&CallbackEnviron, _pPool);
+
+            auto _pWork = ::CreateThreadpoolWork([](_Inout_     PTP_CALLBACK_INSTANCE Instance,
+                _Inout_ PVOID                 Context,
+                _Inout_     PTP_WORK              Work)
+                {
+                    auto& _TestInfo = *(TestInfo*)Context;
+                    InterlockedIncrement(&_TestInfo.uRunCount);
+                    auto _uNew = InterlockedIncrement(&_TestInfo.uCount);
+
+                    for (auto _uMax = _TestInfo.uMax;;)
+                    {
+                        if (_uMax >= _uNew)
+                            break;
+
+                        auto _uLast = InterlockedCompareExchange(&_TestInfo.uMax, _uNew, _uMax);
+                        if (_uLast == _uMax)
+                            break;
+                        _uMax = _uLast;
+                    }
+
+                    Sleep(10);
+
+                    InterlockedDecrement(&_TestInfo.uCount);
+
+                }, & _TestInfo, & CallbackEnviron);
+
+            Assert::IsNotNull(_pWork);
+
+            for (int i = 0; i != kWorkPostCount; ++i)
+            {
+                ::SubmitThreadpoolWork(_pWork);
+            }
+
+            ::WaitForThreadpoolWorkCallbacks(_pWork, FALSE);
+
+            ::CloseThreadpoolWork(_pWork);
+
+            ::CloseThreadpool(_pPool);
+
+            Assert::AreEqual((DWORD)_TestInfo.uCount, 0ul);
+            Assert::AreEqual((DWORD)_TestInfo.uMax, 3ul);
+            Assert::AreEqual((DWORD)_TestInfo.uRunCount, kWorkPostCount);
+        }
+    };
 }
