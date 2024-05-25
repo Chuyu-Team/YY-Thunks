@@ -1454,7 +1454,7 @@ namespace YY::Thunks
                     fd.revents |= fd.events & (POLLERR | POLLHUP | POLLNVAL);
             }
         }
-    
+
         return result;
     }
 #endif
@@ -1480,7 +1480,7 @@ namespace YY::Thunks
 
         if (!_phHandle)
             return WSA_INVALID_HANDLE;
-            
+
         for (auto _uResult = *(volatile uintptr_t*)_phHandle;;)
         {
             if (_uResult <= MAXUINT16)
@@ -1544,7 +1544,7 @@ namespace YY::Thunks
 
         if (_pHandle)
             *_pHandle = nullptr;
-            
+
         *_ppResult = nullptr;
 
         if (_pHints && (_pHints->ai_addrlen || _pHints->ai_canonname || _pHints->ai_addr || _pHints->ai_next))
@@ -1703,7 +1703,7 @@ namespace YY::Thunks
 
         if (_pHandle)
             *_pHandle = nullptr;
-            
+
         *_ppResult = nullptr;
 
         if (_pHints && (_pHints->ai_addrlen || _pHints->ai_canonname || _pHints->ai_addr || _pHints->ai_next))
@@ -1864,7 +1864,7 @@ namespace YY::Thunks
         {
             return _pfnFreeAddrInfoExW(_pAddrInfoEx);
         }
-            
+
         // 跟微软实现存在略微差异，微软的实现每一个成员都需要申请内存。
         // 而YY-Thunks为了优化性能，一块 _pAddrInfoEx的内存是一次内存申请。
         while (_pAddrInfoEx)
@@ -1927,7 +1927,7 @@ namespace YY::Thunks
         {
             return _pfnGetAddrInfoW(_szNodeName, _szServiceName, _pHints, _ppResult);
         }
-            
+
         *_ppResult = nullptr;
         if (_pHints && (_pHints->ai_addrlen || _pHints->ai_canonname || _pHints->ai_addr || _pHints->ai_next))
         {
@@ -1974,7 +1974,7 @@ namespace YY::Thunks
         {
             return _pfnFreeAddrInfoW(_pAddrInfo);
         }
-            
+
         // 跟微软实现存在略微差异，微软的实现每一个成员都需要申请内存。
         // 而YY-Thunks为了优化性能，一块 _pAddrInfoEx的内存是一次内存申请。
         while (_pAddrInfo)

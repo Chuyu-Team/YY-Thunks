@@ -67,7 +67,7 @@ namespace YY
                 if (pWatchInfo)
                 {
                     cbWatchInfo *= 2;
-            
+
                     auto pNewWatchInfo = (PPSAPI_WS_WATCH_INFORMATION)HeapReAlloc(ProcessHeap, 0, pWatchInfo, cbWatchInfo);
 
                     if (!pNewWatchInfo)
@@ -134,7 +134,7 @@ namespace YY
                     lpWatchInfoEx[i].FaultingThreadId = 0;
                     lpWatchInfoEx[i].Flags = 0;
                 }
-        
+
                 //插入终止标记
                 lpWatchInfoEx[ccWatchInfo] = PSAPI_WS_WATCH_INFORMATION_EX{};
 
@@ -146,7 +146,7 @@ namespace YY
             {
                 HeapFree(ProcessHeap, 0, pWatchInfo);
             }
-    
+
             if (lStatus == ERROR_SUCCESS)
             {
                 return TRUE;

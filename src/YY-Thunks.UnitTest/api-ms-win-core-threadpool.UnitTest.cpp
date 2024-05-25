@@ -43,12 +43,12 @@ namespace api_ms_win_core_threadpool
             ::SubmitThreadpoolWork(Work);
             Sleep(500);
             Assert::AreEqual(RunCount, 2l);
-            
+
             ::SubmitThreadpoolWork(Work);
             ::SubmitThreadpoolWork(Work);
             Sleep(500);
             Assert::AreEqual(RunCount, 4l);
-            
+
             Sleep(500);
             Assert::AreEqual(RunCount, 4l);
 
@@ -250,7 +250,7 @@ namespace api_ms_win_core_threadpool
 
             //2秒后触发此任务
             ftDueTime += CFileTime::Second * 2;
-            
+
             ::SetThreadpoolTimer(pTimer, &ftDueTime, 400, 0);
             Sleep(100);
             Assert::AreEqual(RunCount, 0l);
@@ -418,7 +418,7 @@ namespace api_ms_win_core_threadpool
             Guard |= YY::Thunks::aways_null_try_get_WaitForThreadpoolTimerCallbacks;
         }
 
-        
+
         TEST_METHOD(一般行为验证)
         {
             //数值为 0 时则立即触发定时器
@@ -442,7 +442,7 @@ namespace api_ms_win_core_threadpool
                     auto& Data = *(ContextInfo*)Context;
                     SetEvent(Data.hEvent);
                     Sleep(800);
-                    
+
 
                     InterlockedIncrement(&Data.RunCount);
 
@@ -451,7 +451,7 @@ namespace api_ms_win_core_threadpool
             Assert::IsNotNull(pTimer);
 
             CFileTime ftDueTime = {};
-        
+
             //ftDueTime = long long(CFileTime::Second) * 5ll * -1ll;
 
             ::SetThreadpoolTimer(pTimer, &ftDueTime, 1'500, 0);
@@ -733,7 +733,7 @@ namespace api_ms_win_core_threadpool
 
         TEST_METHOD(定时器测试)
         {
-            UserData Data;            
+            UserData Data;
 
             auto pTimer = ::CreateThreadpoolTimer([](
                 _Inout_     PTP_CALLBACK_INSTANCE Instance,
@@ -959,8 +959,8 @@ namespace api_ms_win_core_threadpool
             Assert::IsNotNull(Work);
 
             ::SubmitThreadpoolWork(Work);
-            
-            
+
+
             long i = 0;
             for (; i != 100; ++i)
             {
@@ -1174,7 +1174,7 @@ namespace api_ms_win_core_threadpool
                 Sleep(2000);
                 Assert::AreEqual((long)RunCount, 1l);
 
-                
+
                 ::CloseThreadpoolWait(Wait);
 
                 CloseHandle(hEvent);
@@ -1378,8 +1378,8 @@ namespace api_ms_win_core_threadpool
 
                 Assert::AreEqual(WaitForSingleObject(h, 10 * 1000), (DWORD)WAIT_OBJECT_0, L"10秒内必须完成，这是预期。");
 
-                
-    
+
+
                 Assert::AreEqual((long)RunCount, 1l);
 
                 CloseHandle(h);
@@ -1555,7 +1555,7 @@ namespace api_ms_win_core_threadpool
 
             ::StartThreadpoolIo(_pIo);
             ::StartThreadpoolIo(_pIo);
-            
+
             {
                 char Buffer1[100];
                 OVERLAPPED _Overlapped = {};
@@ -1595,7 +1595,7 @@ namespace api_ms_win_core_threadpool
                     ::CancelThreadpoolIo(_pIo);
                 }
             }
-            
+
             ::CloseThreadpoolIo(_pIo);
         }
 
@@ -1809,7 +1809,7 @@ namespace api_ms_win_core_threadpool
                     ::CancelThreadpoolIo(_pIo);
                 }
             }
-            
+
 
             ::CloseThreadpoolIo(_pIo);
         }

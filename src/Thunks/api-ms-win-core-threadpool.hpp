@@ -462,7 +462,7 @@ namespace YY::Thunks
                     {
                         return;
                     }
-                    
+
                     for (;;)
                     {
                         auto _pTask = PopTask();
@@ -1356,11 +1356,11 @@ namespace YY::Thunks
                 _pTimer->pTaskVFuncs->pExecuteCallback(&Instance, _pTimer);
 
                 Fallback::DoWhenCallbackReturns(&Instance);
-                    
+
                 SetEvent(_pTimer->hEvent);
 
             }, pti, DueTime, msPeriod, 0);
-            
+
         ::ReleaseSRWLockExclusive(&pti->QueueTimerLock);
 
         if (!bRet)
@@ -1368,7 +1368,7 @@ namespace YY::Thunks
             // 创建失败了，所以把之前的内存块引用计数撤销
             SetEvent(_pTimer->hEvent);
             _pTimer->Release();
-        }       
+        }
     }
 #endif
 
@@ -1467,7 +1467,7 @@ namespace YY::Thunks
     }
 #endif
 
-        
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
     //Minimum supported client    Windows Vista [desktop apps | UWP apps]
@@ -1663,7 +1663,7 @@ namespace YY::Thunks
 
 
         auto lStatus = Fallback::TpSimpleTryPost(Callback, Context, CallbackEnviron);
-            
+
         if (lStatus >= 0)
         {
             return TRUE;
@@ -1719,7 +1719,7 @@ namespace YY::Thunks
                 break;
             }
 
-    
+
             pWait->retaddr = _ReturnAddress();
 
 
@@ -1880,7 +1880,7 @@ namespace YY::Thunks
         if (auto hOrgWaitObject = InterlockedExchangePointer(&_pWait->hWaitObject, nullptr))
         {
             UnregisterWaitEx(hOrgWaitObject, INVALID_HANDLE_VALUE);
-                
+
             _pWait->Release();
         }
         ResetEvent(_pWait->hEvent);
@@ -1987,7 +1987,7 @@ namespace YY::Thunks
         {
             return _pfnCreateThreadpoolIo(_hFile, _pfnIoCallback, _pUserData, _pCallbackEnviron);
         }
-            
+
         /////////////////////////////////////////////////////////
         // TpAllocIoCompletion
         if (_hFile == NULL || _pfnIoCallback == NULL)
@@ -2189,14 +2189,14 @@ namespace YY::Thunks
         {
             return _pfnWaitForThreadpoolIoCallbacks(_pIo, _bCancelPendingCallbacks);
         }
-            
+
         // TpWaitForIoCompletion
         if (_pIo == nullptr || (_pIo->uFlags1 & 0x30000) || _pIo->VFuncs != Fallback::GetTppIopCleanupGroupMemberVFuncs())
         {
             internal::RaiseStatus(STATUS_INVALID_PARAMETER);
             return;
         }
-            
+
         Fallback::TppWorkWait(_pIo, _bCancelPendingCallbacks, true);
     }
 #endif
@@ -2219,7 +2219,7 @@ namespace YY::Thunks
         {
             return _pfnCreateThreadpool(_pReserved);
         }
-            
+
         auto _pPool = internal::New<Fallback::TP_Pool>();
         if (!_pPool)
         {
@@ -2274,7 +2274,7 @@ namespace YY::Thunks
         {
             return _pfnSetThreadpoolThreadMaximum(_pPool2, _cthrdMost);
         }
-        
+
         auto _pPool = reinterpret_cast<Fallback::TP_Pool*>(_pPool2);
         if (!_pPool)
             _pPool = Fallback::TP_Pool::GetDefaultPool();
@@ -2327,7 +2327,7 @@ namespace YY::Thunks
         {
             return _pfnCallbackMayRunLong(pci);
         }
-        
+
         if (pci == nullptr || pci->bCallbackMayRunLong)
         {
             internal::RaiseStatus(STATUS_INVALID_PARAMETER);

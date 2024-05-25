@@ -27,7 +27,7 @@ namespace YY
                 for (; ; ++pszString)
                 {
                     const auto ch = *pszString;
-                
+
                     if (ch == Char(' ') || ch == Char('\n') || ch == Char('\t'))
                     {
                         continue;
@@ -125,7 +125,7 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
 
-        // Windows 2000 Professional, Windows XP [desktop apps only] 
+        // Windows 2000 Professional, Windows XP [desktop apps only]
         // Windows 2000 Server [desktop apps only]
         // 虽然Windows 2000支持，但是在IE6里面而IE6不一定所有Windows 2000都有，因此低于5.1我们就静态引入。
         __DEFINE_THUNK(
@@ -151,7 +151,7 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
 
-        // Windows 2000 Professional, Windows XP [desktop apps only] 
+        // Windows 2000 Professional, Windows XP [desktop apps only]
         // Windows 2000 Server [desktop apps only]
         // 虽然Windows 2000支持，但是在IE6里面而IE6不一定所有Windows 2000都有，因此低于5.1我们就静态引入。
         __DEFINE_THUNK(

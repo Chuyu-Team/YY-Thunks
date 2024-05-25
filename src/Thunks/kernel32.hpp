@@ -360,7 +360,7 @@ namespace YY
                         char Buffer[1024];
                         SYSTEM_VHD_BOOT_INFORMATION Info;
                     } _StaticBuffer;
-                    
+
                     if (_uReturnLength > sizeof(_StaticBuffer))
                     {
                         const auto _hProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;

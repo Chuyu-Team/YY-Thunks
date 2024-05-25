@@ -18,7 +18,7 @@ namespace YY::Thunks
         {
             return _pfnUiaClientsAreListening();
         }
-        
+
         // 系统都不支持Uia，肯定不会客户端在监听。
         return FALSE;
     }
@@ -43,7 +43,7 @@ namespace YY::Thunks
         {
             return _pfnUiaHostProviderFromHwnd(hwnd, ppProvider);
         }
-        
+
         if (!ppProvider)
             *ppProvider = nullptr;
         return E_NOTIMPL;
@@ -69,7 +69,7 @@ namespace YY::Thunks
         {
             return _pfnUiaRaiseAutomationEvent(pProvider, id);
         }
-        
+
         return E_NOTIMPL;
     }
 #endif
@@ -121,7 +121,7 @@ namespace YY::Thunks
         {
             return _pfnUiaReturnRawElementProvider(hwnd, wParam, lParam, el);
         }
-        
+
         return E_NOTIMPL;
     }
 #endif

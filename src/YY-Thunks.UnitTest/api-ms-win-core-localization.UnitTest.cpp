@@ -746,7 +746,7 @@ namespace api_ms_win_core_localization
 
             Assert::AreEqual(::LocaleNameToLCID(Buffer, 0), ::GetUserDefaultLCID());
 
-            
+
             ::ResolveLocaleName(LOCALE_NAME_SYSTEM_DEFAULT, Buffer, _countof(Buffer));
 
             Assert::AreNotEqual(result, 0);

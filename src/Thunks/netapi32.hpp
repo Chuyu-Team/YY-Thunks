@@ -32,7 +32,7 @@ namespace YY
             return S_OK;
         }
 #endif
-        
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN10)
 
         // 最低受支持的客户端    Windows 10 [仅限桌面应用]

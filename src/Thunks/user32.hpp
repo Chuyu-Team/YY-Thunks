@@ -54,7 +54,7 @@ namespace YY
             return FALSE;
         }
 #endif
-        
+
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -174,7 +174,7 @@ namespace YY
 
             } while (false);
 
-            
+
             SetLastError(lStatus);
             return FALSE;
         }
@@ -251,7 +251,7 @@ namespace YY
             {
                 return pGetSystemMetricsForDpi(nIndex, dpi);
             }
-    
+
             auto nValue = GetSystemMetrics(nIndex);
 
             if (nValue != 0)
@@ -592,7 +592,7 @@ namespace YY
             return TRUE;
         }
 #endif
-        
+
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 

@@ -221,7 +221,7 @@ namespace YY::Thunks
         {
             return _pfnPowerCreateRequest(_pContext);
         }
-            
+
         if (_pContext == nullptr || _pContext->Version != POWER_REQUEST_CONTEXT_VERSION)
         {
             SetLastError(ERROR_INVALID_PARAMETER);
@@ -239,7 +239,7 @@ namespace YY::Thunks
         return INVALID_HANDLE_VALUE;
     }
 #endif
-        
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
     // 最低受支持的客户端    Windows 7 [仅限桌面应用]
@@ -300,7 +300,7 @@ namespace YY::Thunks
         return FALSE;
     }
 #endif
-        
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
     // 最低受支持的客户端    Windows 7 [仅限桌面应用]

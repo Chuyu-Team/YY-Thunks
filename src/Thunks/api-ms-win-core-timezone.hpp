@@ -33,7 +33,7 @@ namespace YY
                 return Result;
             }
 
-            
+
             pTimeZoneInformation->DynamicDaylightTimeDisabled = TIME_ZONE_ID_UNKNOWN == Result;
 
             //搜索 TimeZoneKeyName 名称
@@ -79,7 +79,7 @@ namespace YY
 
             } while (false);
 
-            
+
             return Result;
 
         }
@@ -297,7 +297,7 @@ namespace YY
             {
                 return _pfnGetTimeZoneInformationForYear(_uYear, _pDynamicTimeZoneInfo, _pTimeZoneInfo);
             }
-            
+
             DYNAMIC_TIME_ZONE_INFORMATION _DynamicTimeZoneInfoBuffer;
             if (!_pDynamicTimeZoneInfo)
             {
@@ -373,7 +373,7 @@ namespace YY
                 _pTimeZoneInfo->DaylightBias = _Tzi.DaylightBias;
                 _pTimeZoneInfo->StandardDate = _Tzi.StandardDate;
                 _pTimeZoneInfo->DaylightDate = _Tzi.DaylightDate;
-                
+
             } while (false);
 
             if (_hTimeZoneKey)
@@ -411,7 +411,7 @@ namespace YY
             {
                 return _pfnGetDynamicTimeZoneInformationEffectiveYears(_pTimeZoneInformation, _puFirstYear, _puLastYear);
             }
-            
+
             if (!_pTimeZoneInformation)
             {
                 return ERROR_INVALID_PARAMETER;

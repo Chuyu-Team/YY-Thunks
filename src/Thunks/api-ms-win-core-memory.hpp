@@ -304,7 +304,7 @@ namespace YY
             {
                 return pCreateFileMapping2(File, SecurityAttributes, DesiredAccess, PageProtection, AllocationAttributes,  MaximumSize, Name, ExtendedParameters, ParameterCount);
             }
-            
+
             //尝试搜索 MemExtendedParameterNumaNode
             if (ExtendedParameters && ParameterCount)
             {
@@ -444,7 +444,7 @@ namespace YY
             return 0;
         }
 #endif
-        
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN10)
 
         // 最低受支持的客户端    Windows 8.1 更新[桌面应用 | UWP 应用]
@@ -508,7 +508,7 @@ namespace YY
             return ERROR_SUCCESS;
         }
 #endif
-        
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN10)
 
         // 最低受支持的客户端    Windows 8.1 更新[桌面应用 | UWP 应用]
@@ -538,11 +538,11 @@ namespace YY
 
             if ((char*)_pVirtualAddress + _uSize > (char*)_Info.BaseAddress + _Info.RegionSize)
                 return ERROR_INVALID_PARAMETER;
-            
+
             return ERROR_SUCCESS;
         }
 #endif
-        
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN10)
 
         // 最低受支持的客户端    Windows 8 [仅限桌面应用]
@@ -595,7 +595,7 @@ namespace YY
             {
                 return _pfnSetProcessWorkingSetSizeEx(_hProcess, _uMinimumWorkingSetSize, _uMaximumWorkingSetSize, _fFlags);
             }
-            
+
             return SetProcessWorkingSetSize(_hProcess, _uMinimumWorkingSetSize, _uMaximumWorkingSetSize);
         }
 #endif
@@ -621,7 +621,7 @@ namespace YY
             {
                 return _pfnGetProcessWorkingSetSizeEx(_hProcess, _puMinimumWorkingSetSize, _puMaximumWorkingSetSize, _pfFlags);
             }
-            
+
             *_pfFlags = 0;
             return GetProcessWorkingSetSize(_hProcess, _puMinimumWorkingSetSize, _puMaximumWorkingSetSize);
         }

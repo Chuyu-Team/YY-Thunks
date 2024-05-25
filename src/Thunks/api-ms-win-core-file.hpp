@@ -344,7 +344,7 @@ namespace YY
                 return TRUE;
 
 
-    
+
             internal::BaseSetLastNTError(Status);
 
             return FALSE;
@@ -413,7 +413,7 @@ namespace YY
             szVolumeRoot[0] = L'\0';
 
             wchar_t* szLongPathNameBuffer = nullptr;
-    
+
             //目标所需的分区名称，不包含最后的 '\\'
             UNICODE_STRING TargetVolumeName = {};
             //目标所需的文件名，开始包含 '\\'
@@ -660,7 +660,7 @@ namespace YY
                         }
 
                         szLongPathNameBuffer = pNewLongPathName;
-                
+
                     }
                     else
                     {
@@ -859,7 +859,7 @@ namespace YY
                     SetLastError(ERROR_INVALID_PARAMETER);
                     return INVALID_HANDLE_VALUE;
                 }
-        
+
                 dwFlagsAndAttributes = pCreateExParams->dwFileAttributes | pCreateExParams->dwFileFlags;
 
                 if (pCreateExParams->dwSecurityQosFlags != 0)
@@ -868,7 +868,7 @@ namespace YY
                 lpSecurityAttributes = pCreateExParams->lpSecurityAttributes;
                 hTemplateFile        = pCreateExParams->hTemplateFile;
             }
-     
+
             return CreateFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
         }
 #endif
@@ -926,7 +926,7 @@ namespace YY
             }
 
             OBJECT_ATTRIBUTES ObjectAttributes = {sizeof(ObjectAttributes), hVolumeHint, &ObjectName,  OBJ_CASE_INSENSITIVE };
-    
+
             ULONG CreateOptions = FILE_OPEN_BY_FILE_ID;
 
             if (FILE_FLAG_WRITE_THROUGH & dwFlagsAndAttributes)
@@ -943,7 +943,7 @@ namespace YY
             {
                 CreateOptions |= FILE_SEQUENTIAL_ONLY;
             }
-    
+
             if (FILE_FLAG_RANDOM_ACCESS & dwFlagsAndAttributes)
             {
                 CreateOptions |= FILE_RANDOM_ACCESS;
@@ -1112,12 +1112,12 @@ namespace YY
                 {
                     CreateOptions |= FILE_RANDOM_ACCESS;
                 }
-        
+
                 if (FILE_FLAG_BACKUP_SEMANTICS & dwFlagsAndAttributes)
                 {
                     CreateOptions |= FILE_OPEN_FOR_BACKUP_INTENT;
                 }
-        
+
                 if ((FILE_FLAG_OVERLAPPED & dwFlagsAndAttributes) == 0)
                 {
                     CreateOptions |= FILE_SYNCHRONOUS_IO_NONALERT;
@@ -1280,7 +1280,7 @@ namespace YY
                 {
                     // dwAdditionalFlags : Windows 7开始才支持 FIND_FIRST_EX_LARGE_FETCH
                     dwAdditionalFlags &= (FIND_FIRST_EX_CASE_SENSITIVE | FIND_FIRST_EX_ON_DISK_ENTRIES_ONLY);
-                    
+
                     // Windows 7开始才支持 FindExInfoBasic
                     fInfoLevelId = FindExInfoStandard;
                 }
@@ -1317,7 +1317,7 @@ namespace YY
                 {
                     // dwAdditionalFlags : Windows 7开始才支持 FIND_FIRST_EX_LARGE_FETCH
                     dwAdditionalFlags &= (FIND_FIRST_EX_CASE_SENSITIVE | FIND_FIRST_EX_ON_DISK_ENTRIES_ONLY);
-                    
+
                     // Windows 7开始才支持 FindExInfoBasic
                     fInfoLevelId = FindExInfoStandard;
                 }

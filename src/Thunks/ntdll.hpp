@@ -27,7 +27,7 @@ namespace YY
             {
                 return _pfnNtCancelIoFile(handle, io_status);
             }
-            
+
             // 正常来说不应该走到这里
             return STATUS_NOT_SUPPORTED;
         }

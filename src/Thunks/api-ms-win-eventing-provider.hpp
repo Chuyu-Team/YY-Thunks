@@ -54,7 +54,7 @@ namespace YY
             {
                 return _pfnEventActivityIdControl(_uControlCode, _pActivityId);
             }
-            
+
             return ERROR_NOT_SUPPORTED;
         }
 #endif
@@ -80,7 +80,7 @@ namespace YY
             {
                 return _pfnEventRegister(_pProviderId, _pfnEnableCallback, _pCallbackContext, _phRegHandle);
             }
-            
+
             return ERROR_NOT_SUPPORTED;
         }
 #endif
@@ -157,7 +157,7 @@ namespace YY
             {
                 return _pfnEventWriteTransfer(RegHandle, EventDescriptor, ActivityId, RelatedActivityId, UserDataCount, UserData);
             }
-            
+
             return ERROR_NOT_SUPPORTED;
         }
 #endif
@@ -181,7 +181,7 @@ namespace YY
             {
                 return _pfnEventEnabled(RegHandle, EventDescriptor);
             }
-            
+
             return FALSE;
         }
 #endif
@@ -207,7 +207,7 @@ namespace YY
             {
                 return _pfnEventWrite(RegHandle, EventDescriptor, UserDataCount, UserData);
             }
-            
+
             return ERROR_NOT_SUPPORTED;
         }
 #endif
@@ -237,7 +237,7 @@ namespace YY
             {
                 return _pfnEventWriteEx(RegHandle, EventDescriptor, Filter, Flags, ActivityId, RelatedActivityId, UserDataCount, UserData);
             }
-            
+
             return ::EventWriteTransfer(RegHandle, EventDescriptor, ActivityId, RelatedActivityId, UserDataCount, UserData);
         }
 #endif

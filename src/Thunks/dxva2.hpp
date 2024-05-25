@@ -21,7 +21,7 @@ namespace YY::Thunks
         {
             return _pfnDXVA2CreateDirect3DDeviceManager9(pResetToken, ppDeviceManager);
         }
-        
+
         if (ppDeviceManager)
             *ppDeviceManager = nullptr;
         return E_NOINTERFACE;
@@ -48,7 +48,7 @@ namespace YY::Thunks
         {
             return _pfnDXVA2CreateVideoService(pDD, riid, ppService);
         }
-        
+
         if (ppService)
             *ppService = nullptr;
         return E_NOINTERFACE;

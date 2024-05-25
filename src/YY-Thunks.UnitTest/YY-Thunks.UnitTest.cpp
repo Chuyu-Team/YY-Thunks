@@ -302,8 +302,8 @@ namespace Others
         //扫描所有支持的符号，是否正确完成Thunks行为
         TEST_METHOD(符号Thunks检测)
         {
-            
-            
+
+
             //扫描所有导入符号
             std::set<LPCSTR, string_less> Names;
 

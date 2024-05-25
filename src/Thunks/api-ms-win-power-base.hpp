@@ -27,7 +27,7 @@ namespace YY
 
             const auto _hProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
 
-                    
+
             if (DEVICE_NOTIFY_CALLBACK == _fFlags)
             {
                 auto _pDeviceNotifyInfo = (DEVICE_NOTIFY_SUBSCRIBE_PARAMETERS*)_hRecipient;
@@ -139,7 +139,7 @@ namespace YY
             {
                 return _pfnPowerRegisterSuspendResumeNotification(_fFlags, _hRecipient, _phRegistrationHandle);
             }
-            
+
             return PowerRegisterSuspendResumeNotificationDownlevel(_fFlags, _hRecipient, _phRegistrationHandle);
         }
 #endif

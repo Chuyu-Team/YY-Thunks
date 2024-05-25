@@ -88,7 +88,7 @@ namespace YY::Thunks::internal
 
         return PBYTE(pBaseAddress) + _DataDirectory.VirtualAddress;
     }
-    
+
     static ULONG __fastcall GetMaxTlsIndex() noexcept
     {
         ULONG uMaxTlsIndex = 0;
@@ -126,7 +126,7 @@ namespace YY::Thunks::internal
         }
 
         return uMaxTlsIndex;
-        
+
     }
 
     static SYSTEM_PROCESS_INFORMATION* __fastcall GetCurrentProcessInfo(StringBuffer<char>& _szBuffer)
@@ -375,7 +375,7 @@ namespace YY::Thunks::internal
 
         if (!_ppThreadLocalStoragePointer[_tls_index])
             return;
-        
+
         __try
         {
             auto _pfnTlsCallbacks = reinterpret_cast<PIMAGE_TLS_CALLBACK*>(_tls_used.AddressOfCallBacks);

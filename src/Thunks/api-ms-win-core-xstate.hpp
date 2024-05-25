@@ -57,7 +57,7 @@
                 return _pfnSetXStateFeaturesMask(Context, FeatureMask);
             }
             const auto _uSupportFeatures =  GetEnabledXStateFeatures();
-            
+
             if (FeatureMask & (~_uSupportFeatures))
             {
                 SetLastError(ERROR_INVALID_PARAMETER);
@@ -70,7 +70,7 @@
         }
 #endif
 
-        
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
 
         // 最低受支持的客户端    Windows 7 SP1 [桌面应用 |UWP 应用]
@@ -94,7 +94,7 @@
 #if defined(_X86_)
             auto& _XSave = *(XSAVE_FORMAT*)Context->ExtendedRegisters;
             constexpr auto kThreadContext = CONTEXT_i386;
-            
+
 #elif defined(_AMD64_)
             auto& _XSave = Context->FltSave;
             constexpr auto kThreadContext = CONTEXT_AMD64;
@@ -221,7 +221,7 @@
             {
                 return _pfnCopyContext(_pDestination, _uContextFlags, _pSource);
             }
-            
+
 #if defined(_X86_)
             constexpr auto kThreadContext = CONTEXT_i386;
 

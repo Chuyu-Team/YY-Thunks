@@ -62,7 +62,7 @@ namespace YY
                 break;
             }
 
-            // 
+            //
             _pRow2->AdminStatus = (NET_IF_ADMIN_STATUS)_pRow->dwAdminStatus;
             _pRow2->ConnectionType = NET_IF_CONNECTION_DEDICATED;
 
@@ -194,7 +194,7 @@ namespace YY
         }
 #endif // (YY_Thunks_Support_Version < NTDDI_WIN6)
 #endif // !YY_Thunks_Implemented
-        
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
         // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
@@ -216,7 +216,7 @@ namespace YY
             return GetIfTable2ExDownlevel(MibIfTableNormal, _ppTable2);
         }
 #endif
-        
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
         // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
@@ -324,7 +324,7 @@ namespace YY
         }
 #endif
 
-        
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
         // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
@@ -343,7 +343,7 @@ namespace YY
             {
                 return _pfnConvertInterfaceIndexToLuid(InterfaceIndex, InterfaceLuid);
             }
-            
+
             MIB_IFROW _IfRow;
             _IfRow.dwIndex = InterfaceIndex;
             auto _lStatus = GetIfEntry(&_IfRow);
@@ -618,7 +618,7 @@ namespace YY
 
                 return _IfRow.dwIndex;
             }
-            
+
             SetLastError(ERROR_INVALID_PARAMETER);
             return 0;
         }
@@ -682,11 +682,11 @@ namespace YY
             {
                 return _pfnConvertInterfaceLuidToGuid(_pInterfaceLuid, _pInterfaceGuid);
             }
-            
+
             if (_pInterfaceLuid == nullptr || _pInterfaceGuid == nullptr)
             {
                 return ERROR_INVALID_PARAMETER;
-            }        
+            }
 
             MIB_IFROW _IfRow;
             _IfRow.dwIndex = _pInterfaceLuid->Info.NetLuidIndex;
@@ -723,11 +723,11 @@ namespace YY
             {
                 return _pfnConvertInterfaceLuidToIndex(_pInterfaceLuid, _pInterfaceIndex);
             }
-            
+
             if (_pInterfaceLuid == nullptr || _pInterfaceIndex == nullptr)
             {
                 return ERROR_INVALID_PARAMETER;
-            }        
+            }
 
             *_pInterfaceIndex = _pInterfaceLuid->Info.NetLuidIndex;
             return ERROR_SUCCESS;

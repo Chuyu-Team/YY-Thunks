@@ -859,7 +859,7 @@ namespace YY
                 return S_OK;
             }
 
-            
+
             if (bExtendedLengthDosDevicePath)
             {
                 if (cchPath != PATHCCH_MAX_CCH)
@@ -925,7 +925,7 @@ namespace YY
             }
         }
 #endif
-        
+
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
@@ -1187,9 +1187,9 @@ namespace YY
                         *pTempOut = L'\0';
                     }
                 }
-                
+
                 /* 删除 路径末尾的 .
-                * "*." 则保留 
+                * "*." 则保留
                 */
                 if (pTempOut > pszPathOut)
                 {
@@ -1213,7 +1213,7 @@ namespace YY
                             {
                                 pTempOut = Str + 1;
                                 *pTempOut = L'\0';
-                                
+
                                 if (*Str == L'.')
                                     continue;
                             }
@@ -1222,7 +1222,7 @@ namespace YY
                             break;
                         }
 
-                        
+
                     }
                 }
 
@@ -1261,7 +1261,7 @@ namespace YY
                     }
                 }
 
-                
+
                 if (cchPathOut > 1 && *pszPathOut == L'\0')
                 {
                     //如果路径为 空，则转换为 "\\"
@@ -1636,7 +1636,7 @@ namespace YY
 
             if (cchPathIn)
                 ++cchPathIn;
-            
+
             size_t cchMore = pszMore ? wcslen(pszMore) : 0;
 
             if (cchMore >= PATHCCH_MAX_CCH)

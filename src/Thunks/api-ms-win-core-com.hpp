@@ -27,7 +27,7 @@ namespace YY
                 return _pfnCoGetApartmentType(_pAptType, _pAptQualifier);
             }
 
-            if (_pAptType == nullptr || _pAptQualifier == nullptr)                
+            if (_pAptType == nullptr || _pAptQualifier == nullptr)
                 return E_INVALIDARG;
 
             *_pAptType = APTTYPE_CURRENT;

@@ -28,7 +28,7 @@ namespace YY
             return CancelIo(hFile);
         }
 #endif
-        
+
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -85,7 +85,7 @@ namespace YY
             *ulNumEntriesRemoved = 0;
 
             auto& _Entry = lpCompletionPortEntries[0];
-            
+
             if (fAlertable)
             {
                 // 使用 WaitForSingleObjectEx 进行等待触发 APC

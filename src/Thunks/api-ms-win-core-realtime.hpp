@@ -1,4 +1,4 @@
-﻿ 
+﻿
 
 namespace YY
 {
@@ -44,7 +44,7 @@ namespace YY
             {
                 return pQueryThreadCycleTime(ThreadHandle, CycleTime);
             }
-    
+
 
             //GetThreadTimes凑合用吧……
             FILETIME CreationTime;
@@ -223,7 +223,7 @@ namespace YY
             {
                 return _pfnQueryIdleProcessorCycleTimeEx(_uGroup, _puBufferLength, _puProcessorIdleCycleTime);
             }
-            
+
             // 不支持的平台统一认为只有1组CPU可用
             if (_uGroup != 0)
             {
@@ -254,7 +254,7 @@ namespace YY
             {
                 return _pfnQueryIdleProcessorCycleTime(_pBufferLength, _pProcessorIdleCycleTime);
             }
-            
+
             // Windows Vista开始才支持：SystemProcessorIdleCycleTimeInformation，目前只能自己实现一份。
             // 目前随便写一个值，表示现在的空闲时间，一般情况下随便写没有太大问题
 

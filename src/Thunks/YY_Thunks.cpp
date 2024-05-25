@@ -40,7 +40,7 @@
     _APPLY(api_ms_win_core_winrt_string_l1_1_0,          "api-ms-win-core-winrt-string-l1-1-0", 0                 ) \
     _APPLY(api_ms_win_core_winrt_error_l1_1_0,           "api-ms-win-core-winrt-error-l1-1-0" , 0                 ) \
     _APPLY(api_ms_win_core_path_l1_1_0,                  "api-ms-win-core-path-l1-1-0"        , 0                 ) \
-    _APPLY(api_ms_win_core_synch_l1_2_0,                 "api-ms-win-core-synch-l1-2-0"       , 0                 ) 
+    _APPLY(api_ms_win_core_synch_l1_2_0,                 "api-ms-win-core-synch-l1-2-0"       , 0                 )
 
 
 //全局可能使用到的函数
@@ -258,7 +258,7 @@ namespace YY::Thunks::internal
             if(_pAddress)
                 HeapFree(((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap, 0, _pAddress);
         }
-        
+
         template<typename Type, typename... Args>
         _Success_(return != NULL) _Check_return_ _Ret_maybenull_
         _CRTALLOCATOR
@@ -362,7 +362,7 @@ namespace YY::Thunks::internal
 
             //一个设备名称 512 长度够多了吧？
             wchar_t szVolumeMountPoint[512];
-                
+
             //检查缓冲区是否充足
             auto cbBufferNeed = sizeof(__szVolumeMountPointPrefix__) + NtName->Length;
 
@@ -371,7 +371,7 @@ namespace YY::Thunks::internal
                 SetLastError(ERROR_NOT_ENOUGH_MEMORY);
                 return FALSE;
             }
-                
+
             memcpy(szVolumeMountPoint, __szVolumeMountPointPrefix__, sizeof(__szVolumeMountPointPrefix__) - sizeof(__szVolumeMountPointPrefix__[0]));
             memcpy((char*)szVolumeMountPoint + sizeof(__szVolumeMountPointPrefix__) - sizeof(__szVolumeMountPointPrefix__[0]), NtName->Buffer, NtName->Length);
 
@@ -462,7 +462,7 @@ namespace YY::Thunks::internal
             _pId->Data2 = (CharToHex(_szInput[9]) << 12) | (CharToHex(_szInput[10]) << 8) | (CharToHex(_szInput[11]) << 4) | (CharToHex(_szInput[12]) << 0);
 
             _pId->Data3 = (CharToHex(_szInput[14]) << 12) | (CharToHex(_szInput[15]) << 8) | (CharToHex(_szInput[16]) << 4) | (CharToHex(_szInput[17]) << 0);
-                
+
             _pId->Data4[0] = (CharToHex(_szInput[19]) << 4) | (CharToHex(_szInput[20]) << 0);
             _pId->Data4[1] = (CharToHex(_szInput[21]) << 4) | (CharToHex(_szInput[22]) << 0);
             _pId->Data4[2] = (CharToHex(_szInput[24]) << 4) | (CharToHex(_szInput[25]) << 0);
@@ -515,7 +515,7 @@ namespace YY::Thunks::internal
                 *_pszEnd = _szEnd;
 
             *_puResult = 0;
-  
+
             DWORD64 _uResult64 = 0;
             for (;;++_szEnd)
             {

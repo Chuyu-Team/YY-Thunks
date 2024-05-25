@@ -48,7 +48,7 @@ namespace YY
             {
                 return _pfnProcessPrng(pDataIn, cbDataIn, dwFlags);
             }
-            
+
             return TRUE;
         }
 #endif

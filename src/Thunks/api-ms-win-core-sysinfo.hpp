@@ -68,7 +68,7 @@ namespace YY
             {
                 return pGetLogicalProcessorInformation(Buffer, ReturnedLength);
             }
-    
+
             SetLastError(ERROR_INVALID_FUNCTION);
             return FALSE;
         }
@@ -101,7 +101,7 @@ namespace YY
                 SetLastError(ERROR_INVALID_PARAMETER);
                 return FALSE;
             }
-    
+
             const auto cbBuffer = *ReturnedLength;
 
             if (cbBuffer != 0 && Buffer == nullptr)
@@ -109,14 +109,14 @@ namespace YY
                 SetLastError(ERROR_NOACCESS);
                 return FALSE;
             }
-    
+
             const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
             LSTATUS lStatus = ERROR_SUCCESS;
 
             SYSTEM_LOGICAL_PROCESSOR_INFORMATION* pProcessorInfo = nullptr;
             DWORD cbLogicalProcessorInformation = 0;
 
-    
+
             for (; GetLogicalProcessorInformation(pProcessorInfo, &cbLogicalProcessorInformation) == FALSE;)
             {
                 lStatus = GetLastError();
@@ -375,7 +375,7 @@ namespace YY
                     if (VersionInfo.wProductType == VER_NT_WORKSTATION)
                     {
                         //如果目标系统是5.1，因为SuiteMask中检测了Home，所以这里只可能是专业版
-                        // 
+                        //
                         //如果目标系统是5.0、5.2，只可能是专业版。
 
                         dwReturnedProductType = PRODUCT_PROFESSIONAL;

@@ -614,7 +614,7 @@ namespace YY
                             }
 
                             cbDataFix = cStringMin * sizeof(*lpValue);
-                        }                
+                        }
                     }
                     break;
                 case REG_MULTI_SZ:

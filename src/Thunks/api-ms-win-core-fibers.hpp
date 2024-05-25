@@ -200,7 +200,7 @@ namespace YY::Thunks
         {
             return pFlsGetValue(dwFlsIndex);
         }
-            
+
         if (dwFlsIndex >= Fallback::kMaxFlsIndexCount || Fallback::s_pFlsDataBlock == nullptr)
         {
             SetLastError(ERROR_INVALID_PARAMETER);
@@ -304,7 +304,7 @@ namespace YY::Thunks
                 Fallback::s_pFlsDataBlock->Release();
                 break;
             }
-            
+
         } while (false);
 
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -378,7 +378,7 @@ namespace YY::Thunks
     }
 #endif
 
-        
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
     //Minimum supported client    Windows Vista [desktop apps | UWP apps]

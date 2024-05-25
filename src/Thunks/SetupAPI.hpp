@@ -70,7 +70,7 @@ namespace YY
 
                 if (PropertyType == -1)
                     return -1;
-                
+
                 *pPropertyType = PropertyType;
 
                 return Property;
@@ -101,7 +101,7 @@ namespace YY
                 }
 
                 auto Property = PropertyKey->pid - IndexStart;
-                
+
                 *PropertyType = PropertyIdTypeIndex[Property];
 
                 return Property + 0x11;

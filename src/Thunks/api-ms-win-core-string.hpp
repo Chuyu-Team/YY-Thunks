@@ -203,7 +203,7 @@ namespace YY
                     else
                         return CSTR_LESS_THAN;
                 }
-        
+
                 if(cchCount1 == -1 && cchCount2 == -1)
                 {
                     //CompareStringOrdinalNullTerminated

@@ -25,7 +25,7 @@ namespace YY
             {
                 return _pfnDwmEnableBlurBehindWindow(_hWnd, _pBlurBehind);
             }
-            
+
             // 老版本系统不支持Dwm,因此假装此功能被禁用
             return DWM_E_COMPOSITIONDISABLED;
         }
@@ -199,7 +199,7 @@ namespace YY
             {
                 return _pfnDwmGetWindowAttribute(_hWnd, _uAttribute, _pvAttribute, _cbAttribute);
             }
-            
+
             if (!_pvAttribute)
             {
                 return E_INVALIDARG;
@@ -234,7 +234,7 @@ namespace YY
             {
                 return E_INVALIDARG;
             }
-            
+
             return DWM_E_COMPOSITIONDISABLED;
         }
 #endif
@@ -256,7 +256,7 @@ namespace YY
             {
                 return _pfnDwmFlush();
             }
-            
+
             return S_OK;
         }
 #endif

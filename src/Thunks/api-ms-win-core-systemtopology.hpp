@@ -22,7 +22,7 @@ namespace YY
             {
                 return pGetNumaNodeProcessorMask(Node, ProcessorMask);
             }
-    
+
             if (Node == 0)
             {
                 //因为我们假定只有一个 Node，所以所有处理器必然在这个 Node 中。
@@ -39,7 +39,7 @@ namespace YY
             //不支持此接口
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
-    
+
         }
 #endif
 

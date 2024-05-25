@@ -112,7 +112,7 @@ namespace YY::Thunks::internal
                 {
                     auto _pNext = _pItem->pNext;
                     _pItem->Release();
-                        
+
                     _pItem = _pNext;
                 }
             }

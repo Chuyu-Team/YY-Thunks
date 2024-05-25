@@ -334,7 +334,7 @@ namespace YY
                         dwFlags |= LOAD_WITH_ALTERED_SEARCH_PATH;
                         break;
                     }
-                }        
+                }
 
 
                 if (LOAD_LIBRARY_SEARCH_USER_DIRS & dwLoadLibrarySearchFlags)

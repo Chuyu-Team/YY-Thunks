@@ -17,220 +17,220 @@
                 static constexpr LcidFallback FallbackTable[] =
                 {
                     { 0x00000004, 0x00007804 }, //zh-Hans -> zh
-                    { 0x00000401, 0x00000001 }, //ar-SA -> ar 
-                    { 0x00000402, 0x00000002 }, //bg-BG -> bg 
-                    { 0x00000403, 0x00000003 }, //ca-ES -> ca 
-                    { 0x00000404, 0x00007C04 }, //zh-TW -> zh-Hant 
-                    { 0x00000405, 0x00000005 }, //cs-CZ -> cs 
-                    { 0x00000406, 0x00000006 }, //da-DK -> da 
-                    { 0x00000407, 0x00000007 }, //de-DE -> de 
-                    { 0x00000408, 0x00000008 }, //el-GR -> el 
-                    { 0x00000409, 0x00000009 }, //en-US -> en 
-                    { 0x0000040A, 0x0000000A }, //es-ES_tradnl -> es 
-                    { 0x0000040B, 0x0000000B }, //fi-FI -> fi 
-                    { 0x0000040C, 0x0000000C }, //fr-FR -> fr 
-                    { 0x0000040D, 0x0000000D }, //he-IL -> he 
-                    { 0x0000040E, 0x0000000E }, //hu-HU -> hu 
-                    { 0x0000040F, 0x0000000F }, //is-IS -> is 
-                    { 0x00000410, 0x00000010 }, //it-IT -> it 
-                    { 0x00000411, 0x00000011 }, //ja-JP -> ja 
-                    { 0x00000412, 0x00000012 }, //ko-KR -> ko 
-                    { 0x00000413, 0x00000013 }, //nl-NL -> nl 
-                    { 0x00000414, 0x00007C14 }, //nb-NO -> nb 
-                    { 0x00000415, 0x00000015 }, //pl-PL -> pl 
-                    { 0x00000416, 0x00000016 }, //pt-BR -> pt 
-                    { 0x00000417, 0x00000017 }, //rm-CH -> rm 
-                    { 0x00000418, 0x00000018 }, //ro-RO -> ro 
-                    { 0x00000419, 0x00000019 }, //ru-RU -> ru 
-                    { 0x0000041A, 0x0000001A }, //hr-HR -> hr 
-                    { 0x0000041B, 0x0000001B }, //sk-SK -> sk 
-                    { 0x0000041C, 0x0000001C }, //sq-AL -> sq 
-                    { 0x0000041D, 0x0000001D }, //sv-SE -> sv 
-                    { 0x0000041E, 0x0000001E }, //th-TH -> th 
-                    { 0x0000041F, 0x0000001F }, //tr-TR -> tr 
-                    { 0x00000420, 0x00000020 }, //ur-PK -> ur 
-                    { 0x00000421, 0x00000021 }, //id-ID -> id 
-                    { 0x00000422, 0x00000022 }, //uk-UA -> uk 
-                    { 0x00000423, 0x00000023 }, //be-BY -> be 
-                    { 0x00000424, 0x00000024 }, //sl-SI -> sl 
-                    { 0x00000425, 0x00000025 }, //et-EE -> et 
-                    { 0x00000426, 0x00000026 }, //lv-LV -> lv 
-                    { 0x00000427, 0x00000027 }, //lt-LT -> lt 
+                    { 0x00000401, 0x00000001 }, //ar-SA -> ar
+                    { 0x00000402, 0x00000002 }, //bg-BG -> bg
+                    { 0x00000403, 0x00000003 }, //ca-ES -> ca
+                    { 0x00000404, 0x00007C04 }, //zh-TW -> zh-Hant
+                    { 0x00000405, 0x00000005 }, //cs-CZ -> cs
+                    { 0x00000406, 0x00000006 }, //da-DK -> da
+                    { 0x00000407, 0x00000007 }, //de-DE -> de
+                    { 0x00000408, 0x00000008 }, //el-GR -> el
+                    { 0x00000409, 0x00000009 }, //en-US -> en
+                    { 0x0000040A, 0x0000000A }, //es-ES_tradnl -> es
+                    { 0x0000040B, 0x0000000B }, //fi-FI -> fi
+                    { 0x0000040C, 0x0000000C }, //fr-FR -> fr
+                    { 0x0000040D, 0x0000000D }, //he-IL -> he
+                    { 0x0000040E, 0x0000000E }, //hu-HU -> hu
+                    { 0x0000040F, 0x0000000F }, //is-IS -> is
+                    { 0x00000410, 0x00000010 }, //it-IT -> it
+                    { 0x00000411, 0x00000011 }, //ja-JP -> ja
+                    { 0x00000412, 0x00000012 }, //ko-KR -> ko
+                    { 0x00000413, 0x00000013 }, //nl-NL -> nl
+                    { 0x00000414, 0x00007C14 }, //nb-NO -> nb
+                    { 0x00000415, 0x00000015 }, //pl-PL -> pl
+                    { 0x00000416, 0x00000016 }, //pt-BR -> pt
+                    { 0x00000417, 0x00000017 }, //rm-CH -> rm
+                    { 0x00000418, 0x00000018 }, //ro-RO -> ro
+                    { 0x00000419, 0x00000019 }, //ru-RU -> ru
+                    { 0x0000041A, 0x0000001A }, //hr-HR -> hr
+                    { 0x0000041B, 0x0000001B }, //sk-SK -> sk
+                    { 0x0000041C, 0x0000001C }, //sq-AL -> sq
+                    { 0x0000041D, 0x0000001D }, //sv-SE -> sv
+                    { 0x0000041E, 0x0000001E }, //th-TH -> th
+                    { 0x0000041F, 0x0000001F }, //tr-TR -> tr
+                    { 0x00000420, 0x00000020 }, //ur-PK -> ur
+                    { 0x00000421, 0x00000021 }, //id-ID -> id
+                    { 0x00000422, 0x00000022 }, //uk-UA -> uk
+                    { 0x00000423, 0x00000023 }, //be-BY -> be
+                    { 0x00000424, 0x00000024 }, //sl-SI -> sl
+                    { 0x00000425, 0x00000025 }, //et-EE -> et
+                    { 0x00000426, 0x00000026 }, //lv-LV -> lv
+                    { 0x00000427, 0x00000027 }, //lt-LT -> lt
                     { 0x00000428, 0x00007C28 }, //tg-Cyrl-TJ -> tg-Cyrl
-                    { 0x00000429, 0x00000029 }, //fa-IR -> fa 
-                    { 0x0000042A, 0x0000002A }, //vi-VN -> vi 
-                    { 0x0000042B, 0x0000002B }, //hy-AM -> hy 
+                    { 0x00000429, 0x00000029 }, //fa-IR -> fa
+                    { 0x0000042A, 0x0000002A }, //vi-VN -> vi
+                    { 0x0000042B, 0x0000002B }, //hy-AM -> hy
                     { 0x0000042C, 0x0000782C }, //az-Latn-AZ -> az-Latn
-                    { 0x0000042D, 0x0000002D }, //eu-ES -> eu 
-                    { 0x0000042E, 0x0000002E }, //hsb-DE -> hsb 
-                    { 0x0000042F, 0x0000002F }, //mk-MK -> mk 
-                    { 0x00000432, 0x00000032 }, //tn-ZA -> tn 
-                    { 0x00000434, 0x00000034 }, //xh-ZA -> xh 
-                    { 0x00000435, 0x00000035 }, //zu-ZA -> zu 
-                    { 0x00000436, 0x00000036 }, //af-ZA -> af 
-                    { 0x00000437, 0x00000037 }, //ka-GE -> ka 
-                    { 0x00000438, 0x00000038 }, //fo-FO -> fo 
-                    { 0x00000439, 0x00000039 }, //hi-IN -> hi 
-                    { 0x0000043A, 0x0000003A }, //mt-MT -> mt 
-                    { 0x0000043B, 0x0000003B }, //se-NO -> se 
-                    { 0x0000043E, 0x0000003E }, //ms-MY -> ms 
-                    { 0x0000043F, 0x0000003F }, //kk-KZ -> kk 
-                    { 0x00000440, 0x00000040 }, //ky-KG -> ky 
-                    { 0x00000441, 0x00000041 }, //sw-KE -> sw 
-                    { 0x00000442, 0x00000042 }, //tk-TM -> tk 
+                    { 0x0000042D, 0x0000002D }, //eu-ES -> eu
+                    { 0x0000042E, 0x0000002E }, //hsb-DE -> hsb
+                    { 0x0000042F, 0x0000002F }, //mk-MK -> mk
+                    { 0x00000432, 0x00000032 }, //tn-ZA -> tn
+                    { 0x00000434, 0x00000034 }, //xh-ZA -> xh
+                    { 0x00000435, 0x00000035 }, //zu-ZA -> zu
+                    { 0x00000436, 0x00000036 }, //af-ZA -> af
+                    { 0x00000437, 0x00000037 }, //ka-GE -> ka
+                    { 0x00000438, 0x00000038 }, //fo-FO -> fo
+                    { 0x00000439, 0x00000039 }, //hi-IN -> hi
+                    { 0x0000043A, 0x0000003A }, //mt-MT -> mt
+                    { 0x0000043B, 0x0000003B }, //se-NO -> se
+                    { 0x0000043E, 0x0000003E }, //ms-MY -> ms
+                    { 0x0000043F, 0x0000003F }, //kk-KZ -> kk
+                    { 0x00000440, 0x00000040 }, //ky-KG -> ky
+                    { 0x00000441, 0x00000041 }, //sw-KE -> sw
+                    { 0x00000442, 0x00000042 }, //tk-TM -> tk
                     { 0x00000443, 0x00007C43 }, //uz-Latn-UZ -> uz-Latn
-                    { 0x00000444, 0x00000044 }, //tt-RU -> tt 
-                    { 0x00000445, 0x00000045 }, //bn-IN -> bn 
-                    { 0x00000446, 0x00000046 }, //pa-IN -> pa 
-                    { 0x00000447, 0x00000047 }, //gu-IN -> gu 
-                    { 0x00000448, 0x00000048 }, //or-IN -> or 
-                    { 0x00000449, 0x00000049 }, //ta-IN -> ta 
-                    { 0x0000044A, 0x0000004A }, //te-IN -> te 
-                    { 0x0000044B, 0x0000004B }, //kn-IN -> kn 
-                    { 0x0000044C, 0x0000004C }, //ml-IN -> ml 
-                    { 0x0000044D, 0x0000004D }, //as-IN -> as 
-                    { 0x0000044E, 0x0000004E }, //mr-IN -> mr 
-                    { 0x0000044F, 0x0000004F }, //sa-IN -> sa 
+                    { 0x00000444, 0x00000044 }, //tt-RU -> tt
+                    { 0x00000445, 0x00000045 }, //bn-IN -> bn
+                    { 0x00000446, 0x00000046 }, //pa-IN -> pa
+                    { 0x00000447, 0x00000047 }, //gu-IN -> gu
+                    { 0x00000448, 0x00000048 }, //or-IN -> or
+                    { 0x00000449, 0x00000049 }, //ta-IN -> ta
+                    { 0x0000044A, 0x0000004A }, //te-IN -> te
+                    { 0x0000044B, 0x0000004B }, //kn-IN -> kn
+                    { 0x0000044C, 0x0000004C }, //ml-IN -> ml
+                    { 0x0000044D, 0x0000004D }, //as-IN -> as
+                    { 0x0000044E, 0x0000004E }, //mr-IN -> mr
+                    { 0x0000044F, 0x0000004F }, //sa-IN -> sa
                     { 0x00000450, 0x00007850 }, //mn-MN -> mn-Cyrl
-                    { 0x00000451, 0x00000051 }, //bo-CN -> bo 
-                    { 0x00000452, 0x00000052 }, //cy-GB -> cy 
-                    { 0x00000453, 0x00000053 }, //km-KH -> km 
-                    { 0x00000454, 0x00000054 }, //lo-LA -> lo 
-                    { 0x00000456, 0x00000056 }, //gl-ES -> gl 
-                    { 0x00000457, 0x00000057 }, //kok-IN -> kok 
-                    { 0x0000045A, 0x0000005A }, //syr-SY -> syr 
-                    { 0x0000045B, 0x0000005B }, //si-LK -> si 
+                    { 0x00000451, 0x00000051 }, //bo-CN -> bo
+                    { 0x00000452, 0x00000052 }, //cy-GB -> cy
+                    { 0x00000453, 0x00000053 }, //km-KH -> km
+                    { 0x00000454, 0x00000054 }, //lo-LA -> lo
+                    { 0x00000456, 0x00000056 }, //gl-ES -> gl
+                    { 0x00000457, 0x00000057 }, //kok-IN -> kok
+                    { 0x0000045A, 0x0000005A }, //syr-SY -> syr
+                    { 0x0000045B, 0x0000005B }, //si-LK -> si
                     { 0x0000045D, 0x0000785D }, //iu-Cans-CA -> iu-Cans
-                    { 0x0000045E, 0x0000005E }, //am-ET -> am 
-                    { 0x00000461, 0x00000061 }, //ne-NP -> ne 
-                    { 0x00000462, 0x00000062 }, //fy-NL -> fy 
-                    { 0x00000463, 0x00000063 }, //ps-AF -> ps 
-                    { 0x00000464, 0x00000064 }, //fil-PH -> fil 
-                    { 0x00000465, 0x00000065 }, //dv-MV -> dv 
+                    { 0x0000045E, 0x0000005E }, //am-ET -> am
+                    { 0x00000461, 0x00000061 }, //ne-NP -> ne
+                    { 0x00000462, 0x00000062 }, //fy-NL -> fy
+                    { 0x00000463, 0x00000063 }, //ps-AF -> ps
+                    { 0x00000464, 0x00000064 }, //fil-PH -> fil
+                    { 0x00000465, 0x00000065 }, //dv-MV -> dv
                     { 0x00000468, 0x00007C68 }, //ha-Latn-NG -> ha-Latn
-                    { 0x0000046A, 0x0000006A }, //yo-NG -> yo 
-                    { 0x0000046B, 0x0000006B }, //quz-BO -> quz 
-                    { 0x0000046C, 0x0000006C }, //nso-ZA -> nso 
-                    { 0x0000046D, 0x0000006D }, //ba-RU -> ba 
-                    { 0x0000046E, 0x0000006E }, //lb-LU -> lb 
-                    { 0x0000046F, 0x0000006F }, //kl-GL -> kl 
-                    { 0x00000470, 0x00000070 }, //ig-NG -> ig 
-                    { 0x00000478, 0x00000078 }, //ii-CN -> ii 
-                    { 0x0000047A, 0x0000007A }, //arn-CL -> arn 
-                    { 0x0000047C, 0x0000007C }, //moh-CA -> moh 
-                    { 0x0000047E, 0x0000007E }, //br-FR -> br 
-                    { 0x00000480, 0x00000080 }, //ug-CN -> ug 
-                    { 0x00000481, 0x00000081 }, //mi-NZ -> mi 
-                    { 0x00000482, 0x00000082 }, //oc-FR -> oc 
-                    { 0x00000483, 0x00000083 }, //co-FR -> co 
-                    { 0x00000484, 0x00000084 }, //gsw-FR -> gsw 
-                    { 0x00000485, 0x00000085 }, //sah-RU -> sah 
-                    { 0x00000486, 0x00000086 }, //qut-GT -> qut 
-                    { 0x00000487, 0x00000087 }, //rw-RW -> rw 
-                    { 0x00000488, 0x00000088 }, //wo-SN -> wo 
-                    { 0x0000048C, 0x0000008C }, //prs-AF -> prs 
-                    { 0x00000491, 0x00000091 }, //gd-GB -> gd 
-                    { 0x00000501, 0x00000009 }, //qps-ploc -> en 
-                    { 0x000005FE, 0x00000011 }, //qps-ploca -> ja 
-                    { 0x00000801, 0x00000001 }, //ar-IQ -> ar 
-                    { 0x00000804, 0x00000004 }, //zh-CN -> zh-Hans 
-                    { 0x00000807, 0x00000007 }, //de-CH -> de 
-                    { 0x00000809, 0x00000009 }, //en-GB -> en 
-                    { 0x0000080A, 0x0000000A }, //es-MX -> es 
-                    { 0x0000080C, 0x0000000C }, //fr-BE -> fr 
-                    { 0x00000810, 0x00000010 }, //it-CH -> it 
-                    { 0x00000813, 0x00000013 }, //nl-BE -> nl 
-                    { 0x00000814, 0x00007814 }, //nn-NO -> nn 
-                    { 0x00000816, 0x00000016 }, //pt-PT -> pt 
-                    { 0x0000081A, 0x0000701A }, //sr-Latn-CS -> sr-Latn 
-                    { 0x0000081D, 0x0000001D }, //sv-FI -> sv 
-                    { 0x0000082C, 0x0000742C }, //az-Cyrl-AZ -> az-Cyrl 
-                    { 0x0000082E, 0x00007C2E }, //dsb-DE -> dsb 
-                    { 0x0000083B, 0x0000003B }, //se-SE -> se 
-                    { 0x0000083C, 0x0000003C }, //ga-IE -> ga 
-                    { 0x0000083E, 0x0000003E }, //ms-BN -> ms 
+                    { 0x0000046A, 0x0000006A }, //yo-NG -> yo
+                    { 0x0000046B, 0x0000006B }, //quz-BO -> quz
+                    { 0x0000046C, 0x0000006C }, //nso-ZA -> nso
+                    { 0x0000046D, 0x0000006D }, //ba-RU -> ba
+                    { 0x0000046E, 0x0000006E }, //lb-LU -> lb
+                    { 0x0000046F, 0x0000006F }, //kl-GL -> kl
+                    { 0x00000470, 0x00000070 }, //ig-NG -> ig
+                    { 0x00000478, 0x00000078 }, //ii-CN -> ii
+                    { 0x0000047A, 0x0000007A }, //arn-CL -> arn
+                    { 0x0000047C, 0x0000007C }, //moh-CA -> moh
+                    { 0x0000047E, 0x0000007E }, //br-FR -> br
+                    { 0x00000480, 0x00000080 }, //ug-CN -> ug
+                    { 0x00000481, 0x00000081 }, //mi-NZ -> mi
+                    { 0x00000482, 0x00000082 }, //oc-FR -> oc
+                    { 0x00000483, 0x00000083 }, //co-FR -> co
+                    { 0x00000484, 0x00000084 }, //gsw-FR -> gsw
+                    { 0x00000485, 0x00000085 }, //sah-RU -> sah
+                    { 0x00000486, 0x00000086 }, //qut-GT -> qut
+                    { 0x00000487, 0x00000087 }, //rw-RW -> rw
+                    { 0x00000488, 0x00000088 }, //wo-SN -> wo
+                    { 0x0000048C, 0x0000008C }, //prs-AF -> prs
+                    { 0x00000491, 0x00000091 }, //gd-GB -> gd
+                    { 0x00000501, 0x00000009 }, //qps-ploc -> en
+                    { 0x000005FE, 0x00000011 }, //qps-ploca -> ja
+                    { 0x00000801, 0x00000001 }, //ar-IQ -> ar
+                    { 0x00000804, 0x00000004 }, //zh-CN -> zh-Hans
+                    { 0x00000807, 0x00000007 }, //de-CH -> de
+                    { 0x00000809, 0x00000009 }, //en-GB -> en
+                    { 0x0000080A, 0x0000000A }, //es-MX -> es
+                    { 0x0000080C, 0x0000000C }, //fr-BE -> fr
+                    { 0x00000810, 0x00000010 }, //it-CH -> it
+                    { 0x00000813, 0x00000013 }, //nl-BE -> nl
+                    { 0x00000814, 0x00007814 }, //nn-NO -> nn
+                    { 0x00000816, 0x00000016 }, //pt-PT -> pt
+                    { 0x0000081A, 0x0000701A }, //sr-Latn-CS -> sr-Latn
+                    { 0x0000081D, 0x0000001D }, //sv-FI -> sv
+                    { 0x0000082C, 0x0000742C }, //az-Cyrl-AZ -> az-Cyrl
+                    { 0x0000082E, 0x00007C2E }, //dsb-DE -> dsb
+                    { 0x0000083B, 0x0000003B }, //se-SE -> se
+                    { 0x0000083C, 0x0000003C }, //ga-IE -> ga
+                    { 0x0000083E, 0x0000003E }, //ms-BN -> ms
                     { 0x00000843, 0x00007843 }, //uz-Cyrl-UZ -> uz-Cyrl
-                    { 0x00000845, 0x00000045 }, //bn-BD -> bn 
+                    { 0x00000845, 0x00000045 }, //bn-BD -> bn
                     { 0x00000850, 0x00007C50 }, //mn-Mong-CN -> mn-Mong
                     { 0x0000085D, 0x00007C5D }, //iu-Latn-CA -> iu-Latn
                     { 0x0000085F, 0x00007C5F }, //tzm-Latn-DZ -> tzm-Latn
-                    { 0x0000086B, 0x0000006B }, //quz-EC -> quz 
-                    { 0x000009FF, 0x00000001 }, //qps-plocm -> ar 
-                    { 0x00000C01, 0x00000001 }, //ar-EG -> ar 
-                    { 0x00000C04, 0x00007C04 }, //zh-HK -> zh-Hant 
-                    { 0x00000C07, 0x00000007 }, //de-AT -> de 
-                    { 0x00000C09, 0x00000009 }, //en-AU -> en 
-                    { 0x00000C0A, 0x0000000A }, //es-ES -> es 
-                    { 0x00000C0C, 0x0000000C }, //fr-CA -> fr 
+                    { 0x0000086B, 0x0000006B }, //quz-EC -> quz
+                    { 0x000009FF, 0x00000001 }, //qps-plocm -> ar
+                    { 0x00000C01, 0x00000001 }, //ar-EG -> ar
+                    { 0x00000C04, 0x00007C04 }, //zh-HK -> zh-Hant
+                    { 0x00000C07, 0x00000007 }, //de-AT -> de
+                    { 0x00000C09, 0x00000009 }, //en-AU -> en
+                    { 0x00000C0A, 0x0000000A }, //es-ES -> es
+                    { 0x00000C0C, 0x0000000C }, //fr-CA -> fr
                     { 0x00000C1A, 0x00006C1A }, //sr-Cyrl-CS -> sr-Cyrl
-                    { 0x00000C3B, 0x0000003B }, //se-FI -> se 
-                    { 0x00000C6B, 0x0000006B }, //quz-PE -> quz 
-                    { 0x00001001, 0x00000001 }, //ar-LY -> ar 
-                    { 0x00001004, 0x00000004 }, //zh-SG -> zh-Hans 
-                    { 0x00001007, 0x00000007 }, //de-LU -> de 
-                    { 0x00001009, 0x00000009 }, //en-CA -> en 
-                    { 0x0000100A, 0x0000000A }, //es-GT -> es 
-                    { 0x0000100C, 0x0000000C }, //fr-CH -> fr 
-                    { 0x0000101A, 0x0000001A }, //hr-BA -> hr 
-                    { 0x0000103B, 0x00007C3B }, //smj-NO -> smj 
-                    { 0x00001401, 0x00000001 }, //ar-DZ -> ar 
-                    { 0x00001404, 0x00007C04 }, //zh-MO -> zh-Hant 
-                    { 0x00001407, 0x00000007 }, //de-LI -> de 
-                    { 0x00001409, 0x00000009 }, //en-NZ -> en 
-                    { 0x0000140A, 0x0000000A }, //es-CR -> es 
-                    { 0x0000140C, 0x0000000C }, //fr-LU -> fr 
+                    { 0x00000C3B, 0x0000003B }, //se-FI -> se
+                    { 0x00000C6B, 0x0000006B }, //quz-PE -> quz
+                    { 0x00001001, 0x00000001 }, //ar-LY -> ar
+                    { 0x00001004, 0x00000004 }, //zh-SG -> zh-Hans
+                    { 0x00001007, 0x00000007 }, //de-LU -> de
+                    { 0x00001009, 0x00000009 }, //en-CA -> en
+                    { 0x0000100A, 0x0000000A }, //es-GT -> es
+                    { 0x0000100C, 0x0000000C }, //fr-CH -> fr
+                    { 0x0000101A, 0x0000001A }, //hr-BA -> hr
+                    { 0x0000103B, 0x00007C3B }, //smj-NO -> smj
+                    { 0x00001401, 0x00000001 }, //ar-DZ -> ar
+                    { 0x00001404, 0x00007C04 }, //zh-MO -> zh-Hant
+                    { 0x00001407, 0x00000007 }, //de-LI -> de
+                    { 0x00001409, 0x00000009 }, //en-NZ -> en
+                    { 0x0000140A, 0x0000000A }, //es-CR -> es
+                    { 0x0000140C, 0x0000000C }, //fr-LU -> fr
                     { 0x0000141A, 0x0000681A }, //bs-Latn-BA -> bs-Latn
-                    { 0x0000143B, 0x00007C3B }, //smj-SE -> smj 
-                    { 0x00001801, 0x00000001 }, //ar-MA -> ar 
-                    { 0x00001809, 0x00000009 }, //en-IE -> en 
-                    { 0x0000180A, 0x0000000A }, //es-PA -> es 
-                    { 0x0000180C, 0x0000000C }, //fr-MC -> fr 
+                    { 0x0000143B, 0x00007C3B }, //smj-SE -> smj
+                    { 0x00001801, 0x00000001 }, //ar-MA -> ar
+                    { 0x00001809, 0x00000009 }, //en-IE -> en
+                    { 0x0000180A, 0x0000000A }, //es-PA -> es
+                    { 0x0000180C, 0x0000000C }, //fr-MC -> fr
                     { 0x0000181A, 0x0000701A }, //sr-Latn-BA -> sr-Latn
-                    { 0x0000183B, 0x0000783B }, //sma-NO -> sma 
-                    { 0x00001C01, 0x00000001 }, //ar-TN -> ar 
-                    { 0x00001C09, 0x00000009 }, //en-ZA -> en 
-                    { 0x00001C0A, 0x0000000A }, //es-DO -> es 
+                    { 0x0000183B, 0x0000783B }, //sma-NO -> sma
+                    { 0x00001C01, 0x00000001 }, //ar-TN -> ar
+                    { 0x00001C09, 0x00000009 }, //en-ZA -> en
+                    { 0x00001C0A, 0x0000000A }, //es-DO -> es
                     { 0x00001C1A, 0x00006C1A }, //sr-Cyrl-BA -> sr-Cyrl
-                    { 0x00001C3B, 0x0000783B }, //sma-SE -> sma 
-                    { 0x00002001, 0x00000001 }, //ar-OM -> ar 
-                    { 0x00002009, 0x00000009 }, //en-JM -> en 
-                    { 0x0000200A, 0x0000000A }, //es-VE -> es 
+                    { 0x00001C3B, 0x0000783B }, //sma-SE -> sma
+                    { 0x00002001, 0x00000001 }, //ar-OM -> ar
+                    { 0x00002009, 0x00000009 }, //en-JM -> en
+                    { 0x0000200A, 0x0000000A }, //es-VE -> es
                     { 0x0000201A, 0x0000641A }, //bs-Cyrl-BA -> bs-Cyrl
-                    { 0x0000203B, 0x0000743B }, //sms-FI -> sms 
-                    { 0x00002401, 0x00000001 }, //ar-YE -> ar 
-                    { 0x00002409, 0x00000009 }, //en-029 -> en 
-                    { 0x0000240A, 0x0000000A }, //es-CO -> es 
+                    { 0x0000203B, 0x0000743B }, //sms-FI -> sms
+                    { 0x00002401, 0x00000001 }, //ar-YE -> ar
+                    { 0x00002409, 0x00000009 }, //en-029 -> en
+                    { 0x0000240A, 0x0000000A }, //es-CO -> es
                     { 0x0000241A, 0x0000701A }, //sr-Latn-RS -> sr-Latn
-                    { 0x0000243B, 0x0000703B }, //smn-FI -> smn 
-                    { 0x00002801, 0x00000001 }, //ar-SY -> ar 
-                    { 0x00002809, 0x00000009 }, //en-BZ -> en 
-                    { 0x0000280A, 0x0000000A }, //es-PE -> es 
+                    { 0x0000243B, 0x0000703B }, //smn-FI -> smn
+                    { 0x00002801, 0x00000001 }, //ar-SY -> ar
+                    { 0x00002809, 0x00000009 }, //en-BZ -> en
+                    { 0x0000280A, 0x0000000A }, //es-PE -> es
                     { 0x0000281A, 0x00006C1A }, //sr-Cyrl-RS -> sr-Cyrl
-                    { 0x00002C01, 0x00000001 }, //ar-JO -> ar 
-                    { 0x00002C09, 0x00000009 }, //en-TT -> en 
-                    { 0x00002C0A, 0x0000000A }, //es-AR -> es 
+                    { 0x00002C01, 0x00000001 }, //ar-JO -> ar
+                    { 0x00002C09, 0x00000009 }, //en-TT -> en
+                    { 0x00002C0A, 0x0000000A }, //es-AR -> es
                     { 0x00002C1A, 0x0000701A }, //sr-Latn-ME -> sr-Latn
-                    { 0x00003001, 0x00000001 }, //ar-LB -> ar 
-                    { 0x00003009, 0x00000009 }, //en-ZW -> en 
-                    { 0x0000300A, 0x0000000A }, //es-EC -> es 
+                    { 0x00003001, 0x00000001 }, //ar-LB -> ar
+                    { 0x00003009, 0x00000009 }, //en-ZW -> en
+                    { 0x0000300A, 0x0000000A }, //es-EC -> es
                     { 0x0000301A, 0x00006C1A }, //sr-Cyrl-ME -> sr-Cyrl
-                    { 0x00003401, 0x00000001 }, //ar-KW -> ar 
-                    { 0x00003409, 0x00000009 }, //en-PH -> en 
-                    { 0x0000340A, 0x0000000A }, //es-CL -> es 
-                    { 0x00003801, 0x00000001 }, //ar-AE -> ar 
-                    { 0x0000380A, 0x0000000A }, //es-UY -> es 
-                    { 0x00003C01, 0x00000001 }, //ar-BH -> ar 
-                    { 0x00003C0A, 0x0000000A }, //es-PY -> es 
-                    { 0x00004001, 0x00000001 }, //ar-QA -> ar 
-                    { 0x00004009, 0x00000009 }, //en-IN -> en 
-                    { 0x0000400A, 0x0000000A }, //es-BO -> es 
-                    { 0x00004409, 0x00000009 }, //en-MY -> en 
-                    { 0x0000440A, 0x0000000A }, //es-SV -> es 
-                    { 0x00004809, 0x00000009 }, //en-SG -> en 
-                    { 0x0000480A, 0x0000000A }, //es-HN -> es 
-                    { 0x00004C0A, 0x0000000A }, //es-NI -> es 
-                    { 0x0000500A, 0x0000000A }, //es-PR -> es 
-                    { 0x0000540A, 0x0000000A }, //es-US -> es 
+                    { 0x00003401, 0x00000001 }, //ar-KW -> ar
+                    { 0x00003409, 0x00000009 }, //en-PH -> en
+                    { 0x0000340A, 0x0000000A }, //es-CL -> es
+                    { 0x00003801, 0x00000001 }, //ar-AE -> ar
+                    { 0x0000380A, 0x0000000A }, //es-UY -> es
+                    { 0x00003C01, 0x00000001 }, //ar-BH -> ar
+                    { 0x00003C0A, 0x0000000A }, //es-PY -> es
+                    { 0x00004001, 0x00000001 }, //ar-QA -> ar
+                    { 0x00004009, 0x00000009 }, //en-IN -> en
+                    { 0x0000400A, 0x0000000A }, //es-BO -> es
+                    { 0x00004409, 0x00000009 }, //en-MY -> en
+                    { 0x0000440A, 0x0000000A }, //es-SV -> es
+                    { 0x00004809, 0x00000009 }, //en-SG -> en
+                    { 0x0000480A, 0x0000000A }, //es-HN -> es
+                    { 0x00004C0A, 0x0000000A }, //es-NI -> es
+                    { 0x0000500A, 0x0000000A }, //es-PR -> es
+                    { 0x0000540A, 0x0000000A }, //es-US -> es
                     { 0x0000641A, 0x0000781A }, //bs-Cyrl -> bs
                     { 0x0000681A, 0x0000781A }, //bs-Latn -> bs
                     { 0x00006C1A, 0x00007C1A }, //sr-Cyrl -> sr
@@ -248,17 +248,17 @@
                     { 0x00007C5F, 0x0000005F }, //tzm-Latn -> tzm
                     { 0x00007C68, 0x00000068 }, //ha-Latn -> ha
                     { 0x0001007F, 0x0000007F }, //x-IV_mathan ->  ""
-                    { 0x00010407, 0x00000007 }, //de-DE_phoneb -> de 
-                    { 0x0001040E, 0x0000000E }, //hu-HU_technl -> hu 
-                    { 0x00010437, 0x00000037 }, //ka-GE_modern -> ka 
-                    { 0x00020804, 0x00000004 }, //zh-CN_stroke -> zh-Hans 
-                    { 0x00021004, 0x00000004 }, //zh-SG_stroke -> zh-Hans 
-                    { 0x00021404, 0x00007C04 }, //zh-MO_stroke -> zh-Hant 
-                    { 0x00030404, 0x00007C04 }, //zh-TW_pronun -> zh-Hant 
-                    { 0x00040404, 0x00007C04 }, //zh-TW_radstr -> zh-Hant 
-                    { 0x00040411, 0x00000011 }, //ja-JP_radstr -> ja 
-                    { 0x00040C04, 0x00007C04 }, //zh-HK_radstr -> zh-Hant 
-                    { 0x00041404, 0x00007C04 }, //zh-MO_radstr -> zh-Hant 
+                    { 0x00010407, 0x00000007 }, //de-DE_phoneb -> de
+                    { 0x0001040E, 0x0000000E }, //hu-HU_technl -> hu
+                    { 0x00010437, 0x00000037 }, //ka-GE_modern -> ka
+                    { 0x00020804, 0x00000004 }, //zh-CN_stroke -> zh-Hans
+                    { 0x00021004, 0x00000004 }, //zh-SG_stroke -> zh-Hans
+                    { 0x00021404, 0x00007C04 }, //zh-MO_stroke -> zh-Hant
+                    { 0x00030404, 0x00007C04 }, //zh-TW_pronun -> zh-Hant
+                    { 0x00040404, 0x00007C04 }, //zh-TW_radstr -> zh-Hant
+                    { 0x00040411, 0x00000011 }, //ja-JP_radstr -> ja
+                    { 0x00040C04, 0x00007C04 }, //zh-HK_radstr -> zh-Hant
+                    { 0x00041404, 0x00007C04 }, //zh-MO_radstr -> zh-Hant
                 };
 
 
@@ -883,7 +883,7 @@
         }
     }
 #endif
-    
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
     //Windows Vista,  Windows Server 2008
@@ -1803,7 +1803,7 @@
         {
             return pEnumSystemLocalesEx(lpLocaleEnumProcEx, dwFlags, lParam, lpReserved);
         }
-            
+
         LSTATUS lStatus = ERROR_SUCCESS;
 
         do
@@ -1970,7 +1970,7 @@
                 dwFlags |= MUI_MERGE_USER_FALLBACK;
             }
 
-                
+
             //最多可能为 3 个ID，线程上下文、User上下文、System上下文
             //WinXP不支持进程上下文……也不支持列表
             LANGID LanguageIds[3 * 5] = {};
@@ -1998,7 +1998,7 @@
                 auto LangID = GetUserDefaultLangID();
                 internal::AddLangIDToBuffer(LanguageIds, _countof(LanguageIds), ulNumLanguages, LangID);
 
-                    
+
                 for (; LangID = (LANGID)internal::DownlevelGetFallbackLocaleLCID(LangID);)
                 {
                     internal::AddLangIDToBuffer(LanguageIds, _countof(LanguageIds), ulNumLanguages, LangID);
@@ -2010,13 +2010,13 @@
                 auto LangID = GetSystemDefaultLangID();
                 internal::AddLangIDToBuffer(LanguageIds, _countof(LanguageIds), ulNumLanguages, LangID);
 
-                    
+
                 for (; LangID = (LANGID)internal::DownlevelGetFallbackLocaleLCID(LangID);)
                 {
                     internal::AddLangIDToBuffer(LanguageIds, _countof(LanguageIds), ulNumLanguages, LangID);
                 }
             }
-                
+
 
 
             if (dwFlags & MUI_LANGUAGE_ID)
@@ -2051,7 +2051,7 @@
 
                     *pwszLanguagesBuffer = L'\0';
                 }
-                    
+
             }
             else
             {
@@ -2101,7 +2101,7 @@
                         memcpy(pwszLanguagesBuffer, szLanguageNameStaticBuffer, cchLanguagesBufferNeed * sizeof(pwszLanguagesBuffer[0]));
                     }
                 }
-                else                
+                else
                 {
                     for (unsigned i = 0; i != ulNumLanguages; ++i)
                     {
@@ -2247,7 +2247,7 @@
             if (result)
                 return result;
         }
-            
+
         //如果找不到，那么直接设置为空字符串
         if (lpLocaleName && cchLocaleName)
         {
@@ -2279,7 +2279,7 @@
         {
             return _pfnGetUserPreferredUILanguages(dwFlags, pulNumLanguages, pwszLanguagesBuffer, pcchLanguagesBuffer);
         }
-            
+
         dwFlags &= ~(MUI_LANGUAGE_ID | MUI_LANGUAGE_NAME);
         dwFlags |= MUI_MERGE_USER_FALLBACK;
         return ::GetThreadPreferredUILanguages(dwFlags, pulNumLanguages, pwszLanguagesBuffer, pcchLanguagesBuffer);
@@ -2442,7 +2442,7 @@
         {
             return _pfnGetNLSVersionEx(_uFunction, _szLocaleName, _pVersionInformation);
         }
-            
+
         if (_uFunction != COMPARE_STRING)
         {
             SetLastError(ERROR_INVALID_FLAGS);
@@ -2458,7 +2458,7 @@
         {
             SetLastError(ERROR_INSUFFICIENT_BUFFER);
             return FALSE;
-        }     
+        }
     }
 #endif
 
@@ -2534,7 +2534,7 @@
         }
 
         return TRUE;
-            
+
     }
 #endif
 } //namespace YY

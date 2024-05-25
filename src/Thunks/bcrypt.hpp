@@ -93,7 +93,7 @@ namespace YY::Thunks
             {
                 return eType == BCryptObjectType::Hash;
             }
-            
+
             bool IsKey()
             {
                 return eType == BCryptObjectType::Key;
@@ -193,7 +193,7 @@ namespace YY::Thunks
                     break;
                 }
             }
-            
+
             DWORD __fastcall GetHashBlockLength() const
             {
                 constexpr auto kByteBits = 32 / sizeof(UINT32);
@@ -628,7 +628,7 @@ namespace YY::Thunks
                     return STATUS_SUCCESS;
                 }
 
-                return BCryptAlgorithm::GetProperty(pszProperty, pbOutput, cbOutput, pcbResult, dwFlags); 
+                return BCryptAlgorithm::GetProperty(pszProperty, pbOutput, cbOutput, pcbResult, dwFlags);
             }
 
 
@@ -700,7 +700,7 @@ namespace YY::Thunks
                 return STATUS_SUCCESS;
             }
         };
-        
+
         struct BCryptKey : public BCryptObject
         {
             static constexpr unsigned kMaxBlockLength = 16'384 / 8;
@@ -877,7 +877,7 @@ namespace YY::Thunks
 
                 return max(_cbBlockBitLength / 8, 1);
             }
-            
+
             NTSTATUS WINAPI GetProperty(
                 _In_z_                                      LPCWSTR pszProperty,
                 _Out_writes_bytes_to_opt_(cbOutput, *pcbResult) PUCHAR   pbOutput,
@@ -992,7 +992,7 @@ namespace YY::Thunks
                 }
                 return STATUS_NOT_SUPPORTED;
             }
-            
+
             NTSTATUS
             WINAPI
             SetProperty(
@@ -1037,7 +1037,7 @@ namespace YY::Thunks
                 }
                 return STATUS_NOT_SUPPORTED;
             }
-            
+
             NTSTATUS WINAPI Encrypt(
                 _In_reads_bytes_opt_(_cbInput)                    PUCHAR   _pInput,
                 _In_                                        ULONG   _cbInput,
@@ -1110,7 +1110,7 @@ namespace YY::Thunks
                     // 单纯计算返回块大小
 
                     *_pcbResult = _cbOutputBufferNeed;
-                }                
+                }
 
                 return STATUS_SUCCESS;
             }
@@ -1195,7 +1195,7 @@ namespace YY::Thunks
                     else
                     {
                         // 这时一定 _bFinal == TRUE
-                        
+
                         // 现有输出缓冲区无法容纳，为了减少中间内存开销，我们分成2步进行
                         // 第一步，先把头部的数据先解密
                         DWORD _cbResult1 = 0;
@@ -1456,7 +1456,7 @@ namespace YY::Thunks
                         }*/
                         return STATUS_NOT_SUPPORTED;
                     }
-                    
+
                     return STATUS_SUCCESS;
                 }
 
@@ -1521,7 +1521,7 @@ namespace YY::Thunks
                 {
                     return STATUS_INVALID_PARAMETER;
                 }
-                
+
                 if (__wcsnicmp_ascii(_szBlobType, BCRYPT_KEY_DATA_BLOB, -1) == 0 || __wcsnicmp_ascii(_szBlobType, BCRYPT_OPAQUE_KEY_BLOB, -1) == 0)
                 {
                     auto _pHerder = (_BCRYPT_KEY_DATA_BLOB_HEADER*)_pInput;
@@ -1567,7 +1567,7 @@ namespace YY::Thunks
                 uEffectiveKeyBitCount = 128;
             }
         };
-        
+
         struct BCryptRC4Algorithm : public BCryptKeyAlgorithm<BCryptRC4Algorithm, BCryptKey, 0, 1>
         {
 
@@ -1747,7 +1747,7 @@ namespace YY::Thunks
         {
             return _pfnBCryptGenRandom(_hAlgorithm, _pbBuffer, _cbBuffer, _fFlags);
         }
-            
+
         if (_pbBuffer == nullptr)
             return STATUS_INVALID_PARAMETER;
         if (_cbBuffer == 0)
@@ -1773,7 +1773,7 @@ namespace YY::Thunks
             internal::RaiseStatus(STATUS_NOT_IMPLEMENTED);
             return STATUS_NOT_IMPLEMENTED;
         }
-            
+
         if (_pfnRtlGenRandom(_pbBuffer, _cbBuffer))
             return STATUS_SUCCESS;
         else
@@ -1804,7 +1804,7 @@ namespace YY::Thunks
         {
             return _pfnBCryptGetProperty(hObject, pszProperty, pbOutput, cbOutput, pcbResult, dwFlags);
         }
-            
+
         if(pszProperty == nullptr || dwFlags)
             return STATUS_INVALID_PARAMETER;
 
@@ -1812,11 +1812,11 @@ namespace YY::Thunks
         {
             return STATUS_INVALID_HANDLE;
         }
-            
+
         return reinterpret_cast<BCryptObject*>(hObject)->GetProperty(pszProperty, pbOutput, cbOutput, pcbResult, dwFlags);
     }
 #endif
-        
+
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -1847,7 +1847,7 @@ namespace YY::Thunks
         {
             return STATUS_INVALID_HANDLE;
         }
-            
+
         return reinterpret_cast<BCryptObject*>(_hObject)->SetProperty(_szProperty, _pInput, _cbInput, _fFlags);
     }
 #endif
@@ -2007,7 +2007,7 @@ namespace YY::Thunks
         {
             return _pfnBCryptDeriveKeyPBKDF2(hPrf, pbPassword, cbPassword, pbSalt, cbSalt, cIterations, pbDerivedKey, cbDerivedKey, dwFlags);
         }
-            
+
         // 实现参考微软 bcrypt.BCryptDeriveKeyPBKDF2 函数
         if ((pbPassword == nullptr && cbPassword) || (pbSalt == nullptr && cbSalt) || cIterations == 0 || pbDerivedKey == nullptr || cbDerivedKey == 0)
         {
@@ -2318,7 +2318,7 @@ namespace YY::Thunks
         {
             return _pfnBCryptDecrypt(_hKey, _pInput, _cbInput, _pPaddingInfo, _pIV, _cbIV, _pOutput, _cbOutput, _pcbResult, _fFlags);
         }
-            
+
         if (!Is<BCryptKey>(_hKey))
         {
             return STATUS_INVALID_HANDLE;
@@ -2352,7 +2352,7 @@ namespace YY::Thunks
         {
             return _pfnBCryptGenerateSymmetricKey(_hAlgorithm, _phKey, _pKeyObject, _cbKeyObject, _pSecret, _cbSecret, _fFlags);
         }
-            
+
         if (_fFlags)
         {
             return STATUS_INVALID_PARAMETER;
@@ -2386,7 +2386,7 @@ namespace YY::Thunks
         {
             return _pfnBCryptDestroyKey(_hKey);
         }
-            
+
         if (!Is<BCryptKey>(_hKey))
             return STATUS_INVALID_HANDLE;
 
@@ -2419,7 +2419,7 @@ namespace YY::Thunks
         {
             return _pfnBCryptExportKey(_hKey, _hExportKey, _szBlobType, _pOutput, _cbOutput, _pcbResult, _fFlags);
         }
-            
+
         if (!Is<BCryptKey>(_hKey))
             return STATUS_INVALID_HANDLE;
 
@@ -2456,7 +2456,7 @@ namespace YY::Thunks
         {
             return _pfnBCryptImportKey(_hAlgorithm, _hImportKey, _szBlobType, _phKey, _pKeyObject, _cbKeyObject, _pInput, _cbInput, _fFlags);
         }
-            
+
         if (!Is<BCryptAlgorithm>(_hAlgorithm))
             return STATUS_INVALID_HANDLE;
 

@@ -76,7 +76,7 @@ namespace YY
             {
                 return pGetThreadErrorMode();
             }
-    
+
             return GetErrorMode();
         }
 #endif

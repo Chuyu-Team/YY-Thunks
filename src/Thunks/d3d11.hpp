@@ -33,7 +33,7 @@ namespace YY::Thunks
 
         if (ppImmediateContext)
             *ppImmediateContext = nullptr;
-        
+
         return E_NOINTERFACE;
     }
 #endif

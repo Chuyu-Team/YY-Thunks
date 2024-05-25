@@ -52,7 +52,7 @@ namespace WinHppt
             Guard |= YY::Thunks::aways_null_try_get_WinHttpGetProxyResult;
             Guard |= YY::Thunks::aways_null_try_get_WinHttpFreeProxyResult;
 
-            
+
             _AutoProxyOptions.lpszAutoConfigUrl = L"https://raw.githubusercontent.com/Chuyu-Team/YY-Thunks/master/src/YY-Thunks.UnitTest/proxy.pac";
             // _AutoProxyOptions.lpszAutoConfigUrl = L"http://192.168.1.17/proxy.pac";
             _AutoProxyOptions.dwFlags = WINHTTP_AUTOPROXY_CONFIG_URL | WINHTTP_AUTOPROXY_NO_CACHE_CLIENT | WINHTTP_AUTOPROXY_NO_CACHE_SVC;

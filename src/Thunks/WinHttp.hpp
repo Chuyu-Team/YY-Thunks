@@ -9,7 +9,7 @@ namespace YY::Thunks
 #if (YY_Thunks_Support_Version < NTDDI_WIN8) && defined(YY_Thunks_Implemented)
     namespace Fallback
     {
-        namespace 
+        namespace
         {
             struct WinHttpProxyResolver
             {
@@ -378,7 +378,7 @@ namespace YY::Thunks
         {
             return _pfnWinHttpCreateProxyResolver(_hSession, _phResolver);
         }
-            
+
         // WinHttpConnect接口不会实际访问网络，这里调用以下主要是2个目的
         // 1. 维持 _hSession 的引用计数，避免hResolver存在期间调用者就主动关闭了hSession。
         // 2. 顺道还可以检测以下这个hSession是否合法。
@@ -427,9 +427,9 @@ namespace YY::Thunks
                 return FALSE;
             }
         }
-            
+
         reinterpret_cast<Fallback::WinHttpProxyResolver*>(_hInternet)->Release();
-        return TRUE;            
+        return TRUE;
     }
 #endif
 
@@ -553,7 +553,7 @@ namespace YY::Thunks
             _pRequest->Release();
             return ERROR_NOT_ENOUGH_MEMORY;
         }
-            
+
         return ERROR_IO_PENDING;
     }
 #endif
@@ -671,7 +671,7 @@ namespace YY::Thunks
         {
             return _pfnWinHttpFreeProxyResult(_pProxyResult);
         }
-            
+
         if(_pProxyResult)
             internal::Free(_pProxyResult->pEntries);
         return;

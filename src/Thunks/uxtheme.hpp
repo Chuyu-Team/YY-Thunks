@@ -31,7 +31,7 @@ namespace YY::Thunks
         {
             return _pfnDrawThemeTextEx(hTheme, hdc, iPartId, iStateId, pszText, cchText, dwTextFlags, pRect, pOptions);
         }
-        
+
         return DrawThemeText(hTheme, hdc, iPartId, iStateId, pszText, cchText, dwTextFlags, 0, pRect);
     }
 #endif
@@ -85,7 +85,7 @@ namespace YY::Thunks
         {
             return _pfnSetWindowThemeAttribute(hwnd, eAttribute, pvAttribute, cbAttribute);
         }
-        
+
         return E_NOTIMPL;
     }
 #endif

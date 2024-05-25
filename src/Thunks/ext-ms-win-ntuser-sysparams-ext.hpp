@@ -18,7 +18,7 @@ namespace YY::Thunks
         {
             return _pfnDisplayConfigGetDeviceInfo(requestPacket);
         }
-        
+
         return ERROR_NOT_SUPPORTED;
     }
 #endif
@@ -42,7 +42,7 @@ namespace YY::Thunks
         {
             return _pfnGetDisplayConfigBufferSizes(flags, numPathArrayElements, numModeInfoArrayElements);
         }
-        
+
         return ERROR_NOT_SUPPORTED;
     }
 #endif
@@ -71,7 +71,7 @@ namespace YY::Thunks
         {
             return _pfnQueryDisplayConfig(flags, numPathArrayElements, pathArray, numModeInfoArrayElements, modeInfoArray, currentTopologyId);
         }
-        
+
         return ERROR_NOT_SUPPORTED;
     }
 #endif

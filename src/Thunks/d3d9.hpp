@@ -18,7 +18,7 @@ namespace YY::Thunks
         {
             return _pfnDirect3DCreate9Ex(SDKVersion, unnamedParam2);
         }
-        
+
         if (unnamedParam2)
             *unnamedParam2 = nullptr;
         return D3DERR_NOTAVAILABLE;

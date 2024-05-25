@@ -30,9 +30,9 @@ struct _YY_RTL_SRWLOCK
     {
         struct
         {
-            ULONG_PTR Locked : 1;       
-            ULONG_PTR Waiting : 1;           
-            ULONG_PTR Waking : 1;            
+            ULONG_PTR Locked : 1;
+            ULONG_PTR Waiting : 1;
+            ULONG_PTR Waking : 1;
             ULONG_PTR MultipleShared : 1;
 #ifdef _WIN64
             ULONG_PTR Shared : 60;
@@ -173,7 +173,7 @@ namespace YY
                     {
                         //微软就不判断下空指针？如此自信？
                         auto pWatiBlock = YY_SRWLOCK_GET_BLOCK(Status);
-                        
+
                         YY_SRWLOCK_WAIT_BLOCK* notify;
 
                         for (auto pBlock = pWatiBlock; (notify = pBlock->notify) == nullptr;)
@@ -183,7 +183,7 @@ namespace YY
 
                             pBlock = back;
                         }
-                        
+
                         pWatiBlock->notify = notify;
 
 
@@ -204,7 +204,7 @@ namespace YY
                                 //块处于等待状态，我们进行线程唤醒
 
                                 //if(!RtlpWaitCouldDeadlock())
-                                
+
                                 pNtReleaseKeyedEvent(GlobalKeyedEventHandle, notify, 0, nullptr);
                             }
 
@@ -996,7 +996,7 @@ namespace YY
 
                                 pItem = Tmp;
                             } while (pBlock);
-                            
+
 
                             if (bFind == false && InterlockedExchange(&pWaitBlock->flag, 0) != 2)
                             {
@@ -1141,7 +1141,7 @@ namespace YY
                                         }
 
                                         Last = InterlockedCompareExchange(ppFirstBlock, New, Current);
-                                        
+
 
                                         if (Last != Current)
                                         {
@@ -1341,7 +1341,7 @@ namespace YY
             {
                 return pInitOnceComplete(lpInitOnce, dwFlags, lpContext);
             }
-    
+
             auto Status = internal::RtlRunOnceComplete(lpInitOnce, dwFlags, lpContext);
 
             if (Status >= 0)
@@ -1685,7 +1685,7 @@ namespace YY
                     if (InterlockedCompareExchange((volatile size_t*)SRWLock, SRWLockNew, SRWLockOld) != SRWLockOld)
                     {
                         //更新锁状态失败，其他线程正在处理改锁，要不咋们换个姿势再来
-                
+
                         //RtlBackoff就懒得做了，反正只是等待一会而已，直接YieldProcessor再来一次吧。
                         //RtlBackoff(&nBackOff)
 
@@ -1823,7 +1823,7 @@ namespace YY
             YY_SRWLOCK_WAIT_BLOCK StackWaitBlock;
             bool bOptimize;
 
-            //尝试给全新的锁加锁    
+            //尝试给全新的锁加锁
             auto OldSRWLock = InterlockedCompareExchange((volatile size_t*)SRWLock, size_t(0x11), 0);
 
             //成功
@@ -1929,7 +1929,7 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
-        //Windows 7 [desktop apps | UWP apps] 
+        //Windows 7 [desktop apps | UWP apps]
         //Windows Server 2008 R2 [desktop apps | UWP apps]
         __DEFINE_THUNK(
         kernel32,
@@ -2028,7 +2028,7 @@ namespace YY
 
                         for (; pLastNode->notify == nullptr; pLastNode = pLastNode->back);
 
-                        /* 
+                        /*
                         既然是在释放共享锁，说明一定有人获取了共享锁
                         如果有人获取了共享锁，就一定没有人获取独到占锁
                         只需要把共享次数减1
@@ -2663,7 +2663,7 @@ namespace YY
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
         //Windows 8 [desktop apps | UWP apps]
-        //Windows Server 2012 [desktop apps | UWP apps] 
+        //Windows Server 2012 [desktop apps | UWP apps]
         __DEFINE_THUNK(
         api_ms_win_core_synch_l1_2_0,
         16,
@@ -2746,7 +2746,7 @@ namespace YY
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
         //Windows 8 [desktop apps | UWP apps]
-        //Windows Server 2012 [desktop apps | UWP apps] 
+        //Windows Server 2012 [desktop apps | UWP apps]
         __DEFINE_THUNK(
         api_ms_win_core_synch_l1_2_0,
         4,
@@ -2769,7 +2769,7 @@ namespace YY
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
         //Windows 8 [desktop apps | UWP apps]
-        //Windows Server 2012 [desktop apps | UWP apps] 
+        //Windows Server 2012 [desktop apps | UWP apps]
         __DEFINE_THUNK(
         api_ms_win_core_synch_l1_2_0,
         4,

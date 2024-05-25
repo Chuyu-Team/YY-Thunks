@@ -52,7 +52,7 @@ namespace bcrypt
             UCHAR _Temp[15] = {};
             long _Status = ::BCryptGenRandom(nullptr, _Temp, sizeof(_Temp), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
             Assert::IsTrue(_Status >= 0);
-            
+
             const UCHAR _Temp2[15] = {};
             Assert::IsFalse(memcpy(_Temp, _Temp2, sizeof(_Temp2)) == 0);
         }
@@ -315,7 +315,7 @@ namespace bcrypt
                 _Status = ::BCryptGetProperty(_hAlg, BCRYPT_HASH_BLOCK_LENGTH, (PUCHAR)&_cbBlockLength, sizeof(_cbBlockLength), &_cbGetPropertyResult, 0);
                 Assert::IsTrue(_Status < 0);
             }
-            
+
             _Status = ::BCryptCloseAlgorithmProvider(_hAlg, 0);
             Assert::IsTrue(_Status >= 0);
         }
@@ -654,11 +654,11 @@ namespace bcrypt
             Assert::IsTrue(_Status >= 0);
 
             static const BYTE kTargetEncryptData[] =
-            { 
-                0xC6, 0xA1, 0x3B, 0x37, 0x87, 0x8F, 0x5B, 0x82, 
-                0x6F, 0x4F, 0x81, 0x62, 0xA1, 0xC8, 0xD8, 0x79, 
-                0xB1, 0xA2, 0x92, 0x73, 0xBE, 0x2C, 0x42, 0x07, 
-                0xA5, 0xAC, 0xE3, 0x93, 0x39, 0x8C, 0xB6, 0xFB, 
+            {
+                0xC6, 0xA1, 0x3B, 0x37, 0x87, 0x8F, 0x5B, 0x82,
+                0x6F, 0x4F, 0x81, 0x62, 0xA1, 0xC8, 0xD8, 0x79,
+                0xB1, 0xA2, 0x92, 0x73, 0xBE, 0x2C, 0x42, 0x07,
+                0xA5, 0xAC, 0xE3, 0x93, 0x39, 0x8C, 0xB6, 0xFB,
             };
 
             Assert::AreEqual(ToHexString(kTargetEncryptData), ToHexString(vecCipherText));
@@ -988,7 +988,7 @@ namespace bcrypt
             _Status = ::BCryptCloseAlgorithmProvider(hAlgorithm, 0);
             Assert::IsTrue(_Status >= 0);
         }
-        
+
         TEST_METHOD(_3DES_112加密测试)
         {
             static constexpr const BYTE kPlainText[] =
@@ -1219,7 +1219,7 @@ namespace bcrypt
                 sizeof(kSecret),
                 0);
             Assert::IsTrue(_Status >= 0);
-            
+
             ULONG _cbResult;
             _Status = ::BCryptExportKey(hKey, NULL, BCRYPT_KEY_DATA_BLOB, nullptr, 0, &_cbResult, 0);
             Assert::IsTrue(_Status >= 0);

@@ -20,7 +20,7 @@ namespace YY::Thunks
         }
 
         if (_ppFactory)
-            *_ppFactory = nullptr;    
+            *_ppFactory = nullptr;
         return E_NOINTERFACE;
     }
 #endif
