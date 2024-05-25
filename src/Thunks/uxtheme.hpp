@@ -8,8 +8,8 @@ namespace YY::Thunks
 {
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+    // 最低受支持的客户端    Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
     __DEFINE_THUNK(
     uxtheme,
     36,
@@ -39,8 +39,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+    // 最低受支持的客户端    Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
     __DEFINE_THUNK(
     uxtheme,
     24,
@@ -67,8 +67,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
-    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+    // 最低受支持的客户端    Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
     __DEFINE_THUNK(
     uxtheme,
     16,

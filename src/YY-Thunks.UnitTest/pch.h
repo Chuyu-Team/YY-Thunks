@@ -29,8 +29,8 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 #define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)     \
     extern bool _CRT_CONCATENATE(aways_null_try_get_, _FUNCTION);                  \
-	EXTERN_C _RETURN_ _CONVENTION_ _FUNCTION(__VA_ARGS__);                         \
-	__if_not_exists(_FUNCTION)
+    EXTERN_C _RETURN_ _CONVENTION_ _FUNCTION(__VA_ARGS__);                         \
+    __if_not_exists(_FUNCTION)
 
 class AwaysNullGuard
 {

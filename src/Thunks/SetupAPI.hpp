@@ -3,8 +3,8 @@
 
 namespace YY
 {
-	namespace Thunks
-	{
+    namespace Thunks
+    {
 #ifdef YY_Thunks_Implemented
         namespace internal
         {
@@ -117,7 +117,7 @@ namespace YY
         setupapi,
         32,
         _Success_(return)
-		BOOL,
+        BOOL,
         WINAPI,
         SetupDiGetDevicePropertyW,
             _In_         HDEVINFO         DeviceInfoSet,
@@ -402,5 +402,5 @@ namespace YY
 #endif
 
 
-	}
+    }
 }

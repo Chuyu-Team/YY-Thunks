@@ -8,8 +8,8 @@ namespace YY
     {
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-        // 最低受支持的客户端	Windows 8 [桌面应用|UWP 应用]
-        // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+        // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
+        // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
         __DEFINE_THUNK(
         mfplat,
         8,
@@ -38,8 +38,8 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-        // 最低受支持的客户端	Windows 8 [桌面应用|UWP 应用]
-        // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+        // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
+        // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
         __DEFINE_THUNK(
         mfplat,
         20,
@@ -67,8 +67,8 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-        // 最低受支持的客户端	Windows 8 [桌面应用|UWP 应用]
-        // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+        // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
+        // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
         __DEFINE_THUNK(
         mfplat,
         8,
@@ -96,8 +96,8 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-        // 最低受支持的客户端	Windows 8 [桌面应用|UWP 应用]
-        // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+        // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
+        // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
         __DEFINE_THUNK(
         mfplat,
         0,

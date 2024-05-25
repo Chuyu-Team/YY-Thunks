@@ -8,7 +8,7 @@ namespace YY
     {
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-        // 最低受支持的客户端	Windows 8及更高版本的 Windows 中受支持。
+        // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
         __DEFINE_THUNK(
         bluetoothapis,
         24,
@@ -40,7 +40,7 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-        // 最低受支持的客户端	Windows 8及更高版本的 Windows 中受支持。
+        // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
         __DEFINE_THUNK(
         bluetoothapis,
         24,
@@ -69,7 +69,7 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-        // 最低受支持的客户端	Windows 8及更高版本的 Windows 中受支持。
+        // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
         __DEFINE_THUNK(
         bluetoothapis,
         24,
@@ -98,7 +98,7 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-        // 最低受支持的客户端	Windows 8及更高版本的 Windows 中受支持。
+        // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
         __DEFINE_THUNK(
         bluetoothapis,
         20,
@@ -126,7 +126,7 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-        // 最低受支持的客户端	Windows 8及更高版本的 Windows 中受支持。
+        // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
         __DEFINE_THUNK(
         bluetoothapis,
         28,
@@ -153,7 +153,7 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-        // 最低受支持的客户端	Windows 8及更高版本的 Windows 中受支持。
+        // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
         __DEFINE_THUNK(
         bluetoothapis,
         24,
@@ -178,7 +178,7 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-        // 最低受支持的客户端	Windows 8及更高版本的 Windows 中受支持。
+        // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
         __DEFINE_THUNK(
         bluetoothapis,
         16,
@@ -202,7 +202,7 @@ namespace YY
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-        // 最低受支持的客户端	Windows 8及更高版本的 Windows 中受支持。
+        // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
         __DEFINE_THUNK(
         bluetoothapis,
         8,

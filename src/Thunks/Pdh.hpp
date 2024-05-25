@@ -6,8 +6,8 @@
 
 namespace YY
 {
-	namespace Thunks
-	{
+    namespace Thunks
+    {
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
         // Windows Vista [desktop apps only]
@@ -59,5 +59,5 @@ namespace YY
         }
 
 #endif
-	}
+    }
 }

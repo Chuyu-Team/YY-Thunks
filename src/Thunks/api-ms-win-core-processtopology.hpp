@@ -6,11 +6,11 @@ namespace YY
     {
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
-		//Minimum supported client	Windows 7 [desktop apps only]
-		//Minimum supported server	Windows Server 2008 R2 [desktop apps only]
-		__DEFINE_THUNK(
-		kernel32,
-		12,
+        //Minimum supported client    Windows 7 [desktop apps only]
+        //Minimum supported server    Windows Server 2008 R2 [desktop apps only]
+        __DEFINE_THUNK(
+        kernel32,
+        12,
         BOOL,
         WINAPI,
         GetProcessGroupAffinity,

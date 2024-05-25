@@ -8,8 +8,8 @@ namespace YY
     {
 #if (YY_Thunks_Support_Version < NTDDI_WIN10)
 
-        // 最低受支持的客户端	Windows 10 [仅限桌面应用]
-        // 最低受支持的服务器	Windows Server 2016[仅限桌面应用]
+        // 最低受支持的客户端    Windows 10 [仅限桌面应用]
+        // 最低受支持的服务器    Windows Server 2016[仅限桌面应用]
         __DEFINE_THUNK(
         netapi32,
         8,
@@ -35,8 +35,8 @@ namespace YY
         
 #if (YY_Thunks_Support_Version < NTDDI_WIN10)
 
-        // 最低受支持的客户端	Windows 10 [仅限桌面应用]
-        // 最低受支持的服务器	Windows Server 2016[仅限桌面应用]
+        // 最低受支持的客户端    Windows 10 [仅限桌面应用]
+        // 最低受支持的服务器    Windows Server 2016[仅限桌面应用]
         __DEFINE_THUNK(
         netapi32,
         8,

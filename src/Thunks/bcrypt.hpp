@@ -23,13 +23,13 @@ namespace YY::Thunks
             _In_     ULONG              _fFlags,
             _Outptr_ BCryptAlgorithm** _ppAlgorithm);
 
-		struct BCryptMapItem
-		{
-			LPCWSTR szProvider;
+        struct BCryptMapItem
+        {
+            LPCWSTR szProvider;
             LPCWSTR szAlgName;
             DWORD cbAlgId;
-			DWORD uProvType;
-			DWORD uAlgId;
+            DWORD uProvType;
+            DWORD uAlgId;
             OpenAlgorithmProviderType pfnOpenAlgorithmProviderType;
 
             template<DWORD _cchAlgId>
@@ -42,7 +42,7 @@ namespace YY::Thunks
                 , pfnOpenAlgorithmProviderType(_pOpenAlgorithmProvider)
             {
             }
-		};
+        };
 
         enum class BCryptObjectType
         {
@@ -1623,26 +1623,26 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
-	// 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	16,
-	NTSTATUS,
-	WINAPI,
-	BCryptOpenAlgorithmProvider,
-		_Out_       BCRYPT_ALG_HANDLE* _phAlgorithm,
-		_In_        LPCWSTR            _szAlgId,
-		_In_opt_    LPCWSTR            _szImplementation,
-		_In_        ULONG              _fFlags
-		)
-	{
-		if (const auto _pfnBCryptOpenAlgorithmProvider = try_get_BCryptOpenAlgorithmProvider())
-		{
-			return _pfnBCryptOpenAlgorithmProvider(_phAlgorithm, _szAlgId, _szImplementation, _fFlags);
-		}
+    // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    16,
+    NTSTATUS,
+    WINAPI,
+    BCryptOpenAlgorithmProvider,
+        _Out_       BCRYPT_ALG_HANDLE* _phAlgorithm,
+        _In_        LPCWSTR            _szAlgId,
+        _In_opt_    LPCWSTR            _szImplementation,
+        _In_        ULONG              _fFlags
+        )
+    {
+        if (const auto _pfnBCryptOpenAlgorithmProvider = try_get_BCryptOpenAlgorithmProvider())
+        {
+            return _pfnBCryptOpenAlgorithmProvider(_phAlgorithm, _szAlgId, _szImplementation, _fFlags);
+        }
 
-		UNREFERENCED_PARAMETER(_szImplementation);
+        UNREFERENCED_PARAMETER(_szImplementation);
 
         if (_phAlgorithm == nullptr || _szAlgId == nullptr || (_fFlags & ~BCRYPT_ALG_HANDLE_HMAC_FLAG))
         {
@@ -1695,26 +1695,26 @@ namespace YY::Thunks
         }
 
         return STATUS_NOT_FOUND;
-	}
+    }
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
-	// 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	8,
-	NTSTATUS,
-	WINAPI,
-	BCryptCloseAlgorithmProvider,
-		_Inout_ BCRYPT_ALG_HANDLE _hAlgorithm,
-		_In_    ULONG _fFlags)
-	{
-		if (auto _pfnBCryptCloseAlgorithmProvider = try_get_BCryptCloseAlgorithmProvider())
-		{
-			return _pfnBCryptCloseAlgorithmProvider(_hAlgorithm, _fFlags);
-		}
+    // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    8,
+    NTSTATUS,
+    WINAPI,
+    BCryptCloseAlgorithmProvider,
+        _Inout_ BCRYPT_ALG_HANDLE _hAlgorithm,
+        _In_    ULONG _fFlags)
+    {
+        if (auto _pfnBCryptCloseAlgorithmProvider = try_get_BCryptCloseAlgorithmProvider())
+        {
+            return _pfnBCryptCloseAlgorithmProvider(_hAlgorithm, _fFlags);
+        }
 
         if (_fFlags)
             return STATUS_INVALID_PARAMETER;
@@ -1724,72 +1724,72 @@ namespace YY::Thunks
 
         reinterpret_cast<BCryptObject*>(_hAlgorithm)->Release();
         return STATUS_SUCCESS;
-	}
+    }
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
-	// 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	16,
-	NTSTATUS,
-	WINAPI,
-	BCryptGenRandom,
-		_In_opt_                        BCRYPT_ALG_HANDLE _hAlgorithm,
-		_Out_writes_bytes_(_cbBuffer)   PUCHAR _pbBuffer,
-		_In_                            ULONG _cbBuffer,
-		_In_                            ULONG _fFlags
-		)
-	{
-		if (auto _pfnBCryptGenRandom = try_get_BCryptGenRandom())
-		{
-			return _pfnBCryptGenRandom(_hAlgorithm, _pbBuffer, _cbBuffer, _fFlags);
-		}
-			
-		if (_pbBuffer == nullptr)
-			return STATUS_INVALID_PARAMETER;
-		if (_cbBuffer == 0)
-			return STATUS_SUCCESS;
+    // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    16,
+    NTSTATUS,
+    WINAPI,
+    BCryptGenRandom,
+        _In_opt_                        BCRYPT_ALG_HANDLE _hAlgorithm,
+        _Out_writes_bytes_(_cbBuffer)   PUCHAR _pbBuffer,
+        _In_                            ULONG _cbBuffer,
+        _In_                            ULONG _fFlags
+        )
+    {
+        if (auto _pfnBCryptGenRandom = try_get_BCryptGenRandom())
+        {
+            return _pfnBCryptGenRandom(_hAlgorithm, _pbBuffer, _cbBuffer, _fFlags);
+        }
+            
+        if (_pbBuffer == nullptr)
+            return STATUS_INVALID_PARAMETER;
+        if (_cbBuffer == 0)
+            return STATUS_SUCCESS;
 
-		if (_fFlags & BCRYPT_USE_SYSTEM_PREFERRED_RNG)
-		{
-			if(_hAlgorithm != NULL)
-				return STATUS_INVALID_PARAMETER;
-		}
-		else
-		{
+        if (_fFlags & BCRYPT_USE_SYSTEM_PREFERRED_RNG)
+        {
+            if(_hAlgorithm != NULL)
+                return STATUS_INVALID_PARAMETER;
+        }
+        else
+        {
             if (!Is<BCryptRngAlgorithm>(_hAlgorithm))
             {
                 return STATUS_INVALID_HANDLE;
             }
-		}
+        }
 
-		// 此函数内部其实就是用了Crypt API，所以针对Windows XP就直接使用它了。
-		const auto _pfnRtlGenRandom = try_get_SystemFunction036();
-		if (!_pfnRtlGenRandom)
-		{
-			internal::RaiseStatus(STATUS_NOT_IMPLEMENTED);
-			return STATUS_NOT_IMPLEMENTED;
-		}
-			
-		if (_pfnRtlGenRandom(_pbBuffer, _cbBuffer))
-			return STATUS_SUCCESS;
-		else
-			return STATUS_UNSUCCESSFUL;
-	}
+        // 此函数内部其实就是用了Crypt API，所以针对Windows XP就直接使用它了。
+        const auto _pfnRtlGenRandom = try_get_SystemFunction036();
+        if (!_pfnRtlGenRandom)
+        {
+            internal::RaiseStatus(STATUS_NOT_IMPLEMENTED);
+            return STATUS_NOT_IMPLEMENTED;
+        }
+            
+        if (_pfnRtlGenRandom(_pbBuffer, _cbBuffer))
+            return STATUS_SUCCESS;
+        else
+            return STATUS_UNSUCCESSFUL;
+    }
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
-	// 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	24,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    24,
+    NTSTATUS,
     WINAPI,
     BCryptGetProperty,
         _In_                                        BCRYPT_HANDLE   hObject,
@@ -1799,11 +1799,11 @@ namespace YY::Thunks
         _Out_                                       ULONG   *pcbResult,
         _In_                                        ULONG   dwFlags
         )
-	{
-		if (const auto _pfnBCryptGetProperty = try_get_BCryptGetProperty())
-		{
-			return _pfnBCryptGetProperty(hObject, pszProperty, pbOutput, cbOutput, pcbResult, dwFlags);
-		}
+    {
+        if (const auto _pfnBCryptGetProperty = try_get_BCryptGetProperty())
+        {
+            return _pfnBCryptGetProperty(hObject, pszProperty, pbOutput, cbOutput, pcbResult, dwFlags);
+        }
             
         if(pszProperty == nullptr || dwFlags)
             return STATUS_INVALID_PARAMETER;
@@ -1814,18 +1814,18 @@ namespace YY::Thunks
         }
             
         return reinterpret_cast<BCryptObject*>(hObject)->GetProperty(pszProperty, pbOutput, cbOutput, pcbResult, dwFlags);
-	}
+    }
 #endif
         
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
-	// 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	20,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    20,
+    NTSTATUS,
     WINAPI,
     BCryptSetProperty,
         _Inout_                 BCRYPT_HANDLE _hObject,
@@ -1834,11 +1834,11 @@ namespace YY::Thunks
         _In_                    ULONG   _cbInput,
         _In_                    ULONG   _fFlags
         )
-	{
-		if (const auto _pfnBCryptSetProperty = try_get_BCryptSetProperty())
-		{
-			return _pfnBCryptSetProperty(_hObject, _szProperty, _pInput, _cbInput, _fFlags);
-		}
+    {
+        if (const auto _pfnBCryptSetProperty = try_get_BCryptSetProperty())
+        {
+            return _pfnBCryptSetProperty(_hObject, _szProperty, _pInput, _cbInput, _fFlags);
+        }
 
         if(_szProperty == nullptr || _fFlags)
             return STATUS_INVALID_PARAMETER;
@@ -1849,18 +1849,18 @@ namespace YY::Thunks
         }
             
         return reinterpret_cast<BCryptObject*>(_hObject)->SetProperty(_szProperty, _pInput, _cbInput, _fFlags);
-	}
+    }
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
-	// 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	28,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    28,
+    NTSTATUS,
     WINAPI,
     BCryptCreateHash,
         _Inout_                             BCRYPT_ALG_HANDLE   hAlgorithm,
@@ -1871,11 +1871,11 @@ namespace YY::Thunks
         _In_                                ULONG   cbSecret,   // optional
         _In_                                ULONG   dwFlags
         )
-	{
-		if (const auto _pfnBCryptCreateHash = try_get_BCryptCreateHash())
-		{
-			return _pfnBCryptCreateHash(hAlgorithm, phHash, pbHashObject, cbHashObject, pbSecret, cbSecret, dwFlags);
-		}
+    {
+        if (const auto _pfnBCryptCreateHash = try_get_BCryptCreateHash())
+        {
+            return _pfnBCryptCreateHash(hAlgorithm, phHash, pbHashObject, cbHashObject, pbSecret, cbSecret, dwFlags);
+        }
 
         if ((cbHashObject && pbHashObject == nullptr) || dwFlags || phHash == nullptr)
         {
@@ -1888,18 +1888,18 @@ namespace YY::Thunks
         }
 
         return reinterpret_cast<BCryptAlgorithm*>(hAlgorithm)->CreateHash(reinterpret_cast<BCryptHash**>(phHash), pbHashObject, cbHashObject, pbSecret, cbSecret, dwFlags);
-	}
+    }
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
-	// 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	16,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    16,
+    NTSTATUS,
     WINAPI,
     BCryptHashData,
         _Inout_                 BCRYPT_HASH_HANDLE  hHash,
@@ -1907,11 +1907,11 @@ namespace YY::Thunks
         _In_                    ULONG   cbInput,
         _In_                    ULONG   dwFlags
         )
-	{
-		if (const auto _pfnBCryptHashData = try_get_BCryptHashData())
-		{
-			return _pfnBCryptHashData(hHash, pbInput, cbInput, dwFlags);
-		}
+    {
+        if (const auto _pfnBCryptHashData = try_get_BCryptHashData())
+        {
+            return _pfnBCryptHashData(hHash, pbInput, cbInput, dwFlags);
+        }
 
         if(dwFlags)
             return STATUS_INVALID_PARAMETER;
@@ -1920,18 +1920,18 @@ namespace YY::Thunks
             return STATUS_INVALID_HANDLE;
 
         return reinterpret_cast<BCryptHash*>(hHash)->HashData(pbInput, cbInput, dwFlags);
-	}
+    }
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
-	// 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	16,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    16,
+    NTSTATUS,
     WINAPI,
     BCryptFinishHash,
         _Inout_                     BCRYPT_HASH_HANDLE hHash,
@@ -1939,11 +1939,11 @@ namespace YY::Thunks
         _In_                        ULONG   cbOutput,
         _In_                        ULONG   dwFlags
         )
-	{
-		if (const auto _pfnBCryptFinishHash = try_get_BCryptFinishHash())
-		{
-			return _pfnBCryptFinishHash(hHash, pbOutput, cbOutput, dwFlags);
-		}
+    {
+        if (const auto _pfnBCryptFinishHash = try_get_BCryptFinishHash())
+        {
+            return _pfnBCryptFinishHash(hHash, pbOutput, cbOutput, dwFlags);
+        }
 
         if(dwFlags)
             return STATUS_INVALID_PARAMETER;
@@ -1952,44 +1952,44 @@ namespace YY::Thunks
             return STATUS_INVALID_HANDLE;
 
         return reinterpret_cast<BCryptHash*>(hHash)->FinishHash(pbOutput, cbOutput, dwFlags);
-	}
+    }
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
-	// 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	4,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    4,
+    NTSTATUS,
     WINAPI,
     BCryptDestroyHash,
         _Inout_ BCRYPT_HASH_HANDLE hHash)
-	{
-		if (const auto _pfnBCryptDestroyHash = try_get_BCryptDestroyHash())
-		{
-			return _pfnBCryptDestroyHash(hHash);
-		}
+    {
+        if (const auto _pfnBCryptDestroyHash = try_get_BCryptDestroyHash())
+        {
+            return _pfnBCryptDestroyHash(hHash);
+        }
 
         if (!Is<BCryptHash>(hHash))
             return STATUS_INVALID_PARAMETER;
 
         reinterpret_cast<BCryptHash*>(hHash)->Release();
         return STATUS_SUCCESS;
-	}
+    }
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
-	// 最低受支持的客户端	Windows 7 [桌面应用 |UWP 应用]
-    // 最低受支持的服务器	Windows Server 2008 R2[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	40,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows 7 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008 R2[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    40,
+    NTSTATUS,
     WINAPI,
     BCryptDeriveKeyPBKDF2,
         _In_                                 BCRYPT_ALG_HANDLE   hPrf,
@@ -2002,11 +2002,11 @@ namespace YY::Thunks
         _In_                                 ULONG               cbDerivedKey,
         _In_                                 ULONG               dwFlags
         )
-	{
-		if (const auto _pfnBCryptDeriveKeyPBKDF2 = try_get_BCryptDeriveKeyPBKDF2())
-		{
-			return _pfnBCryptDeriveKeyPBKDF2(hPrf, pbPassword, cbPassword, pbSalt, cbSalt, cIterations, pbDerivedKey, cbDerivedKey, dwFlags);
-		}
+    {
+        if (const auto _pfnBCryptDeriveKeyPBKDF2 = try_get_BCryptDeriveKeyPBKDF2())
+        {
+            return _pfnBCryptDeriveKeyPBKDF2(hPrf, pbPassword, cbPassword, pbSalt, cbSalt, cIterations, pbDerivedKey, cbDerivedKey, dwFlags);
+        }
             
         // 实现参考微软 bcrypt.BCryptDeriveKeyPBKDF2 函数
         if ((pbPassword == nullptr && cbPassword) || (pbSalt == nullptr && cbSalt) || cIterations == 0 || pbDerivedKey == nullptr || cbDerivedKey == 0)
@@ -2122,18 +2122,18 @@ namespace YY::Thunks
         if (_pObjectHashBuffer)
             _freea(_pObjectHashBuffer);
         return _Status;
-	}
+    }
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
-	// 最低受支持的客户端	Windows 7 [桌面应用 |UWP 应用]
-    // 最低受支持的服务器	Windows Server 2008 R2[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	40,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows 7 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008 R2[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    40,
+    NTSTATUS,
     WINAPI,
     BCryptDeriveKeyCapi,
         _In_                            BCRYPT_HASH_HANDLE  hHash,
@@ -2142,11 +2142,11 @@ namespace YY::Thunks
         _In_                            ULONG               cbDerivedKey,
         _In_                            ULONG               dwFlags
         )
-	{
-		if (const auto _pfnBCryptDeriveKeyCapi = try_get_BCryptDeriveKeyCapi())
-		{
-			return _pfnBCryptDeriveKeyCapi(hHash, hTargetAlg, pbDerivedKey, cbDerivedKey, dwFlags);
-		}
+    {
+        if (const auto _pfnBCryptDeriveKeyCapi = try_get_BCryptDeriveKeyCapi())
+        {
+            return _pfnBCryptDeriveKeyCapi(hHash, hTargetAlg, pbDerivedKey, cbDerivedKey, dwFlags);
+        }
 
         if (dwFlags != 0 || (pbDerivedKey == nullptr && cbDerivedKey))
         {
@@ -2258,12 +2258,12 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
-    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	40,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    40,
+    NTSTATUS,
     WINAPI,
     BCryptEncrypt,
         _Inout_                                     BCRYPT_KEY_HANDLE _hKey,
@@ -2276,11 +2276,11 @@ namespace YY::Thunks
         _In_                                        ULONG   _cbOutput,
         _Out_                                       ULONG   *_pcbResult,
         _In_                                        ULONG   _fFlags)
-	{
-		if (const auto _pfnBCryptEncrypt = try_get_BCryptEncrypt())
-		{
-			return _pfnBCryptEncrypt(_hKey, _pInput, _cbInput, _pPaddingInfo, _pIV, _cbIV, _pOutput, _cbOutput, _pcbResult, _fFlags);
-		}
+    {
+        if (const auto _pfnBCryptEncrypt = try_get_BCryptEncrypt())
+        {
+            return _pfnBCryptEncrypt(_hKey, _pInput, _cbInput, _pPaddingInfo, _pIV, _cbIV, _pOutput, _cbOutput, _pcbResult, _fFlags);
+        }
 
         if (!Is<BCryptKey>(_hKey))
         {
@@ -2294,12 +2294,12 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
-    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	40,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    40,
+    NTSTATUS,
     WINAPI,
     BCryptDecrypt,
         _Inout_                                     BCRYPT_KEY_HANDLE _hKey,
@@ -2313,11 +2313,11 @@ namespace YY::Thunks
         _Out_                                       ULONG* _pcbResult,
         _In_                                        ULONG _fFlags
         )
-	{
-		if (const auto _pfnBCryptDecrypt = try_get_BCryptDecrypt())
-		{
-			return _pfnBCryptDecrypt(_hKey, _pInput, _cbInput, _pPaddingInfo, _pIV, _cbIV, _pOutput, _cbOutput, _pcbResult, _fFlags);
-		}
+    {
+        if (const auto _pfnBCryptDecrypt = try_get_BCryptDecrypt())
+        {
+            return _pfnBCryptDecrypt(_hKey, _pInput, _cbInput, _pPaddingInfo, _pIV, _cbIV, _pOutput, _cbOutput, _pcbResult, _fFlags);
+        }
             
         if (!Is<BCryptKey>(_hKey))
         {
@@ -2331,12 +2331,12 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
-    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	28,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    28,
+    NTSTATUS,
     WINAPI,
     BCryptGenerateSymmetricKey,
         _Inout_                             BCRYPT_ALG_HANDLE _hAlgorithm,
@@ -2347,11 +2347,11 @@ namespace YY::Thunks
         _In_                                ULONG _cbSecret,
         _In_                                ULONG _fFlags
         )
-	{
-		if (const auto _pfnBCryptGenerateSymmetricKey = try_get_BCryptGenerateSymmetricKey())
-		{
-			return _pfnBCryptGenerateSymmetricKey(_hAlgorithm, _phKey, _pKeyObject, _cbKeyObject, _pSecret, _cbSecret, _fFlags);
-		}
+    {
+        if (const auto _pfnBCryptGenerateSymmetricKey = try_get_BCryptGenerateSymmetricKey())
+        {
+            return _pfnBCryptGenerateSymmetricKey(_hAlgorithm, _phKey, _pKeyObject, _cbKeyObject, _pSecret, _cbSecret, _fFlags);
+        }
             
         if (_fFlags)
         {
@@ -2371,21 +2371,21 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
-    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	4,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    4,
+    NTSTATUS,
     WINAPI,
     BCryptDestroyKey,
         _Inout_ BCRYPT_KEY_HANDLE _hKey
         )
-	{
-		if (const auto _pfnBCryptDestroyKey = try_get_BCryptDestroyKey())
-		{
-			return _pfnBCryptDestroyKey(_hKey);
-		}
+    {
+        if (const auto _pfnBCryptDestroyKey = try_get_BCryptDestroyKey())
+        {
+            return _pfnBCryptDestroyKey(_hKey);
+        }
             
         if (!Is<BCryptKey>(_hKey))
             return STATUS_INVALID_HANDLE;
@@ -2398,12 +2398,12 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
-    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	28,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    28,
+    NTSTATUS,
     WINAPI,
     BCryptExportKey,
         _In_                                        BCRYPT_KEY_HANDLE   _hKey,
@@ -2414,11 +2414,11 @@ namespace YY::Thunks
         _Out_                                       ULONG*  _pcbResult,
         _In_                                        ULONG   _fFlags
         )
-	{
-		if (const auto _pfnBCryptExportKey = try_get_BCryptExportKey())
-		{
-			return _pfnBCryptExportKey(_hKey, _hExportKey, _szBlobType, _pOutput, _cbOutput, _pcbResult, _fFlags);
-		}
+    {
+        if (const auto _pfnBCryptExportKey = try_get_BCryptExportKey())
+        {
+            return _pfnBCryptExportKey(_hKey, _hExportKey, _szBlobType, _pOutput, _cbOutput, _pcbResult, _fFlags);
+        }
             
         if (!Is<BCryptKey>(_hKey))
             return STATUS_INVALID_HANDLE;
@@ -2433,12 +2433,12 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
-    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	bcrypt,
-	36,
-	NTSTATUS,
+    // 最低受支持的客户端    Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    bcrypt,
+    36,
+    NTSTATUS,
     WINAPI,
     BCryptImportKey,
         _In_                                BCRYPT_ALG_HANDLE _hAlgorithm,
@@ -2451,11 +2451,11 @@ namespace YY::Thunks
         _In_                                ULONG   _cbInput,
         _In_                                ULONG   _fFlags
         )
-	{
-		if (const auto _pfnBCryptImportKey = try_get_BCryptImportKey())
-		{
-			return _pfnBCryptImportKey(_hAlgorithm, _hImportKey, _szBlobType, _phKey, _pKeyObject, _cbKeyObject, _pInput, _cbInput, _fFlags);
-		}
+    {
+        if (const auto _pfnBCryptImportKey = try_get_BCryptImportKey())
+        {
+            return _pfnBCryptImportKey(_hAlgorithm, _hImportKey, _szBlobType, _phKey, _pKeyObject, _cbKeyObject, _pInput, _cbInput, _fFlags);
+        }
             
         if (!Is<BCryptAlgorithm>(_hAlgorithm))
             return STATUS_INVALID_HANDLE;

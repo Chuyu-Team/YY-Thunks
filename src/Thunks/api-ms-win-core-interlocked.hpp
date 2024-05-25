@@ -2,8 +2,8 @@
 
 namespace YY
 {
-	namespace Thunks
-	{
+    namespace Thunks
+    {
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03)
 
@@ -23,7 +23,7 @@ namespace YY
             _In_ LONG64 Comperand
             )
         {
-	        return _InterlockedCompareExchange64(Destination, ExChange, Comperand);
+            return _InterlockedCompareExchange64(Destination, ExChange, Comperand);
         }
         #pragma pop_macro("InterlockedCompareExchange64")
 
@@ -188,6 +188,6 @@ namespace YY
         }
 #endif
 
-	}//namespace Thunks
+    }//namespace Thunks
 
 } //namespace YY

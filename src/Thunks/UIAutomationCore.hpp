@@ -4,8 +4,8 @@ namespace YY::Thunks
 {
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    // 最低受支持的客户端	Windows XP [桌面应用 | UWP 应用]（需要安装 .NET）
-    // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+    // 最低受支持的客户端    Windows XP [桌面应用 | UWP 应用]（需要安装 .NET）
+    // 最低受支持的服务器    Windows Server 2003[桌面应用 | UWP 应用]
     __DEFINE_THUNK(
     uiautomationcore,
     0,
@@ -27,8 +27,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    // 最低受支持的客户端	Windows XP [桌面应用 | UWP 应用]（需要安装 .NET）
-    // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+    // 最低受支持的客户端    Windows XP [桌面应用 | UWP 应用]（需要安装 .NET）
+    // 最低受支持的服务器    Windows Server 2003[桌面应用 | UWP 应用]
     __DEFINE_THUNK(
     uiautomationcore,
     8,
@@ -53,8 +53,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    // 最低受支持的客户端	Windows XP [桌面应用 | UWP 应用]（需要安装 .NET）
-    // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+    // 最低受支持的客户端    Windows XP [桌面应用 | UWP 应用]（需要安装 .NET）
+    // 最低受支持的服务器    Windows Server 2003[桌面应用 | UWP 应用]
     __DEFINE_THUNK(
     uiautomationcore,
     8,
@@ -77,8 +77,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    // 最低受支持的客户端	Windows XP [桌面应用 | UWP 应用]（需要安装 .NET）
-    // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+    // 最低受支持的客户端    Windows XP [桌面应用 | UWP 应用]（需要安装 .NET）
+    // 最低受支持的服务器    Windows Server 2003[桌面应用 | UWP 应用]
     __DEFINE_THUNK(
     uiautomationcore,
     16,
@@ -103,8 +103,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    // 最低受支持的客户端	Windows XP [桌面应用 | UWP 应用]（需要安装 .NET）
-    // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+    // 最低受支持的客户端    Windows XP [桌面应用 | UWP 应用]（需要安装 .NET）
+    // 最低受支持的服务器    Windows Server 2003[桌面应用 | UWP 应用]
     __DEFINE_THUNK(
     uiautomationcore,
     16,

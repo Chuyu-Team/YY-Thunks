@@ -4,7 +4,7 @@ namespace YY::Thunks
 {
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    // 最低受支持的客户端	在 Windows Vista 和更高版本的 Windows 操作系统中可用。
+    // 最低受支持的客户端    在 Windows Vista 和更高版本的 Windows 操作系统中可用。
     __DEFINE_THUNK(
     user32,
     4,
@@ -26,7 +26,7 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    // 最低受支持的客户端	在 Windows Vista 和更高版本的 Windows 操作系统中可用。
+    // 最低受支持的客户端    在 Windows Vista 和更高版本的 Windows 操作系统中可用。
     __DEFINE_THUNK(
     user32,
     12,
@@ -50,7 +50,7 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    // 最低受支持的客户端	在 Windows Vista 和更高版本的 Windows 操作系统中可用。
+    // 最低受支持的客户端    在 Windows Vista 和更高版本的 Windows 操作系统中可用。
     __DEFINE_THUNK(
     user32,
     24,
