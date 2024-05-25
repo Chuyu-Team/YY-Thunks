@@ -191,919 +191,919 @@ namespace YY::Thunks::Fallback
     {
 
 #if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WIN6)
-            template<typename Type>
-            struct TP_BASE : public Type
+        template<typename Type>
+        struct TP_BASE : public Type
+        {
+            void AddRef()
             {
-                void AddRef()
-                {
-                    InterlockedIncrement(&nRef);
-                }
+                InterlockedIncrement(&nRef);
+            }
 
-                void Release()
-                {
-                    if (InterlockedDecrement(&nRef) == 0)
-                    {
-                        VFuncs->pfnTppWorkpFree(this);
-                    }
-                }
-
-                void AddPendingCount()
-                {
-                    if (InterlockedAdd((volatile LONG*)&uFlags, 2) < 4)
-                    {
-                        ResetEvent(hEvent);
-                    }
-                }
-
-                bool TryReleasePendingount()
-                {
-                    ULARGE_INTEGER _uLast;
-                    for (_uLast.QuadPart = uFlags64;;)
-                    {
-                        ULARGE_INTEGER _uNew = _uLast;
-                        if (_uNew.LowPart < 2)
-                            return false;
-
-                        _uNew.LowPart -= 2;
-
-                        auto _uResult = InterlockedCompareExchange64((volatile LONG64*)&uFlags64, _uNew.QuadPart, _uLast.QuadPart);
-                        if (_uResult == _uLast.QuadPart)
-                        {
-                            //计数为 0，唤醒等待
-                            if (_uNew.QuadPart < 2ull)
-                            {
-                                SetEvent(hEvent);
-                            }
-                            return true;
-                        }
-
-                        _uLast.QuadPart = _uResult;
-                    }
-                }
-
-                bool TryReleaseWorkingCountAddWorkingCount()
-                {
-                    ULARGE_INTEGER _uLast;
-                    for (_uLast.QuadPart = uFlags64;;)
-                    {
-                        ULARGE_INTEGER _uNew = _uLast;
-                        if (_uNew.LowPart < 2)
-                        {
-                            return false;
-                        }
-                        else
-                        {
-                            _uNew.LowPart -= 2;
-                        }
-
-                        _uNew.HighPart += 1;
-
-                        auto _uResult = InterlockedCompareExchange64((volatile LONG64*)&uFlags64, _uNew.QuadPart, _uLast.QuadPart);
-                        if (_uResult == _uLast.QuadPart)
-                        {
-                            return true;
-                        }
-
-                        _uLast.QuadPart = _uResult;
-                    }
-                }
-
-                void ReleaseWorkingCount()
-                {
-                    ULARGE_INTEGER _uLast;
-                    for (_uLast.QuadPart = uFlags64;;)
-                    {
-                        ULARGE_INTEGER _uNew = _uLast;
-                        _uNew.HighPart -= 1;
-
-                        auto _uResult = InterlockedCompareExchange64((volatile LONG64*)&uFlags64, _uNew.QuadPart, _uLast.QuadPart);
-                        if (_uResult == _uLast.QuadPart)
-                        {
-                            //计数为 0，唤醒等待
-                            if (_uNew.QuadPart < 2ull)
-                            {
-                                SetEvent(hEvent);
-                            }
-                            return;
-                        }
-
-                        _uLast.QuadPart = _uResult;
-                    }
-                }
-            };
-
-            using TP_Work = TP_BASE<_TP_WORK>;
-            using TP_Io = TP_BASE<_TP_IO>;
-            using TP_Timer = TP_BASE<_TP_TIMER>;
-            using TP_Wait = TP_BASE<_TP_WAIT>;
-
-            static void __fastcall DoWhenCallbackReturns(_TP_CALLBACK_INSTANCE* Instance);
-
-            // XP系统默认值是500，我们难以知道
-            volatile LONG uAvailableWorkerCount = 500;
-
-            // 结构跟微软完全不同！！！
-            class TP_Pool
+            void Release()
             {
-                static constexpr DWORD kDefaultParallelMaximum = 200;
-
-                volatile ULONG uRef = 1;
-
-                // 允许并行执行的最大个数，0代表默认值，Vista系统默认值为200。
-                volatile DWORD uParallelMaximum = 0;
-
-                internal::InterlockedQueue<TP_Work, 1024> oTaskQueue;
-
-                // |uWeakCount| bPushLock | bStopWakeup | bPushLock |
-                // | 31  ~  3 |    2      |     1       |    0      |
-                union TaskRunnerFlagsType
+                if (InterlockedDecrement(&nRef) == 0)
                 {
-                    uint64_t fFlags64;
-                    uint32_t uWakeupCountAndPushLock;
-
-                    struct
-                    {
-                        volatile uint32_t bPushLock : 1;
-                        volatile uint32_t bStopWakeup : 1;
-                        volatile uint32_t bPopLock : 1;
-                        int32_t uWakeupCount : 29;
-                        // 当前已经启动的线程数
-                        uint32_t uParallelCurrent;
-                    };
-                };
-                TaskRunnerFlagsType TaskRunnerFlags = { 0 };
-                enum : uint32_t
-                {
-                    LockedQueuePushBitIndex = 0,
-                    StopWakeupBitIndex,
-                    LockedQueuePopBitIndex,
-                    WakeupCountStartBitIndex,
-                    WakeupOnceRaw = 1 << WakeupCountStartBitIndex,
-                    UnlockQueuePushLockBitAndWakeupOnceRaw = WakeupOnceRaw - (1u << LockedQueuePushBitIndex),
-                };
-
-                static_assert(sizeof(TaskRunnerFlags) == sizeof(uint64_t));
-
-            public:
-                TP_Pool(bool _bDefault = false)
-                    : uRef(_bDefault? UINT32_MAX : 1)
-                {
+                    VFuncs->pfnTppWorkpFree(this);
                 }
+            }
 
-                TP_Pool(const TP_Pool&) = delete;
-
-                bool __fastcall PostWork(_In_ TP_Work* _pWork) noexcept
+            void AddPendingCount()
+            {
+                if (InterlockedAdd((volatile LONG*)&uFlags, 2) < 4)
                 {
-                    if (TaskRunnerFlags.bStopWakeup)
+                    ResetEvent(hEvent);
+                }
+            }
+
+            bool TryReleasePendingount()
+            {
+                ULARGE_INTEGER _uLast;
+                for (_uLast.QuadPart = uFlags64;;)
+                {
+                    ULARGE_INTEGER _uNew = _uLast;
+                    if (_uNew.LowPart < 2)
+                        return false;
+
+                    _uNew.LowPart -= 2;
+
+                    auto _uResult = InterlockedCompareExchange64((volatile LONG64*)&uFlags64, _uNew.QuadPart, _uLast.QuadPart);
+                    if (_uResult == _uLast.QuadPart)
+                    {
+                        //计数为 0，唤醒等待
+                        if (_uNew.QuadPart < 2ull)
+                        {
+                            SetEvent(hEvent);
+                        }
+                        return true;
+                    }
+
+                    _uLast.QuadPart = _uResult;
+                }
+            }
+
+            bool TryReleaseWorkingCountAddWorkingCount()
+            {
+                ULARGE_INTEGER _uLast;
+                for (_uLast.QuadPart = uFlags64;;)
+                {
+                    ULARGE_INTEGER _uNew = _uLast;
+                    if (_uNew.LowPart < 2)
                     {
                         return false;
                     }
-
-                    _pWork->AddRef();
-                    _pWork->AddPendingCount();
-                    auto _uParallelMaximum = uParallelMaximum;
-                    if (_uParallelMaximum == 0)
-                        _uParallelMaximum = kDefaultParallelMaximum;
-
-                    // 将任务提交到任务队列
-                    AddRef();
-                    for (;;)
+                    else
                     {
-                        if (!_interlockedbittestandset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePushBitIndex))
-                        {
-                            oTaskQueue.Push(_pWork);
-
-                            // 后面交换略
-                            _interlockedbittestandreset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePushBitIndex);
-                            break;
-                        }
+                        _uNew.LowPart -= 2;
                     }
 
-                    // 解除锁定，并且 WeakupCount + 1，也尝试提升 uParallelCurrent
-                    TaskRunnerFlagsType _uOldFlags = TaskRunnerFlags;
-                    TaskRunnerFlagsType _uNewFlags;
-                    for (;;)
+                    _uNew.HighPart += 1;
+
+                    auto _uResult = InterlockedCompareExchange64((volatile LONG64*)&uFlags64, _uNew.QuadPart, _uLast.QuadPart);
+                    if (_uResult == _uLast.QuadPart)
                     {
-                        _uNewFlags = _uOldFlags;
-                        _uNewFlags.uWakeupCountAndPushLock += WakeupOnceRaw;
-
-                        if (_uNewFlags.uParallelCurrent < _uParallelMaximum && _uNewFlags.uWakeupCount >= (int32_t)_uNewFlags.uParallelCurrent)
-                        {
-                            _uNewFlags.uParallelCurrent += 1;
-                        }
-
-                        auto _uLast = InterlockedCompareExchange(&TaskRunnerFlags.fFlags64, _uNewFlags.fFlags64, _uOldFlags.fFlags64);
-                        if (_uLast == _uOldFlags.fFlags64)
-                            break;
-
-                        _uOldFlags.fFlags64 = _uLast;
-                    }
-
-                    // 并发送数量没有提升，所以无需从线程池拉发起新任务
-                    if (_uOldFlags.uParallelCurrent == _uNewFlags.uParallelCurrent)
                         return true;
-
-                    // 如果是第一次那么再额外 AddRef，避免ExecuteTaskRunner调用时 TP_Pool 被释放了
-                    // ExecuteTaskRunner内部负责重新减少引用计数
-                    if (_uOldFlags.uParallelCurrent == 0u)
-                    {
-                        AddRef();
                     }
 
-                    InterlockedDecrement(&uAvailableWorkerCount);
-                    auto _bRet = QueueUserWorkItem([](LPVOID lpThreadParameter) -> DWORD
+                    _uLast.QuadPart = _uResult;
+                }
+            }
+
+            void ReleaseWorkingCount()
+            {
+                ULARGE_INTEGER _uLast;
+                for (_uLast.QuadPart = uFlags64;;)
+                {
+                    ULARGE_INTEGER _uNew = _uLast;
+                    _uNew.HighPart -= 1;
+
+                    auto _uResult = InterlockedCompareExchange64((volatile LONG64*)&uFlags64, _uNew.QuadPart, _uLast.QuadPart);
+                    if (_uResult == _uLast.QuadPart)
+                    {
+                        //计数为 0，唤醒等待
+                        if (_uNew.QuadPart < 2ull)
                         {
-                            auto _pPool = (TP_Pool*)lpThreadParameter;
-
-                            _pPool->ExecuteTaskRunner();
-                            InterlockedIncrement(&uAvailableWorkerCount);
-                            return 0;
-
-                        }, this, 0);
-
-                    if (!_bRet)
-                    {
-                        InterlockedIncrement(&uAvailableWorkerCount);
-                        Release();
-                    }
-
-                    return true;
-                }
-
-                static _Ret_notnull_ TP_Pool* __fastcall GetDefaultPool() noexcept
-                {
-                    static TP_Pool s_Pool(true);
-                    return &s_Pool;
-                }
-
-                void __fastcall AddRef() noexcept
-                {
-                    if (uRef != UINT32_MAX)
-                    {
-                        InterlockedIncrement(&uRef);
-                    }
-                }
-
-                void __fastcall Release() noexcept
-                {
-                    if (uRef != UINT32_MAX)
-                    {
-                        if (InterlockedDecrement(&uRef) == 0)
-                        {
-                            internal::Delete(this);
+                            SetEvent(hEvent);
                         }
-                    }
-                }
-
-                void __fastcall Close() noexcept
-                {
-                    if (_interlockedbittestandset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, StopWakeupBitIndex))
-                    {
                         return;
                     }
 
-                    for (;;)
-                    {
-                        auto _pTask = PopTask();
-                        if (!_pTask)
-                            break;
+                    _uLast.QuadPart = _uResult;
+                }
+            }
+        };
 
-                        _pTask->TryReleasePendingount();
-                        _pTask->Release();
-                        Release();
-                        if (InterlockedAdd((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, -(LONG)WakeupOnceRaw) < WakeupOnceRaw)
-                            break;
+        using TP_Work = TP_BASE<_TP_WORK>;
+        using TP_Io = TP_BASE<_TP_IO>;
+        using TP_Timer = TP_BASE<_TP_TIMER>;
+        using TP_Wait = TP_BASE<_TP_WAIT>;
+
+        static void __fastcall DoWhenCallbackReturns(_TP_CALLBACK_INSTANCE* Instance);
+
+        // XP系统默认值是500，我们难以知道
+        volatile LONG uAvailableWorkerCount = 500;
+
+        // 结构跟微软完全不同！！！
+        class TP_Pool
+        {
+            static constexpr DWORD kDefaultParallelMaximum = 200;
+
+            volatile ULONG uRef = 1;
+
+            // 允许并行执行的最大个数，0代表默认值，Vista系统默认值为200。
+            volatile DWORD uParallelMaximum = 0;
+
+            internal::InterlockedQueue<TP_Work, 1024> oTaskQueue;
+
+            // |uWeakCount| bPushLock | bStopWakeup | bPushLock |
+            // | 31  ~  3 |    2      |     1       |    0      |
+            union TaskRunnerFlagsType
+            {
+                uint64_t fFlags64;
+                uint32_t uWakeupCountAndPushLock;
+
+                struct
+                {
+                    volatile uint32_t bPushLock : 1;
+                    volatile uint32_t bStopWakeup : 1;
+                    volatile uint32_t bPopLock : 1;
+                    int32_t uWakeupCount : 29;
+                    // 当前已经启动的线程数
+                    uint32_t uParallelCurrent;
+                };
+            };
+            TaskRunnerFlagsType TaskRunnerFlags = { 0 };
+            enum : uint32_t
+            {
+                LockedQueuePushBitIndex = 0,
+                StopWakeupBitIndex,
+                LockedQueuePopBitIndex,
+                WakeupCountStartBitIndex,
+                WakeupOnceRaw = 1 << WakeupCountStartBitIndex,
+                UnlockQueuePushLockBitAndWakeupOnceRaw = WakeupOnceRaw - (1u << LockedQueuePushBitIndex),
+            };
+
+            static_assert(sizeof(TaskRunnerFlags) == sizeof(uint64_t));
+
+        public:
+            TP_Pool(bool _bDefault = false)
+                : uRef(_bDefault? UINT32_MAX : 1)
+            {
+            }
+
+            TP_Pool(const TP_Pool&) = delete;
+
+            bool __fastcall PostWork(_In_ TP_Work* _pWork) noexcept
+            {
+                if (TaskRunnerFlags.bStopWakeup)
+                {
+                    return false;
+                }
+
+                _pWork->AddRef();
+                _pWork->AddPendingCount();
+                auto _uParallelMaximum = uParallelMaximum;
+                if (_uParallelMaximum == 0)
+                    _uParallelMaximum = kDefaultParallelMaximum;
+
+                // 将任务提交到任务队列
+                AddRef();
+                for (;;)
+                {
+                    if (!_interlockedbittestandset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePushBitIndex))
+                    {
+                        oTaskQueue.Push(_pWork);
+
+                        // 后面交换略
+                        _interlockedbittestandreset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePushBitIndex);
+                        break;
+                    }
+                }
+
+                // 解除锁定，并且 WeakupCount + 1，也尝试提升 uParallelCurrent
+                TaskRunnerFlagsType _uOldFlags = TaskRunnerFlags;
+                TaskRunnerFlagsType _uNewFlags;
+                for (;;)
+                {
+                    _uNewFlags = _uOldFlags;
+                    _uNewFlags.uWakeupCountAndPushLock += WakeupOnceRaw;
+
+                    if (_uNewFlags.uParallelCurrent < _uParallelMaximum && _uNewFlags.uWakeupCount >= (int32_t)_uNewFlags.uParallelCurrent)
+                    {
+                        _uNewFlags.uParallelCurrent += 1;
                     }
 
+                    auto _uLast = InterlockedCompareExchange(&TaskRunnerFlags.fFlags64, _uNewFlags.fFlags64, _uOldFlags.fFlags64);
+                    if (_uLast == _uOldFlags.fFlags64)
+                        break;
+
+                    _uOldFlags.fFlags64 = _uLast;
+                }
+
+                // 并发送数量没有提升，所以无需从线程池拉发起新任务
+                if (_uOldFlags.uParallelCurrent == _uNewFlags.uParallelCurrent)
+                    return true;
+
+                // 如果是第一次那么再额外 AddRef，避免ExecuteTaskRunner调用时 TP_Pool 被释放了
+                // ExecuteTaskRunner内部负责重新减少引用计数
+                if (_uOldFlags.uParallelCurrent == 0u)
+                {
+                    AddRef();
+                }
+
+                InterlockedDecrement(&uAvailableWorkerCount);
+                auto _bRet = QueueUserWorkItem([](LPVOID lpThreadParameter) -> DWORD
+                    {
+                        auto _pPool = (TP_Pool*)lpThreadParameter;
+
+                        _pPool->ExecuteTaskRunner();
+                        InterlockedIncrement(&uAvailableWorkerCount);
+                        return 0;
+
+                    }, this, 0);
+
+                if (!_bRet)
+                {
+                    InterlockedIncrement(&uAvailableWorkerCount);
                     Release();
                 }
 
-                void __fastcall SetParallelMaximum(DWORD _uParallelMaximum)
-                {
-                    uParallelMaximum = _uParallelMaximum;
-                }
+                return true;
+            }
 
-            private:
-                _Ret_maybenull_ TP_Work* __fastcall PopTask() noexcept
+            static _Ret_notnull_ TP_Pool* __fastcall GetDefaultPool() noexcept
+            {
+                static TP_Pool s_Pool(true);
+                return &s_Pool;
+            }
+
+            void __fastcall AddRef() noexcept
+            {
+                if (uRef != UINT32_MAX)
                 {
-                    for (;;)
+                    InterlockedIncrement(&uRef);
+                }
+            }
+
+            void __fastcall Release() noexcept
+            {
+                if (uRef != UINT32_MAX)
+                {
+                    if (InterlockedDecrement(&uRef) == 0)
                     {
-                        if (!_interlockedbittestandset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePopBitIndex))
-                        {
-                            auto _pWork = oTaskQueue.Pop();
-
-                            _interlockedbittestandreset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePopBitIndex);
-                            return _pWork;
-                        }
-                    }
-                }
-
-                void __fastcall ExecuteTaskRunner() noexcept
-                {
-                __START:
-                    for (;;)
-                    {
-                        auto _pWork = PopTask();
-                        if (!_pWork)
-                            break;
-
-                        if (_pWork->TryReleaseWorkingCountAddWorkingCount())
-                        {
-                            TP_CALLBACK_INSTANCE Instance = {};
-                            _pWork->pTaskVFuncs->pExecuteCallback(&Instance, _pWork);
-                            Fallback::DoWhenCallbackReturns(&Instance);
-
-                            _pWork->ReleaseWorkingCount();
-                        }
-
-                        _pWork->Release();
-                        Release();
-                        if (InterlockedAdd((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, -(LONG)WakeupOnceRaw) < WakeupOnceRaw)
-                            break;
-                    }
-
-                    // 尝试释放 uParallelCurrent
-                    TaskRunnerFlagsType _uOldFlags = TaskRunnerFlags;
-                    TaskRunnerFlagsType _uNewFlags;
-                    for (;;)
-                    {
-                        // 任然有任务，重新执行 ExecuteTaskRunner
-                        if (_uOldFlags.uWakeupCount > 0)
-                        {
-                            goto __START;
-                        }
-
-                        _uNewFlags = _uOldFlags;
-                        _uNewFlags.uParallelCurrent -= 1;
-
-                        auto _uLast = InterlockedCompareExchange(&TaskRunnerFlags.fFlags64, _uNewFlags.fFlags64, _uOldFlags.fFlags64);
-                        if (_uLast == _uOldFlags.fFlags64)
-                            break;
-
-                        _uOldFlags.fFlags64 = _uLast;
-                    }
-
-                    if (_uNewFlags.uParallelCurrent == 0u)
-                    {
-                        // 对应上面 QueueUserWorkItem 的AddRef();
-                        Release();
-                    }
-                }
-            };
-
-            static void __fastcall DoWhenCallbackReturns(_TP_CALLBACK_INSTANCE* Instance)
-            {
-                if (auto CriticalSection = Instance->CriticalSection)
-                {
-                    LeaveCriticalSection(CriticalSection);
-                }
-
-                if (auto DllHandle = Instance->DllHandle)
-                {
-                    FreeLibrary(DllHandle);
-                }
-
-                if (auto Event = Instance->Event)
-                {
-                    SetEvent(Event);
-                }
-
-                if (auto Mutex = Instance->Mutex)
-                {
-                    ReleaseMutex(Mutex);
-                }
-
-                if (auto Semaphore = Instance->Semaphore)
-                {
-                    ReleaseSemaphore(Semaphore, Instance->ReleaseCount, nullptr);
-                }
-            }
-
-            static void __fastcall TppWorkpFree(_TP_WORK* Work)
-            {
-                if (Work)
-                {
-                    const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
-                    HeapFree(ProcessHeap, 0, Work);
-                }
-            }
-
-            static void __fastcall TppWorkCallbackEpilog(_TP_WORK* _pWork)
-            {
-
-            }
-
-            static void __fastcall TppWorkCancelPendingCallbacks(_TP_WORK* _pWork)
-            {
-
-            }
-
-            static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppWorkpCleanupGroupMemberVFuncs()
-            {
-                static _TP_CLEANUP_GROUP_FUNCS TppWorkpCleanupGroupMemberVFuncs = { &TppWorkpFree, &TppWorkCallbackEpilog, 0, &TppWorkCancelPendingCallbacks };
-                return &TppWorkpCleanupGroupMemberVFuncs;
-            }
-
-            static void __fastcall TppWorkpExecuteCallback(PTP_CALLBACK_INSTANCE Instance, _TP_WORK* Work)
-            {
-                ((PTP_WORK_CALLBACK)Work->Callback)(Instance, Work->Context, Work);
-            }
-
-            static const TaskVFuncs* __fastcall GetTppWorkpTaskVFuncs()
-            {
-                static TaskVFuncs TppWorkpTaskVFuncs = { &TppWorkpExecuteCallback };
-                return &TppWorkpTaskVFuncs;
-            }
-
-            static void __fastcall TppCleanupGroupMemberWait(_TP_WORK* _pWork, ULONG _uCancelledCallbackCount)
-            {
-                if (_pWork->uFlags64 & (~1ull))
-                    WaitForSingleObject(_pWork->hEvent, INFINITE);
-            }
-
-            static void __fastcall TppWorkWait(_TP_WORK* _pWork, BOOL _bCancelPendingCallbacks, bool bReleaseRef = false)
-            {
-                ULONG _uCancelledCallbackCount = 0;
-                if (_bCancelPendingCallbacks)
-                {
-                    for (auto _uLast = _pWork->uFlags;;)
-                    {
-                        _uCancelledCallbackCount = _uLast >> 1;
-                        if (_uCancelledCallbackCount == 0)
-                            break;
-
-                        const auto _uResult = InterlockedCompareExchange(&_pWork->uFlags, _uLast & 1, _uLast);
-                        if (_uResult == _uLast)
-                        {
-                            break;
-                        }
-
-                        _uLast = _uResult;
-                    }
-                }
-
-                TppCleanupGroupMemberWait(_pWork, _uCancelledCallbackCount);
-
-                if (bReleaseRef)
-                {
-                    if (InterlockedAdd((volatile LONG*)&_pWork->nRef, -LONG(_uCancelledCallbackCount)) == 0)
-                    {
-                        _pWork->VFuncs->pfnTppWorkpFree(_pWork);
+                        internal::Delete(this);
                     }
                 }
             }
 
-            static
-                NTSTATUS
-                __fastcall
-                TppCleanupGroupMemberInitialize(
-                    _Inout_ _TP_WORK* pWork,
-                    _Inout_opt_ PVOID pv,
-                    _In_opt_ PTP_CALLBACK_ENVIRON pcbe,
-                    _In_ DWORD uFlags,
-                    const _TP_CLEANUP_GROUP_FUNCS* CleanupGroupVFuncs
-                )
+            void __fastcall Close() noexcept
             {
-                pWork->nRef = 1;
-                pWork->VFuncs = CleanupGroupVFuncs;
-                pWork->p20 = 0;
-                pWork->p24 = 0;
-                pWork->p2C = 0;
-
-                ::InitializeSRWLock(&pWork->srwLock);
-
-                pWork->Context = pv;
-
-                if (pcbe)
+                if (_interlockedbittestandset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, StopWakeupBitIndex))
                 {
-                    pWork->Pool = pcbe->Pool;
-                    pWork->CleanupGroup = pcbe->CleanupGroup;
-                    pWork->CleanupGroupCancelCallback = pcbe->CleanupGroupCancelCallback;
-                    pWork->FinalizationCallback = NULL;
-                    pWork->ActivationContext = pcbe->ActivationContext;
-                    pWork->RaceDll = pcbe->RaceDll;
-                }
-                else
-                {
-                    pWork->Pool = NULL;
-                    pWork->CleanupGroup = NULL;
-                    pWork->CleanupGroupCancelCallback = NULL;
-                    pWork->FinalizationCallback = NULL;
-                    pWork->ActivationContext = NULL;
-                    pWork->RaceDll = NULL;
-                }
-
-                pWork->SubProcessTag = NtCurrentTeb()->SubProcessTag;
-                pWork->uFlags1 = uFlags;
-                pWork->p18 = pWork->p14 = &pWork->p14;
-
-
-                if (pWork->ActivationContext != NULL)
-                {
-                    if (pWork->ActivationContext != (_ACTIVATION_CONTEXT*)-1)
-                    {
-
-                    }
-                }
-
-                auto hEvent = CreateEventW(nullptr, TRUE, TRUE, nullptr);
-
-                if (hEvent == nullptr)
-                {
-                    return STATUS_NO_MEMORY;
-                }
-
-                pWork->hEvent = hEvent;
-
-                return STATUS_SUCCESS;
-            }
-
-            static
-                NTSTATUS
-                __fastcall
-                TppWorkInitialize(
-                    _Inout_ _TP_WORK* pWork,
-                    _Inout_opt_ PVOID pv,
-                    _In_opt_ PTP_CALLBACK_ENVIRON pcbe,
-                    _In_ DWORD uFlags,
-                    _In_ const _TP_CLEANUP_GROUP_FUNCS* CleanupGroupVFuncs,
-                    _In_ const TaskVFuncs* TaskVFuncs
-                )
-            {
-                auto Status = TppCleanupGroupMemberInitialize(pWork, pv, pcbe, uFlags, CleanupGroupVFuncs);
-
-                if (Status >= 0)
-                {
-                    //if(pWork->)
-                    pWork->pTaskVFuncs = TaskVFuncs;
-                    pWork->uFlags = 1;
-                }
-
-                return Status;
-            }
-
-            static
-                void
-                __fastcall
-                TppCleanupGroupAddMember(
-                    _Outptr_ _TP_WORK* pWork
-                )
-            {
-                ::AcquireSRWLockExclusive(&pWork->CleanupGroup->srwLock);
-
-                pWork->p14 = &pWork->CleanupGroup->pC;
-                pWork->p18 = pWork->CleanupGroup->p10;
-
-                *(void**)pWork->CleanupGroup->p10 = pWork->p14;
-                pWork->CleanupGroup->p10 = &pWork->p14;
-
-                ::ReleaseSRWLockExclusive(&pWork->CleanupGroup->srwLock);
-            }
-
-            static
-                NTSTATUS
-                __fastcall
-                TpAllocWork(
-                    _Outptr_ _TP_WORK** ppWork,
-                    _In_ PTP_WORK_CALLBACK pfnwk,
-                    _Inout_opt_ PVOID pv,
-                    _In_opt_ PTP_CALLBACK_ENVIRON pcbe
-                )
-            {
-                if (ppWork == nullptr || pfnwk == nullptr || (pcbe && (pcbe->u.Flags & 0xFFFFFFFE)))
-                {
-                    return STATUS_INVALID_PARAMETER;
-                }
-
-                const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
-                auto pWork = (_TP_WORK*)HeapAlloc(ProcessHeap, HEAP_ZERO_MEMORY, sizeof(_TP_WORK));
-
-                if (!pWork)
-                    return STATUS_NO_MEMORY;
-
-                pWork->retaddr = _ReturnAddress();
-
-                auto Status = TppWorkInitialize(pWork, pv, pcbe, pcbe ? pcbe->u.Flags : 0, GetTppWorkpCleanupGroupMemberVFuncs(), GetTppWorkpTaskVFuncs());
-
-                do
-                {
-                    if (Status < 0)
-                        break;
-
-                    pWork->Callback = pfnwk;
-
-                    if (pcbe)
-                        pWork->FinalizationCallback = pcbe->FinalizationCallback;
-
-                    if (pWork->CleanupGroup)
-                        TppCleanupGroupAddMember(pWork);
-
-
-
-                    *ppWork = pWork;
-
-                    return STATUS_SUCCESS;
-                } while (false);
-
-
-                if (pWork)
-                    HeapFree(ProcessHeap, 0, pWork);
-
-
-                return Status;
-            }
-
-            static void __fastcall TppWaitpFree(_TP_WORK* Work)
-            {
-                if (Work)
-                {
-                    const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
-                    HeapFree(ProcessHeap, 0, Work);
-                }
-            }
-
-            static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppWaitpCleanupGroupMemberVFuncs()
-            {
-                static const _TP_CLEANUP_GROUP_FUNCS TppWorkpCleanupGroupMemberVFuncs = { &TppWaitpFree, &TppWorkCallbackEpilog, 0, &TppWorkCancelPendingCallbacks };
-                return &TppWorkpCleanupGroupMemberVFuncs;
-            }
-
-            static void __fastcall TppWaitpExecuteCallback(PTP_CALLBACK_INSTANCE Instance, _TP_WORK* Work)
-            {
-                ((PTP_WAIT_CALLBACK)Work->Callback)(Instance, Work->Context, (PTP_WAIT)Work, 0);
-            }
-
-
-            static const TaskVFuncs* __fastcall GetTppWaitpTaskVFuncs()
-            {
-                static TaskVFuncs TppWorkpTaskVFuncs = { &TppWaitpExecuteCallback };
-                return &TppWorkpTaskVFuncs;
-            }
-
-            static void __fastcall TppWorkPost(TP_Work* _pWork)
-            {
-                auto _pPool = _pWork->Pool ? reinterpret_cast<TP_Pool*>(_pWork->Pool) : TP_Pool::GetDefaultPool();
-                _pPool->PostWork(_pWork);
-            }
-
-            //暂时我们不需要实现 GetTppSimplepCleanupGroupMemberVFuncs
-#define GetTppSimplepCleanupGroupMemberVFuncs GetTppWorkpCleanupGroupMemberVFuncs
-
-
-            static void __fastcall TppSimplepExecuteCallback(PTP_CALLBACK_INSTANCE Instance, _TP_WORK* Work)
-            {
-                ((PTP_SIMPLE_CALLBACK)Work->Callback)(Instance, Work->Context);
-            }
-
-
-            static const TaskVFuncs* __fastcall GetTppSimplepTaskVFuncs()
-            {
-                static TaskVFuncs TppWorkpTaskVFuncs = { &TppSimplepExecuteCallback };
-                return &TppWorkpTaskVFuncs;
-            }
-
-            static void __fastcall TppIopExecuteCallback(TP_Io* _pIoWork, DWORD _lStatus, DWORD _cbNumberOfBytesTransfered, LPOVERLAPPED _pOverlapped)
-            {
-                auto _pfnIoCallback = reinterpret_cast<PTP_WIN32_IO_CALLBACK>(_pIoWork->Callback);
-
-                if (_pIoWork->TryReleaseWorkingCountAddWorkingCount())
-                {
-                    _TP_CALLBACK_INSTANCE _Instance = {};
-                    _pfnIoCallback(&_Instance, _pIoWork->Context, _pOverlapped, _lStatus, _cbNumberOfBytesTransfered, _pIoWork);
-                    DoWhenCallbackReturns(&_Instance);
-
-                    _pIoWork->ReleaseWorkingCount();
-                    _pIoWork->Release();
-                }
-            }
-
-            static const TaskVFuncs* __fastcall GetTppIopExecuteCallback()
-            {
-                static TaskVFuncs TppWorkpTaskVFuncs = { &TppIopExecuteCallback };
-                return &TppWorkpTaskVFuncs;
-            }
-
-            static void __fastcall TppIopFree(_TP_WORK* _pWork)
-            {
-                if (auto _pIoWork = static_cast<_TP_IO*>(_pWork))
-                {
-                    if (_pIoWork->pThunkData)
-                        _pIoWork->pThunkData->Free();
-
-                    internal::Free(_pWork);
-                }
-            }
-
-            static void __fastcall TppIopCallbackEpilog(_TP_WORK* _pWork)
-            {
-
-            }
-
-            static void __fastcall TppIopCancelPendingCallbacks(_TP_WORK* _pWork)
-            {
-            }
-
-            static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppIopCleanupGroupMemberVFuncs()
-            {
-                static _TP_CLEANUP_GROUP_FUNCS TppWorkpCleanupGroupMemberVFuncs = { &TppIopFree, &TppWorkCallbackEpilog, 0, &TppIopCancelPendingCallbacks };
-                return &TppWorkpCleanupGroupMemberVFuncs;
-            }
-
-
-            static
-                NTSTATUS
-                __fastcall
-                TpSimpleTryPost(
-                    _In_ PTP_SIMPLE_CALLBACK Callback,
-                    _Inout_opt_ PVOID Context,
-                    _In_opt_ PTP_CALLBACK_ENVIRON CallbackEnviron
-                )
-            {
-                auto Flags = CallbackEnviron ? CallbackEnviron->u.Flags : 0;
-
-                if (Callback == nullptr || (Flags & 0xFFFFFFFE) != 0)
-                {
-                    internal::RaiseStatus(STATUS_INVALID_PARAMETER);
-                    return STATUS_INVALID_PARAMETER;
-                }
-
-
-
-                const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
-                auto pWork = (TP_Work*)HeapAlloc(ProcessHeap, HEAP_ZERO_MEMORY, sizeof(TP_WORK));
-
-                if (!pWork)
-                    return STATUS_NO_MEMORY;
-
-                pWork->retaddr = _ReturnAddress();
-
-                auto Status = TppWorkInitialize(pWork, Context, CallbackEnviron, Flags, GetTppSimplepCleanupGroupMemberVFuncs(), GetTppSimplepTaskVFuncs());
-
-                do
-                {
-                    if (Status < 0)
-                        break;
-
-                    pWork->Callback = Callback;
-
-                    if (CallbackEnviron)
-                        pWork->FinalizationCallback = CallbackEnviron->FinalizationCallback;
-
-                    if (pWork->CleanupGroup)
-                        Fallback::TppCleanupGroupAddMember(pWork);
-
-                    TppWorkPost(pWork);
-
-                    return STATUS_SUCCESS;
-                } while (false);
-
-
-                if (pWork)
-                    HeapFree(ProcessHeap, 0, pWork);
-
-
-                return Status;
-            }
-
-            static
-                bool
-                __fastcall
-                TppCleanupGroupMemberRelease(
-                    _TP_WORK* CleanupGroupMember,
-                    bool RaiseIfAlreadyRaised
-                )
-            {
-                auto orgFlags1 = InterlockedOr(&CleanupGroupMember->uFlags1, 0x10000);
-
-                if (RaiseIfAlreadyRaised && (orgFlags1 & 0x10000))
-                {
-                    internal::RaiseStatus(STATUS_INVALID_PARAMETER);
-                }
-
-                return (orgFlags1 & 0x30000) == 0;
-            }
-
-            static
-                void
-                WINAPI
-                TpReleaseWork(
-                    TP_Work* Work)
-            {
-                if (Work == nullptr || (Work->uFlags1 & 0x10000) || Work->VFuncs != Fallback::GetTppWorkpCleanupGroupMemberVFuncs())
-                {
-                    internal::RaiseStatus(STATUS_INVALID_PARAMETER);
                     return;
                 }
 
-                if (TppCleanupGroupMemberRelease(Work, true))
+                for (;;)
                 {
-                    Work->un58 = _ReturnAddress();
+                    auto _pTask = PopTask();
+                    if (!_pTask)
+                        break;
 
-                    Work->Release();
+                    _pTask->TryReleasePendingount();
+                    _pTask->Release();
+                    Release();
+                    if (InterlockedAdd((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, -(LONG)WakeupOnceRaw) < WakeupOnceRaw)
+                        break;
+                }
+
+                Release();
+            }
+
+            void __fastcall SetParallelMaximum(DWORD _uParallelMaximum)
+            {
+                uParallelMaximum = _uParallelMaximum;
+            }
+
+        private:
+            _Ret_maybenull_ TP_Work* __fastcall PopTask() noexcept
+            {
+                for (;;)
+                {
+                    if (!_interlockedbittestandset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePopBitIndex))
+                    {
+                        auto _pWork = oTaskQueue.Pop();
+
+                        _interlockedbittestandreset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePopBitIndex);
+                        return _pWork;
+                    }
                 }
             }
 
-            static void __fastcall TppTimerpFree(_TP_WORK* Work)
+            void __fastcall ExecuteTaskRunner() noexcept
             {
-                if (Work)
+            __START:
+                for (;;)
                 {
-                    const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
-                    HeapFree(ProcessHeap, 0, (_TP_TIMER*)Work);
+                    auto _pWork = PopTask();
+                    if (!_pWork)
+                        break;
+
+                    if (_pWork->TryReleaseWorkingCountAddWorkingCount())
+                    {
+                        TP_CALLBACK_INSTANCE Instance = {};
+                        _pWork->pTaskVFuncs->pExecuteCallback(&Instance, _pWork);
+                        Fallback::DoWhenCallbackReturns(&Instance);
+
+                        _pWork->ReleaseWorkingCount();
+                    }
+
+                    _pWork->Release();
+                    Release();
+                    if (InterlockedAdd((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, -(LONG)WakeupOnceRaw) < WakeupOnceRaw)
+                        break;
+                }
+
+                // 尝试释放 uParallelCurrent
+                TaskRunnerFlagsType _uOldFlags = TaskRunnerFlags;
+                TaskRunnerFlagsType _uNewFlags;
+                for (;;)
+                {
+                    // 任然有任务，重新执行 ExecuteTaskRunner
+                    if (_uOldFlags.uWakeupCount > 0)
+                    {
+                        goto __START;
+                    }
+
+                    _uNewFlags = _uOldFlags;
+                    _uNewFlags.uParallelCurrent -= 1;
+
+                    auto _uLast = InterlockedCompareExchange(&TaskRunnerFlags.fFlags64, _uNewFlags.fFlags64, _uOldFlags.fFlags64);
+                    if (_uLast == _uOldFlags.fFlags64)
+                        break;
+
+                    _uOldFlags.fFlags64 = _uLast;
+                }
+
+                if (_uNewFlags.uParallelCurrent == 0u)
+                {
+                    // 对应上面 QueueUserWorkItem 的AddRef();
+                    Release();
                 }
             }
+        };
 
-            static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppTimerpCleanupGroupMemberVFuncs()
+        static void __fastcall DoWhenCallbackReturns(_TP_CALLBACK_INSTANCE* Instance)
+        {
+            if (auto CriticalSection = Instance->CriticalSection)
             {
-                static _TP_CLEANUP_GROUP_FUNCS TppTimerpCleanupGroupMemberVFuncs = { &TppTimerpFree };
-                return &TppTimerpCleanupGroupMemberVFuncs;
+                LeaveCriticalSection(CriticalSection);
             }
 
-
-            static void __fastcall TppTimerpExecuteCallback(PTP_CALLBACK_INSTANCE Instance, _TP_WORK* Work)
+            if (auto DllHandle = Instance->DllHandle)
             {
-                ((PTP_TIMER_CALLBACK)Work->Callback)(Instance, Work->Context, (PTP_TIMER)Work);
+                FreeLibrary(DllHandle);
             }
 
-            static const TaskVFuncs* __fastcall GetTppTimerpTaskVFuncs()
+            if (auto Event = Instance->Event)
             {
-                static TaskVFuncs TppTimerpTaskVFuncs = { &TppTimerpExecuteCallback };
-
-                return &TppTimerpTaskVFuncs;
+                SetEvent(Event);
             }
 
-
-            static
-                NTSTATUS
-                __fastcall
-                TppTimerAlloc(
-                    _TP_TIMER** ppTimer,
-                    _In_ PTP_TIMER_CALLBACK Callback,
-                    _Inout_opt_ PVOID Context,
-                    _In_opt_ PTP_CALLBACK_ENVIRON CallbackEnviron,
-                    DWORD Flags
-                )
+            if (auto Mutex = Instance->Mutex)
             {
+                ReleaseMutex(Mutex);
+            }
 
-                *ppTimer = nullptr;
+            if (auto Semaphore = Instance->Semaphore)
+            {
+                ReleaseSemaphore(Semaphore, Instance->ReleaseCount, nullptr);
+            }
+        }
 
-
+        static void __fastcall TppWorkpFree(_TP_WORK* Work)
+        {
+            if (Work)
+            {
                 const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
-                auto pTimer = (_TP_TIMER*)HeapAlloc(ProcessHeap, HEAP_ZERO_MEMORY, sizeof(_TP_TIMER));
-
-                if (!pTimer)
-                    return STATUS_NO_MEMORY;
-
-                pTimer->retaddr = _ReturnAddress();
-
-                auto Status = TppWorkInitialize(pTimer, Context, CallbackEnviron, Flags | 0x1040000, GetTppTimerpCleanupGroupMemberVFuncs(), GetTppTimerpTaskVFuncs());
-
-                if (Status >= 0)
-                {
-                    pTimer->Callback = Callback;
-
-                    if (CallbackEnviron)
-                        pTimer->FinalizationCallback = CallbackEnviron->FinalizationCallback;
-
-                    if (pTimer->CleanupGroup)
-                        TppCleanupGroupAddMember(pTimer);
-
-                    *ppTimer = pTimer;
-
-                    return Status;
-                }
-
-                HeapFree(ProcessHeap, 0, pTimer);
-                return Status;
-
+                HeapFree(ProcessHeap, 0, Work);
             }
+        }
 
+        static void __fastcall TppWorkCallbackEpilog(_TP_WORK* _pWork)
+        {
 
-            static
-                NTSTATUS
-                __fastcall
-                TpAllocTimer(
-                    _TP_TIMER** ppTimer,
-                    _In_ PTP_TIMER_CALLBACK Callback,
-                    _Inout_opt_ PVOID Context,
-                    _In_opt_ PTP_CALLBACK_ENVIRON CallbackEnviron
-                )
+        }
+
+        static void __fastcall TppWorkCancelPendingCallbacks(_TP_WORK* _pWork)
+        {
+
+        }
+
+        static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppWorkpCleanupGroupMemberVFuncs()
+        {
+            static _TP_CLEANUP_GROUP_FUNCS TppWorkpCleanupGroupMemberVFuncs = { &TppWorkpFree, &TppWorkCallbackEpilog, 0, &TppWorkCancelPendingCallbacks };
+            return &TppWorkpCleanupGroupMemberVFuncs;
+        }
+
+        static void __fastcall TppWorkpExecuteCallback(PTP_CALLBACK_INSTANCE Instance, _TP_WORK* Work)
+        {
+            ((PTP_WORK_CALLBACK)Work->Callback)(Instance, Work->Context, Work);
+        }
+
+        static const TaskVFuncs* __fastcall GetTppWorkpTaskVFuncs()
+        {
+            static TaskVFuncs TppWorkpTaskVFuncs = { &TppWorkpExecuteCallback };
+            return &TppWorkpTaskVFuncs;
+        }
+
+        static void __fastcall TppCleanupGroupMemberWait(_TP_WORK* _pWork, ULONG _uCancelledCallbackCount)
+        {
+            if (_pWork->uFlags64 & (~1ull))
+                WaitForSingleObject(_pWork->hEvent, INFINITE);
+        }
+
+        static void __fastcall TppWorkWait(_TP_WORK* _pWork, BOOL _bCancelPendingCallbacks, bool bReleaseRef = false)
+        {
+            ULONG _uCancelledCallbackCount = 0;
+            if (_bCancelPendingCallbacks)
             {
-                auto Flags = CallbackEnviron ? CallbackEnviron->u.Flags : 0;
-
-                if (ppTimer == nullptr || Callback == nullptr || (Flags & 0xFFFFFFFE))
+                for (auto _uLast = _pWork->uFlags;;)
                 {
-                    return STATUS_INVALID_PARAMETER;
+                    _uCancelledCallbackCount = _uLast >> 1;
+                    if (_uCancelledCallbackCount == 0)
+                        break;
+
+                    const auto _uResult = InterlockedCompareExchange(&_pWork->uFlags, _uLast & 1, _uLast);
+                    if (_uResult == _uLast)
+                    {
+                        break;
+                    }
+
+                    _uLast = _uResult;
                 }
+            }
 
-                auto Status = TppTimerAlloc(ppTimer, Callback, Context, CallbackEnviron, Flags);
+            TppCleanupGroupMemberWait(_pWork, _uCancelledCallbackCount);
 
-                if (Status >= 0)
+            if (bReleaseRef)
+            {
+                if (InterlockedAdd((volatile LONG*)&_pWork->nRef, -LONG(_uCancelledCallbackCount)) == 0)
                 {
-                    (*ppTimer)->retaddr = _ReturnAddress();
+                    _pWork->VFuncs->pfnTppWorkpFree(_pWork);
                 }
+            }
+        }
+
+        static
+            NTSTATUS
+            __fastcall
+            TppCleanupGroupMemberInitialize(
+                _Inout_ _TP_WORK* pWork,
+                _Inout_opt_ PVOID pv,
+                _In_opt_ PTP_CALLBACK_ENVIRON pcbe,
+                _In_ DWORD uFlags,
+                const _TP_CLEANUP_GROUP_FUNCS* CleanupGroupVFuncs
+            )
+        {
+            pWork->nRef = 1;
+            pWork->VFuncs = CleanupGroupVFuncs;
+            pWork->p20 = 0;
+            pWork->p24 = 0;
+            pWork->p2C = 0;
+
+            ::InitializeSRWLock(&pWork->srwLock);
+
+            pWork->Context = pv;
+
+            if (pcbe)
+            {
+                pWork->Pool = pcbe->Pool;
+                pWork->CleanupGroup = pcbe->CleanupGroup;
+                pWork->CleanupGroupCancelCallback = pcbe->CleanupGroupCancelCallback;
+                pWork->FinalizationCallback = NULL;
+                pWork->ActivationContext = pcbe->ActivationContext;
+                pWork->RaceDll = pcbe->RaceDll;
+            }
+            else
+            {
+                pWork->Pool = NULL;
+                pWork->CleanupGroup = NULL;
+                pWork->CleanupGroupCancelCallback = NULL;
+                pWork->FinalizationCallback = NULL;
+                pWork->ActivationContext = NULL;
+                pWork->RaceDll = NULL;
+            }
+
+            pWork->SubProcessTag = NtCurrentTeb()->SubProcessTag;
+            pWork->uFlags1 = uFlags;
+            pWork->p18 = pWork->p14 = &pWork->p14;
+
+
+            if (pWork->ActivationContext != NULL)
+            {
+                if (pWork->ActivationContext != (_ACTIVATION_CONTEXT*)-1)
+                {
+
+                }
+            }
+
+            auto hEvent = CreateEventW(nullptr, TRUE, TRUE, nullptr);
+
+            if (hEvent == nullptr)
+            {
+                return STATUS_NO_MEMORY;
+            }
+
+            pWork->hEvent = hEvent;
+
+            return STATUS_SUCCESS;
+        }
+
+        static
+            NTSTATUS
+            __fastcall
+            TppWorkInitialize(
+                _Inout_ _TP_WORK* pWork,
+                _Inout_opt_ PVOID pv,
+                _In_opt_ PTP_CALLBACK_ENVIRON pcbe,
+                _In_ DWORD uFlags,
+                _In_ const _TP_CLEANUP_GROUP_FUNCS* CleanupGroupVFuncs,
+                _In_ const TaskVFuncs* TaskVFuncs
+            )
+        {
+            auto Status = TppCleanupGroupMemberInitialize(pWork, pv, pcbe, uFlags, CleanupGroupVFuncs);
+
+            if (Status >= 0)
+            {
+                //if(pWork->)
+                pWork->pTaskVFuncs = TaskVFuncs;
+                pWork->uFlags = 1;
+            }
+
+            return Status;
+        }
+
+        static
+            void
+            __fastcall
+            TppCleanupGroupAddMember(
+                _Outptr_ _TP_WORK* pWork
+            )
+        {
+            ::AcquireSRWLockExclusive(&pWork->CleanupGroup->srwLock);
+
+            pWork->p14 = &pWork->CleanupGroup->pC;
+            pWork->p18 = pWork->CleanupGroup->p10;
+
+            *(void**)pWork->CleanupGroup->p10 = pWork->p14;
+            pWork->CleanupGroup->p10 = &pWork->p14;
+
+            ::ReleaseSRWLockExclusive(&pWork->CleanupGroup->srwLock);
+        }
+
+        static
+            NTSTATUS
+            __fastcall
+            TpAllocWork(
+                _Outptr_ _TP_WORK** ppWork,
+                _In_ PTP_WORK_CALLBACK pfnwk,
+                _Inout_opt_ PVOID pv,
+                _In_opt_ PTP_CALLBACK_ENVIRON pcbe
+            )
+        {
+            if (ppWork == nullptr || pfnwk == nullptr || (pcbe && (pcbe->u.Flags & 0xFFFFFFFE)))
+            {
+                return STATUS_INVALID_PARAMETER;
+            }
+
+            const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+            auto pWork = (_TP_WORK*)HeapAlloc(ProcessHeap, HEAP_ZERO_MEMORY, sizeof(_TP_WORK));
+
+            if (!pWork)
+                return STATUS_NO_MEMORY;
+
+            pWork->retaddr = _ReturnAddress();
+
+            auto Status = TppWorkInitialize(pWork, pv, pcbe, pcbe ? pcbe->u.Flags : 0, GetTppWorkpCleanupGroupMemberVFuncs(), GetTppWorkpTaskVFuncs());
+
+            do
+            {
+                if (Status < 0)
+                    break;
+
+                pWork->Callback = pfnwk;
+
+                if (pcbe)
+                    pWork->FinalizationCallback = pcbe->FinalizationCallback;
+
+                if (pWork->CleanupGroup)
+                    TppCleanupGroupAddMember(pWork);
+
+
+
+                *ppWork = pWork;
+
+                return STATUS_SUCCESS;
+            } while (false);
+
+
+            if (pWork)
+                HeapFree(ProcessHeap, 0, pWork);
+
+
+            return Status;
+        }
+
+        static void __fastcall TppWaitpFree(_TP_WORK* Work)
+        {
+            if (Work)
+            {
+                const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+                HeapFree(ProcessHeap, 0, Work);
+            }
+        }
+
+        static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppWaitpCleanupGroupMemberVFuncs()
+        {
+            static const _TP_CLEANUP_GROUP_FUNCS TppWorkpCleanupGroupMemberVFuncs = { &TppWaitpFree, &TppWorkCallbackEpilog, 0, &TppWorkCancelPendingCallbacks };
+            return &TppWorkpCleanupGroupMemberVFuncs;
+        }
+
+        static void __fastcall TppWaitpExecuteCallback(PTP_CALLBACK_INSTANCE Instance, _TP_WORK* Work)
+        {
+            ((PTP_WAIT_CALLBACK)Work->Callback)(Instance, Work->Context, (PTP_WAIT)Work, 0);
+        }
+
+
+        static const TaskVFuncs* __fastcall GetTppWaitpTaskVFuncs()
+        {
+            static TaskVFuncs TppWorkpTaskVFuncs = { &TppWaitpExecuteCallback };
+            return &TppWorkpTaskVFuncs;
+        }
+
+        static void __fastcall TppWorkPost(TP_Work* _pWork)
+        {
+            auto _pPool = _pWork->Pool ? reinterpret_cast<TP_Pool*>(_pWork->Pool) : TP_Pool::GetDefaultPool();
+            _pPool->PostWork(_pWork);
+        }
+
+        //暂时我们不需要实现 GetTppSimplepCleanupGroupMemberVFuncs
+#define GetTppSimplepCleanupGroupMemberVFuncs GetTppWorkpCleanupGroupMemberVFuncs
+
+
+        static void __fastcall TppSimplepExecuteCallback(PTP_CALLBACK_INSTANCE Instance, _TP_WORK* Work)
+        {
+            ((PTP_SIMPLE_CALLBACK)Work->Callback)(Instance, Work->Context);
+        }
+
+
+        static const TaskVFuncs* __fastcall GetTppSimplepTaskVFuncs()
+        {
+            static TaskVFuncs TppWorkpTaskVFuncs = { &TppSimplepExecuteCallback };
+            return &TppWorkpTaskVFuncs;
+        }
+
+        static void __fastcall TppIopExecuteCallback(TP_Io* _pIoWork, DWORD _lStatus, DWORD _cbNumberOfBytesTransfered, LPOVERLAPPED _pOverlapped)
+        {
+            auto _pfnIoCallback = reinterpret_cast<PTP_WIN32_IO_CALLBACK>(_pIoWork->Callback);
+
+            if (_pIoWork->TryReleaseWorkingCountAddWorkingCount())
+            {
+                _TP_CALLBACK_INSTANCE _Instance = {};
+                _pfnIoCallback(&_Instance, _pIoWork->Context, _pOverlapped, _lStatus, _cbNumberOfBytesTransfered, _pIoWork);
+                DoWhenCallbackReturns(&_Instance);
+
+                _pIoWork->ReleaseWorkingCount();
+                _pIoWork->Release();
+            }
+        }
+
+        static const TaskVFuncs* __fastcall GetTppIopExecuteCallback()
+        {
+            static TaskVFuncs TppWorkpTaskVFuncs = { &TppIopExecuteCallback };
+            return &TppWorkpTaskVFuncs;
+        }
+
+        static void __fastcall TppIopFree(_TP_WORK* _pWork)
+        {
+            if (auto _pIoWork = static_cast<_TP_IO*>(_pWork))
+            {
+                if (_pIoWork->pThunkData)
+                    _pIoWork->pThunkData->Free();
+
+                internal::Free(_pWork);
+            }
+        }
+
+        static void __fastcall TppIopCallbackEpilog(_TP_WORK* _pWork)
+        {
+
+        }
+
+        static void __fastcall TppIopCancelPendingCallbacks(_TP_WORK* _pWork)
+        {
+        }
+
+        static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppIopCleanupGroupMemberVFuncs()
+        {
+            static _TP_CLEANUP_GROUP_FUNCS TppWorkpCleanupGroupMemberVFuncs = { &TppIopFree, &TppWorkCallbackEpilog, 0, &TppIopCancelPendingCallbacks };
+            return &TppWorkpCleanupGroupMemberVFuncs;
+        }
+
+
+        static
+            NTSTATUS
+            __fastcall
+            TpSimpleTryPost(
+                _In_ PTP_SIMPLE_CALLBACK Callback,
+                _Inout_opt_ PVOID Context,
+                _In_opt_ PTP_CALLBACK_ENVIRON CallbackEnviron
+            )
+        {
+            auto Flags = CallbackEnviron ? CallbackEnviron->u.Flags : 0;
+
+            if (Callback == nullptr || (Flags & 0xFFFFFFFE) != 0)
+            {
+                internal::RaiseStatus(STATUS_INVALID_PARAMETER);
+                return STATUS_INVALID_PARAMETER;
+            }
+
+
+
+            const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+            auto pWork = (TP_Work*)HeapAlloc(ProcessHeap, HEAP_ZERO_MEMORY, sizeof(TP_WORK));
+
+            if (!pWork)
+                return STATUS_NO_MEMORY;
+
+            pWork->retaddr = _ReturnAddress();
+
+            auto Status = TppWorkInitialize(pWork, Context, CallbackEnviron, Flags, GetTppSimplepCleanupGroupMemberVFuncs(), GetTppSimplepTaskVFuncs());
+
+            do
+            {
+                if (Status < 0)
+                    break;
+
+                pWork->Callback = Callback;
+
+                if (CallbackEnviron)
+                    pWork->FinalizationCallback = CallbackEnviron->FinalizationCallback;
+
+                if (pWork->CleanupGroup)
+                    Fallback::TppCleanupGroupAddMember(pWork);
+
+                TppWorkPost(pWork);
+
+                return STATUS_SUCCESS;
+            } while (false);
+
+
+            if (pWork)
+                HeapFree(ProcessHeap, 0, pWork);
+
+
+            return Status;
+        }
+
+        static
+            bool
+            __fastcall
+            TppCleanupGroupMemberRelease(
+                _TP_WORK* CleanupGroupMember,
+                bool RaiseIfAlreadyRaised
+            )
+        {
+            auto orgFlags1 = InterlockedOr(&CleanupGroupMember->uFlags1, 0x10000);
+
+            if (RaiseIfAlreadyRaised && (orgFlags1 & 0x10000))
+            {
+                internal::RaiseStatus(STATUS_INVALID_PARAMETER);
+            }
+
+            return (orgFlags1 & 0x30000) == 0;
+        }
+
+        static
+            void
+            WINAPI
+            TpReleaseWork(
+                TP_Work* Work)
+        {
+            if (Work == nullptr || (Work->uFlags1 & 0x10000) || Work->VFuncs != Fallback::GetTppWorkpCleanupGroupMemberVFuncs())
+            {
+                internal::RaiseStatus(STATUS_INVALID_PARAMETER);
+                return;
+            }
+
+            if (TppCleanupGroupMemberRelease(Work, true))
+            {
+                Work->un58 = _ReturnAddress();
+
+                Work->Release();
+            }
+        }
+
+        static void __fastcall TppTimerpFree(_TP_WORK* Work)
+        {
+            if (Work)
+            {
+                const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+                HeapFree(ProcessHeap, 0, (_TP_TIMER*)Work);
+            }
+        }
+
+        static const _TP_CLEANUP_GROUP_FUNCS* __fastcall GetTppTimerpCleanupGroupMemberVFuncs()
+        {
+            static _TP_CLEANUP_GROUP_FUNCS TppTimerpCleanupGroupMemberVFuncs = { &TppTimerpFree };
+            return &TppTimerpCleanupGroupMemberVFuncs;
+        }
+
+
+        static void __fastcall TppTimerpExecuteCallback(PTP_CALLBACK_INSTANCE Instance, _TP_WORK* Work)
+        {
+            ((PTP_TIMER_CALLBACK)Work->Callback)(Instance, Work->Context, (PTP_TIMER)Work);
+        }
+
+        static const TaskVFuncs* __fastcall GetTppTimerpTaskVFuncs()
+        {
+            static TaskVFuncs TppTimerpTaskVFuncs = { &TppTimerpExecuteCallback };
+
+            return &TppTimerpTaskVFuncs;
+        }
+
+
+        static
+            NTSTATUS
+            __fastcall
+            TppTimerAlloc(
+                _TP_TIMER** ppTimer,
+                _In_ PTP_TIMER_CALLBACK Callback,
+                _Inout_opt_ PVOID Context,
+                _In_opt_ PTP_CALLBACK_ENVIRON CallbackEnviron,
+                DWORD Flags
+            )
+        {
+
+            *ppTimer = nullptr;
+
+
+            const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+            auto pTimer = (_TP_TIMER*)HeapAlloc(ProcessHeap, HEAP_ZERO_MEMORY, sizeof(_TP_TIMER));
+
+            if (!pTimer)
+                return STATUS_NO_MEMORY;
+
+            pTimer->retaddr = _ReturnAddress();
+
+            auto Status = TppWorkInitialize(pTimer, Context, CallbackEnviron, Flags | 0x1040000, GetTppTimerpCleanupGroupMemberVFuncs(), GetTppTimerpTaskVFuncs());
+
+            if (Status >= 0)
+            {
+                pTimer->Callback = Callback;
+
+                if (CallbackEnviron)
+                    pTimer->FinalizationCallback = CallbackEnviron->FinalizationCallback;
+
+                if (pTimer->CleanupGroup)
+                    TppCleanupGroupAddMember(pTimer);
+
+                *ppTimer = pTimer;
 
                 return Status;
             }
+
+            HeapFree(ProcessHeap, 0, pTimer);
+            return Status;
+
+        }
+
+
+        static
+            NTSTATUS
+            __fastcall
+            TpAllocTimer(
+                _TP_TIMER** ppTimer,
+                _In_ PTP_TIMER_CALLBACK Callback,
+                _Inout_opt_ PVOID Context,
+                _In_opt_ PTP_CALLBACK_ENVIRON CallbackEnviron
+            )
+        {
+            auto Flags = CallbackEnviron ? CallbackEnviron->u.Flags : 0;
+
+            if (ppTimer == nullptr || Callback == nullptr || (Flags & 0xFFFFFFFE))
+            {
+                return STATUS_INVALID_PARAMETER;
+            }
+
+            auto Status = TppTimerAlloc(ppTimer, Callback, Context, CallbackEnviron, Flags);
+
+            if (Status >= 0)
+            {
+                (*ppTimer)->retaddr = _ReturnAddress();
+            }
+
+            return Status;
+        }
 #endif
 
     }

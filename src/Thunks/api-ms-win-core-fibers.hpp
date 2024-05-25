@@ -6,127 +6,127 @@ namespace YY::Thunks::Fallback
     {
 
 #if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WS03)
-            //Vista的Fls数量只有128，所以我们将长度固定为128，模拟Vista
-            constexpr auto kMaxFlsIndexCount = 128;
+        //Vista的Fls数量只有128，所以我们将长度固定为128，模拟Vista
+        constexpr auto kMaxFlsIndexCount = 128;
 
-            struct FlsData
+        struct FlsData
+        {
+            FlsData* pNext;
+            FlsData* pPrev;
+
+            //此线程存储的数据
+            LPVOID lpFlsData;
+        };
+
+        struct FlsDataBlock
+        {
+            FlsData FlsDataArray[kMaxFlsIndexCount] = {};
+            DWORD uRef = 1;
+
+            void AddRef()
             {
-                FlsData* pNext;
-                FlsData* pPrev;
-
-                //此线程存储的数据
-                LPVOID lpFlsData;
-            };
-
-            struct FlsDataBlock
-            {
-                FlsData FlsDataArray[kMaxFlsIndexCount] = {};
-                DWORD uRef = 1;
-
-                void AddRef()
-                {
-                    InterlockedIncrement(&uRef);
-                }
-
-                void Release()
-                {
-                    if (InterlockedDecrement(&uRef) == 0)
-                    {
-                        internal::Delete(this);
-                    }
-                }
-            };
-
-            static thread_local FlsDataBlock* s_pFlsDataBlock;
-
-            struct FlsIndex
-            {
-                volatile LONG fFlags;
-                //FlsAlloc 传入的参数
-                volatile PFLS_CALLBACK_FUNCTION pfnCallback;
-                FlsData Root;
-
-                enum
-                {
-                    TlsUsedBitIndex = 0,
-                    DataLockBitIndex,
-                };
-            };
-            static FlsIndex s_FlsIndexArray[kMaxFlsIndexCount];
-            static DWORD s_FlsIndexArrayBitMap[kMaxFlsIndexCount / 32];
-            static_assert(sizeof(s_FlsIndexArrayBitMap) * 8 == kMaxFlsIndexCount, "");
-
-            static VOID NTAPI ThreadDetachCallback(
-                PVOID DllHandle,
-                DWORD Reason,
-                PVOID Reserved
-                )
-            {
-                if (DLL_THREAD_DETACH == Reason && s_pFlsDataBlock)
-                {
-                    //线程退出时我们需要调用Fls的 Callback
-                    for (DWORD i = 0; i != kMaxFlsIndexCount; ++i)
-                    {
-                        auto& _FlsData = s_pFlsDataBlock->FlsDataArray[i];
-                        if (/*_FlsData.pPrev == nullptr ||*/ _FlsData.lpFlsData == nullptr)
-                            continue;
-
-                        auto& _FlsIndex = s_FlsIndexArray[i];
-
-                        for (auto _fLastFlags = _FlsIndex.fFlags; _FlsIndex.pfnCallback;)
-                        {
-                            if ((_fLastFlags & (1 << FlsIndex::TlsUsedBitIndex)) == 0)
-                            {
-                                break;
-                            }
-
-                            if (_fLastFlags & (1 << FlsIndex::DataLockBitIndex))
-                            {
-                                YieldProcessor();
-                                _fLastFlags = _FlsIndex.fFlags;
-                                continue;
-                            }
-
-                            auto _Result = InterlockedCompareExchange(&_FlsIndex.fFlags, _fLastFlags | (1 << FlsIndex::DataLockBitIndex), _fLastFlags);
-                            if (_Result == _fLastFlags)
-                            {
-                                auto pPrev = _FlsData.pPrev;
-                                auto pNext = _FlsData.pNext;
-                                _FlsData.pNext = nullptr;
-                                _FlsData.pPrev = nullptr;
-                                if (pNext)
-                                {
-                                    pNext->pPrev = pPrev;
-                                }
-                                pPrev->pNext = pNext;
-
-                                auto _pfnCallback = _FlsIndex.pfnCallback;
-                                _interlockedbittestandreset(&_FlsIndex.fFlags, FlsIndex::DataLockBitIndex);
-
-                                __try
-                                {
-                                    if (_pfnCallback && _FlsData.lpFlsData)
-                                    {
-                                        _pfnCallback(_FlsData.lpFlsData);
-                                    }
-                                }
-                                __except (EXCEPTION_EXECUTE_HANDLER)
-                                {
-                                }
-                                s_pFlsDataBlock->Release();
-                                break;
-                            }
-
-                            _fLastFlags = _Result;
-                        }
-                    }
-
-                    s_pFlsDataBlock->Release();
-                }
+                InterlockedIncrement(&uRef);
             }
 
+            void Release()
+            {
+                if (InterlockedDecrement(&uRef) == 0)
+                {
+                    internal::Delete(this);
+                }
+            }
+        };
+
+        static thread_local FlsDataBlock* s_pFlsDataBlock;
+
+        struct FlsIndex
+        {
+            volatile LONG fFlags;
+            //FlsAlloc 传入的参数
+            volatile PFLS_CALLBACK_FUNCTION pfnCallback;
+            FlsData Root;
+
+            enum
+            {
+                TlsUsedBitIndex = 0,
+                DataLockBitIndex,
+            };
+        };
+        static FlsIndex s_FlsIndexArray[kMaxFlsIndexCount];
+        static DWORD s_FlsIndexArrayBitMap[kMaxFlsIndexCount / 32];
+        static_assert(sizeof(s_FlsIndexArrayBitMap) * 8 == kMaxFlsIndexCount, "");
+
+        static VOID NTAPI ThreadDetachCallback(
+            PVOID DllHandle,
+            DWORD Reason,
+            PVOID Reserved
+            )
+        {
+            if (DLL_THREAD_DETACH == Reason && s_pFlsDataBlock)
+            {
+                //线程退出时我们需要调用Fls的 Callback
+                for (DWORD i = 0; i != kMaxFlsIndexCount; ++i)
+                {
+                    auto& _FlsData = s_pFlsDataBlock->FlsDataArray[i];
+                    if (/*_FlsData.pPrev == nullptr ||*/ _FlsData.lpFlsData == nullptr)
+                        continue;
+
+                    auto& _FlsIndex = s_FlsIndexArray[i];
+
+                    for (auto _fLastFlags = _FlsIndex.fFlags; _FlsIndex.pfnCallback;)
+                    {
+                        if ((_fLastFlags & (1 << FlsIndex::TlsUsedBitIndex)) == 0)
+                        {
+                            break;
+                        }
+
+                        if (_fLastFlags & (1 << FlsIndex::DataLockBitIndex))
+                        {
+                            YieldProcessor();
+                            _fLastFlags = _FlsIndex.fFlags;
+                            continue;
+                        }
+
+                        auto _Result = InterlockedCompareExchange(&_FlsIndex.fFlags, _fLastFlags | (1 << FlsIndex::DataLockBitIndex), _fLastFlags);
+                        if (_Result == _fLastFlags)
+                        {
+                            auto pPrev = _FlsData.pPrev;
+                            auto pNext = _FlsData.pNext;
+                            _FlsData.pNext = nullptr;
+                            _FlsData.pPrev = nullptr;
+                            if (pNext)
+                            {
+                                pNext->pPrev = pPrev;
+                            }
+                            pPrev->pNext = pNext;
+
+                            auto _pfnCallback = _FlsIndex.pfnCallback;
+                            _interlockedbittestandreset(&_FlsIndex.fFlags, FlsIndex::DataLockBitIndex);
+
+                            __try
+                            {
+                                if (_pfnCallback && _FlsData.lpFlsData)
+                                {
+                                    _pfnCallback(_FlsData.lpFlsData);
+                                }
+                            }
+                            __except (EXCEPTION_EXECUTE_HANDLER)
+                            {
+                            }
+                            s_pFlsDataBlock->Release();
+                            break;
+                        }
+
+                        _fLastFlags = _Result;
+                    }
+                }
+
+                s_pFlsDataBlock->Release();
+            }
+        }
+
 #pragma section(".CRT$XLY",    long, read) // MS CRT Loader TLS Callback
-            extern "C" extern bool _tls_used;
+        extern "C" extern bool _tls_used;
 #endif
 
     }

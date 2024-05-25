@@ -34,29 +34,29 @@ namespace YY::Thunks::Fallback
 {
 
 #if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WIN6)
-            static void __cdecl UninitPageVirtualProtect();
+    static void __cdecl UninitPageVirtualProtect();
 
-            static char* volatile *GetPageVirtualProtect()
-            {
-                //注册 m_pPageVirtualProtect 的反初始化工作
-                __declspec(allocate(".YYThr$AAB")) static void* RunUninitPageVirtualProtect = reinterpret_cast<void*>(&Fallback::UninitPageVirtualProtect);
+    static char* volatile *GetPageVirtualProtect()
+    {
+        //注册 m_pPageVirtualProtect 的反初始化工作
+        __declspec(allocate(".YYThr$AAB")) static void* RunUninitPageVirtualProtect = reinterpret_cast<void*>(&Fallback::UninitPageVirtualProtect);
 
-                __foreinclude(RunUninitPageVirtualProtect);
+        __foreinclude(RunUninitPageVirtualProtect);
 
-                static char* volatile m_pPageVirtualProtect = nullptr;
+        static char* volatile m_pPageVirtualProtect = nullptr;
 
-                return &m_pPageVirtualProtect;
-            }
+        return &m_pPageVirtualProtect;
+    }
 
-            static void __cdecl UninitPageVirtualProtect()
-            {
-                auto pOrgPageVirtualProtect = (char*)InterlockedExchangePointer((PVOID volatile*)GetPageVirtualProtect(), INVALID_HANDLE_VALUE);
+    static void __cdecl UninitPageVirtualProtect()
+    {
+        auto pOrgPageVirtualProtect = (char*)InterlockedExchangePointer((PVOID volatile*)GetPageVirtualProtect(), INVALID_HANDLE_VALUE);
 
-                if (pOrgPageVirtualProtect != nullptr && pOrgPageVirtualProtect != (char*)INVALID_HANDLE_VALUE)
-                {
-                    VirtualFree(pOrgPageVirtualProtect, 0, MEM_RELEASE);
-                }
-            }
+        if (pOrgPageVirtualProtect != nullptr && pOrgPageVirtualProtect != (char*)INVALID_HANDLE_VALUE)
+        {
+            VirtualFree(pOrgPageVirtualProtect, 0, MEM_RELEASE);
+        }
+    }
 #endif
 
 } // namespace YY::Thunks::Fallback
