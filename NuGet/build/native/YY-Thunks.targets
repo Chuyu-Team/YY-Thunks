@@ -10,6 +10,7 @@
       <MinimumRequiredVersion Condition=" '%(Link.MinimumRequiredVersion)' == '' and '$(PlatformShortName)'=='x86' and '$(YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' ">5.01</MinimumRequiredVersion>
       <MinimumRequiredVersion Condition=" '%(Link.MinimumRequiredVersion)' == '' and '$(PlatformShortName)'=='x64' and '$(YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' ">5.02</MinimumRequiredVersion>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)objs\$(PlatformShortName)\$(YY_Thunks_File);%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol Condition="'$(ConfigurationType)'=='DynamicLibrary' and ('$(YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' or '$(YY_Thunks_File)'=='YY_Thunks_for_Win2K.obj')">DllMainCRTStartupForYY_Thunks</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
