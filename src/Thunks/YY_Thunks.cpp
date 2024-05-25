@@ -166,6 +166,10 @@ RtlCutoverTimeToSystemTime(
 	static decltype(_FUNCTION)* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept       \
 	{                                                                                          \
         __CHECK_UNIT_TEST_BOOL(_FUNCTION);                                                     \
+        __declspec(allocate(".YYThr$AAA")) static void* _CRT_CONCATENATE(pInit_ ,_FUNCTION) =  \
+              reinterpret_cast<void*>(&_CRT_CONCATENATE(try_get_, _FUNCTION));                 \
+        /*为了避免编译器将 YYThr$AAA 节优化掉*/                                                \
+        __foreinclude(_CRT_CONCATENATE(pInit_ ,_FUNCTION));                                    \
 		__declspec(allocate(".YYThu$AAB")) static void* _CRT_CONCATENATE(pFun_, _FUNCTION);    \
 		return reinterpret_cast<decltype(_FUNCTION)*>(try_get_function(                        \
 		&_CRT_CONCATENATE(pFun_ ,_FUNCTION),                                                   \
