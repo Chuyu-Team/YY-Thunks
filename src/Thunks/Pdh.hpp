@@ -4,10 +4,9 @@
 #pragma comment(lib, "Pdh.lib")
 #endif
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
         // Windows Vista [desktop apps only]
@@ -59,5 +58,5 @@ namespace YY
         }
 
 #endif
-    }
-}
+
+} // namespace YY::Thunks

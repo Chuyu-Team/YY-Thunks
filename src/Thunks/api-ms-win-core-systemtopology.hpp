@@ -1,9 +1,7 @@
-﻿
+﻿#include <winbase.h>
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXPSP2)
 
@@ -236,6 +234,4 @@ namespace YY
         }
 #endif
 
-    }//namespace Thunks
-
-} //namespace YY
+} // namespace YY::Thunks

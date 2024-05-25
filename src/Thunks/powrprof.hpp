@@ -2,10 +2,9 @@
 #include <powrprof.h>
 #endif
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_VISTA)
 
         // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
@@ -27,5 +26,5 @@ namespace YY
             return PlatformRoleDesktop;
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

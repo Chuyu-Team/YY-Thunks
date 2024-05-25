@@ -1,9 +1,8 @@
 ﻿
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
         //Minimum supported client    Windows 8 [desktop apps only]
@@ -626,5 +625,5 @@ namespace YY
             return GetProcessWorkingSetSize(_hProcess, _puMinimumWorkingSetSize, _puMaximumWorkingSetSize);
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

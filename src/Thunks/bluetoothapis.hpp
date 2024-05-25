@@ -2,10 +2,9 @@
 #include <bluetoothleapis.h>
 #endif
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
         // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
@@ -221,5 +220,5 @@ namespace YY
             return ERROR_NOT_SUPPORTED;
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

@@ -2,10 +2,9 @@
 #include <userenv.h>
 #endif
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
         // 最低受支持的客户端    Windows 8 [仅限桌面应用]
@@ -132,5 +131,5 @@ namespace YY
             return E_NOTIMPL;
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

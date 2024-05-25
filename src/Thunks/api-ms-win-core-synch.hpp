@@ -1,4 +1,4 @@
-﻿
+﻿#include <winbase.h>
 
 #ifdef YY_Thunks_Implemented
 
@@ -108,15 +108,11 @@ static_assert(sizeof(SYNCHRONIZATION_BARRIER) >= sizeof(YY_BARRIER), "必须跟�
 
 #endif
 
-
-
-namespace YY
-{
-    namespace Thunks
-    {
 #ifdef YY_Thunks_Implemented
-        namespace internal
-        {
+
+namespace YY::Thunks::internal
+{
+
             static HANDLE __fastcall GetGlobalKeyedEventHandle()
             {
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
@@ -1238,9 +1234,13 @@ namespace YY
 
             }
 #endif
-        }
+
+} // namespace YY::Thunks::internal
+
 #endif
 
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -2866,6 +2866,5 @@ namespace YY
             return SetWaitableTimer(_hTimer, _lpDueTime, _iPeriod, _pfnCompletionRoutine, _lpArgToCompletionRoutine, _pWakeContext != nullptr);
         }
 #endif
-    }//namespace Thunks
 
-} //namespace YY
+} // namespace YY::Thunks

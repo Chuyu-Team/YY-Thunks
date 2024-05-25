@@ -1,14 +1,12 @@
-﻿
+﻿#include <winbase.h>
+
 #define PATHCCH_NO_DEPRECATE
 #include <pathcch.h>
 
-namespace YY
+namespace YY::Thunks::internal
 {
-    namespace Thunks
-    {
+
 #ifdef YY_Thunks_Implemented
-        namespace internal
-        {
             static bool __fastcall IsHexDigitWorker(wchar_t ch)
             {
                 return (ch >= L'0' && ch <= L'9') || (ch >= L'A' && ch <= L'F') || (ch >= L'a' && ch <= L'f');
@@ -140,8 +138,12 @@ namespace YY
                 return szPath[0] != L'\\'
                     && (((L'A' <= szPath[0] && szPath[0] <= L'Z') || (L'a' <= szPath[0] && szPath[0] <= L'z')) && szPath[1] == L':') == false;
             }
-        }
 #endif
+
+} // YY::Thunks::internal
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
@@ -1758,5 +1760,4 @@ namespace YY
         }
 #endif
 
-    }
-}
+} // namespace YY::Thunks

@@ -1,9 +1,8 @@
-﻿
+﻿#include <realtimeapiset.h>
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN7) && defined(YY_Thunks_Implemented)
         static VOID WINAPI QueryInterruptTimeDownlevel(
             _Out_ PULONGLONG _puInterruptTime
@@ -293,6 +292,5 @@ namespace YY
             }
         }
 #endif
-    }//namespace Thunks
 
-} //namespace YY
+} // namespace YY::Thunks

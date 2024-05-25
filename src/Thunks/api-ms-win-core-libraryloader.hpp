@@ -1,11 +1,9 @@
-﻿
-namespace YY
+﻿#include <libloaderapi.h>
+
+namespace YY::Thunks::internal
 {
-    namespace Thunks
-    {
+
 #ifdef YY_Thunks_Implemented
-        namespace internal
-        {
             /*LSTATUS __fastcall BasepGetModuleHandleExParameterValidation(
                 _In_ DWORD dwFlags,
                 _In_opt_ LPCSTR lpModuleName,
@@ -32,9 +30,12 @@ namespace YY
                     SetLastError(ERROR_INVALID_PARAMETER);                        \
                     return FALSE;                                                 \
                 }
-        }
 #endif
 
+} // namespace YY::Thunks::internal
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
 
@@ -841,5 +842,5 @@ namespace YY
             }
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

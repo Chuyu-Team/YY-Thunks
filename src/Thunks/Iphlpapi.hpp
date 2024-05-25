@@ -7,10 +7,9 @@
 #pragma comment(lib, "Iphlpapi.lib")
 #endif
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if defined(YY_Thunks_Implemented)
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -733,5 +732,5 @@ namespace YY
             return ERROR_SUCCESS;
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

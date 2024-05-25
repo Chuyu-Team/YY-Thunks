@@ -1,9 +1,7 @@
 ﻿
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
 
@@ -29,5 +27,4 @@ namespace YY
             return 0;
         }
 #endif
-    }
-}
+} // namespace YY::Thunks

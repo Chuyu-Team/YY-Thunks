@@ -1,10 +1,8 @@
 ﻿
 #include <strsafe.h>
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -352,5 +350,5 @@ namespace YY
             return _pfnCompareStringW(Locale, dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2);
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

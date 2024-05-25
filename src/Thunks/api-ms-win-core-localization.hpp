@@ -1,10 +1,9 @@
-﻿namespace YY::Thunks
+﻿namespace YY::Thunks::internal
 {
-#if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WIN6)
-    namespace internal
+    namespace
     {
-        namespace
-        {
+
+#if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WIN6)
             //逆向来自微软的Nlsdl.dll，获取一个区域的 Fallback区域
             static LCID __fastcall DownlevelGetFallbackLocaleLCID(LCID Locale)
             {
@@ -880,9 +879,13 @@
                 ++Count;
                 return true;
             }
-        }
-    }
 #endif
+
+    }
+} // YY::Thunks::internal
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -2537,4 +2540,5 @@
 
     }
 #endif
-} //namespace YY
+
+} // namespace YY::Thunks

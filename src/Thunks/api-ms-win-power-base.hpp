@@ -6,10 +6,9 @@
 #pragma comment(lib, "PowrProf.lib")
 #endif
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN8) && defined(YY_Thunks_Implemented)
 
         static
@@ -165,5 +164,5 @@ namespace YY
             return PowerUnregisterSuspendResumeNotificationDownlevel(_hRegistrationHandle);
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

@@ -1,4 +1,6 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+﻿#include <winbase.h>
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
 #include <evntprov.h>
 #endif
 
@@ -6,10 +8,9 @@
 #include <evntrace.h>
 #endif
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
         // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
@@ -266,5 +267,5 @@ namespace YY
             return ERROR_NOT_SUPPORTED;
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

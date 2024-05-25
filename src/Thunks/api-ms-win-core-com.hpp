@@ -4,10 +4,8 @@
 #pragma comment(lib, "ole32.lib")
 #endif
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
@@ -74,5 +72,6 @@ namespace YY
             return S_OK;
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks
+

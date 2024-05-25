@@ -1,10 +1,9 @@
 ﻿
 #include <roerrorapi.h>
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
         //Windows 8 [desktop apps | UWP apps]
@@ -53,5 +52,5 @@ namespace YY
             return FALSE;
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

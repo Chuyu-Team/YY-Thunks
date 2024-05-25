@@ -1,9 +1,7 @@
 ﻿#include <winstring.h>
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
@@ -234,5 +232,4 @@ namespace YY
         }
 #endif
 
-    }
-}
+} // namespace YY::Thunks

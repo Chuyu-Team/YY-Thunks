@@ -1,9 +1,8 @@
 ﻿#include <processtopologyapi.h>
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
         //Minimum supported client    Windows 7 [desktop apps only]
@@ -41,5 +40,5 @@ namespace YY
             return TRUE;
         }
 #endif
-    } // namespace Thunks
-} // namespace YY
+
+} // namespace YY::Thunks

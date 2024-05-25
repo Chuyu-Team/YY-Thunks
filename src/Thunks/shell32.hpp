@@ -2,13 +2,11 @@
 
 #include <Shlobj.h>
 
-namespace YY
+namespace YY::Thunks::internal
 {
-    namespace Thunks
-    {
+
 #ifdef YY_Thunks_Implemented
-        namespace internal
-        {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
             struct KnownFoldersIdKey
             {
@@ -445,10 +443,13 @@ namespace YY
             }
 
 #endif
-        }
+
 #endif
 
+} // namespace YY::Thunks::internal
 
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -878,6 +879,4 @@ namespace YY
         }
 #endif
 
-    }//namespace Thunks
-
-} //namespace YY
+} // namespace YY::Thunks

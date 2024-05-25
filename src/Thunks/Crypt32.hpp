@@ -1,9 +1,8 @@
 ﻿#include <dpapi.h>
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
         // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
@@ -52,5 +51,5 @@ namespace YY
             return TRUE;
         }
 #endif
-    } // namespace Thunks
-} // namespace YY
+
+} // namespace YY::Thunks

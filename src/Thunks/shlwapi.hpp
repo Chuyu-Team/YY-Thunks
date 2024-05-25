@@ -1,14 +1,11 @@
 ﻿
 #include <Shlwapi.h>
 
-namespace YY
+namespace YY::Thunks::internal
 {
-    namespace Thunks
-    {
 
 #ifdef YY_Thunks_Implemented
-        namespace internal
-        {
+
             template<class Char>
             static
             _Success_(return)
@@ -119,9 +116,12 @@ namespace YY
 
                 return FALSE;
             }
-        }
 #endif
 
+}
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
 
@@ -173,5 +173,5 @@ namespace YY
             return internal::StrToInt64ExT(pszString, dwFlags, pllRet);
         }
 #endif //YY_Thunks_Support_Version < NTDDI_WINXP
-    }
-}
+
+} // namespace YY::Thunks

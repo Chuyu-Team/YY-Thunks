@@ -1,7 +1,8 @@
-﻿namespace YY
+﻿#include <winbase.h>
+
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
 
         // 最低受支持的客户端    Windows 7 SP1[桌面应用 | UWP 应用]
@@ -343,5 +344,5 @@
             return TRUE;
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

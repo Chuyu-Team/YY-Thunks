@@ -185,13 +185,12 @@ struct _TP_CALLBACK_INSTANCE
 #endif
 
 
-namespace YY::Thunks
+namespace YY::Thunks::Fallback
 {
-#if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WIN6)
-    namespace Fallback
+    namespace
     {
-        namespace
-        {
+
+#if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WIN6)
             template<typename Type>
             struct TP_BASE : public Type
             {
@@ -1105,9 +1104,13 @@ namespace YY::Thunks
 
                 return Status;
             }
-        }
-    }
 #endif
+
+    }
+} // namespace YY::Thunks::Fallback
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -2339,4 +2342,5 @@ namespace YY::Thunks
         return Fallback::uAvailableWorkerCount > 0;
     }
 #endif
-}
+
+} // namespace YY::Thunks

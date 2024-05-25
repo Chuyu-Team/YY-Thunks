@@ -3,10 +3,9 @@
 // 忽略deprecated，因为是Thunks项目肯定是需要调用老接口的。
 #pragma warning(disable:4995)
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
         // 最低受支持的客户端    Windows Vista [仅限桌面应用]
@@ -260,5 +259,5 @@ namespace YY
             return S_OK;
         }
 #endif
-    } // namespace Thunks
-} // namespace YY
+
+} // namespace YY::Thunks

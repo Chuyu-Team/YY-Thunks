@@ -2,9 +2,11 @@
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN7) && defined(YY_Thunks_Implemented)
     namespace
     {
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7) && defined(YY_Thunks_Implemented)
+
         struct PowerRequestTaskItem : public internal::TaskItem
         {
             DWORD RequestTypeCount[4];
@@ -200,9 +202,13 @@ namespace YY::Thunks
             static PowerRequestInfo g_PowerRequestCache;
             return &g_PowerRequestCache;
         }
-    }
 #endif
 
+    }
+}
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
@@ -434,4 +440,5 @@ namespace YY::Thunks
         return TRUE;
     }
 #endif
+
 } //namespace YY

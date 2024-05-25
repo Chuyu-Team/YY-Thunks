@@ -1,13 +1,10 @@
-﻿
+﻿#include <winuser.h>
 
 
-namespace YY
+namespace YY::Thunks::internal
 {
-    namespace Thunks
-    {
+
 #ifdef YY_Thunks_Implemented
-        namespace internal
-        {
             static
             UINT
             __fastcall
@@ -30,9 +27,12 @@ namespace YY
 
                 return nDPICache = nDpiX;
             }
-        }
 #endif
 
+} // namespace YY::Thunks::internal
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
 
@@ -698,6 +698,5 @@ namespace YY
             const_cast<BLENDFUNCTION*>(pULWInfo->pblend), pULWInfo->dwFlags);
     }
 #endif
-    }//namespace Thunks
 
-} //namespace YY
+} // namespace YY::Thunks

@@ -1,9 +1,8 @@
-﻿
+﻿#include <winbase.h>
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #ifdef YY_Thunks_Implemented
 
         enum _FILE_ID_TYPE_win7
@@ -1328,6 +1327,5 @@ namespace YY
             return FindFirstFileA(lpFileName, (WIN32_FIND_DATAA*)lpFindFileData);
         }
 #endif
-    }//namespace Thunks
 
-} //namespace YY
+} // namespace YY::Thunks

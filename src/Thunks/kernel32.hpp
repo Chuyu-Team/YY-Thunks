@@ -1,9 +1,8 @@
 ﻿
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WINXP)
 
         //Minimum supported client    Windows Vista
@@ -495,5 +494,5 @@ namespace YY
             return DEP_SYSTEM_POLICY_TYPE::DEPPolicyAlwaysOff;
         }
 #endif // (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
-    }
-}
+
+} // namespace YY::Thunks

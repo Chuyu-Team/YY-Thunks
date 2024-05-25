@@ -1,4 +1,6 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+﻿#include <winbase.h>
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
 #include <processthreadsapi.h>
 #endif
 
@@ -28,13 +30,10 @@ typedef struct _PROC_THREAD_ATTRIBUTE_LIST
 
 #endif
 
-namespace YY
+namespace YY::Thunks::Fallback
 {
-    namespace Thunks
-    {
+
 #if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WIN6)
-        namespace Fallback
-        {
             static void __cdecl UninitPageVirtualProtect();
 
             static char* volatile *GetPageVirtualProtect()
@@ -58,10 +57,12 @@ namespace YY
                     VirtualFree(pOrgPageVirtualProtect, 0, MEM_RELEASE);
                 }
             }
-        }
-
 #endif
 
+} // namespace YY::Thunks::Fallback
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03)
 
@@ -1169,6 +1170,5 @@ namespace YY
             return TRUE;
         }
 #endif
-    }//namespace Thunks
 
-} //namespace YY
+} // namespace YY::Thunks

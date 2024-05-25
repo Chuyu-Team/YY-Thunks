@@ -11,9 +11,10 @@
 
 namespace YY::Thunks
 {
-#if defined(YY_Thunks_Implemented) && YY_Thunks_Support_Version < NTDDI_WIN6
     namespace
     {
+
+#if defined(YY_Thunks_Implemented) && YY_Thunks_Support_Version < NTDDI_WIN6
         struct BCryptHash;
         struct BCryptAlgorithm;
         struct BCryptKey;
@@ -1618,8 +1619,13 @@ namespace YY::Thunks
 
             return reinterpret_cast<BCryptObject*>(_pSrc)->IsKey();
         }
-    }
 #endif
+
+    }
+} // namespace YY::Thunks
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -2474,4 +2480,4 @@ namespace YY::Thunks
             _fFlags);
     }
 #endif
-}
+} // namespace YY::Thunks

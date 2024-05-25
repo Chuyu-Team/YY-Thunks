@@ -1,12 +1,11 @@
 ﻿
 
-namespace YY::Thunks
+namespace YY::Thunks::Fallback
 {
-#if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WS03)
-    namespace Fallback
+    namespace
     {
-        namespace
-        {
+
+#if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WS03)
             //Vista的Fls数量只有128，所以我们将长度固定为128，模拟Vista
             constexpr auto kMaxFlsIndexCount = 128;
 
@@ -128,10 +127,13 @@ namespace YY::Thunks
 
 #pragma section(".CRT$XLY",    long, read) // MS CRT Loader TLS Callback
             extern "C" extern bool _tls_used;
-        }
-    }
 #endif
 
+    }
+} // namespace YY::Thunks::Fallback
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WS03)
 
@@ -429,4 +431,5 @@ namespace YY::Thunks
         return ConvertThreadToFiber(lpParameter);
     }
 #endif
-}
+
+} // namespace YY::Thunks

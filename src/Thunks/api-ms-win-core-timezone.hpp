@@ -1,10 +1,9 @@
 ﻿
 #include <timezoneapi.h>
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
         //Minimum supported client    Windows Vista [desktop apps | UWP apps]
@@ -477,5 +476,5 @@ namespace YY
             return _lStatus;
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

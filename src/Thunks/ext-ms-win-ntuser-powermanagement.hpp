@@ -2,10 +2,9 @@
 #include <winuser.h>
 #endif
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
+
 #ifndef CONST_DEVICE_NOTIFY_WINDOW_HANDLE
 #define CONST_DEVICE_NOTIFY_WINDOW_HANDLE (HPOWERNOTIFY)0x1001
 #endif
@@ -157,5 +156,5 @@ namespace YY
             return FALSE;
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

@@ -1,9 +1,7 @@
 ﻿#include <winuser.h>
 
-namespace YY
+namespace YY::Thunks
 {
-    namespace Thunks
-    {
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
         // Windows 8 [仅限桌面应用]，Windows Server 2012 [仅限桌面应用]
@@ -29,5 +27,5 @@ namespace YY
             return SetTimer(_hWnd, _nIDEvent, _uElapse, _lpTimerFunc);
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks

@@ -4,13 +4,12 @@
 #pragma comment(lib, "winhttp.lib")
 #endif
 
-namespace YY::Thunks
+namespace YY::Thunks::Fallback
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN8) && defined(YY_Thunks_Implemented)
-    namespace Fallback
+    namespace
     {
-        namespace
-        {
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8) && defined(YY_Thunks_Implemented)
             struct WinHttpProxyResolver
             {
                 struct Request
@@ -356,9 +355,13 @@ namespace YY::Thunks
                     return true;
                 }
             };
-        }
-    }
 #endif
+
+    }
+} // namespace YY::Thunks::Fallback
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
@@ -677,4 +680,5 @@ namespace YY::Thunks
         return;
     }
 #endif
-}
+
+} // namespace YY::Thunks

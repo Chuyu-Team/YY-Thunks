@@ -1,13 +1,11 @@
 ﻿
 #include <setupapi.h>
 
-namespace YY
+namespace YY::Thunks::internal
 {
-    namespace Thunks
-    {
+
 #ifdef YY_Thunks_Implemented
-        namespace internal
-        {
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
             #pragma comment(lib, "Setupapi.lib")
@@ -107,8 +105,12 @@ namespace YY
                 return Property + 0x11;
             };
 #endif
-        }
 #endif
+
+}
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
@@ -401,6 +403,4 @@ namespace YY
         }
 #endif
 
-
-    }
-}
+} // namespace YY::Thunks

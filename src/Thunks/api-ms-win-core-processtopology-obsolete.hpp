@@ -1,11 +1,8 @@
 ﻿
-namespace YY
+namespace YY::Thunks::Downlevel
 {
-    namespace Thunks
-    {
+
 #ifdef YY_Thunks_Implemented
-        namespace Downlevel
-        {
             //我们Windows 7以后才引入了组的概念，因此我们可以统一的假定 只有一组，并且不支持CPU热插拔。
             static
             DWORD
@@ -25,8 +22,12 @@ namespace YY
 
                 return 0;
             }
-        }
 #endif
+
+} // namespace YY::Thunks::Downlevel
+
+namespace YY::Thunks
+{
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
@@ -120,5 +121,5 @@ namespace YY
             return 1;
         }
 #endif
-    }
-}
+
+} // namespace YY::Thunks
