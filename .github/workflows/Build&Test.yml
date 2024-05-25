@@ -111,11 +111,8 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       shell: pwsh
       run: |
-          # MSBuild 目录更新到 Path
-          $Env:Path="${{env.MSBuildBinPath}};${{env.LatestVisualStudioRoot}}\Common7\IDE\CommonExtensions\Microsoft\TestWindow;" + $Env:Path
-          
-          # 设置 PROCDUMP_PATH 目录
-          $Env:PROCDUMP_PATH="$Env:GITHUB_WORKSPACE\Bin"
+          # MSBuild、PROCDUMP_PATH目录更新到 Path
+          $Env:Path="$Env:GITHUB_WORKSPACE\Bin;${{env.MSBuildBinPath}};${{env.LatestVisualStudioRoot}}\Common7\IDE\CommonExtensions\Microsoft\TestWindow;" + $Env:Path
 
           # 编译单元测试项目
           &msbuild src\YY-Thunks.UnitTest\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=Win32;SolutionDir=$Env:GITHUB_WORKSPACE\src\\"

@@ -7,8 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YY-Thunks.UnitTest", "YY-Th
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D2258BCB-A66B-4928-9CF9-23D705B72DBD}"
 	ProjectSection(SolutionItems) = preProject
-		..\ReadMe.md = ..\ReadMe.md
-		..\Readme.ocs.md = ..\Readme.ocs.md
+		..\Readme.md = ..\Readme.md
+		..\Readme.osc.md = ..\Readme.osc.md
 		..\ThunksList.md = ..\ThunksList.md
 	EndProjectSection
 EndProject
