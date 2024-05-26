@@ -503,6 +503,8 @@
 | SHGetNameFromIDList                        | 不存在时，调用IShellItem。
 | SHCreateShellItem                          | 不存在时，调用IShellItem。
 | SHCreateItemFromParsingName                | 不存在时，调用SHParseDisplayName。
+| Shell_NotifyIconGetRect                    | 不存在时，调用SendMessageW（可能不适用于Vista系统）。
+| SHGetStockIconInfo                         | 不存在时，调用LoadImageW。
 
 ## shlwapi.dll
 | 函数                                       | Fallback

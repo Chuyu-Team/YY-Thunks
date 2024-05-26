@@ -252,6 +252,7 @@ static HMODULE __fastcall try_load_library_from_system_directory(wchar_t const* 
 
 
 #define USING_UNSAFE_LOAD 0x00000001
+#define LOAD_AS_DATA_FILE 0x00000002
 
 template<int Flags>
 static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name) noexcept
@@ -270,7 +271,20 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
 	// If we haven't yet cached the module handle, try to load the library.  If
 	// this fails, cache the sentinel handle value INVALID_HANDLE_VALUE so that
 	// we don't attempt to load the module again:
-	HMODULE const new_handle = (Flags & USING_UNSAFE_LOAD) ? LoadLibraryW(module_name) : try_load_library_from_system_directory(module_name);
+    HMODULE new_handle = NULL;
+    if constexpr (Flags & LOAD_AS_DATA_FILE)
+    {
+        new_handle = LoadLibraryExW(module_name, NULL, LOAD_LIBRARY_AS_DATAFILE);
+    }
+    else if constexpr (Flags & USING_UNSAFE_LOAD)
+    {
+        new_handle = LoadLibraryW(module_name);
+    }
+    else
+    {
+        new_handle = try_load_library_from_system_directory(module_name);
+    }
+    
 	if (!new_handle)
 	{
 		if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(pModule, INVALID_HANDLE_VALUE))

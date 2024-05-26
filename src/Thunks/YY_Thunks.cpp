@@ -35,6 +35,7 @@
     _APPLY(netapi32,                                     "netapi32"                           , 0                 ) \
     _APPLY(powrprof,                                     "powrprof"                           , 0                 ) \
     _APPLY(winhttp,                                      "winhttp"                            , 0                 ) \
+    _APPLY(zipfldr,                                      "zipfldr"                            , LOAD_AS_DATA_FILE ) \
     _APPLY(api_ms_win_core_realtime_l1_1_1,              "api-ms-win-core-realtime-l1-1-1"    , 0                 ) \
     _APPLY(api_ms_win_core_winrt_l1_1_0,                 "api-ms-win-core-winrt-l1-1-0"       , 0                 ) \
     _APPLY(api_ms_win_core_winrt_string_l1_1_0,          "api-ms-win-core-winrt-string-l1-1-0", 0                 ) \
@@ -72,6 +73,7 @@
     _APPLY(RtlDllShutdownInProgress,                     ntdll                                         ) \
     _APPLY(RtlCutoverTimeToSystemTime,                   ntdll                                         ) \
     _APPLY(NtCancelIoFile,                               ntdll                                         ) \
+    _APPLY(NtWow64ReadVirtualMemory64,                   ntdll                                         ) \
     _APPLY(AddDllDirectory,                              kernel32                                      ) \
     _APPLY(SystemFunction036,                            advapi32                                      )
 

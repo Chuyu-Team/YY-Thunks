@@ -311,6 +311,9 @@
     <ClInclude Include="..\Thunks\DllMainCRTStartup.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
+    <ClInclude Include="..\Thunks\ext-ms-win-shell-shell32.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\def\x86\PSAPI2Kernel32.def">

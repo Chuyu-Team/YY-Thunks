@@ -236,6 +236,7 @@
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-powermanagement.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-sysparams-ext.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-window.hpp" />
+    <ClInclude Include="..\Thunks\ext-ms-win-shell-shell32.hpp" />
     <ClInclude Include="..\Thunks\Iphlpapi.hpp" />
     <ClInclude Include="..\Thunks\mfplat.hpp" />
     <ClInclude Include="..\Thunks\netapi32.hpp" />
