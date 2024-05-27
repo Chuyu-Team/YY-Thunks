@@ -165,19 +165,7 @@ RtlCutoverTimeToSystemTime(
 #define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                 \
     __APPLY_UNIT_TEST_BOOL(_FUNCTION);                                                         \
     EXTERN_C _RETURN_ _CONVENTION_ _FUNCTION(__VA_ARGS__);                                     \
-	static decltype(_FUNCTION)* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept       \
-	{                                                                                          \
-        __CHECK_UNIT_TEST_BOOL(_FUNCTION);                                                     \
-        __declspec(allocate(".YYThr$AAA")) static void* _CRT_CONCATENATE(pInit_ ,_FUNCTION) =  \
-              reinterpret_cast<void*>(&_CRT_CONCATENATE(try_get_, _FUNCTION));                 \
-        /*为了避免编译器将 YYThr$AAA 节优化掉*/                                                \
-        __foreinclude(_CRT_CONCATENATE(pInit_ ,_FUNCTION));                                    \
-		__declspec(allocate(".YYThu$AAB")) static void* _CRT_CONCATENATE(pFun_, _FUNCTION);    \
-		return reinterpret_cast<decltype(_FUNCTION)*>(try_get_function(                        \
-		&_CRT_CONCATENATE(pFun_ ,_FUNCTION),                                                   \
-		_CRT_STRINGIZE(_FUNCTION),                                                             \
-        &_CRT_CONCATENATE(try_get_module_, _MODULE)));                                         \
-	}                                                                                          \
+	static decltype(_FUNCTION)* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept;      \
 	__if_not_exists(_CRT_CONCATENATE(try_get_, _FUNCTION))
 
 
@@ -770,9 +758,30 @@ namespace YY::Thunks::internal
 
 //导入实际的实现
 #define YY_Thunks_Implemented
-#define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)     \
-    _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION, _SIZE);                                     \
-    _YY_THUNKS_DEFINE_RUST_RAW_DYLIB_IAT_SYMBOL(_FUNCTION, _SIZE);                 \
+#define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                 \
+    static decltype(_FUNCTION)* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept       \
+	{                                                                                          \
+        __CHECK_UNIT_TEST_BOOL(_FUNCTION);                                                     \
+        __declspec(allocate(".YYThr$AAA")) static void* _CRT_CONCATENATE(pInit_ ,_FUNCTION) =  \
+              reinterpret_cast<void*>(&_CRT_CONCATENATE(try_get_, _FUNCTION));                 \
+        /*为了避免编译器将 YYThr$AAA 节优化掉*/                                                \
+        __foreinclude(_CRT_CONCATENATE(pInit_ ,_FUNCTION));                                    \
+		__declspec(allocate(".YYThu$AAB")) static void* _CRT_CONCATENATE(pFun_, _FUNCTION);    \
+        static const ProcInfo _ProcInfo =                                                      \
+        {                                                                                      \
+            _CRT_STRINGIZE(_FUNCTION),                                                         \
+            &_CRT_CONCATENATE(try_get_module_, _MODULE),                                       \
+__if_exists(YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION))                       \
+{                                                                                              \
+            &YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION)                       \
+}                                                                                              \
+        };                                                                                     \
+		return reinterpret_cast<decltype(_FUNCTION)*>(try_get_function(                        \
+		&_CRT_CONCATENATE(pFun_ ,_FUNCTION),                                                   \
+		_ProcInfo));                                                                           \
+	}                                                                                          \
+    _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION, _SIZE);                                                 \
+    _YY_THUNKS_DEFINE_RUST_RAW_DYLIB_IAT_SYMBOL(_FUNCTION, _SIZE);                             \
     EXTERN_C _RETURN_ _CONVENTION_ _FUNCTION(__VA_ARGS__)
 
 #include "YY_Thunks_List.hpp"

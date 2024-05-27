@@ -565,7 +565,7 @@
 ## uxtheme.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
-| DrawThemeTextEx                            | 不存在时，调用DrawThemeText。
+| DrawThemeTextEx                            | 不存在时，尝试获取非导出DrawThemeTextEx。如果任然获取失败则调用DrawThemeText。
 | GetThemeTransitionDuration                 | 不存在时，返回E_NOTIMPL。
 | SetWindowThemeAttribute                    | 不存在时，返回E_NOTIMPL。
 

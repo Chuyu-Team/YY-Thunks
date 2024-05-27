@@ -309,7 +309,7 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
 }
 
 #define _APPLY(_MODULE, _NAME, _FLAGS)                                                         \
-    static volatile HMODULE __fastcall _CRT_CONCATENATE(try_get_module_, _MODULE)() noexcept   \
+    static HMODULE __fastcall _CRT_CONCATENATE(try_get_module_, _MODULE)() noexcept            \
     {                                                                                          \
         __declspec(allocate(".YYThu$AAA")) static volatile HMODULE hModule;                    \
         return try_get_module<_FLAGS>(&hModule, _CRT_CONCATENATE(module_name_, _MODULE));      \
@@ -317,20 +317,31 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
 _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)
 #undef _APPLY
 
-typedef volatile HMODULE (__fastcall* try_get_module_fun)();
+typedef HMODULE (__fastcall* try_get_module_fun)();
+typedef void*(__fastcall* try_get_proc_fallback_fun)();
+
+struct ProcInfo
+{
+    char const* const szProcName;
+    try_get_module_fun pfnGetModule;
+    try_get_proc_fallback_fun pfnGetProcFallback;
+};
 
 static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
-	try_get_module_fun get_module,
-	char      const* const name
-) noexcept
+	const ProcInfo& _ProcInfo
+    ) noexcept
 {
-	HMODULE const module_handle = get_module();
+	HMODULE const module_handle = _ProcInfo.pfnGetModule();
 	if (!module_handle)
 	{
 		return nullptr;
 	}
 
-	return reinterpret_cast<void*>(GetProcAddress(module_handle, name));
+	auto _pProc = reinterpret_cast<void*>(GetProcAddress(module_handle, _ProcInfo.szProcName));
+    if (_pProc || _ProcInfo.pfnGetProcFallback == nullptr)
+        return _pProc;
+
+    return _ProcInfo.pfnGetProcFallback();
 }
 
 
@@ -342,9 +353,8 @@ static __forceinline void* __cdecl invalid_function_sentinel() noexcept
 
 static void* __fastcall try_get_function(
 	void**      ppFunAddress,
-	char      const* const name,
-	try_get_module_fun get_module
-) noexcept
+    const ProcInfo& _ProcInfo
+    ) noexcept
 {
 	// First check to see if we've cached the function pointer:
 	{
@@ -365,7 +375,7 @@ static void* __fastcall try_get_function(
 	// If we haven't yet cached the function pointer, try to import it from any
 	// of the modules in which it might be defined.  If this fails, cache the
 	// sentinel pointer so that we don't attempt to load this function again:
-	void* const new_fp = try_get_proc_address_from_first_available_module(get_module, name);
+	void* const new_fp = try_get_proc_address_from_first_available_module(_ProcInfo);
 	if (!new_fp)
 	{
 		void* const cached_fp = __crt_fast_decode_pointer(
@@ -406,15 +416,23 @@ static void* __fastcall try_get_function(
     static _CRT_CONCATENATE(_FUNCTION, _pft) __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept \
     {                                                                                                 \
         __CHECK_UNIT_TEST_BOOL(_FUNCTION);                                                            \
-        __declspec(allocate(".YYThr$AAA")) static void* _CRT_CONCATENATE(pInit_ ,_FUNCTION) =         \
+        __declspec(allocate(".YYThr$AAA")) static void* const _CRT_CONCATENATE(pInit_ ,_FUNCTION) =   \
               reinterpret_cast<void*>(&_CRT_CONCATENATE(try_get_, _FUNCTION));                        \
         /*为了避免编译器将 YYThr$AAA 节优化掉*/                                                       \
         __foreinclude(_CRT_CONCATENATE(pInit_ ,_FUNCTION));                                           \
         __declspec(allocate(".YYThu$AAB")) static void* _CRT_CONCATENATE( pFun_ ,_FUNCTION);          \
+        static const ProcInfo _ProcInfo =                                                             \
+        {                                                                                             \
+            _CRT_STRINGIZE(_FUNCTION),                                                                \
+            &_CRT_CONCATENATE(try_get_module_, _MODULE),                                              \
+__if_exists(YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION))                              \
+{                                                                                                     \
+            &YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION)                              \
+}                                                                                                     \
+        };                                                                                            \
         return reinterpret_cast<_CRT_CONCATENATE(_FUNCTION, _pft)>(try_get_function(                  \
             &_CRT_CONCATENATE(pFun_ ,_FUNCTION),                                                      \
-            _CRT_STRINGIZE(_FUNCTION),                                                                \
-            &_CRT_CONCATENATE(try_get_module_, _MODULE)));                                            \
+            _ProcInfo));                                                                              \
     }
 	_YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)
 #undef _APPLY
