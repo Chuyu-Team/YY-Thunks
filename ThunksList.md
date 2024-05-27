@@ -426,6 +426,7 @@
 | GetTimeZoneInformationForYear              | 不存在时，直接读取`Time Zones`注册表。
 | SetProcessDEPPolicy                        | 不存在时，调用NtSetInformationProcess。
 | GetSystemDEPPolicy                         | 不存在时，返回总是关闭。
+| DisableThreadLibraryCalls                  | 不存在时，始终返回成功。
 
 ## mfplat.dll
 | 函数                                       | Fallback
