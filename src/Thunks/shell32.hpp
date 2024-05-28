@@ -1124,4 +1124,80 @@ namespace YY::Thunks
 		return _hr;
 	}
 #endif
+
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+        //Minimum supported client	Windows Vista
+        //Minimum supported server	Windows Server 2008
+        __DEFINE_THUNK(
+            shell32,
+            12,
+            HRESULT,
+            STDAPICALLTYPE,
+            SHGetPropertyStoreForWindow,
+            _In_  HWND   hwnd,
+            _In_  REFIID riid,
+            _Inout_ void** ppv
+        )
+        {
+            if (auto const pSHGetPropertyStoreForWindow = try_get_SHGetPropertyStoreForWindow())
+            {
+                return pSHGetPropertyStoreForWindow(hwnd, riid, ppv);
+            }
+
+            return  __HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER);
+        }
+#endif
+
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+        //Minimum supported client	Windows Vista
+        //Minimum supported server	Windows Server 2008
+        __DEFINE_THUNK(
+            shell32,
+            8,
+            HRESULT,
+            STDAPICALLTYPE,
+            SHOpenWithDialog,
+            _In_  HWND   hwndParent,
+            _In_  const OPENASINFO* poainfo
+        )
+        {
+            if (auto const pSHOpenWithDialog = try_get_SHOpenWithDialog())
+            {
+                return pSHOpenWithDialog(hwndParent, poainfo);
+            }
+
+            return  __HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER);
+        }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+        //Minimum supported client	Windows Vista
+        //Minimum supported server	Windows Server 2008
+        __DEFINE_THUNK(
+            shell32,
+            4,
+            HRESULT,
+            STDAPICALLTYPE,
+            SHQueryUserNotificationState,
+            _Out_  QUERY_USER_NOTIFICATION_STATE* pquns
+
+        )
+        {
+            if (auto const pSHQueryUserNotificationState = try_get_SHQueryUserNotificationState())
+            {
+                return pSHQueryUserNotificationState(pquns);
+            }
+
+            return  __HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER);
+        }
+#endif
+
 } //namespace YY

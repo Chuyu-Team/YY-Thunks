@@ -15,6 +15,11 @@
     _APPLY(dxva2,                                        "dxva2"                              , 0                 ) \
     _APPLY(uxtheme,                                      "uxtheme"                            , 0                 ) \
     _APPLY(uiautomationcore,                             "uiautomationcore"                   , 0                 ) \
+    _APPLY(ncrypt,                                       "ncrypt"                             , 0                 ) \
+    _APPLY(credui,                                       "credui"                             , 0                 ) \
+    _APPLY(wevtapi,                                      "wevtapi"                            , 0                 ) \
+    _APPLY(esent,                                        "esent"                              , 0                 ) \
+    _APPLY(propsys,                                      "propsys"                            , 0                 ) \
     _APPLY(psapi,                                        "psapi"                              , 0                 ) \
     _APPLY(pdh,                                          "pdh"                                , 0                 ) \
     _APPLY(version,                                      "version"                            , 0                 ) \

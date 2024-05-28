@@ -495,5 +495,82 @@ namespace YY
             return DEP_SYSTEM_POLICY_TYPE::DEPPolicyAlwaysOff;
 		}
 #endif // (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+        //Minimum supported client	Windows Vista [desktop apps only]
+        //Minimum supported server	Windows Server 2008 [desktop apps only]
+        __DEFINE_THUNK(
+            kernel32,
+            8,
+            BOOL,
+            WINAPI,
+            Wow64GetThreadContext,
+            _In_ HANDLE         hThread,
+            _Out_ PWOW64_CONTEXT lpContext
+        )
+        {
+            if (const auto pWow64GetThreadContext = try_get_Wow64GetThreadContext())
+            {
+                return pWow64GetThreadContext(hThread, lpContext);
+            }
+
+            return FALSE;
+        }
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+        //Minimum supported client	Windows Vista [desktop apps only]
+        //Minimum supported server	Windows Server 2008 [desktop apps only]
+        __DEFINE_THUNK(
+            kernel32,
+            8,
+            HRESULT,
+            WINAPI,
+            WerRegisterRuntimeExceptionModule,
+            _In_ PCWSTR pwszOutOfProcessCallbackDll,
+            _In_ PVOID  pContext
+        )
+        {
+            if (const auto pWerRegisterRuntimeExceptionModule = try_get_WerRegisterRuntimeExceptionModule())
+            {
+                return pWerRegisterRuntimeExceptionModule(pwszOutOfProcessCallbackDll, pContext);
+            }
+
+            return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+        }
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+        //Minimum supported client	Windows Vista [desktop apps only]
+        //Minimum supported server	Windows Server 2008 [desktop apps only]
+        __DEFINE_THUNK(
+            kernel32,
+            32,
+            HANDLE,
+            WINAPI,
+            CreateRemoteThreadEx,
+            _In_  HANDLE                       hProcess,
+            _In_  LPSECURITY_ATTRIBUTES        lpThreadAttributes,
+            _In_  SIZE_T                       dwStackSize,
+            _In_  LPTHREAD_START_ROUTINE       lpStartAddress,
+            _In_  LPVOID                       lpParameter,
+            _In_  DWORD                        dwCreationFlags,
+            _In_  LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList,
+            _Out_ LPDWORD                      lpThreadId
+        )
+        {
+            if (const auto pCreateRemoteThreadEx = try_get_CreateRemoteThreadEx())
+            {
+                return pCreateRemoteThreadEx(hProcess, lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, lpAttributeList, lpThreadId);
+            }
+
+            return CreateRemoteThread(hProcess, lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, lpThreadId);
+        }
+#endif
+
 	}
 }

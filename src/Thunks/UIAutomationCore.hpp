@@ -125,4 +125,69 @@ namespace YY::Thunks
         return E_NOTIMPL;
     }
 #endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+        //UiaGetReservedMixedAttributeValue
+        __DEFINE_THUNK(
+            uiautomationcore,
+            4,
+            HRESULT,
+            WINAPI,
+            UiaGetReservedMixedAttributeValue,
+            _Outptr_ IUnknown** punkMixedAttributeValue
+        )
+        {
+            if (auto const pUiaGetReservedMixedAttributeValue = try_get_UiaGetReservedMixedAttributeValue())
+            {
+                return pUiaGetReservedMixedAttributeValue(punkMixedAttributeValue);
+            }
+
+            return  E_NOTIMPL;
+        }
+
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+        //UiaGetReservedNotSupportedValue
+        __DEFINE_THUNK(
+            uiautomationcore,
+            4,
+            HRESULT,
+            WINAPI,
+            UiaGetReservedNotSupportedValue,
+            _Outptr_ IUnknown** punkNotSupportedValue
+        )
+        {
+            if (auto const pUiaGetReservedNotSupportedValue = try_get_UiaGetReservedNotSupportedValue())
+            {
+                return pUiaGetReservedNotSupportedValue(punkNotSupportedValue);
+            }
+
+            return  E_NOTIMPL;
+        }
+#endif
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+        //UiaRaiseStructureChangedEvent
+
+        __DEFINE_THUNK(
+            uiautomationcore,
+            16,
+            HRESULT,
+            WINAPI,
+            UiaRaiseStructureChangedEvent,
+            IRawElementProviderSimple* pProvider, 
+            enum StructureChangeType structureChangeType, 
+            int* pRuntimeId, 
+            int cRuntimeIdLen
+        )
+        {
+            if (auto const pUiaRaiseStructureChangedEvent = try_get_UiaRaiseStructureChangedEvent())
+            {
+                return pUiaRaiseStructureChangedEvent(pProvider, structureChangeType, pRuntimeId, cRuntimeIdLen);
+            }
+
+            return  E_NOTIMPL;
+        }
+#endif
 }
