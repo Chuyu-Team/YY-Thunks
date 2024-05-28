@@ -193,6 +193,7 @@
 | DwmGetWindowAttribute                      | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
 | DwmSetWindowAttribute                      | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
 | DwmFlush                                   | 不存在时，返回 `S_OK_`。
+| DwmGetCompositionTimingInfo                | 不存在时，返回 `DWM_E_COMPOSITIONDISABLED`（表示DWM已禁用）。
 
 ## dwrite.dll
 | 函数                                       | Fallback
@@ -202,12 +203,97 @@
 ## dxgi.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
-| CreateDXGIFactory1                         | 不存在时，返回 `E_NOINTERFACE`。
+| CreateDXGIFactory1                         | 不存在时，返回 `DXGI_ERROR_UNSUPPORTED`。
+| CreateDXGIFactory                          | 不存在时，返回 `DXGI_ERROR_UNSUPPORTED`。
 
 ## dxva2.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
 | DXVA2CreateVideoService                    | 不存在时，返回 `E_NOINTERFACE`。
+
+## esent.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| JetAddColumnA                              | 调用JetAddColumn。
+| JetAddColumnA                              | 调用JetAddColumn。
+| JetAttachDatabaseA                         | 调用JetAttachDatabase。
+| JetAttachDatabase2A                        | 调用JetAttachDatabase2。
+| JetAttachDatabaseWithStreamingA            | 调用JetAttachDatabaseWithStreaming。
+| JetBackupA                                 | 调用JetBackup。
+| JetBackupInstanceA                         | 调用JetBackupInstance。
+| JetBeginDatabaseIncrementalReseedA         | 调用JetBeginDatabaseIncrementalReseed。
+| JetBeginSessionA                           | 调用JetBeginSession。
+| JetCompactA                                | 调用JetCompact。
+| JetConvertDDLA                             | 调用JetConvertDDL。
+| JetCreateDatabaseA                         | 调用JetCreateDatabase。
+| JetCreateDatabase2A                        | 调用JetCreateDatabase2。
+| JetCreateDatabaseWithStreamingA            | 调用JetCreateDatabaseWithStreaming。
+| JetCreateIndexA                            | 调用JetCreateIndex。
+| JetCreateIndex2A                           | 调用JetCreateIndex2。
+| JetCreateInstanceA                         | 调用JetCreateInstance。
+| JetCreateInstance2A                        | 调用JetCreateInstance2。
+| JetCreateTableA                            | 调用JetCreateTable。
+| JetCreateTableColumnIndexA                 | 调用JetCreateTableColumnIndex。
+| JetCreateTableColumnIndex2A                | 调用JetCreateTableColumnIndex2。
+| JetDBUtilitiesA                            | 调用JetDBUtilities。
+| JetDefragmentA                             | 调用JetDefragment。
+| JetDefragment2A                            | 调用JetDefragment2。
+| JetDeleteColumnA                           | 调用JetDeleteColumn。
+| JetDeleteColumn2A                          | 调用JetDeleteColumn2。
+| JetDeleteIndexA                            | 调用JetDeleteIndex。
+| JetDeleteTableA                            | 调用JetDeleteTable。
+| JetDetachDatabaseA                         | 调用JetDetachDatabase。
+| JetDetachDatabase2A                        | 调用JetDetachDatabase2。
+| JetEnableMultiInstanceA                    | 调用JetEnableMultiInstance。
+| JetExternalRestoreA                        | 调用JetExternalRestore。
+| JetExternalRestore2A                       | 调用JetExternalRestore2。
+| JetGetAttachInfoA                          | 调用JetGetAttachInfo。
+| JetGetAttachInfoInstanceA                  | 调用JetGetAttachInfoInstance。
+| JetGetColumnInfoA                          | 调用JetGetColumnInfo。
+| JetGetCurrentIndexA                        | 调用JetGetCurrentIndex。
+| JetGetDatabaseFileInfoA                    | 调用JetGetDatabaseFileInfo。
+| JetGetDatabaseInfoA                        | 调用JetGetDatabaseInfo。
+| JetGetIndexInfoA                           | 调用JetGetIndexInfo。
+| JetGetInstanceInfoA                        | 调用JetGetInstanceInfo。
+| JetGetLogInfoA                             | 调用JetGetLogInfo。
+| JetGetLogInfoInstanceA                     | 调用JetGetLogInfoInstance。
+| JetGetLogInfoInstance2A                    | 调用JetGetLogInfoInstance2。
+| JetGetObjectInfoA                          | 调用JetGetObjectInfo。
+| JetGetSystemParameterA                     | 调用JetGetSystemParameter。
+| JetGetTableColumnInfoA                     | 调用JetGetTableColumnInfo。
+| JetGetTableIndexInfoA                      | 调用JetGetTableIndexInfo。
+| JetGetTableInfoA                           | 调用JetGetTableInfo。
+| JetGetTruncateLogInfoInstanceA             | 调用JetGetTruncateLogInfoInstance。
+| JetInit3A                                  | 调用JetInit3。
+| JetInit4A                                  | 调用JetInit4。
+| JetOpenDatabaseA                           | 调用JetOpenDatabase。
+| JetOpenFileA                               | 调用JetOpenFile。
+| JetOpenFileInstanceA                       | 调用JetOpenFileInstance。
+| JetOpenFileSectionInstanceA                | 调用JetOpenFileSectionInstance。
+| JetOpenTableA                              | 调用JetOpenTable。
+| JetOSSnapshotFreezeA                       | 调用JetOSSnapshotFreeze。
+| JetRenameColumnA                           | 调用JetRenameColumn。
+| JetRenameTableA                            | 调用JetRenameTable。
+| JetRestoreA                                | 调用JetRestore。
+| JetRestore2A                               | 调用JetRestore2。
+| JetRestoreInstanceA                        | 调用JetRestoreInstance。
+| JetSetColumnDefaultValueA                  | 调用JetSetColumnDefaultValue。
+| JetSetCurrentIndexA                        | 调用JetSetCurrentIndex。
+| JetSetCurrentIndex2A                       | 调用JetSetCurrentIndex2。
+| JetSetCurrentIndex3A                       | 调用JetSetCurrentIndex3。
+| JetSetCurrentIndex4A                       | 调用JetSetCurrentIndex4。
+| JetSetDatabaseSizeA                        | 调用JetSetDatabaseSize。
+| JetSetSystemParameterA                     | 调用JetSetSystemParameter。
+| JetSnapshotStartA                          | 调用JetSnapshotStart。
+| JetUpgradeDatabaseA                        | 调用JetUpgradeDatabase。
+| JetAttachDatabase2W                        | 不存在时，调用JetAttachDatabase2A。
+| JetBeginSessionW                           | 不存在时，调用JetBeginSessionA。
+| JetCreateInstanceW                         | 不存在时，调用JetCreateInstanceA。
+| JetGetTableColumnInfoW                     | 不存在时，调用JetGetTableColumnInfoA。
+| JetOpenDatabaseW                           | 不存在时，调用JetOpenDatabaseA。
+| JetOpenTableW                              | 不存在时，调用JetOpenTableA。
+| JetSetSystemParameterW                     | 不存在时，调用JetSetSystemParameterA。
+| JetGetSystemParameterW                     | 不存在时，调用JetGetSystemParameterA。
 
 ## iphlpapi.dll
 | 函数                                       | Fallback
@@ -427,6 +513,10 @@
 | SetProcessDEPPolicy                        | 不存在时，调用NtSetInformationProcess。
 | GetSystemDEPPolicy                         | 不存在时，返回总是关闭。
 | DisableThreadLibraryCalls                  | 不存在时，始终返回成功。
+| CreateRemoteThreadEx                       | 不存在时，调用CreateRemoteThread。
+| WerRegisterRuntimeExceptionModule          | 不存在时，返回S_OK。
+| WerUnregisterRuntimeExceptionModule        | 不存在时，返回S_OK。
+| Wow64GetThreadContext                      | 不存在时，返回ERROR_INVALID_PARAMETER。
 
 ## mfplat.dll
 | 函数                                       | Fallback
@@ -506,6 +596,8 @@
 | SHCreateItemFromParsingName                | 不存在时，调用SHParseDisplayName。
 | Shell_NotifyIconGetRect                    | 不存在时，调用SendMessageW（可能不适用于Vista系统）。
 | SHGetStockIconInfo                         | 不存在时，调用LoadImageW。
+| SHGetPropertyStoreForWindow                | 不存在时，报告错误 E_NOTIMPL。
+| SHOpenWithDialog                           | 不存在时，报告错误 E_NOTIMPL。
 
 ## shlwapi.dll
 | 函数                                       | Fallback
@@ -520,6 +612,9 @@
 | UiaRaiseAutomationEvent                    | 存在时，报告错误 E_NOTIMPL。
 | UiaRaiseAutomationPropertyChangedEvent     | 存在时，报告错误 E_NOTIMPL。
 | UiaReturnRawElementProvider                | 存在时，报告错误 E_NOTIMPL。
+| UiaGetReservedMixedAttributeValue          | 存在时，报告错误 E_NOTIMPL。
+| UiaGetReservedNotSupportedValue            | 存在时，报告错误 E_NOTIMPL。
+| UiaRaiseStructureChangedEvent              | 存在时，报告错误 E_NOTIMPL。
 
 ## user32.dll
 | 函数                                       | Fallback
@@ -574,6 +669,15 @@
 | ----                                       | -----------
 | GetFileVersionInfoExW(A)                   | 不存在时，调用GetFileVersionInfoW(A)。
 | GetFileVersionInfoSizeExW(A)               | 不存在时，调用GetFileVersionInfoSizeW(A)。
+
+## wevtapi.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| EvtClose                                   | 不存在时，返回TRUE。
+| EvtCreateRenderContext                     | 不存在时，报告ERROR_NOT_SUPPORTED。
+| EvtNext                                    | 不存在时，报告ERROR_NOT_SUPPORTED。
+| EvtQuery                                   | 不存在时，报告ERROR_NOT_SUPPORTED。
+| EvtRender                                  | 不存在时，报告ERROR_NOT_SUPPORTED。
 
 ## WinHttp.dll
 | 函数                                       | Fallback

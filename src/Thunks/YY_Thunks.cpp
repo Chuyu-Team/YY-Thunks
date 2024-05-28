@@ -13,6 +13,7 @@
     _APPLY(dxgi,                                         "dxgi"                               , 0                 ) \
     _APPLY(dwrite,                                       "dwrite"                             , 0                 ) \
     _APPLY(dxva2,                                        "dxva2"                              , 0                 ) \
+    _APPLY(esent,                                        "esent"                              , 0                 ) \
     _APPLY(uxtheme,                                      "uxtheme"                            , 0                 ) \
     _APPLY(uiautomationcore,                             "uiautomationcore"                   , 0                 ) \
     _APPLY(psapi,                                        "psapi"                              , 0                 ) \
@@ -34,6 +35,7 @@
     _APPLY(bluetoothapis,                                "bluetoothapis"                      , 0                 ) \
     _APPLY(netapi32,                                     "netapi32"                           , 0                 ) \
     _APPLY(powrprof,                                     "powrprof"                           , 0                 ) \
+    _APPLY(wevtapi,                                      "wevtapi"                            , 0                 ) \
     _APPLY(winhttp,                                      "winhttp"                            , 0                 ) \
     _APPLY(zipfldr,                                      "zipfldr"                            , LOAD_AS_DATA_FILE ) \
     _APPLY(api_ms_win_core_realtime_l1_1_1,              "api-ms-win-core-realtime-l1-1-1"    , 0                 ) \

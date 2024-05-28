@@ -22,32 +22,37 @@ popd
 
 goto:eof
 
-:: BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6
+:: BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6 1.def+2.def
 :BuildObj
 cl /O1 /Os /Oi /GS- /std:c++17 /arch:IA32 /Z7 /MT /Fo"objs\\%Platform%\\%1" /Zl /c /D "NDEBUG" /D "YY_Thunks_Support_Version=%2" "%~dp0Thunks\YY_Thunks.cpp"
 
-::进行函数名称进行修正 __imp__%s_%u -> __imp__%s@%u
+::生成weak符号，一些非必须符号安排为weak可以避免链接失败
 LibMaker.exe FixObj "%~dp0..\\objs\\%Platform%\\%1" /WeakExternFix:__security_cookie=%PointType% /WeakExternFix:__YY_Thunks_Process_Terminating=4 /WeakExternFix:__acrt_atexit_table=%PointType% /WeakExternFix:__pfnDllMainCRTStartupForYY_Thunks=%PointType%
+if "%3"=="" goto:eof
+set DEF_FILES=%3
+:AppendWeak
+for /f "tokens=1* delims=+" %%a in ("%DEF_FILES%") do (
+    echo "AppendWeak %~dp0def\\%Platform%\\%%a"
+    LibMaker.exe AppendWeak /MACHINE:%Platform% /DEF:"%~dp0def\\%Platform%\\%%a" /OUT:"%~dp0..\\objs\\%Platform%\\%1"
+    set DEF_FILES=%%b
+)
 
-LibMaker.exe AppendWeak /MACHINE:%Platform% /DEF:"%~dp0def\\%Platform%\\PSAPI2Kernel32.def" /OUT:"%~dp0..\\objs\\%Platform%\\%1"
-
+if defined DEF_FILES goto :AppendWeak
 
 goto:eof
 
 :Buildx86
 set PointType=4
-call:BuildObj YY_Thunks_for_Win2K.obj NTDDI_WIN2K
-call:BuildObj YY_Thunks_for_WinXP.obj NTDDI_WINXP
-call:BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6
-
-
+call:BuildObj YY_Thunks_for_Win2K.obj NTDDI_WIN2K PSAPI2Kernel32.def+esent.def
+call:BuildObj YY_Thunks_for_WinXP.obj NTDDI_WINXP PSAPI2Kernel32.def+esent.def
+call:BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6 PSAPI2Kernel32.def
 goto:eof
 
 
 :Buildx64
 set PointType=8
-call:BuildObj YY_Thunks_for_WinXP.obj NTDDI_WS03SP1
-call:BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6
+call:BuildObj YY_Thunks_for_WinXP.obj NTDDI_WS03SP1 PSAPI2Kernel32.def+esent.def
+call:BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6 PSAPI2Kernel32.def
 goto:eof
 
 :Buildarm

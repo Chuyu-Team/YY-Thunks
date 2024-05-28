@@ -260,5 +260,29 @@ namespace YY
             return S_OK;
         }
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+        // Minimum supported client	Windows Vista
+        // Minimum supported server	Windows Server 2008
+        __DEFINE_THUNK(
+        dwmapi,
+        8,
+        HRESULT,
+        STDAPICALLTYPE,
+        DwmGetCompositionTimingInfo,
+            _In_ HWND _hWnd,
+            _Out_ DWM_TIMING_INFO* _pTimingInfo
+            )
+        {
+            if (auto const _pfnDwmGetCompositionTimingInfo = try_get_DwmGetCompositionTimingInfo())
+            {
+                return _pfnDwmGetCompositionTimingInfo(_hWnd, _pTimingInfo);
+            }
+
+            return DWM_E_COMPOSITIONDISABLED;
+        }
+#endif
     } // namespace Thunks
 } // namespace YY

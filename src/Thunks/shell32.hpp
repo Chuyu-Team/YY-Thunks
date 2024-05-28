@@ -1124,4 +1124,83 @@ namespace YY::Thunks
 		return _hr;
 	}
 #endif
-} //namespace YY
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+    // 最低受支持的客户端	Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+    __DEFINE_THUNK(
+    shell32,
+    12,
+    HRESULT,
+    STDAPICALLTYPE,
+    SHGetPropertyStoreForWindow,
+        _In_  HWND   hwnd,
+        _In_  REFIID riid,
+        _Inout_ void** ppv
+        )
+    {
+        if (auto const _pfnSHGetPropertyStoreForWindow = try_get_SHGetPropertyStoreForWindow())
+        {
+            return _pfnSHGetPropertyStoreForWindow(hwnd, riid, ppv);
+        }
+
+        if (ppv)
+            *ppv = nullptr;
+
+        return E_NOTIMPL;
+    }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+    __DEFINE_THUNK(
+    shell32,
+    8,
+    HRESULT,
+    STDAPICALLTYPE,
+    SHOpenWithDialog,
+        _In_  HWND   hwndParent,
+        _In_  const OPENASINFO* poainfo
+        )
+    {
+        if (auto const _pfnSHOpenWithDialog = try_get_SHOpenWithDialog())
+        {
+            return _pfnSHOpenWithDialog(hwndParent, poainfo);
+        }
+
+        return E_NOTIMPL;
+    }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+    __DEFINE_THUNK(
+    shell32,
+    4,
+    HRESULT,
+    STDAPICALLTYPE,
+    SHQueryUserNotificationState,
+        _Out_  QUERY_USER_NOTIFICATION_STATE* pquns
+        )
+    {
+        if (auto const _pfnSHQueryUserNotificationState = try_get_SHQueryUserNotificationState())
+        {
+            return _pfnSHQueryUserNotificationState(pquns);
+        }
+
+        if (!pquns)
+            return E_INVALIDARG;
+
+        *pquns = QUNS_QUIET_TIME;
+        return S_OK;
+    }
+#endif
+} //namespace YY::Thunks

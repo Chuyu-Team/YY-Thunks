@@ -216,6 +216,7 @@
     <ClInclude Include="..\Thunks\api-ms-win-core-kernel32-legacy.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-processtopology.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-rtlsupport.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-windowserrorreporting.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-xstate.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-eventing-provider.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-power-base.hpp" />
@@ -231,6 +232,7 @@
     <ClInclude Include="..\Thunks\dwrite.hpp" />
     <ClInclude Include="..\Thunks\dxgi.hpp" />
     <ClInclude Include="..\Thunks\dxva2.hpp" />
+    <ClInclude Include="..\Thunks\esent.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-gui.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-misc.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-powermanagement.hpp" />
@@ -247,6 +249,7 @@
     <ClInclude Include="..\Thunks\UIAutomationCore.hpp" />
     <ClInclude Include="..\Thunks\userenv.hpp" />
     <ClInclude Include="..\Thunks\uxtheme.hpp" />
+    <ClInclude Include="..\Thunks\wevtapi.hpp" />
     <ClInclude Include="..\Thunks\WinHttp.hpp" />
     <ClInclude Include="..\Thunks\YY_Thunks.h" />
     <ClInclude Include="pch.h" />
@@ -287,7 +290,9 @@
     <ClInclude Include="..\Thunks\shcore.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\def\x64\esent.def" />
     <None Include="..\def\x64\PSAPI2Kernel32.def" />
+    <None Include="..\def\x86\esent.def" />
     <None Include="..\def\x86\PSAPI2Kernel32.def" />
     <None Include="proxy.pac" />
   </ItemGroup>

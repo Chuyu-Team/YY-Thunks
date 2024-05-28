@@ -21,7 +21,33 @@ namespace YY::Thunks
 
         if (_ppFactory)
             *_ppFactory = nullptr;    
-        return E_NOINTERFACE;
+        return DXGI_ERROR_UNSUPPORTED;
+    }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+
+    // Minimum supported client	Windows Vista
+    // Minimum supported server	Windows Server 2008
+    __DEFINE_THUNK(
+    dxgi,
+    8,
+    HRESULT,
+    STDAPICALLTYPE,
+    CreateDXGIFactory,
+        REFIID riid,
+        _COM_Outptr_ void** _ppFactory
+        )
+    {
+        if (auto const _pfnCreateDXGIFactory = try_get_CreateDXGIFactory())
+        {
+            return _pfnCreateDXGIFactory(riid, _ppFactory);
+        }
+
+        if (_ppFactory)
+            *_ppFactory = nullptr;
+        return DXGI_ERROR_UNSUPPORTED;
     }
 #endif
 }
