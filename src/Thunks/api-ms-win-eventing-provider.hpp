@@ -6,6 +6,12 @@
 #include <evntrace.h>
 #endif
 
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#pragma comment(lib, "Advapi32.lib")
+#endif
+
+
 namespace YY
 {
 	namespace Thunks

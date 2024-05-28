@@ -6,6 +6,170 @@
 #pragma push_macro("InterlockedCompareExchange64")
 #undef InterlockedCompareExchange64
 
+LSTATUS RunCmd(LPCWSTR FilePath, CString CmdString, CString* pOutString, CString _szCurrentDirectory)
+{
+    SECURITY_ATTRIBUTES sa;
+    HANDLE hRead, hWrite;
+
+    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = TRUE;
+    if (!CreatePipe(&hRead, &hWrite, &sa, 0))
+    {
+        return GetLastError();
+    }
+
+    STARTUPINFO si = { sizeof(STARTUPINFO) };
+    PROCESS_INFORMATION pi;
+
+    GetStartupInfo(&si);
+    si.hStdError = hWrite;
+    si.hStdOutput = hWrite;
+    si.wShowWindow = SW_HIDE;
+    si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+    //关键步骤，CreateProcess函数参数意义请查阅MSDN
+    //auto TT= EXECDOSCMD.GetBuffer();
+
+    if (_szCurrentDirectory.IsEmpty())
+    {
+        _szCurrentDirectory.ReleaseBufferSetLength(GetSystemDirectoryW(_szCurrentDirectory.GetBuffer(MAX_PATH), MAX_PATH));
+    }
+
+    if (!CreateProcessW(FilePath, CmdString.GetBuffer(), NULL, NULL, TRUE, CREATE_UNICODE_ENVIRONMENT, NULL, _szCurrentDirectory.GetString(), &si, &pi))
+    {
+        return GetLastError();
+    }
+
+    CloseHandle(hWrite);
+
+    DWORD bytesRead;
+
+    CStringA OutString;
+    //OutString.reserve(1024);
+
+    //OutString.GetBuffer(1024);
+    while (ReadFile(hRead, OutString.GetBuffer(OutString.GetLength() + 1024) + OutString.GetLength(), 1024, &bytesRead, NULL) && bytesRead)
+    {
+        OutString.ReleaseBufferSetLength(OutString.GetLength() + bytesRead);
+
+        //OutString._Mylast() += bytesRead;
+        //OutString.reserve(OutString.size() + 1024);
+
+
+        //buffer中就是执行的结果，可以保存到文本，也可以直接输出
+        //TRACE(buffer);
+        //等待10毫秒
+
+        Sleep(5);
+
+    }
+
+    CloseHandle(hRead);
+
+    WaitForSingleObject(pi.hProcess, INFINITE);
+
+    LSTATUS lStatus = ERROR_INVALID_FUNCTION;
+
+    GetExitCodeProcess(pi.hProcess, (LPDWORD)&lStatus);
+
+
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    if (pOutString)
+    {
+        const auto _iUtf8Length = OutString.GetLength();
+        auto _iUtf16Length = MultiByteToWideChar(CP_UTF8, 0, OutString.GetString(), _iUtf8Length, pOutString->GetBuffer(_iUtf8Length), _iUtf8Length);
+        pOutString->ReleaseBufferSetLength(_iUtf16Length);
+    }
+    return lStatus;
+}
+
+LSTATUS CreateFileByData(LPCWSTR FilePath, const void* Data, DWORD ccbData)
+{
+    if (Data == NULL)
+        return ERROR_DATABASE_FULL;
+
+    DWORD FileAttr = GetFileAttributes(FilePath);
+
+    if (FileAttr != INVALID_FILE_ATTRIBUTES && (FileAttr & FILE_ATTRIBUTE_READONLY))
+    {
+        SetFileAttributes(FilePath, FileAttr & (-1 ^ FILE_ATTRIBUTE_READONLY));
+    }
+
+    LSTATUS lStatus = ERROR_SUCCESS;
+
+    auto thFile = CreateFile(FilePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, 0);
+
+    if (thFile != INVALID_HANDLE_VALUE)
+    {
+        if (!WriteFile(thFile, Data, ccbData, &ccbData, NULL))
+        {
+            lStatus = GetLastError();
+        }
+
+        CloseHandle(thFile);
+    }
+    else
+    {
+        lStatus = GetLastError();
+    }
+
+    if (FileAttr != INVALID_FILE_ATTRIBUTES)
+    {
+        SetFileAttributes(FilePath, FileAttr);
+    }
+
+
+    return lStatus;
+}
+
+
+CString RunMSBuildTest(
+    LPCWSTR szPlatform,
+    LPCWSTR szConfiguration,
+    CStringW szYY_ThunksFilePath,
+    LPCWSTR BuildProperty = nullptr
+)
+{
+    CStringW szSymbolsTestCppRootPath;
+    szSymbolsTestCppRootPath.Format(SymbolBuildTestPath L"Example\\%s\\%s\\%s", szPlatform, szConfiguration, PathFindFileNameW(szYY_ThunksFilePath));
+
+    CString Cmd;
+
+    Cmd.Format(L"\"%s\" \"%s\" -t:Rebuild \"-p:Configuration=%s;Platform=%s;YY_Thunks_File_Path=%s;SymbolsTestCppRootPath=%s\\\"",
+        MSBuildBinPath LR"(MSBuild.exe)",
+        SymbolBuildTestPath LR"(Example\SymbolBuildTest.vcxproj)",
+        szConfiguration,
+        szPlatform,
+        szYY_ThunksFilePath.GetString(),
+        szSymbolsTestCppRootPath.GetString());
+
+    if (BuildProperty)
+    {
+        Cmd.ReleaseBufferSetLength(Cmd.GetLength() - 1);
+        Cmd += L';';
+        Cmd += BuildProperty;
+    }
+
+    CString OutString;
+
+    auto lStatus = RunCmd(nullptr, Cmd, &OutString, CStringW());
+
+
+
+    OutString.Insert(0, (wchar_t)0xfeff);
+
+
+    auto BuildLog = szSymbolsTestCppRootPath + L"Build.log";
+
+    CreateFileByData(BuildLog, OutString.GetString(), OutString.GetLength() * sizeof(OutString[0]));
+
+    Assert::AreEqual(lStatus, ERROR_SUCCESS, BuildLog);
+
+    return OutString;
+
+}
+
 namespace YY
 {
 	namespace Thunks
@@ -383,5 +547,15 @@ namespace Others
 
 			} while (false);
 		}
+
+        TEST_METHOD(可链接性检测)
+        {
+            RunMSBuildTest(L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_Win2K.obj");
+            RunMSBuildTest(L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_WinXP.obj");
+            RunMSBuildTest(L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_Vista.obj");
+
+            RunMSBuildTest(L"x64", L"Static", YY_ThunksRootPath L"objs\\x64\\YY_Thunks_for_WinXP.obj");
+            RunMSBuildTest(L"x64", L"Static", YY_ThunksRootPath L"objs\\x64\\YY_Thunks_for_Vista.obj");
+        }
 	};
 }
