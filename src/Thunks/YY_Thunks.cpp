@@ -5,6 +5,7 @@
 #define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                                     \
     _APPLY(ntdll,                                        "ntdll"                              , USING_UNSAFE_LOAD ) \
     _APPLY(kernel32,                                     "kernel32"                           , USING_UNSAFE_LOAD ) \
+    _APPLY(credui,                                       "credui"                             , 0                 ) \
     _APPLY(crypt32,                                      "crypt32"                            , 0                 ) \
     _APPLY(dwmapi,                                       "dwmapi"                             , 0                 ) \
     _APPLY(d3d9,                                         "d3d9"                               , 0                 ) \
@@ -33,8 +34,10 @@
     _APPLY(userenv,                                      "userenv"                            , 0                 ) \
     _APPLY(mfplat,                                       "mfplat"                             , 0                 ) \
     _APPLY(bluetoothapis,                                "bluetoothapis"                      , 0                 ) \
+    _APPLY(ncrypt,                                       "ncrypt"                             , 0                 ) \
     _APPLY(netapi32,                                     "netapi32"                           , 0                 ) \
     _APPLY(powrprof,                                     "powrprof"                           , 0                 ) \
+    _APPLY(propsys,                                      "propsys"                            , 0                 ) \
     _APPLY(wevtapi,                                      "wevtapi"                            , 0                 ) \
     _APPLY(winhttp,                                      "winhttp"                            , 0                 ) \
     _APPLY(zipfldr,                                      "zipfldr"                            , LOAD_AS_DATA_FILE ) \
