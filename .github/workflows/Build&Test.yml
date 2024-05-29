@@ -19,7 +19,7 @@ jobs:
           &7z e Bin\Procdump.zip "-o$Env:GITHUB_WORKSPACE\Bin"
 
 
-          Invoke-WebRequest -Uri https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.2.8/LibMaker.exe -OutFile Bin\LibMaker.exe
+          Invoke-WebRequest -Uri https://github.com/Chuyu-Team/LibMaker/releases/download/v1.0.2/LibMaker.exe -OutFile Bin\LibMaker.exe
           Invoke-WebRequest -Uri https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.2.8/MinimumRequiredVersionHelper.exe -OutFile Bin\MinimumRequiredVersionHelper.exe
           
           $ProgramFiles = ${env:ProgramFiles(x86)}
@@ -94,7 +94,7 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       shell: cmd
       run: |
-          set Path=%GITHUB_WORKSPACE%\Bin;%Path%
+          set Path=%GITHUB_WORKSPACE%\Bin;${{env.MSBuildBinPath}};%Path%
           set LatestVisualStudioRoot=${{env.LatestVisualStudioRoot}}
           
           setlocal
@@ -107,13 +107,15 @@ jobs:
           call "%GITHUB_WORKSPACE%\src\Build.cmd"
           endlocal
 
+          msbuild src\YY.Depends.Analyzer\YY.Depends.Analyzer.vcxproj "-p:Configuration=Release;Platform=Win32;OutDir=%GITHUB_WORKSPACE%\;SolutionDir=%GITHUB_WORKSPACE%\src\\"
+
     - name: 执行单元测试
       working-directory: ${{env.GITHUB_WORKSPACE}}
       shell: pwsh
       run: |
           # MSBuild、PROCDUMP_PATH目录更新到 Path
           $Env:Path="$Env:GITHUB_WORKSPACE\Bin;${{env.MSBuildBinPath}};${{env.LatestVisualStudioRoot}}\Common7\IDE\CommonExtensions\Microsoft\TestWindow;" + $Env:Path
-
+          
           # 编译单元测试项目
           &msbuild src\YY-Thunks.UnitTest\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=Win32;SolutionDir=$Env:GITHUB_WORKSPACE\src\\"
           if($lastexitcode -ne 0)
@@ -157,8 +159,11 @@ jobs:
       shell: cmd
       run: |
           ::打包Release
-          7z a -tzip YY-Thunks-${{env.BuildVersion}}-Binary.zip objs LICENSE ReadMe.md ThunksList.md
-          
+          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-${{env.BuildVersion}}-Binary.zip objs LICENSE ReadMe.md ThunksList.md YY.Depends.Analyzer.exe
+          pushd ".\src\YY.Depends.Analyzer"
+          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-${{env.BuildVersion}}-Binary.zip Config
+          popd
+
           ::打包Nuget
           if "${{env.BuildVersion}}" NEQ "" (
               nuget pack YY-Thunks-New.nuspec -Properties version=${{env.BuildVersion}};commit=%GITHUB_SHA%
