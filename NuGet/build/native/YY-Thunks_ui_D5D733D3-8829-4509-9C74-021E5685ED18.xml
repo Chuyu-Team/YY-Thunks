@@ -31,10 +31,22 @@
       
       <EnumValue
         Name="YY_Thunks_for_WinXP.obj"
-        DisplayName="为我的代码自动修正到Windows XP兼容，谢谢。"/>
+        DisplayName="为我的代码自动修正到Windows XP RTM兼容，谢谢。"/>
       <EnumValue
         Name="YY_Thunks_for_Vista.obj"
-        DisplayName="为我的代码自动修正到Windows Vista兼容，谢谢。"/>
+        DisplayName="为我的代码自动修正到Windows Vista RTM兼容，谢谢。"/>
+      <EnumValue
+        Name="YY_Thunks_for_Win7.obj"
+        DisplayName="为我的代码自动修正到Windows 7 RTM兼容，谢谢。"/>
+      <EnumValue
+        Name="YY_Thunks_for_Win8.obj"
+        DisplayName="为我的代码自动修正到Windows 8 RTM兼容，谢谢。"/>
+      <EnumValue
+        Name="YY_Thunks_for_Win10.0.10240.obj"
+        DisplayName="为我的代码自动修正到Windows 10 10240兼容，谢谢。"/>
+      <EnumValue
+        Name="YY_Thunks_for_Win10.0.19041.obj"
+        DisplayName="为我的代码自动修正到Windows 10 19041兼容，谢谢。"/>
     </EnumProperty>
   </Rule>
 </ProjectSchemaDefinitions>

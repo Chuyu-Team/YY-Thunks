@@ -1,4 +1,4 @@
-﻿Windows Vista开始，新增了A后缀来代替统一表示ANSI版函数
+﻿;Windows Vista开始，新增了A后缀来代替统一表示ANSI版函数
 
 [Symbols]
 JetAddColumnA=JetAddColumn

@@ -46,6 +46,10 @@ set PointType=4
 call:BuildObj YY_Thunks_for_Win2K.obj NTDDI_WIN2K PSAPI2Kernel32.def+esent.def
 call:BuildObj YY_Thunks_for_WinXP.obj NTDDI_WINXP PSAPI2Kernel32.def+esent.def
 call:BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6 PSAPI2Kernel32.def
+call:BuildObj YY_Thunks_for_Win7.obj NTDDI_WIN7
+call:BuildObj YY_Thunks_for_Win8.obj NTDDI_WIN8
+call:BuildObj YY_Thunks_for_Win10.0.10240.obj NTDDI_WIN10
+call:BuildObj YY_Thunks_for_Win10.0.19041.obj NTDDI_WIN10_VB
 goto:eof
 
 
@@ -53,14 +57,22 @@ goto:eof
 set PointType=8
 call:BuildObj YY_Thunks_for_WinXP.obj NTDDI_WS03SP1 PSAPI2Kernel32.def+esent.def
 call:BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6 PSAPI2Kernel32.def
+call:BuildObj YY_Thunks_for_Win7.obj NTDDI_WIN7
+call:BuildObj YY_Thunks_for_Win8.obj NTDDI_WIN8
+call:BuildObj YY_Thunks_for_Win10.0.10240.obj NTDDI_WIN10
+call:BuildObj YY_Thunks_for_Win10.0.19041.obj NTDDI_WIN10_VB
 goto:eof
 
 :Buildarm
 set PointType=4
 call:BuildObj YY_Thunks_for_Win8.obj NTDDI_WIN8
+call:BuildObj YY_Thunks_for_Win10.0.10240.obj NTDDI_WIN10
+call:BuildObj YY_Thunks_for_Win10.0.19041.obj NTDDI_WIN10_VB
 goto:eof
 
 :Buildarm64
 set PointType=8
-call:BuildObj YY_Thunks_for_Win10_RS3.obj NTDDI_WIN10_RS3
+; NTDDI_WIN10_RS3 = 16299
+call:BuildObj YY_Thunks_for_Win10.0.10240.obj NTDDI_WIN10_RS3
+call:BuildObj YY_Thunks_for_Win10.0.19041.obj NTDDI_WIN10_VB
 goto:eof

@@ -254,8 +254,7 @@ static HMODULE __fastcall try_load_library_from_system_directory(wchar_t const* 
 #define USING_UNSAFE_LOAD 0x00000001
 #define LOAD_AS_DATA_FILE 0x00000002
 
-template<int Flags>
-static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name) noexcept
+static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name, int Flags) noexcept
 {
 	// First check to see if we've cached the module handle:
 	if (HMODULE const cached_handle = __crt_interlocked_read_pointer(pModule))
@@ -272,11 +271,11 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
 	// this fails, cache the sentinel handle value INVALID_HANDLE_VALUE so that
 	// we don't attempt to load the module again:
     HMODULE new_handle = NULL;
-    if constexpr (Flags & LOAD_AS_DATA_FILE)
+    if (Flags & LOAD_AS_DATA_FILE)
     {
         new_handle = LoadLibraryExW(module_name, NULL, LOAD_LIBRARY_AS_DATAFILE);
     }
-    else if constexpr (Flags & USING_UNSAFE_LOAD)
+    else if (Flags & USING_UNSAFE_LOAD)
     {
         new_handle = LoadLibraryW(module_name);
     }
@@ -312,7 +311,7 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
     static HMODULE __fastcall _CRT_CONCATENATE(try_get_module_, _MODULE)() noexcept            \
     {                                                                                          \
         __declspec(allocate(".YYThu$AAA")) static volatile HMODULE hModule;                    \
-        return try_get_module<_FLAGS>(&hModule, _CRT_CONCATENATE(module_name_, _MODULE));      \
+        return try_get_module(&hModule, _CRT_CONCATENATE(module_name_, _MODULE), _FLAGS);      \
     }
 _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)
 #undef _APPLY

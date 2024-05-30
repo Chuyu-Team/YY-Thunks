@@ -1,7 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="UserMacros" Condition="('$(PlatformShortName)'=='x86') Or ('$(PlatformShortName)'=='x64')">
+    <!--[MSBuild]::VersionGreaterThanOrEquals 需要16.5才支持，就用[System.Version]凑合吧-->
+    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('5.1.0.0').CompareTo($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)')))) > 0) And ('$(PlatformShortName)'=='x86')">YY_Thunks_for_Win2K.obj</YY_Thunks_File>
     <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And (('$(SupportWinXP)'=='true') Or ($(PlatformToolset.IndexOf('_xp')) != -1))">YY_Thunks_for_WinXP.obj</YY_Thunks_File>
+    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('6.0.0.0').CompareTo($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)')))) > 0)">YY_Thunks_for_WinXP.obj</YY_Thunks_File>
+    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('6.1.0.0').CompareTo($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)')))) > 0)">YY_Thunks_for_Vista.obj</YY_Thunks_File>
+    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('6.2.0.0').CompareTo($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)')))) > 0)">YY_Thunks_for_Win7.obj</YY_Thunks_File>
+    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('10.0.0.0').CompareTo($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)')))) > 0)">YY_Thunks_for_Win8.obj</YY_Thunks_File>
+    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('10.0.19041.0').CompareTo($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)')))) > 0)">YY_Thunks_for_Win10.0.10240.obj</YY_Thunks_File>
+    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='')">YY_Thunks_for_Win10.0.19041.obj</YY_Thunks_File>
+
+    <!--默认值-->
     <YY_Thunks_File Condition="'$(YY_Thunks_File)'==''">YY_Thunks_for_Vista.obj</YY_Thunks_File>
   </PropertyGroup>
 
