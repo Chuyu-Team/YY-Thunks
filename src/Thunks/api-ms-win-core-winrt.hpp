@@ -152,8 +152,9 @@ namespace YY
 			if (factory)
 				*factory = nullptr;
 
-			return E_NOTIMPL;
-
+            // According to the C++/WinRT fallback implementation, we should
+            // return CLASS_E_CLASSNOTAVAILABLE.
+			return CLASS_E_CLASSNOTAVAILABLE;
 		}
 #endif
 

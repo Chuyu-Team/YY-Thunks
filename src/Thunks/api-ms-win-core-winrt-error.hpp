@@ -24,7 +24,10 @@ namespace YY
 				return pRoOriginateError(error, message);
 			}
 
-			return FALSE;
+            // According to the C++/WinRT fallback implementation, we should
+            // return TRUE to tell the caller that the error message was
+            // reported successfully.
+			return TRUE;
 		}
 #endif
 
@@ -50,7 +53,10 @@ namespace YY
 				return pRoOriginateErrorW(error, cchMax, message);
 			}
 
-			return FALSE;
+            // According to the C++/WinRT fallback implementation, we should
+            // return TRUE to tell the caller that the error message was
+            // reported successfully.
+            return TRUE;
 		}
 #endif
 	}

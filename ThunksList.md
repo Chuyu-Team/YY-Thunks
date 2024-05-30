@@ -77,7 +77,7 @@
 | RoActivateInstance                         | 不存在时，返回 E_NOTIMPL。
 | RoRegisterActivationFactories              | 不存在时，返回 E_NOTIMPL。
 | RoRevokeActivationFactories                | 不存在时，什么也不做。
-| RoGetActivationFactory                     | 不存在时，返回 E_NOTIMPL。
+| RoGetActivationFactory                     | 不存在时，返回 CLASS_E_CLASSNOTAVAILABLE
 | RoRegisterForApartmentShutdown             | 不存在时，返回 E_NOTIMPL。
 | RoUnregisterForApartmentShutdown           | 不存在时，返回 E_NOTIMPL。
 | RoGetApartmentIdentifier                   | 不存在时，返回 E_NOTIMPL。
@@ -85,8 +85,8 @@
 ## api-ms-win-core-winrt-error-l1-1-0.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
-| RoOriginateError                           | 不存在时，返回 FALSE.
-| RoOriginateErrorW                          | 不存在时，返回 FALSE.
+| RoOriginateError                           | 不存在时，返回 TRUE.
+| RoOriginateErrorW                          | 不存在时，返回 TRUE.
 
 ## api-ms-win-core-winrt-string-l1-1-0.dll
 | 函数                                       | Fallback
