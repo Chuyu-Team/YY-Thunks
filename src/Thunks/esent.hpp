@@ -70,7 +70,7 @@ namespace YY::Thunks
             auto _lStatus = internal::Convert(szUserName, -1, &_szUserNameBuffer);
             if (_lStatus)
             {
-                return JET_errcatMemory;
+                return JET_errOutOfMemory;
             }
         }
 
@@ -80,7 +80,7 @@ namespace YY::Thunks
             auto _lStatus = internal::Convert(szPassword, -1, &_szPasswordBuffer);
             if (_lStatus)
             {
-                return JET_errcatMemory;
+                return JET_errOutOfMemory;
             }
         }
         return JetBeginSessionA(instance, psesid, szUserName ? _szUserNameBuffer.GetC_String() : nullptr, szPassword ? _szPasswordBuffer.GetC_String() : nullptr);
@@ -112,7 +112,7 @@ namespace YY::Thunks
             auto _lStatus = internal::Convert(szInstanceName, -1, &_szInstanceNameBuffer);
             if (_lStatus)
             {
-                return JET_errcatMemory;
+                return JET_errOutOfMemory;
             }
         }
         return JetCreateInstanceA(pinstance, szInstanceName ? _szInstanceNameBuffer.GetC_String() : nullptr);;
@@ -148,7 +148,7 @@ namespace YY::Thunks
             auto _lStatus = internal::Convert(szColumnName, -1, &_szColumnNameBuffer);
             if (_lStatus)
             {
-                return JET_errcatMemory;
+                return JET_errOutOfMemory;
             }
         }
         return JetGetTableColumnInfoA(sesid, tableid, szColumnName ? _szColumnNameBuffer.GetC_String() : nullptr, pvResult, cbMax, InfoLevel);
@@ -183,7 +183,7 @@ namespace YY::Thunks
         {
             if (WideCharToMultiByte(CP_ACP, 0, szFilename, 01, szFileNameBuffer, _countof(szFileNameBuffer), nullptr, nullptr) <= 0)
             {
-                return JET_errcatMemory;
+                return JET_errOutOfMemory;
             }
         }
 
@@ -232,7 +232,7 @@ namespace YY::Thunks
             auto _lStatus = internal::Convert(szTableName, -1, &_szTableNameBuffer);
             if (_lStatus)
             {
-                return JET_errcatMemory;
+                return JET_errOutOfMemory;
             }
         }
 
@@ -269,7 +269,7 @@ namespace YY::Thunks
             auto _lStatus = internal::Convert(szParam, -1, &_szParamBuffer);
             if (_lStatus)
             {
-                return JET_errcatMemory;
+                return JET_errOutOfMemory;
             }
         }
 
@@ -310,7 +310,7 @@ namespace YY::Thunks
         auto _pBuffer = _szParamBuffer.GetBuffer(max(cbMax, 512));
         if (!_pBuffer)
         {
-            return JET_errcatMemory;
+            return JET_errOutOfMemory;
         }
         memset(_pBuffer, 0, _szParamBuffer.uBufferLength);
 
