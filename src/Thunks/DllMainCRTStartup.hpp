@@ -404,16 +404,18 @@ namespace YY::Thunks::internal
     {
         const auto _pfnDllMainCRTStartup = __pfnDllMainCRTStartupForYY_Thunks ? __pfnDllMainCRTStartupForYY_Thunks : &_DllMainCRTStartup;
 
-#if YY_Thunks_Support_Version < NTDDI_WIN6
-        __declspec(allocate(".CRT$XLB")) static const PIMAGE_TLS_CALLBACK s_FirstCallback = FirstCallback;
-        __foreinclude(s_FirstCallback);
-        __foreinclude(_tls_used);
-        if (internal::GetSystemVersion() < internal::MakeVersion(6, 0))
+        // Vista开始已经可以动态的处理TLS问题了，所以这里只针对老系统处理。
+        switch (_uReason)
         {
-            // Vista开始已经可以动态的处理TLS问题了，所以这里只针对老系统处理。
-            switch (_uReason)
+        case DLL_PROCESS_ATTACH:
+            _YY_initialize_winapi_thunks(ThunksInitStatus::InitByDllMain);
+
+#if YY_Thunks_Support_Version < NTDDI_WIN6
+            if (internal::GetSystemVersion() < internal::MakeVersion(6, 0))
             {
-            case DLL_PROCESS_ATTACH:
+                __declspec(allocate(".CRT$XLB")) static const PIMAGE_TLS_CALLBACK s_FirstCallback = FirstCallback;
+                __foreinclude(s_FirstCallback);
+                __foreinclude(_tls_used);
                 if (g_TlsMode == TlsMode::None)
                 {
                     g_TlsMode = TlsMode::ByDllMainCRTStartupForYY_Thunks;
@@ -422,42 +424,67 @@ namespace YY::Thunks::internal
                 if (_tls_index == 0 && g_TlsMode == TlsMode::ByDllMainCRTStartupForYY_Thunks)
                 {
                     CreateTlsIndex();
-                    return _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
                 }
-                break;
-            case DLL_THREAD_ATTACH:
-                if (_tls_index_old == 0 && g_TlsMode == TlsMode::ByDllMainCRTStartupForYY_Thunks)
-                {
-                    AllocTlsData();
-                    CallTlsCallback(_hInstance, _uReason);
-                    return _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
-                }
-                break;
-            case DLL_THREAD_DETACH:
-                if (_tls_index_old == 0 && g_TlsMode == TlsMode::ByDllMainCRTStartupForYY_Thunks)
-                {
-                    CallTlsCallback(_hInstance, _uReason);
-                    auto _bRet = _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
-                    FreeTlsData();
-                    return _bRet;
-                }
-                break;
-            case DLL_PROCESS_DETACH:
-#if (YY_Thunks_Support_Version < NTDDI_WINXP)
-                __YY_Thunks_Process_Terminating = _pReserved != nullptr;
-#endif
-                if (_tls_index_old == 0 && g_TlsMode == TlsMode::ByDllMainCRTStartupForYY_Thunks)
-                {
-                    CallTlsCallback(_hInstance, _uReason);
-                    auto _bRet = _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
-                    FreeTlsIndex();
-                    return _bRet;
-                }
-                break;
             }
-        }
 #endif
-        return _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
+            return _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
+            break;
+#if YY_Thunks_Support_Version < NTDDI_WIN6
+        case DLL_THREAD_ATTACH:
+            if (internal::GetSystemVersion() < internal::MakeVersion(6, 0) && _tls_index_old == 0 && g_TlsMode == TlsMode::ByDllMainCRTStartupForYY_Thunks)
+            {
+                AllocTlsData();
+                CallTlsCallback(_hInstance, _uReason);
+            }
+            return _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
+            break;
+        case DLL_THREAD_DETACH:
+            if (internal::GetSystemVersion() < internal::MakeVersion(6, 0) && _tls_index_old == 0 && g_TlsMode == TlsMode::ByDllMainCRTStartupForYY_Thunks)
+            {
+                CallTlsCallback(_hInstance, _uReason);
+                auto _bRet = _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
+                FreeTlsData();
+                return _bRet;
+            }
+            else
+            {
+                return _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
+            }
+            break;
+#endif
+        case DLL_PROCESS_DETACH:
+#if (YY_Thunks_Support_Version < NTDDI_WINXP)
+            __YY_Thunks_Process_Terminating = _pReserved != nullptr;
+#endif
+
+#if YY_Thunks_Support_Version < NTDDI_WIN6
+            if (internal::GetSystemVersion() < internal::MakeVersion(6, 0) && _tls_index_old == 0 && g_TlsMode == TlsMode::ByDllMainCRTStartupForYY_Thunks)
+            {
+                CallTlsCallback(_hInstance, _uReason);
+                auto _bRet = _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
+
+                FreeTlsIndex();
+                if (_pReserved != nullptr)
+                {
+                    __YY_uninitialize_winapi_thunks();
+                }
+                return _bRet;
+            }
+            else
+#endif
+            {
+                auto _bRet = _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
+                if (_pReserved != nullptr)
+                {
+                    __YY_uninitialize_winapi_thunks();
+                }
+                return _bRet;
+            }
+            break;
+        default:
+            return _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
+            break;
+        }
     }
 }
 #endif

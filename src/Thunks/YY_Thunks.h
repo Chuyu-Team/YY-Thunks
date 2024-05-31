@@ -181,6 +181,20 @@ static __forceinline unsigned __int64 __fastcall __crt_rotate_pointer_value(unsi
 	_bittest((LONG_PTR*)(&p), 0)
 #endif
 
+enum class ThunksInitStatus : LONG
+{
+    // 已经反初始化
+    Uninitialized = -2,
+    // 其他线程正在处理
+    Wait = -1,
+    None = 0,
+    InitByDllMain,
+    InitByCRT,
+    // 调用被Thunks的API时发生的延后初始化
+    InitByAPI,
+};
+
+static ThunksInitStatus __cdecl _YY_initialize_winapi_thunks(ThunksInitStatus _sInitStatus);
 
 static PVOID __fastcall __CRT_DecodePointer(
 		PVOID Ptr
@@ -355,6 +369,12 @@ static void* __fastcall try_get_function(
     const ProcInfo& _ProcInfo
     ) noexcept
 {
+    // 指针为空，那么往往还没有调用初始化，尝试动态初始化
+    if (*ppFunAddress == nullptr)
+    {
+        _YY_initialize_winapi_thunks(ThunksInitStatus::InitByAPI);
+    }
+
 	// First check to see if we've cached the function pointer:
 	{
 		void* const cached_fp = __crt_fast_decode_pointer(
@@ -437,29 +457,98 @@ __if_exists(YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION))        
 #undef _APPLY
 
 
-static bool g_bUninitialize/* = false*/;
+#ifdef _WIN64
+#define DEFAULT_SECURITY_COOKIE ((uintptr_t)0x00002B992DDFA232)
+#else  /* _WIN64 */
+#define DEFAULT_SECURITY_COOKIE ((uintptr_t)0xBB40E64E)
+#endif  /* _WIN64 */
+
+static UINT_PTR GetSecurityNewCookie()
+{
+    /*
+    * Union to facilitate converting from FILETIME to unsigned __int64
+    */
+    typedef union {
+        unsigned __int64 ft_scalar;
+        FILETIME ft_struct;
+    } FT;
+
+    UINT_PTR cookie;
+    FT systime = { 0 };
+    LARGE_INTEGER perfctr;
+
+    GetSystemTimeAsFileTime(&systime.ft_struct);
+#if defined (_WIN64)
+    cookie = systime.ft_scalar;
+#else  /* defined (_WIN64) */
+    cookie = systime.ft_struct.dwLowDateTime;
+    cookie ^= systime.ft_struct.dwHighDateTime;
+#endif  /* defined (_WIN64) */
+
+    cookie ^= GetCurrentThreadId();
+    cookie ^= GetCurrentProcessId();
+
+#if (YY_Thunks_Support_Version >= NTDDI_WIN6)
+#if defined (_WIN64)
+    cookie ^= (((UINT_PTR)GetTickCount64()) << 56);
+#endif  /* defined (_WIN64) */
+    cookie ^= (UINT_PTR)GetTickCount64();
+#else // (YY_Thunks_Support_Version < NTDDI_WIN6)
+    cookie ^= (UINT_PTR)GetTickCount();
+#endif // !(YY_Thunks_Support_Version < NTDDI_WIN6)
+
+    QueryPerformanceCounter(&perfctr);
+#if defined (_WIN64)
+    cookie ^= (((UINT_PTR)perfctr.LowPart << 32) ^ perfctr.QuadPart);
+#else  /* defined (_WIN64) */
+    cookie ^= perfctr.LowPart;
+    cookie ^= perfctr.HighPart;
+#endif  /* defined (_WIN64) */
+
+    /*
+    * Increase entropy using ASLR relocation
+    */
+    cookie ^= (UINT_PTR)&cookie;
+
+#if defined (_WIN64)
+    /*
+    * On Win64, generate a cookie with the most significant word set to zero,
+    * as a defense against buffer overruns involving null-terminated strings.
+    * Don't do so on Win32, as it's more important to keep 32 bits of cookie.
+    */
+    cookie &= 0x0000FFFFffffFFFFi64;
+#endif  /* defined (_WIN64) */
+
+    if (cookie == UINT_PTR(0) || cookie == DEFAULT_SECURITY_COOKIE)
+    {
+        cookie = DEFAULT_SECURITY_COOKIE + 1;
+    }
+    return cookie;
+}
+
+static volatile ThunksInitStatus s_eThunksStatus /*= ThunksInitStatus::None*/;
 
 static void __cdecl __YY_uninitialize_winapi_thunks()
 {
-	// 值反初始化一次
-	if (g_bUninitialize)
+	// 只反初始化一次
+    const auto _eStatus = (ThunksInitStatus)InterlockedExchange((volatile LONG*)&s_eThunksStatus, LONG(ThunksInitStatus::Uninitialized));
+
+    // Uninitialized : 已经反初始化，那么也就没有必要再次反初始化。
+    // Wait : 其他线程还在等待……保险起见我就直接跳过反初始化吧。崩溃还是如何听天由命吧
+    // None : 怎么还没初始化呢……这是在逗我？
+	if (LONG(_eStatus) <= 0)
 		return;
 
-	g_bUninitialize = true;
-
-	//当DLL被强行卸载时，我们什么都不做。
+    //当DLL被强行卸载时，我们什么都不做，因为依赖的函数指针可能是无效的。
+    __if_exists(__YY_Thunks_Process_Terminating)
+    {
+        if (__YY_Thunks_Process_Terminating)
+            return;
+    }
 	if (auto pRtlDllShutdownInProgress = (decltype(RtlDllShutdownInProgress)*)GetProcAddress(try_get_module_ntdll(), "RtlDllShutdownInProgress"))
 	{
 		if(pRtlDllShutdownInProgress())
 			return;
-	}
-	__if_exists(__YY_Thunks_Process_Terminating)
-	{
-		else
-		{
-			if (__YY_Thunks_Process_Terminating)
-				return;
-		}
 	}
 
 	auto pModule = (HMODULE*)__YY_THUNKS_MODULE_START;
@@ -490,29 +579,63 @@ static void __cdecl __YY_uninitialize_winapi_thunks()
 	}
 }
 
-
-static int __cdecl _YY_initialize_winapi_thunks()
+static ThunksInitStatus __cdecl _YY_initialize_winapi_thunks(ThunksInitStatus _sInitStatus)
 {
-	__security_cookie_yy_thunks = __security_cookie;
+#ifndef NDEBUG
+    if (LONG(_sInitStatus) <= 0)
+    {
+        // 非法输入，请检查
+        __debugbreak();
+    }
+#endif
 
-	void* const encoded_nullptr = __crt_fast_encode_pointer((void*)nullptr);
+    auto _eStatus = (ThunksInitStatus)InterlockedCompareExchange((volatile LONG*)&s_eThunksStatus, LONG(ThunksInitStatus::Wait), LONG(ThunksInitStatus::None));
+    if (_eStatus == ThunksInitStatus::None)
+    {
+        // 首次进入，正在初始化
+        if (__security_cookie == 0 || __security_cookie == DEFAULT_SECURITY_COOKIE)
+        {
+            __security_cookie_yy_thunks = GetSecurityNewCookie();
+        }
+        else
+        {
+            __security_cookie_yy_thunks = __security_cookie;
+        }
 
-	for (auto p = __YY_THUNKS_FUN_START; p != __YY_THUNKS_FUN_END; ++p)
-	{
-		*p = encoded_nullptr;
-	}
+        void* const encoded_nullptr = __crt_fast_encode_pointer((void*)nullptr);
 
-	/*
-	 * https://github.com/Chuyu-Team/YY-Thunks/issues/7
-	 * 为了避免 try_get 系列函数竞争 DLL load锁，因此我们将所有被Thunk的API都预先加载完毕。
-	 */
-	for (auto p = (InitFunType*)__YY_THUNKS_INIT_FUN_START; p != (InitFunType*)__YY_THUNKS_INIT_FUN_END; ++p)
-	{
-		if (auto pInitFun = *p)
-			pInitFun();
-	}
+        for (auto p = __YY_THUNKS_FUN_START; p != __YY_THUNKS_FUN_END; ++p)
+        {
+            *p = encoded_nullptr;
+        }
 
-	return 0;
+        // 后续过程已经可以线程安全执行了，所以我们立即解锁，避免其他线程过于长时间的等待
+        InterlockedExchange((volatile LONG*)&s_eThunksStatus, LONG(_sInitStatus));
+
+        /*
+         * https://github.com/Chuyu-Team/YY-Thunks/issues/7
+         * 为了避免 try_get 系列函数竞争 DLL load锁，因此我们将所有被Thunk的API都预先加载完毕。
+         */
+        for (auto p = (InitFunType*)__YY_THUNKS_INIT_FUN_START; p != (InitFunType*)__YY_THUNKS_INIT_FUN_END; ++p)
+        {
+            if (auto pInitFun = *p)
+                pInitFun();
+        }
+
+        return _sInitStatus;
+    }
+    else if (_eStatus == ThunksInitStatus::Wait)
+    {
+        // 其他线程正在初始化……
+        do
+        {
+            YieldProcessor();
+            _eStatus = s_eThunksStatus;
+        } while (_eStatus != ThunksInitStatus::Wait);
+    }
+
+    // 初始化已经完成
+    return _eStatus;
 }
 
 // 外部weak符号，用于判断当前是否静态
@@ -520,7 +643,12 @@ EXTERN_C extern void* __acrt_atexit_table;
 
 static int __cdecl __YY_initialize_winapi_thunks()
 {
-	_YY_initialize_winapi_thunks();
+	const auto _eStatus = _YY_initialize_winapi_thunks(ThunksInitStatus::InitByCRT);
+    if (_eStatus != ThunksInitStatus::InitByCRT && _eStatus != ThunksInitStatus::InitByAPI)
+    {
+        // 不接管由DllMain触发的初始化，因为它可以自行反初始化。
+        return 0;
+    }
 
 	// 如果 == null，那么有2种情况：
 	//   1. 非UCRT，比如2008，VC6，这时，调用 atexit是安全的，因为atexit在 XIA初始化完成了。
