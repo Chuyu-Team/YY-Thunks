@@ -65,8 +65,8 @@ ULONGLONG WINAPI GetTickCount64(VOID)
 4. 默认兼容到Windows Vista（默认）,如果需要兼容Windows XP可以将`WindowsSupportedOSPlatformVersion`调整为`5.1`。
 
 ### 2.2. 手工配置
-
-1. 下载 [YY-Thunks-Binary](https://github.com/Chuyu-Team/YY-Thunks/releases)，
+#### 2.2.1. obj方式（适合微软的链接器）
+1. 下载 [YY-Thunks-Objs](https://github.com/Chuyu-Team/YY-Thunks/releases)，
    然后解压到你的工程目录。
 2. 【链接器】-【输入】-【附加依赖项】，添加 
    `objs\$(PlatformShortName)\YY_Thunks_for_WinXP.obj`。
@@ -76,6 +76,15 @@ ULONGLONG WINAPI GetTickCount64(VOID)
 
 > 温馨提示：如果需要兼容 Vista，【所需的最低版本】无需修改，但是【附加依赖项】请选择 
   `objs\$(PlatformShortName)\YY_Thunks_for_Vista.obj`。
+
+#### 2.2.2. lib方式（适合LLD链接器）
+> LLD链接器无法使用obj方式，因为遇到重复符号会报告错误。
+
+1. 下载 [YY-Thunks-Lib](https://github.com/Chuyu-Team/YY-Thunks/releases)，
+   然后解压到你的工程目录。
+2. 将 `-L YY-Thunks根目录/Lib/5.1.2600.0/x86` 类似的参数添加到链接器参数中，并确保顺序比系统SDK靠前。
+3. 如果是编译DLL，额外给链接器传递 `-e DllMainCRTStartupForYY_Thunks`，修改DLL入口点（不这样做XP下使用thread_local可能崩溃！）
+4. 重新编译代码。
 
 ## 3. 兼容性
 

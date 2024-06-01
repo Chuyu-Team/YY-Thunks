@@ -19,7 +19,7 @@ jobs:
           &7z e Bin\Procdump.zip "-o$Env:GITHUB_WORKSPACE\Bin"
 
 
-          Invoke-WebRequest -Uri https://github.com/Chuyu-Team/LibMaker/releases/download/v1.0.2/LibMaker.exe -OutFile Bin\LibMaker.exe
+          Invoke-WebRequest -Uri https://github.com/Chuyu-Team/LibMaker/releases/download/v1.0.3/LibMaker.exe -OutFile Bin\LibMaker.exe
           Invoke-WebRequest -Uri https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.2.8/MinimumRequiredVersionHelper.exe -OutFile Bin\MinimumRequiredVersionHelper.exe
           
           $ProgramFiles = ${env:ProgramFiles(x86)}
@@ -100,15 +100,17 @@ jobs:
           setlocal
           call "%LatestVisualStudioRoot%\VC\Auxiliary\Build\vcvars32.bat"
           call "%GITHUB_WORKSPACE%\src\Build.cmd"
+          if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
           endlocal
           
           setlocal
           call "%LatestVisualStudioRoot%\VC\Auxiliary\Build\vcvars64.bat"
           call "%GITHUB_WORKSPACE%\src\Build.cmd"
+          if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
           endlocal
 
           msbuild src\YY.Depends.Analyzer\YY.Depends.Analyzer.vcxproj "-p:Configuration=Release;Platform=Win32;OutDir=%GITHUB_WORKSPACE%\;SolutionDir=%GITHUB_WORKSPACE%\src\\"
-
+          if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
     - name: 执行单元测试
       working-directory: ${{env.GITHUB_WORKSPACE}}
       shell: pwsh
@@ -159,9 +161,14 @@ jobs:
       shell: cmd
       run: |
           ::打包Release
-          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-${{env.BuildVersion}}-Binary.zip objs LICENSE ReadMe.md ThunksList.md YY.Depends.Analyzer.exe
+          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-${{env.BuildVersion}}-Objs.zip objs LICENSE ReadMe.md ThunksList.md YY.Depends.Analyzer.exe
           pushd ".\src\YY.Depends.Analyzer"
-          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-${{env.BuildVersion}}-Binary.zip Config
+          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-${{env.BuildVersion}}-Objs.zip Config
+          popd
+
+          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-${{env.BuildVersion}}-Lib.zip Lib LICENSE ReadMe.md ThunksList.md YY.Depends.Analyzer.exe
+          pushd ".\src\YY.Depends.Analyzer"
+          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-${{env.BuildVersion}}-Lib.zip Config
           popd
 
           ::打包Nuget

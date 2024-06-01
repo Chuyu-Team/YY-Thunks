@@ -186,13 +186,18 @@ RtlCutoverTimeToSystemTime(
 
 #include <HookThunk.h>
 
+#ifndef __FALLBACK_PREFIX
+#define __FALLBACK_PREFIX
+#endif
+
 //展开函数的所有的 声明 以及 try_get_ 函数
-#define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                 \
-    __APPLY_UNIT_TEST_BOOL(_FUNCTION);                                                         \
-    EXTERN_C _RETURN_ _CONVENTION_ _FUNCTION(__VA_ARGS__);                                     \
-	static decltype(_FUNCTION)* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept;      \
+#define __DEFINE_THUNK_EXTERN_PREFIX(_PREFIX, _MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                      \
+    __APPLY_UNIT_TEST_BOOL(_FUNCTION);                                                                                     \
+    EXTERN_C _RETURN_ _CONVENTION_ _CRT_CONCATENATE_(_PREFIX, _FUNCTION)(__VA_ARGS__);                                     \
+	static decltype(_CRT_CONCATENATE_(_PREFIX, _FUNCTION))* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept;      \
 	__if_not_exists(_CRT_CONCATENATE(try_get_, _FUNCTION))
 
+#define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...) __DEFINE_THUNK_EXTERN_PREFIX(__FALLBACK_PREFIX, _MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, __VA_ARGS__)
 
 #include "Thunks\YY_Thunks_List.hpp"
 
@@ -781,10 +786,13 @@ namespace YY::Thunks::internal
 
 #include "ThreadRunner.h"
 
+#define _DEFINE_IAT_SYMBOL_PREFIX(_PREFIX, _FUNCTION, _SIZE) _LCRT_DEFINE_IAT_SYMBOL(_PREFIX ## _FUNCTION, _SIZE)
+#define _YY_THUNKS_DEFINE_RUST_RAW_DYLIB_IAT_SYMBOL_PREFIX(_PREFIX, _FUNCTION, _SIZE) _YY_THUNKS_DEFINE_RUST_RAW_DYLIB_IAT_SYMBOL(_FUNCTION, _SIZE, _PREFIX ## _FUNCTION)
+
 //导入实际的实现
 #define YY_Thunks_Implemented
-#define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                 \
-    static decltype(_FUNCTION)* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept       \
+#define __DEFINE_THUNK_IMP_PREFIX(_PREFIX, _MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                 \
+    static decltype(_CRT_CONCATENATE_(_PREFIX, _FUNCTION))* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept       \
 	{                                                                                          \
         __CHECK_UNIT_TEST_BOOL(_FUNCTION);                                                     \
         __declspec(allocate(".YYThr$AAA")) static void* _CRT_CONCATENATE(pInit_ ,_FUNCTION) =  \
@@ -801,13 +809,15 @@ __if_exists(YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION))        
             &YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION)                       \
 }                                                                                              \
         };                                                                                     \
-		return reinterpret_cast<decltype(_FUNCTION)*>(try_get_function(                        \
+		return reinterpret_cast<decltype(_CRT_CONCATENATE_(_PREFIX, _FUNCTION))*>(try_get_function(                        \
 		&_CRT_CONCATENATE(pFun_ ,_FUNCTION),                                                   \
 		_ProcInfo));                                                                           \
 	}                                                                                          \
-    _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION, _SIZE);                                                 \
-    _YY_THUNKS_DEFINE_RUST_RAW_DYLIB_IAT_SYMBOL(_FUNCTION, _SIZE);                             \
-    EXTERN_C _RETURN_ _CONVENTION_ _FUNCTION(__VA_ARGS__)
+    _DEFINE_IAT_SYMBOL_PREFIX(_PREFIX, _FUNCTION, _SIZE);                                                 \
+    _YY_THUNKS_DEFINE_RUST_RAW_DYLIB_IAT_SYMBOL_PREFIX(_PREFIX, _FUNCTION, _SIZE);                             \
+    EXTERN_C _RETURN_ _CONVENTION_ _CRT_CONCATENATE_(_PREFIX, _FUNCTION)(__VA_ARGS__)
+
+#define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...) __DEFINE_THUNK_IMP_PREFIX(__FALLBACK_PREFIX, _MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, __VA_ARGS__)
 
 #include "YY_Thunks_List.hpp"
 

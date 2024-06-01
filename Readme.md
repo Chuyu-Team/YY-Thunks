@@ -13,7 +13,7 @@
 With each new version of Windows, a large number of APIs are added,
 and it often takes a lot of effort to develop Windows applications
 that are compatible with older systems. And some open source projects
-are no longer compatible with some earlier versions of Windows, such as Windows XP and Windows 7...
+are no longer compatible with some earlier versions of Windows, such as Windows XP, Windows 7...
 
 Isn't there a solution to quickly deal with the problem that the old system can't find the API?
 
@@ -68,8 +68,8 @@ as NuGet is designed to be foolproof and easier to use.
 3. Optional, if you need run on Windows XP, please modify the value of `SupportedOSPlatformVersion` to `5.1`
 
 ### 2.2. Manual
-
-1. Download and unzip [YY-Thunks-Binary](https://github.com/Chuyu-Team/YY-Thunks/releases) to project directory.
+#### 2.2.1. using obj file (MSVC Link)
+1. Download and unzip [YY-Thunks-Objs](https://github.com/Chuyu-Team/YY-Thunks/releases) to project directory.
 2. `Linker` - `Input` - `Additional Dependencies`, add `objs\$(PlatformShortName)\YY_Thunks_for_WinXP.obj`.
 3. `Linker` - `System` - `Minimum Required Version`, set to `5.1` (WinXP 32-bit) or `5.2` (WinXP x64 or Win2003).
 4. If the project is a `Dynamic Link Library`, then change `Linker` - `Advanced` - `Custom Entry Point` to `DllMainCRTStartupForYY_Thunks`
@@ -78,6 +78,15 @@ as NuGet is designed to be foolproof and easier to use.
 
 > Note: If your app needs to be compatible with Vista or later, please set `Additional Dependencies` to 
   `objs\$(PlatformShortName)\YY_Thunks_for_Vista.obj`。
+
+#### 2.2.2. using lib files (LLD Link)
+> LLD linkers using obj files will encounter duplicate symbol errors.
+
+1. Download and unzip [YY-Thunks-Lib](https://github.com/Chuyu-Team/YY-Thunks/releases) to project directory.
+2. Add a parameter like `-L YY-Thunks_Root_Dir/lib/5.1.2600.0/x86` to the linker and make sure the order is higher than WinSDK.
+3. 如If the project is a `Dynamic Link Library`, please add parameter `-e DllMainCRTStartupForYY_Thunks`
+    (If you ignore this step, the XP system may crash with `thread_local`).
+4. Rebuild the solution.
 
 ## 3. Compatibility
 

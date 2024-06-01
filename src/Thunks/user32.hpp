@@ -1,17 +1,24 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN10_RS1) && !defined(__Comment_Lib_user32)
+﻿#if (YY_Thunks_Support_Version < NTDDI_WIN10_RS2)
+#include <shellscalingapi.h>
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN10_RS1) && !defined(__Comment_Lib_user32)
 #define __Comment_Lib_user32
 #pragma comment(lib, "User32.lib")
 #endif
 
-#if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WINBLUE)
+#if (YY_Thunks_Support_Version < NTDDI_WIN10_RS2) && !defined(__Comment_Lib_shcore)
+#define __Comment_Lib_shcore
+#pragma comment(lib, "Shcore.lib")
+#endif
+
+#if defined(YY_Thunks_Implemented)
 namespace YY::Thunks::internal
 {
 	namespace
 	{
-		static
-		UINT
-		__fastcall
-		GetDpiForSystemDownlevel()
+#if (YY_Thunks_Support_Version < NTDDI_WIN10_RS1)
+		static UINT __fastcall GetDpiForSystemDownlevel()
 		{
 			static int nDPICache = 0;
 
@@ -30,6 +37,7 @@ namespace YY::Thunks::internal
 
 			return nDPICache = nDpiX;
 		}
+#endif
 	}
 }
 #endif

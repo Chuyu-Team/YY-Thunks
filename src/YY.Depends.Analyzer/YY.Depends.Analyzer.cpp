@@ -1071,9 +1071,19 @@ bool IsInYY_Thunks(WORD _Machine, const AnalyzerProc& _ProcInfo)
     if (_Cache.size() == 0)
     {
         static const LPCWSTR s_szSubPath[2] = { L"objs\\x86\\YY_Thunks_for_Win2K.obj" , L"objs\\x64\\YY_Thunks_for_WinXP.obj" };
+        static const LPCWSTR s_szSubPathFallback[2] = { L"Lib\\5.0.2195.0\\x86\\YY_Thunks_for_5.0.2195.0.obj" , L"Lib\\5.2.3790.1180\\x64\\YY_Thunks_for_5.2.3790.1180.obj" };
+
+        bool _bFallback = false;
+
         CStringA _FileData = ReadFileData(g_szRoot + s_szSubPath[SymbolCacheIndex]);
         if (_FileData.IsEmpty())
-            return false;
+        {
+            _FileData = ReadFileData(g_szRoot + s_szSubPathFallback[SymbolCacheIndex]);
+            if (_FileData.IsEmpty())
+                return false;
+
+            _bFallback = true;
+        }
 
         auto pData = _FileData.GetString();
         auto tttt = (IMAGE_FILE_HEADER*)pData;
@@ -1115,9 +1125,39 @@ bool IsInYY_Thunks(WORD _Machine, const AnalyzerProc& _ProcInfo)
                 {
                     continue;
                 }
-                _Cache.insert(_szBuffer);
 
-                _szBuffer += 6;
+                if (_bFallback)
+                {
+                    _szBuffer += 6;
+                    if (_Machine == IMAGE_FILE_MACHINE_I386 && _szBuffer[0] == '_')
+                    {
+                        ++_szBuffer;
+                        if (strncmp(_szBuffer, "YY_Thunks_", 10) != 0)
+                        {
+                            continue;
+                        }
+
+                        // 故意留下一个 '_'
+                        _szBuffer += 9;
+                        _Cache.insert(CStringA("__imp_") + _szBuffer);
+                    }
+                    else
+                    {
+                        if (strncmp(_szBuffer, "YY_Thunks_", 10) != 0)
+                        {
+                            continue;
+                        }
+
+                        _szBuffer += 10;
+                        _Cache.insert(CStringA("__imp_") + _szBuffer);
+                    }
+                }
+                else
+                {
+                    _Cache.insert(_szBuffer);
+                    _szBuffer += 6;
+                }
+
 
                 _Cache.insert(_szBuffer);
 
@@ -1375,7 +1415,7 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
                         auto _iter = _pCache->ProcNameToModuleNameMap.find(_Proc.second.szProc);
                         if (_iter != _pCache->ProcNameToModuleNameMap.end())
                         {
-                            _szData += " ( try use";
+                            _szData += " ( try use ";
                             _szData += _iter->second;
                             _szData += '?';
                             _szData += '?';

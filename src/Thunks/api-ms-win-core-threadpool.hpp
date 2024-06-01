@@ -319,7 +319,7 @@ namespace YY::Thunks
                 // | 31  ~  3 |    2      |     1       |    0      |
                 union TaskRunnerFlagsType
                 {
-                    uint64_t fFlags64;
+                    volatile uint64_t fFlags64;
                     uint32_t uWakeupCountAndPushLock;
 
                     struct
@@ -368,25 +368,20 @@ namespace YY::Thunks
 
                     // 将任务提交到任务队列
                     AddRef();
-                    for (;;)
-                    {
-                        if (!_interlockedbittestandset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePushBitIndex))
-                        {
-                            oTaskQueue.Push(_pWork);
-
-                            // 后面交换略
-                            _interlockedbittestandreset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePushBitIndex);
-                            break;
-                        }
-                    }
-
-                    // 解除锁定，并且 WeakupCount + 1，也尝试提升 uParallelCurrent
-                    TaskRunnerFlagsType _uOldFlags = TaskRunnerFlags;
+                    // 尝试 WeakupCount + 1，并锁定Push，也尝试提升 uParallelCurrent
+                    TaskRunnerFlagsType _uOldFlags = { TaskRunnerFlags.fFlags64 };
                     TaskRunnerFlagsType _uNewFlags;
                     for (;;)
                     {
-                        _uNewFlags = _uOldFlags;
-                        _uNewFlags.uWakeupCountAndPushLock += WakeupOnceRaw;
+                        if (_uOldFlags.uWakeupCountAndPushLock & (1 << LockedQueuePushBitIndex))
+                        {
+                            YieldProcessor();
+                            _uOldFlags.fFlags64 = TaskRunnerFlags.fFlags64;
+                            continue;
+                        }
+
+                        _uNewFlags.fFlags64 = _uOldFlags.fFlags64;
+                        _uNewFlags.uWakeupCountAndPushLock += WakeupOnceRaw + (1 << LockedQueuePushBitIndex);
 
                         if (_uNewFlags.uParallelCurrent < _uParallelMaximum && _uNewFlags.uWakeupCount >= (int32_t)_uNewFlags.uParallelCurrent)
                         {
@@ -395,8 +390,12 @@ namespace YY::Thunks
 
                         auto _uLast = InterlockedCompareExchange(&TaskRunnerFlags.fFlags64, _uNewFlags.fFlags64, _uOldFlags.fFlags64);
                         if (_uLast == _uOldFlags.fFlags64)
+                        {
+                            // 完成Push锁定，提交任务后再解锁
+                            oTaskQueue.Push(_pWork);
+                            _interlockedbittestandreset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePushBitIndex);
                             break;
-
+                        }
                         _uOldFlags.fFlags64 = _uLast;
                     }
 
@@ -472,8 +471,6 @@ namespace YY::Thunks
                         _pTask->TryReleasePendingount();
                         _pTask->Release();
                         Release();
-                        if (InterlockedAdd((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, -(LONG)WakeupOnceRaw) < WakeupOnceRaw)
-                            break;
                     }
 
                     Release();
@@ -492,10 +489,19 @@ namespace YY::Thunks
                         if (!_interlockedbittestandset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePopBitIndex))
                         {
                             auto _pWork = oTaskQueue.Pop();
-
-                            _interlockedbittestandreset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePopBitIndex);
+                            if (_pWork)
+                            {
+                                // 因为弹出一个有效任务，所以 WakeupCount - 1，同时解除 pop 锁定
+                                InterlockedAdd((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, -(LONG)(WakeupOnceRaw + (1 << LockedQueuePopBitIndex)));
+                            }
+                            else
+                            {
+                                _interlockedbittestandreset((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, LockedQueuePopBitIndex);
+                            }
                             return _pWork;
                         }
+
+                        YieldProcessor();
                     }
                 }
 
@@ -519,12 +525,10 @@ namespace YY::Thunks
 
                         _pWork->Release();
                         Release();
-                        if (InterlockedAdd((volatile LONG*)&TaskRunnerFlags.uWakeupCountAndPushLock, -(LONG)WakeupOnceRaw) < WakeupOnceRaw)
-                            break;
                     }
 
                     // 尝试释放 uParallelCurrent
-                    TaskRunnerFlagsType _uOldFlags = TaskRunnerFlags;
+                    TaskRunnerFlagsType _uOldFlags = { TaskRunnerFlags.fFlags64 };
                     TaskRunnerFlagsType _uNewFlags;
                     for (;;)
                     {
