@@ -1,11 +1,15 @@
-﻿#include <bcrypt.h>
+﻿#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#include <bcrypt.h>
 #include <wincrypt.h>
+#endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_advapi32)
+#define __Comment_Lib_advapi32
 #pragma comment(lib, "Advapi32.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7) && (YY_Thunks_Support_Version >= NTDDI_WIN6)
+#if (YY_Thunks_Support_Version < NTDDI_WIN7) && !defined(__Comment_Lib_bcrypt)
+#define __Comment_Lib_bcrypt
 #pragma comment(lib, "bcrypt.lib")
 #endif
 

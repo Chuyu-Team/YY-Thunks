@@ -133,31 +133,54 @@ RtlCutoverTimeToSystemTime(
 
 #include "YY_Thunks.h"
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03SP1)
+#if (YY_Thunks_Support_Version < NTDDI_WS03SP1) && !defined(__Comment_Lib_advapi32)
+#define __Comment_Lib_advapi32
 #pragma comment(lib, "Advapi32.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_shlwapi)
+#define __Comment_Lib_shlwapi
 #pragma comment(lib, "Shlwapi.lib")
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_ws2_32)
+#define __Comment_Lib_ws2_32
 #pragma comment(lib, "Ws2_32.lib")
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_version)
+#define __Comment_Lib_version
 #pragma comment(lib, "version.lib")
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_ole32)
+#define __Comment_Lib_ole32
 #pragma comment(lib, "ole32.lib")
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_shell32)
+#define __Comment_Lib_shell32
 #pragma comment(lib, "shell32.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+// PSAPI2Kernel32.def
+#if (YY_Thunks_Support_Version < NTDDI_WIN7) && !defined(__Comment_Lib_psapi)
+#define __Comment_Lib_psapi
 #pragma comment(lib, "psapi.lib")
 #endif
 
-#if (YY_Thunks_Support_Version >= NTDDI_WINBLUE)
+#if (YY_Thunks_Support_Version >= NTDDI_WINBLUE) && !defined(__Comment_Lib_shcore)
+#define __Comment_Lib_shcore
 #pragma comment(lib, "Shcore.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WINBLUE)
+#if (YY_Thunks_Support_Version < NTDDI_WINBLUE) && !defined(__Comment_Lib_gdi32)
+#define __Comment_Lib_gdi32
 #pragma comment(lib, "Gdi32.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+#if (YY_Thunks_Support_Version < NTDDI_WIN10) && !defined(__Comment_Lib_user32)
+#define __Comment_Lib_user32
 #pragma comment(lib, "User32.lib")
 #endif
 

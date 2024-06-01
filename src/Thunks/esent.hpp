@@ -1,6 +1,9 @@
-﻿#include <Esent.h>
+﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#include <Esent.h>
+#endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_esent)
+#define __Comment_Lib_esent
 #pragma comment(lib, "esent.lib")
 #endif
 

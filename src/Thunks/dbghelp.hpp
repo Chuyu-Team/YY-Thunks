@@ -1,6 +1,9 @@
-﻿#include <dbghelp.h>
+﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#include <dbghelp.h>
+#endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_dbghelp)
+#define __Comment_Lib_dbghelp
 #pragma comment(lib, "Dbghelp.lib")
 #endif
 

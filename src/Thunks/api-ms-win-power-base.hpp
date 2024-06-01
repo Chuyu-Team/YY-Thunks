@@ -2,16 +2,16 @@
 #include <powrprof.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Support_Version < NTDDI_WIN8) && !defined(__Comment_Lib_powrprof)
+#define __Comment_Lib_powrprof
 #pragma comment(lib, "PowrProf.lib")
 #endif
 
-namespace YY
-{
-	namespace Thunks
-	{
 #if (YY_Thunks_Support_Version < NTDDI_WIN8) && defined(YY_Thunks_Implemented)
-
+namespace YY::Thunks
+{
+	namespace 
+	{
 		static
 		DWORD
 		WINAPI
@@ -87,83 +87,84 @@ namespace YY
 
 			return internal::GetGlobalThreadRunner()->RemoveTask((internal::TaskItem*)_hRegistrationHandle);
 		}
-
+    }
+}
 #endif // (YY_Thunks_Support_Version < NTDDI_WIN8) && defined(YY_Thunks_Implemented)
 
-
+namespace YY::Thunks
+{
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-		// 最低受支持的客户端	Windows 8 [桌面应用|UWP 应用]
-		// 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
-		__DEFINE_THUNK(
-		powrprof,
-		4,
-		POWER_PLATFORM_ROLE,
-		WINAPI,
-		PowerDeterminePlatformRoleEx,
-			_In_ ULONG _uVersion
-			)
+	// 最低受支持的客户端	Windows 8 [桌面应用|UWP 应用]
+	// 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+	__DEFINE_THUNK(
+	powrprof,
+	4,
+	POWER_PLATFORM_ROLE,
+	WINAPI,
+	PowerDeterminePlatformRoleEx,
+		_In_ ULONG _uVersion
+		)
+	{
+		if (auto const _pfnPowerDeterminePlatformRoleEx = try_get_PowerDeterminePlatformRoleEx())
 		{
-			if (auto const _pfnPowerDeterminePlatformRoleEx = try_get_PowerDeterminePlatformRoleEx())
-			{
-				return _pfnPowerDeterminePlatformRoleEx(_uVersion);
-			}
-
-			if (_uVersion == POWER_PLATFORM_ROLE_V1)
-			{
-				return PowerDeterminePlatformRole();
-			}
-			else
-			{
-				return PlatformRoleUnspecified;
-			}
+			return _pfnPowerDeterminePlatformRoleEx(_uVersion);
 		}
-#endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
-
-		// 最低受支持的客户端	Windows 8 [仅限桌面应用]
-		// 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
-		__DEFINE_THUNK(
-		powrprof,
-		12,
-		DWORD,
-		WINAPI,
-		PowerRegisterSuspendResumeNotification,
-			_In_ DWORD _fFlags,
-			_In_ HANDLE _hRecipient,
-			_Out_ PHPOWERNOTIFY _phRegistrationHandle
-			)
+		if (_uVersion == POWER_PLATFORM_ROLE_V1)
 		{
-			if (auto const _pfnPowerRegisterSuspendResumeNotification = try_get_PowerRegisterSuspendResumeNotification())
-			{
-				return _pfnPowerRegisterSuspendResumeNotification(_fFlags, _hRecipient, _phRegistrationHandle);
-			}
-			
-			return PowerRegisterSuspendResumeNotificationDownlevel(_fFlags, _hRecipient, _phRegistrationHandle);
+			return PowerDeterminePlatformRole();
 		}
-#endif
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
-
-		// 最低受支持的客户端	Windows 8 [仅限桌面应用]
-		// 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
-		__DEFINE_THUNK(
-		powrprof,
-		4,
-		DWORD,
-		WINAPI,
-		PowerUnregisterSuspendResumeNotification,
-			_Inout_ HPOWERNOTIFY _hRegistrationHandle
-			)
+		else
 		{
-			if (auto const _pfnPowerUnregisterSuspendResumeNotification = try_get_PowerUnregisterSuspendResumeNotification())
-			{
-				return _pfnPowerUnregisterSuspendResumeNotification(_hRegistrationHandle);
-			}
-
-			return PowerUnregisterSuspendResumeNotificationDownlevel(_hRegistrationHandle);
+			return PlatformRoleUnspecified;
 		}
-#endif
 	}
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+	// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+	// 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
+	__DEFINE_THUNK(
+	powrprof,
+	12,
+	DWORD,
+	WINAPI,
+	PowerRegisterSuspendResumeNotification,
+		_In_ DWORD _fFlags,
+		_In_ HANDLE _hRecipient,
+		_Out_ PHPOWERNOTIFY _phRegistrationHandle
+		)
+	{
+		if (auto const _pfnPowerRegisterSuspendResumeNotification = try_get_PowerRegisterSuspendResumeNotification())
+		{
+			return _pfnPowerRegisterSuspendResumeNotification(_fFlags, _hRecipient, _phRegistrationHandle);
+		}
+			
+		return PowerRegisterSuspendResumeNotificationDownlevel(_fFlags, _hRecipient, _phRegistrationHandle);
+	}
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+	// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+	// 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
+	__DEFINE_THUNK(
+	powrprof,
+	4,
+	DWORD,
+	WINAPI,
+	PowerUnregisterSuspendResumeNotification,
+		_Inout_ HPOWERNOTIFY _hRegistrationHandle
+		)
+	{
+		if (auto const _pfnPowerUnregisterSuspendResumeNotification = try_get_PowerUnregisterSuspendResumeNotification())
+		{
+			return _pfnPowerUnregisterSuspendResumeNotification(_hRegistrationHandle);
+		}
+
+		return PowerUnregisterSuspendResumeNotificationDownlevel(_hRegistrationHandle);
+	}
+#endif
 }

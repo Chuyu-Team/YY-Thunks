@@ -1,55 +1,28 @@
-﻿#include <winhttp.h>
+﻿#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#include <winhttp.h>
+#endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Support_Version < NTDDI_WIN8) && !defined(__Comment_Lib_winhttp)
+#define __Comment_Lib_winhttp
 #pragma comment(lib, "winhttp.lib")
 #endif
 
-namespace YY::Thunks
-{
 #if (YY_Thunks_Support_Version < NTDDI_WIN8) && defined(YY_Thunks_Implemented)
-    namespace Fallback
+namespace YY::Thunks::Fallback
+{
+    namespace 
     {
-        namespace 
+        struct WinHttpProxyResolver
         {
-            struct WinHttpProxyResolver
+            struct Request
             {
-                struct Request
-                {
-                    ULONG uRef;
-                    WINHTTP_PROXY_INFO ProxyInfo;
+                ULONG uRef;
+                WINHTTP_PROXY_INFO ProxyInfo;
 
-                    WinHttpProxyResolver* pProxyResolver;
-                    DWORD_PTR pContext;
-                    WINHTTP_AUTOPROXY_OPTIONS AutoProxyOptions;
-                    wchar_t szUrl[0];
-
-                    void AddRef()
-                    {
-                        InterlockedIncrement(&uRef);
-                    }
-
-                    void Release()
-                    {
-                        if (InterlockedDecrement(&uRef) == 0)
-                        {
-                            if (ProxyInfo.lpszProxy)
-                                GlobalFree(ProxyInfo.lpszProxy);
-                            if (ProxyInfo.lpszProxyBypass)
-                                GlobalFree(ProxyInfo.lpszProxyBypass);
-                            internal::Free(this);
-                        }
-                    }
-                };
-
-                static constexpr DWORD kMagic = 696;
-                DWORD uMagic = kMagic;
-                DWORD uRef = 1;
-                SRWLOCK Lock = {};
-                HINTERNET hSession = NULL;
-                HINTERNET hConnect = NULL;
-                WINHTTP_STATUS_CALLBACK pfnGetProxyForUrlCallback = nullptr;
-                DWORD fNotificationFlags = 0;
-                Request* pResult = nullptr;
+                WinHttpProxyResolver* pProxyResolver;
+                DWORD_PTR pContext;
+                WINHTTP_AUTOPROXY_OPTIONS AutoProxyOptions;
+                wchar_t szUrl[0];
 
                 void AddRef()
                 {
@@ -60,306 +33,336 @@ namespace YY::Thunks
                 {
                     if (InterlockedDecrement(&uRef) == 0)
                     {
-                        auto _pResult = (WinHttpProxyResolver::Request*)InterlockedExchange((volatile uintptr_t*)&pResult, (uintptr_t)nullptr);
-                        if (_pResult)
-                        {
-                            _pResult->Release();
-                        }
-
-                        ::WinHttpCloseHandle(hConnect);
-                        internal::Delete(this);
-                    }
-                }
-
-                Request* GetResult()
-                {
-                    ::AcquireSRWLockShared(&Lock);
-                    auto _p = pResult;
-                    _p->AddRef();
-                    ::ReleaseSRWLockShared(&Lock);
-                    return _p;
-                }
-
-                void SetResult(Request* _pResult)
-                {
-                    if (_pResult)
-                        _pResult->AddRef();
-                    ::AcquireSRWLockExclusive(&Lock);
-                    auto _p = (WinHttpProxyResolver::Request*)InterlockedExchange((volatile uintptr_t*)&pResult, (uintptr_t)_pResult);
-                    ::ReleaseSRWLockExclusive(&Lock);
-                    if (_p)
-                    {
-                        _p->Release();
+                        if (ProxyInfo.lpszProxy)
+                            GlobalFree(ProxyInfo.lpszProxy);
+                        if (ProxyInfo.lpszProxyBypass)
+                            GlobalFree(ProxyInfo.lpszProxyBypass);
+                        internal::Free(this);
                     }
                 }
             };
 
-            template<typename Type>
-            bool Is(HINTERNET _hSession) noexcept;
+            static constexpr DWORD kMagic = 696;
+            DWORD uMagic = kMagic;
+            DWORD uRef = 1;
+            SRWLOCK Lock = {};
+            HINTERNET hSession = NULL;
+            HINTERNET hConnect = NULL;
+            WINHTTP_STATUS_CALLBACK pfnGetProxyForUrlCallback = nullptr;
+            DWORD fNotificationFlags = 0;
+            Request* pResult = nullptr;
 
-            template<>
-            bool __fastcall Is<WinHttpProxyResolver>(HINTERNET _hSession) noexcept
+            void AddRef()
             {
-                return _hSession && reinterpret_cast<WinHttpProxyResolver*>(_hSession)->uMagic == WinHttpProxyResolver::kMagic;
+                InterlockedIncrement(&uRef);
             }
 
-            // 代理格式： [<scheme>=][<scheme>"://"]<server>[":"<port>]
-            struct ProxyResultEntry
+            void Release()
             {
-                bool            bProxy = false;
-                bool            bBypass = false;
-                INTERNET_PORT   ProxyPort = 0;
-                INTERNET_SCHEME uProxyScheme = 0;
-                LPCWSTR         szProxy = nullptr;
-                size_t          cchProxy = 0;
-
-            public:
-                bool __fastcall Parse(LPCWSTR* _pszProxy)
+                if (InterlockedDecrement(&uRef) == 0)
                 {
-                    if (!ParseProxyScheme(_pszProxy))
-                        return false;
-
-                    if (!ParseProxyServerAndPort(_pszProxy))
-                        return false;
-
-                    return true;
-                }
-
-                static size_t __fastcall GetMaxBufferCount(_In_opt_z_ LPCWSTR _szProxy)
-                {
-                    size_t _cbMaxBuffer = sizeof(WINHTTP_PROXY_RESULT_ENTRY) + sizeof(wchar_t);
-                    if (_szProxy)
+                    auto _pResult = (WinHttpProxyResolver::Request*)InterlockedExchange((volatile uintptr_t*)&pResult, (uintptr_t)nullptr);
+                    if (_pResult)
                     {
-                        for (; *_szProxy; ++_szProxy, _cbMaxBuffer += sizeof(wchar_t))
-                        {
-                            if (*_szProxy == L';')
-                            {
-                                _cbMaxBuffer += sizeof(WINHTTP_PROXY_RESULT_ENTRY) + sizeof(wchar_t);
-                            }
-
-                        }
+                        _pResult->Release();
                     }
 
-                    return _cbMaxBuffer;
+                    ::WinHttpCloseHandle(hConnect);
+                    internal::Delete(this);
+                }
+            }
+
+            Request* GetResult()
+            {
+                ::AcquireSRWLockShared(&Lock);
+                auto _p = pResult;
+                _p->AddRef();
+                ::ReleaseSRWLockShared(&Lock);
+                return _p;
+            }
+
+            void SetResult(Request* _pResult)
+            {
+                if (_pResult)
+                    _pResult->AddRef();
+                ::AcquireSRWLockExclusive(&Lock);
+                auto _p = (WinHttpProxyResolver::Request*)InterlockedExchange((volatile uintptr_t*)&pResult, (uintptr_t)_pResult);
+                ::ReleaseSRWLockExclusive(&Lock);
+                if (_p)
+                {
+                    _p->Release();
+                }
+            }
+        };
+
+        template<typename Type>
+        bool Is(HINTERNET _hSession) noexcept;
+
+        template<>
+        bool __fastcall Is<WinHttpProxyResolver>(HINTERNET _hSession) noexcept
+        {
+            return _hSession && reinterpret_cast<WinHttpProxyResolver*>(_hSession)->uMagic == WinHttpProxyResolver::kMagic;
+        }
+
+        // 代理格式： [<scheme>=][<scheme>"://"]<server>[":"<port>]
+        struct ProxyResultEntry
+        {
+            bool            bProxy = false;
+            bool            bBypass = false;
+            INTERNET_PORT   ProxyPort = 0;
+            INTERNET_SCHEME uProxyScheme = 0;
+            LPCWSTR         szProxy = nullptr;
+            size_t          cchProxy = 0;
+
+        public:
+            bool __fastcall Parse(LPCWSTR* _pszProxy)
+            {
+                if (!ParseProxyScheme(_pszProxy))
+                    return false;
+
+                if (!ParseProxyServerAndPort(_pszProxy))
+                    return false;
+
+                return true;
+            }
+
+            static size_t __fastcall GetMaxBufferCount(_In_opt_z_ LPCWSTR _szProxy)
+            {
+                size_t _cbMaxBuffer = sizeof(WINHTTP_PROXY_RESULT_ENTRY) + sizeof(wchar_t);
+                if (_szProxy)
+                {
+                    for (; *_szProxy; ++_szProxy, _cbMaxBuffer += sizeof(wchar_t))
+                    {
+                        if (*_szProxy == L';')
+                        {
+                            _cbMaxBuffer += sizeof(WINHTTP_PROXY_RESULT_ENTRY) + sizeof(wchar_t);
+                        }
+
+                    }
                 }
 
-                void To(_Out_ WINHTTP_PROXY_RESULT_ENTRY* _pEntry, WCHAR** _pszBuffer)
-                {
-                    auto _szBuffer = *_pszBuffer;
+                return _cbMaxBuffer;
+            }
 
-                    _pEntry->fProxy = bProxy;
-                    _pEntry->fBypass = bBypass;
-                    _pEntry->ProxyScheme = uProxyScheme;
-                    _pEntry->ProxyPort = ProxyPort;
-                    if (cchProxy)
+            void To(_Out_ WINHTTP_PROXY_RESULT_ENTRY* _pEntry, WCHAR** _pszBuffer)
+            {
+                auto _szBuffer = *_pszBuffer;
+
+                _pEntry->fProxy = bProxy;
+                _pEntry->fBypass = bBypass;
+                _pEntry->ProxyScheme = uProxyScheme;
+                _pEntry->ProxyPort = ProxyPort;
+                if (cchProxy)
+                {
+                    --_szBuffer;
+                    *_szBuffer = L'\0';
+                    _szBuffer -= cchProxy;
+                    _pEntry->pwszProxy = _szBuffer;
+                    memcpy(_szBuffer, szProxy, cchProxy * sizeof(_szBuffer[0]));
+                }
+                else
+                {
+                    _pEntry->pwszProxy = nullptr;
+                }
+                *_pszBuffer = _szBuffer;
+            }
+
+        private:
+            bool __fastcall ParseProxyScheme(LPCWSTR* _pszProxy) noexcept
+            {
+                auto _szProxy = *_pszProxy;
+                for (; *_szProxy == L' '; ++_szProxy);
+
+                // scheme: http HTTPS FTP SOCKS
+                switch (__ascii_towlower(*_szProxy))
+                {
+                case 'h':
+                    ++_szProxy;
+                    if (__ascii_towlower(*_szProxy) != L't')
                     {
-                        --_szBuffer;
-                        *_szBuffer = L'\0';
-                        _szBuffer -= cchProxy;
-                        _pEntry->pwszProxy = _szBuffer;
-                        memcpy(_szBuffer, szProxy, cchProxy * sizeof(_szBuffer[0]));
+                        return false;
+                    }
+                    ++_szProxy;
+                    if (__ascii_towlower(*_szProxy) != L't')
+                    {
+                        return false;
+                    }
+                    ++_szProxy;
+                    if (__ascii_towlower(*_szProxy) != L'p')
+                    {
+                        return false;
+                    }
+                    ++_szProxy;
+                    if (__ascii_towlower(*_szProxy) == L's')
+                    {
+                        ++_szProxy;
+                        uProxyScheme = INTERNET_SCHEME_HTTPS;
                     }
                     else
                     {
-                        _pEntry->pwszProxy = nullptr;
-                    }
-                    *_pszBuffer = _szBuffer;
-                }
-
-            private:
-                bool __fastcall ParseProxyScheme(LPCWSTR* _pszProxy) noexcept
-                {
-                    auto _szProxy = *_pszProxy;
-                    for (; *_szProxy == L' '; ++_szProxy);
-
-                    // scheme: http HTTPS FTP SOCKS
-                    switch (__ascii_towlower(*_szProxy))
-                    {
-                    case 'h':
-                        ++_szProxy;
-                        if (__ascii_towlower(*_szProxy) != L't')
-                        {
-                            return false;
-                        }
-                        ++_szProxy;
-                        if (__ascii_towlower(*_szProxy) != L't')
-                        {
-                            return false;
-                        }
-                        ++_szProxy;
-                        if (__ascii_towlower(*_szProxy) != L'p')
-                        {
-                            return false;
-                        }
-                        ++_szProxy;
-                        if (__ascii_towlower(*_szProxy) == L's')
-                        {
-                            ++_szProxy;
-                            uProxyScheme = INTERNET_SCHEME_HTTPS;
-                        }
-                        else
-                        {
-                            uProxyScheme = INTERNET_SCHEME_HTTP;
-                        }
-                        break;
-                    case 'f':
-                        // Windows的PAC好像本身就不支持FTP，代码先留着吧。
-                        ++_szProxy;
-                        if (__ascii_towlower(*_szProxy) != L't')
-                        {
-                            return false;
-                        }
-                        ++_szProxy;
-                        if (__ascii_towlower(*_szProxy) != L'p')
-                        {
-                            return false;
-                        }
-                        ++_szProxy;
-                        uProxyScheme = INTERNET_SCHEME_FTP;
-                        break;
-                    case 's':
-                        ++_szProxy;
-                        if (__ascii_towlower(*_szProxy) != L'o')
-                        {
-                            return false;
-                        }
-                        ++_szProxy;
-                        if (__ascii_towlower(*_szProxy) != L'c')
-                        {
-                            return false;
-                        }
-                        ++_szProxy;
-                        if (__ascii_towlower(*_szProxy) != L'k')
-                        {
-                            return false;
-                        }
-                        ++_szProxy;
-                        if (__ascii_towlower(*_szProxy) != L's')
-                        {
-                            return false;
-                        }
-                        ++_szProxy;
-                        uProxyScheme = INTERNET_SCHEME_SOCKS;
-                        break;
-                    default:
-                        // 默认认为是http
                         uProxyScheme = INTERNET_SCHEME_HTTP;
-                        goto __Exit;
+                    }
+                    break;
+                case 'f':
+                    // Windows的PAC好像本身就不支持FTP，代码先留着吧。
+                    ++_szProxy;
+                    if (__ascii_towlower(*_szProxy) != L't')
+                    {
+                        return false;
+                    }
+                    ++_szProxy;
+                    if (__ascii_towlower(*_szProxy) != L'p')
+                    {
+                        return false;
+                    }
+                    ++_szProxy;
+                    uProxyScheme = INTERNET_SCHEME_FTP;
+                    break;
+                case 's':
+                    ++_szProxy;
+                    if (__ascii_towlower(*_szProxy) != L'o')
+                    {
+                        return false;
+                    }
+                    ++_szProxy;
+                    if (__ascii_towlower(*_szProxy) != L'c')
+                    {
+                        return false;
+                    }
+                    ++_szProxy;
+                    if (__ascii_towlower(*_szProxy) != L'k')
+                    {
+                        return false;
+                    }
+                    ++_szProxy;
+                    if (__ascii_towlower(*_szProxy) != L's')
+                    {
+                        return false;
+                    }
+                    ++_szProxy;
+                    uProxyScheme = INTERNET_SCHEME_SOCKS;
+                    break;
+                default:
+                    // 默认认为是http
+                    uProxyScheme = INTERNET_SCHEME_HTTP;
+                    goto __Exit;
+                    break;
+                }
+
+                if (*_szProxy == L'=')
+                {
+                    ++_szProxy;
+                }
+                else if (*_szProxy == L':')
+                {
+                    ++_szProxy;
+                    if (*_szProxy != L'/')
+                    {
+                        return false;
+                    }
+                    ++_szProxy;
+                    if (*_szProxy != L'/')
+                    {
+                        return false;
+                    }
+                    ++_szProxy;
+                }
+
+            __Exit:
+                *_pszProxy = _szProxy;
+                return true;
+            }
+
+            bool __fastcall ParseProxyServerAndPort(LPCWSTR* _pszProxy) noexcept
+            {
+                auto _szProxy = *_pszProxy;
+                for (; *_szProxy == L' '; ++_szProxy);
+
+                szProxy = _szProxy;
+
+                for (; ; ++_szProxy)
+                {
+                    if (*_szProxy == L'\0' || *_szProxy == ';')
+                    {
+                        cchProxy = _szProxy - szProxy;
+                        if (cchProxy == 0)
+                            return false;
+
+                        switch (uProxyScheme)
+                        {
+                        case INTERNET_SCHEME_HTTP:
+                            ProxyPort = INTERNET_DEFAULT_HTTP_PORT;
+                            break;
+                        case INTERNET_SCHEME_HTTPS:
+                            // 实际微软的API测试函数就算是HTTPS默认端口也是80
+                            // 具体原因不明，我们就先跟微软保持一致吧。
+                            ProxyPort = /*INTERNET_DEFAULT_HTTPS_PORT*/INTERNET_DEFAULT_HTTP_PORT;
+                            break;
+                        case INTERNET_SCHEME_FTP:
+                            ProxyPort = 21;
+                            break;
+                        case INTERNET_SCHEME_SOCKS:
+                            ProxyPort = 1080;
+                            break;
+                        default:
+                            return false;
+                            break;
+                        }
+
+                        if (*_szProxy == ';')
+                            ++_szProxy;
+
                         break;
                     }
-
-                    if (*_szProxy == L'=')
+                    else if (*_szProxy == ':')
                     {
-                        ++_szProxy;
-                    }
-                    else if (*_szProxy == L':')
-                    {
-                        ++_szProxy;
-                        if (*_szProxy != L'/')
-                        {
+                        cchProxy = _szProxy - szProxy;
+                        if (cchProxy == 0)
                             return false;
-                        }
                         ++_szProxy;
-                        if (*_szProxy != L'/')
-                        {
+                        if (!ParseProxyPort(&_szProxy))
                             return false;
-                        }
-                        ++_szProxy;
+                        break;
                     }
-
-                __Exit:
-                    *_pszProxy = _szProxy;
-                    return true;
                 }
 
-                bool __fastcall ParseProxyServerAndPort(LPCWSTR* _pszProxy) noexcept
+                *_pszProxy = _szProxy;
+                return true;
+            }
+
+            bool __fastcall ParseProxyPort(LPCWSTR* _pszProxy) noexcept
+            {
+                auto _szProxy = *_pszProxy;
+                for (; *_szProxy == L' '; ++_szProxy);
+
+                DWORD _uPort = 0;
+                if (!internal::StringToUint32(_szProxy, &_uPort, &_szProxy))
+                    return false;
+
+                if (_uPort > MAXUINT16)
+                    return false;
+
+                for (; *_szProxy == L' '; ++_szProxy);
+                if (*_szProxy == ';')
                 {
-                    auto _szProxy = *_pszProxy;
-                    for (; *_szProxy == L' '; ++_szProxy);
-
-                    szProxy = _szProxy;
-
-                    for (; ; ++_szProxy)
-                    {
-                        if (*_szProxy == L'\0' || *_szProxy == ';')
-                        {
-                            cchProxy = _szProxy - szProxy;
-                            if (cchProxy == 0)
-                                return false;
-
-                            switch (uProxyScheme)
-                            {
-                            case INTERNET_SCHEME_HTTP:
-                                ProxyPort = INTERNET_DEFAULT_HTTP_PORT;
-                                break;
-                            case INTERNET_SCHEME_HTTPS:
-                                // 实际微软的API测试函数就算是HTTPS默认端口也是80
-                                // 具体原因不明，我们就先跟微软保持一致吧。
-                                ProxyPort = /*INTERNET_DEFAULT_HTTPS_PORT*/INTERNET_DEFAULT_HTTP_PORT;
-                                break;
-                            case INTERNET_SCHEME_FTP:
-                                ProxyPort = 21;
-                                break;
-                            case INTERNET_SCHEME_SOCKS:
-                                ProxyPort = 1080;
-                                break;
-                            default:
-                                return false;
-                                break;
-                            }
-
-                            if (*_szProxy == ';')
-                                ++_szProxy;
-
-                            break;
-                        }
-                        else if (*_szProxy == ':')
-                        {
-                            cchProxy = _szProxy - szProxy;
-                            if (cchProxy == 0)
-                                return false;
-                            ++_szProxy;
-                            if (!ParseProxyPort(&_szProxy))
-                                return false;
-                            break;
-                        }
-                    }
-
-                    *_pszProxy = _szProxy;
-                    return true;
+                    ++_szProxy;
                 }
-
-                bool __fastcall ParseProxyPort(LPCWSTR* _pszProxy) noexcept
+                else if (*_szProxy != '\0')
                 {
-                    auto _szProxy = *_pszProxy;
-                    for (; *_szProxy == L' '; ++_szProxy);
-
-                    DWORD _uPort = 0;
-                    if (!internal::StringToUint32(_szProxy, &_uPort, &_szProxy))
-                        return false;
-
-                    if (_uPort > MAXUINT16)
-                        return false;
-
-                    for (; *_szProxy == L' '; ++_szProxy);
-                    if (*_szProxy == ';')
-                    {
-                        ++_szProxy;
-                    }
-                    else if (*_szProxy != '\0')
-                    {
-                        return false;
-                    }
-
-                    ProxyPort = static_cast<UINT16>(_uPort);
-                    *_pszProxy = _szProxy;
-                    return true;
+                    return false;
                 }
-            };
-        }
+
+                ProxyPort = static_cast<UINT16>(_uPort);
+                *_pszProxy = _szProxy;
+                return true;
+            }
+        };
     }
+}
 #endif
 
+namespace YY::Thunks
+{
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
 	// 最低受支持的客户端	Windows 8 [仅限桌面应用]

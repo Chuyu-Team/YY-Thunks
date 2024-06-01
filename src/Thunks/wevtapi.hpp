@@ -1,6 +1,9 @@
-﻿#include <winevt.h>
+﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#include <winevt.h>
+#endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_wevtapi)
+#define __Comment_Lib_wevtapi
 #pragma comment(lib, "wevtapi.lib")
 #endif
 

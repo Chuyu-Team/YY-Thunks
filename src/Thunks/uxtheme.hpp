@@ -1,6 +1,9 @@
-﻿#include <uxtheme.h>
+﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#include <uxtheme.h>
+#endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_uxtheme)
+#define __Comment_Lib_uxtheme
 #pragma comment(lib, "UxTheme.lib")
 #endif
 
