@@ -176,6 +176,13 @@ namespace YY::Thunks::internal
         if (!_pTeb)
             _pTeb = (TEB*)NtCurrentTeb();
 
+        const size_t _cbTlsRaw = _tls_used.EndAddressOfRawData - _tls_used.StartAddressOfRawData;
+        auto _pRawTlsData = (BYTE*)Alloc(_cbTlsRaw, HEAP_ZERO_MEMORY);
+        if (!_pRawTlsData)
+        {
+            return false;
+        }
+
         auto _pTlsIndex = (void**)_pTeb->ThreadLocalStoragePointer;
         void** _pOldTlsIndex = nullptr;
         auto _cTlsIndexLength = GetTlsIndexBufferCount(_pTeb);
@@ -185,11 +192,15 @@ namespace YY::Thunks::internal
             auto _cNewTlsIndexLength = _tls_index + 128;
             auto _pNewTlsIndex = (void**)Alloc(_cNewTlsIndexLength * sizeof(void*), HEAP_ZERO_MEMORY);
             if (!_pNewTlsIndex)
+            {
+                Free(_pRawTlsData);
                 return false;
+            }
 
             memcpy(_pNewTlsIndex, _pTlsIndex, _cTlsIndexLength * sizeof(void*));
             if ((void*)InterlockedCompareExchange((uintptr_t*)&_pTeb->ThreadLocalStoragePointer, (uintptr_t)_pNewTlsIndex, (uintptr_t)_pTlsIndex) != _pTlsIndex)
             {
+                Free(_pRawTlsData);
                 Free(_pNewTlsIndex);
                 return false;
             }
@@ -204,14 +215,6 @@ namespace YY::Thunks::internal
                 _pOldTlsIndex = _pTlsIndex;
             }
             _pTlsIndex = _pNewTlsIndex;
-        }
-        const size_t _cbTlsRaw = _tls_used.EndAddressOfRawData - _tls_used.StartAddressOfRawData;
-        auto _pRawTlsData = (BYTE*)Alloc(_cbTlsRaw, HEAP_ZERO_MEMORY);
-        if (!_pRawTlsData)
-        {
-            // 释放不是安全的，极小的概率可能野，但是现在现在就这样吧。
-            Free(_pOldTlsIndex);
-            return false;
         }
 
         memcpy(_pRawTlsData, (void*)_tls_used.StartAddressOfRawData, _cbTlsRaw);
