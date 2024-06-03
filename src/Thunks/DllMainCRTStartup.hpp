@@ -294,7 +294,8 @@ namespace YY::Thunks::internal
             return false;
 
         _tls_index = GetMaxTlsIndex() + 1;
-        AllocTlsData((TEB*)NtCurrentTeb());
+        if (!AllocTlsData((TEB *)NtCurrentTeb()))
+          return false;
 
         // 同时给所有历史的线程追加新DLL产生的Tls内存
         do
@@ -423,7 +424,8 @@ namespace YY::Thunks::internal
                 _tls_index_old = _tls_index;
                 if (_tls_index == 0 && g_TlsMode == TlsMode::ByDllMainCRTStartupForYY_Thunks)
                 {
-                    CreateTlsIndex();
+                    if (!CreateTlsIndex())
+                        return false;
                 }
             }
 #endif
