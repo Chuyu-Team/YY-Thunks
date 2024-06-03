@@ -18,8 +18,6 @@ DWORD g_InputRootCount;
 bool g_bIgnoreReady= false;
 bool g_bCheckBoxView = false;
 
-std::set<CStringA> g_AppFiles;
-
 __forceinline constexpr UINT64 __fastcall MakeVersion(_In_ UINT16 _uMajorVersion, _In_ UINT16 _uMinorVersion, UINT16 v3, UINT16 v4)
 {
     return ((UINT64)_uMajorVersion << 48) | ((UINT64)_uMinorVersion << 32) | ((UINT64)v3 << 16) | (UINT64)v4;
@@ -138,12 +136,10 @@ public:
             case IMAGE_FILE_MACHINE_I386:
             case IMAGE_FILE_MACHINE_ARMNT:
                 BuildImport<IMAGE_THUNK_DATA32>(pBase, pNtHeader, Import);
-                BuildDelayImport<IMAGE_THUNK_DATA32>(pBase, pNtHeader, Import);
                 break;
             case IMAGE_FILE_MACHINE_AMD64:
             case IMAGE_FILE_MACHINE_ARM64:
                 BuildImport<IMAGE_THUNK_DATA64>(pBase, pNtHeader, Import);
-                BuildDelayImport<IMAGE_THUNK_DATA64>(pBase, pNtHeader, Import);
                 break;
             default:
                 break;
@@ -152,28 +148,28 @@ public:
         return Import;
     }
 
-    //std::vector<DllImportItem> GetDelayImport() const
-    //{
-    //    std::vector<DllImportItem> DelayImport;
-    //    if (pNtHeader)
-    //    {
-    //        switch (pNtHeader->FileHeader.Machine)
-    //        {
-    //        case IMAGE_FILE_MACHINE_I386:
-    //        case IMAGE_FILE_MACHINE_ARMNT:
-    //            BuildDelayImport<IMAGE_THUNK_DATA32>(pBase, pNtHeader, DelayImport);
-    //            break;
-    //        case IMAGE_FILE_MACHINE_AMD64:
-    //        case IMAGE_FILE_MACHINE_ARM64:
-    //            BuildDelayImport<IMAGE_THUNK_DATA64>(pBase, pNtHeader, DelayImport);
-    //            break;
-    //        default:
-    //            break;
-    //        }
-    //    }
+    std::vector<DllImportItem> GetDelayImport() const
+    {
+        std::vector<DllImportItem> DelayImport;
+        if (pNtHeader)
+        {
+            switch (pNtHeader->FileHeader.Machine)
+            {
+            case IMAGE_FILE_MACHINE_I386:
+            case IMAGE_FILE_MACHINE_ARMNT:
+                BuildDelayImport<IMAGE_THUNK_DATA32>(pBase, pNtHeader, DelayImport);
+                break;
+            case IMAGE_FILE_MACHINE_AMD64:
+            case IMAGE_FILE_MACHINE_ARM64:
+                BuildDelayImport<IMAGE_THUNK_DATA64>(pBase, pNtHeader, DelayImport);
+                break;
+            default:
+                break;
+            }
+        }
 
-    //    return DelayImport;
-    //}
+        return DelayImport;
+    }
 
     std::map<DWORD, CStringA> GetExport() const
     {
@@ -595,6 +591,8 @@ struct ExportModuleInfo
     }
 };
 
+std::map<WORD, std::map<CStringA, ExportModuleInfo>> g_AppFiles;
+
 struct ExportCache
 {
     //       模块名称  ExportModuleInfo
@@ -602,9 +600,23 @@ struct ExportCache
     //     API导出名称  模块的名称
     std::map<CStringA, CStringA> ProcNameToModuleNameMap;
 
+    WORD _Machine = IMAGE_FILE_MACHINE_UNKNOWN;
+
     ExportModuleInfo* GetExportModuleInfo(CStringA _szDllName)
     {
         _szDllName.MakeLower();
+
+        // 优先查找App目录的文件，虽然这个不是很正确，未考虑加载顺序，但是一般来说这样没有问题。
+        auto _iterAppFiles = g_AppFiles.find(_Machine);
+        if (_iterAppFiles != g_AppFiles.end())
+        {
+            auto _iterAppExport = _iterAppFiles->second.find(_szDllName);
+            if (_iterAppExport != _iterAppFiles->second.end())
+            {
+                return &_iterAppExport->second;
+            }
+        }
+
         auto _iter = ModuleToExportModuleInfoMap.find(_szDllName);
         if (_iter != ModuleToExportModuleInfoMap.end())
         {
@@ -620,7 +632,7 @@ struct ExportCache
 
 std::map<CStringW, ExportCache> g_ExportModuleCache;
 
-ExportCache* GetExportModule(CStringW _szDefFilePath)
+ExportCache* GetExportModule(CStringW _szDefFilePath, WORD _Machine)
 {
     auto _szKey = _szDefFilePath;
     _szKey.MakeLower();
@@ -628,6 +640,7 @@ ExportCache* GetExportModule(CStringW _szDefFilePath)
     auto& _Cache = g_ExportModuleCache[_szKey];
     if (_Cache.ModuleToExportModuleInfoMap.size())
         return &_Cache;
+    _Cache._Machine = _Machine;
 
     FILE* file = _wfopen(_szDefFilePath, L"r");
     if (!file)
@@ -698,6 +711,63 @@ ExportCache* GetExportModule(CStringW _szDefFilePath)
 
 HRESULT BuildOrdinalMap(CStringW _szInput, CStringW _szOutput);
 
+CStringA FindInAllTarget(CStringA _szDllName, CStringA _szImportName, CStringW _szBaseDefFileDir, LPCWSTR _szCurrentTarget, WORD _Machine)
+{
+    CStringA _szResult;
+    if (_szBaseDefFileDir.IsEmpty() || _szCurrentTarget == nullptr)
+        return _szResult;
+
+    if (_szBaseDefFileDir[_szBaseDefFileDir.GetLength() - 1] != L'\\')
+        _szBaseDefFileDir += L'\\';
+
+    WIN32_FIND_DATAW _FindFileData;
+    auto _hFindFile = FindFirstFileW(_szBaseDefFileDir + L"*.*.*.txt", &_FindFileData);
+    if (_hFindFile == INVALID_HANDLE_VALUE)
+    {
+        return _szResult;
+    }
+    _szDllName.MakeLower();
+
+    UINT16 _CurrentTargetVersion[4] = {};
+    swscanf_s(_szCurrentTarget, L"%hd.%hd.%hd.%hd", &_CurrentTargetVersion[3], &_CurrentTargetVersion[2], &_CurrentTargetVersion[1], &_CurrentTargetVersion[0]);
+
+    do
+    {
+        if (_FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            continue;
+
+        UINT16 _TargetVersion[4] = {};
+        swscanf_s(_FindFileData.cFileName, L"%hd.%hd.%hd.%hd", &_TargetVersion[3], &_TargetVersion[2], &_TargetVersion[1], &_TargetVersion[0]);
+
+        if (*(UINT64*)_TargetVersion > *(UINT64*)_CurrentTargetVersion)
+        {
+            if (auto _pCahce = GetExportModule(_szBaseDefFileDir + _FindFileData.cFileName, _Machine))
+            {
+                if (auto _pModuleInfo = _pCahce->GetExportModuleInfo(_szDllName))
+                {
+                    if (_pModuleInfo->FindImport(_szImportName))
+                    {
+                        if (_szResult.GetLength())
+                        {
+                            _szResult += ',';
+                            _szResult += ' ';
+                        }
+                        _szResult += _FindFileData.cFileName;
+                        // 去掉后缀 ".txt"
+                        _szResult.ReleaseBufferSetLength(_szResult.GetLength() - 4);
+                    }
+                }
+            }
+
+        }
+
+    } while (FindNextFileW(_hFindFile, &_FindFileData));
+
+    FindClose(_hFindFile);
+
+    return _szResult;
+}
+
 int __cdecl wmain(int argc, wchar_t* argv[])
 {
     _tsetlocale(0, _T(".936"));
@@ -706,15 +776,18 @@ int __cdecl wmain(int argc, wchar_t* argv[])
     {
     __INVALIDARG:
         wprintf(LR"(无效参数！请提供可执行文件路径。或者包含可执行文件的文件夹路径。
-  YY.Depends.Analyzer {可执行文件路径或者文件夹} {/IgnoreReady} {/ReportView:[Table|CheckBox]}
+  YY.Depends.Analyzer {可执行文件路径或者文件夹} [/IgnoreReady] [/ReportView:{Table|CheckBox}]
                   - /IgnoreReady : 自动跳过YY-Thunk已经支持的接口，减少信息干扰
-                  - /ReportView:[Table|CheckBox] : 如果选择CheckBox，那么输出位CheckBox视图。默认是Table（表格）
+                  - /ReportView:{Table|CheckBox} : 如果选择CheckBox，那么输出位CheckBox视图。默认是Table（表格）
+                  - /Target:<SystemVersion> : 需要检测是目标版本，值可以是5.1.2600、5.2.3790、6.1.7600等。
 
 
 比如：
   YY.Depends.Analyzer "D:\Test\Test.exe"
   YY.Depends.Analyzer "D:\Test"
   YY.Depends.Analyzer "D:\Test" /IgnoreReady /ReportView:CheckBox
+  YY.Depends.Analyzer "D:\Test" /IgnoreReady /ReportView:CheckBox /Target:6.1.7600
+
 )");
         return E_INVALIDARG;
     }
@@ -809,15 +882,77 @@ int __cdecl wmain(int argc, wchar_t* argv[])
         if (_szOutPath[_szOutPath.GetLength() - 1] != L'\\')
             _szOutPath += L'\\';
 
+        PVOID OldValue = nullptr;
+        Wow64DisableWow64FsRedirection(&OldValue);
+
         std::map<CStringA, std::map<DWORD, CStringA>> _Out;
         if (PathIsDirectoryW(_szInputPath))
         {
-            // 一些需要胖载，比如 GdiPlus.dll 记得自行处理comctl32.dll
             if (_szInputPath[_szInputPath.GetLength() - 1] != L'\\')
                 _szInputPath += L'\\';
-            g_InputRootCount = _szInputPath.GetLength();
             _szOutPath += L"DllMap.txt";
-            BuildExport(_szInputPath, _Out);
+
+            auto _szSystem32Path = _szInputPath + L"System32\\";
+            if (PathIsDirectoryW(_szSystem32Path))
+            {
+                // 这是一个系统目录
+                g_InputRootCount = _szSystem32Path.GetLength();
+                BuildExport(_szSystem32Path, _Out);
+
+                PEImage _Image;
+                auto _hr = _Image.Init(_szInputPath + L"System32\\ntdll.dll");
+                if (SUCCEEDED(_hr))
+                {
+                    CStringW _szProcessorArchitecture;
+                    // 简单处理一下需要旁载的DLL。
+                    WIN32_FIND_DATAW _FindFileData;
+                    if (_Image.GetMachine() == IMAGE_FILE_MACHINE_I386)
+                    {
+                        _szProcessorArchitecture = L"x86";
+                    }
+                    else if (_Image.GetMachine() == IMAGE_FILE_MACHINE_AMD64)
+                    {
+                        _szProcessorArchitecture = L"amd64";
+                    }
+
+                    if (_szProcessorArchitecture.GetLength())
+                    {
+                        auto _szWinSxSPath = _szInputPath + L"winsxs\\";
+
+                        static const LPCWSTR s_szNames[] =
+                        {
+                            L"Microsoft.Windows.Common-Controls",
+                            L"Microsoft.Windows.GdiPlus",
+                            L"Microsoft.Windows.WinHTTP",
+                        };
+
+                        for (auto _szName : s_szNames)
+                        {
+                            auto _hFind = FindFirstFileW(_szWinSxSPath + _szProcessorArchitecture + L"_" + _szName + L"_*", &_FindFileData);
+                            if (_hFind == INVALID_HANDLE_VALUE)
+                                continue;
+
+                            do
+                            {
+                                if ((_FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+                                    continue;
+
+                                auto _szTmp = _szWinSxSPath + _FindFileData.cFileName + L'\\';
+                                g_InputRootCount = _szTmp.GetLength();
+                                BuildExport(_szTmp, _Out);
+
+                            } while (FindNextFileW(_hFind, &_FindFileData));
+
+                            FindClose(_hFind);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                g_InputRootCount = _szInputPath.GetLength();
+                BuildExport(_szInputPath, _Out);
+            }
         }
         else
         {            
@@ -826,6 +961,7 @@ int __cdecl wmain(int argc, wchar_t* argv[])
             BuildExportFile(_szInputPath, _Out);
         }
 
+        Wow64RevertWow64FsRedirection(&OldValue);
 
         CStringA _szData;
         for (auto& _Dll : _Out)
@@ -949,16 +1085,6 @@ HRESULT BuildExport(CStringW _szInputPath, std::map<CStringA, std::map<DWORD, CS
 
 HRESULT AnalyzerImage(CStringW _szInputPath, std::map<WORD, AnalyzerInfo>& _AnalyzerInfos)
 {
-    if (auto _szFileName = PathFindFileNameW(_szInputPath))
-    {
-        // 排除应用程序底下的API Set，应该正确依赖到YY-Thunks。
-        if (_wcsnicmp(_szFileName, L"api-ms-win-", 11) == 0 || _wcsnicmp(_szFileName, L"ext-ms-win-", 11) == 0)
-        {
-            return S_OK;
-        }
-        g_AppFiles.insert(CStringA(_szFileName).MakeLower());
-    }
-
     PEImage _Image;
     auto _hr = _Image.Init(_szInputPath);
     if (FAILED(_hr))
@@ -966,39 +1092,72 @@ HRESULT AnalyzerImage(CStringW _szInputPath, std::map<WORD, AnalyzerInfo>& _Anal
         wprintf(L"错误：PEImage无法打开文件 %s, hr=0x%.8X\n", _szInputPath.GetString(), _hr);
         return _hr;
     }
+    const auto _Machine = _Image.GetMachine();
+    auto&& _Export = _Image.GetExport();
+    if (_Export.size())
+    {
+        auto _szFileName = PathFindFileNameW(_szInputPath);
+        if (_szFileName)
+        {
+            auto& _ExportModule = g_AppFiles[_Machine][CStringA(_szFileName).MakeLower()];
+            if (_ExportModule.OrdinalToNameMap.empty())
+            {
+                for (auto& _Item : _Export)
+                {
+                    _ExportModule.NameToOrdinalMap[_Item.second] = _Item.first;
+                }
 
-    const auto _Import = _Image.GetImport();
-    if (_Import.empty())
+                _ExportModule.OrdinalToNameMap = std::move(_Export);
+            }
+            else
+            {
+                wprintf(L"警告：存在同名文件 %s，依赖分析可能出现错误。\n", _szFileName);
+            }
+        }
+    }
+
+    std::vector<DllImportItem> _Imports[2] = {_Image.GetImport(), _Image.GetDelayImport()};
+    if (_Imports[0].empty() && _Imports[1].empty())
         return S_OK;
 
-    const auto _Machine = _Image.GetMachine();
     auto& _AnalyzerInfo = _AnalyzerInfos[_Machine];
 
-    for (auto& _Item : _Import)
+    for (auto i = 0; i != _countof(_Imports); ++i)
     {
-        AnalyzerModule* _pModule = nullptr;        
-        for (auto& _Import : _Item.ImportNames)
+        for (auto& _Item : _Imports[i])
         {
-            if (_Import.IsEmpty())
-                continue;
-
-            if (!_pModule)
+            AnalyzerModule* _pModule = nullptr;
+            for (auto& _Import : _Item.ImportNames)
             {
-                auto _Key = _Item.szDllName;
-                _Key.MakeLower();
-                auto& _Module = _AnalyzerInfo.Modules[_Key];
-                if (_Module.szModuleName.IsEmpty())
+                if (_Import.IsEmpty())
+                    continue;
+
+                if (!_pModule)
                 {
-                    _Module.szModuleName = _Item.szDllName;
+                    auto _Key = _Item.szDllName;
+                    _Key.MakeLower();
+                    auto& _Module = _AnalyzerInfo.Modules[_Key];
+                    if (_Module.szModuleName.IsEmpty())
+                    {
+                        _Module.szModuleName = _Item.szDllName;
+                    }
+                    _pModule = &_Module;
                 }
-                _pModule = &_Module;
+
+                auto& _Proc = _pModule->Procs[_Import];
+                if (_Proc.szProc.IsEmpty())
+                    _Proc.szProc = _Import;
+
+                auto _szInputSubPath = _szInputPath.GetString() + g_InputRootCount;
+                if (i)
+                {
+                    _Proc.Ref.push_back(CStringA("[Delay] ") + _szInputSubPath);
+                }
+                else
+                {
+                    _Proc.Ref.push_back(_szInputSubPath);
+                }
             }
-
-            auto& _Proc = _pModule->Procs[_Import];
-            if (_Proc.szProc.IsEmpty())
-                _Proc.szProc = _Import;
-
-            _Proc.Ref.push_back(CStringA(_szInputPath.GetString() + g_InputRootCount));
         }
     }
 
@@ -1300,11 +1459,12 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
 
     for (auto& _AnalyzerInfo : _AnalyzerInfos)
     {
+        auto _szDefRootPath = szDefBase;
         _szData += "# Report By YY.Depends.Analyzer (Target:";
         switch (_AnalyzerInfo.first)
         {
         case IMAGE_FILE_MACHINE_I386:
-            szDefBase += L"x86\\";
+            _szDefRootPath += L"x86\\";
             if (*(UINT64*)_TargetVersion < MakeVersion(5, 1, 2600, 0))
             {
                 _szTarget = L"5.1.2600";
@@ -1314,7 +1474,7 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
             _szData += "x86";
             break;
         case IMAGE_FILE_MACHINE_AMD64:
-            szDefBase += L"x64\\";
+            _szDefRootPath += L"x64\\";
             if (*(UINT64*)_TargetVersion < MakeVersion(5, 2, 3790, 0))
             {
                 _szTarget = L"5.2.3790";
@@ -1324,7 +1484,7 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
             _szData += "x64";
             break;
         case IMAGE_FILE_MACHINE_ARM:
-            szDefBase += L"arm\\";
+            _szDefRootPath += L"arm\\";
             if (*(UINT64*)_TargetVersion < MakeVersion(6, 2, 9200, 0))
             {
                 _szTarget = L"6.2.9200";
@@ -1334,7 +1494,7 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
             _szData += "arm";
             break;
         case IMAGE_FILE_MACHINE_ARM64:
-            szDefBase += L"arm64\\";
+            _szDefRootPath += L"arm64\\";
             if (*(UINT64*)_TargetVersion < MakeVersion(10, 0, 19041, 0))
             {
                 _szTarget = L"10.0.19041";
@@ -1345,25 +1505,25 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
             break;
         default:
             _szData.AppendFormat("%d", _AnalyzerInfo.first);
-            szDefBase += L"unknow\\";
+            _szDefRootPath += L"unknow\\";
             break;
         }
         _szData += ')';
         _szData += '\r';
         _szData += '\n';
 
-        szDefBase += _szTarget;
-        szDefBase += ".txt";
+        auto _szDefPath = _szDefRootPath + _szTarget;
+        _szDefPath += ".txt";
 
-        auto _pCache = GetExportModule(szDefBase);
+        auto _pCache = GetExportModule(_szDefPath, _AnalyzerInfo.first);
         if (!_pCache)
         {
             _szData += "not spuuorted ";
-            _szData += szDefBase;
+            _szData += _szDefPath;
             _szData += '\r';
             _szData += '\n';
 
-            // wprintf(L"错误：数据库 %s 为空，请确认 Target 是否输入正确。\n", szDefBase.GetString());
+            // wprintf(L"错误：数据库 %s 为空，请确认 Target 是否输入正确。\n", _szDefPath.GetString());
             continue;
         }
 
@@ -1372,9 +1532,7 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
         {
             for (auto& _Module : _AnalyzerInfo.second.Modules)
             {
-                if (g_AppFiles.find(_Module.second.szModuleName.MakeLower()) != g_AppFiles.end())
-                    continue;
-
+                _Module.second.szModuleName.MakeLower();
                 auto _pExportModule = _pCache->GetExportModuleInfo(_Module.second.szModuleName);
 
                 const auto _LengthBackup = _szData.GetLength();
@@ -1395,6 +1553,7 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
                             continue;
                     }
 
+                    auto _szIncludeTargets = FindInAllTarget(_Module.second.szModuleName, _Proc.second.szProc, _szDefRootPath, _szTarget, _AnalyzerInfo.first);
                     TryGetFirendlyName(_AnalyzerInfo.first, _Module.second.szModuleName, _Proc.second);
 
                     const auto _bYYReady = IsInYY_Thunks(_AnalyzerInfo.first, _Proc.second);
@@ -1409,34 +1568,53 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
                     _szData += ']';
                     _szData += ' ';
                     _szData += _Proc.second.szFriendlyName.GetLength() ? _Proc.second.szFriendlyName : _Proc.second.szProc;
+                    _szData += '\r';
+                    _szData += '\n';
 
                     if (!_bYYReady)
                     {
                         auto _iter = _pCache->ProcNameToModuleNameMap.find(_Proc.second.szProc);
                         if (_iter != _pCache->ProcNameToModuleNameMap.end())
                         {
-                            _szData += " ( try use ";
+                            _szData += "  - Tips: YY-Thunks not ready, but found in ";
+                            _szData += '\"';
                             _szData += _iter->second;
-                            _szData += '?';
-                            _szData += '?';
-                            _szData += '?';
-                            _szData += ' ';
-                            _szData += ')';
+                            _szData += '\"';
+                            _szData += '.';
+                            _szData += '\r';
+                            _szData += '\n';
                         }
                     }
 
-                    _szData += '\r';
-                    _szData += '\n';
-
-                    for (auto& _szRefPath : _Proc.second.Ref)
+                    if (_szIncludeTargets.GetLength())
                     {
-                        _szData += ' ';
-                        _szData += ' ';
-                        _szData += '-';
-                        _szData += ' ';
-                        _szData += _szRefPath;
+                        _szData += "  - Supported OS: ";
+                        _szData += _szIncludeTargets;
                         _szData += '\r';
                         _szData += '\n';
+                    }
+
+                    if (_Proc.second.Ref.size() == 1)
+                    {
+                        _szData += "  - Ref Module: " + _Proc.second.Ref[0];
+                        _szData += '\r';
+                        _szData += '\n';
+                    }
+                    else
+                    {
+                        _szData += "  - Ref Module: \r\n";
+                        for (auto& _szRefPath : _Proc.second.Ref)
+                        {
+                            _szData += ' ';
+                            _szData += ' ';
+                            _szData += ' ';
+                            _szData += ' ';
+                            _szData += '-';
+                            _szData += ' ';
+                            _szData += _szRefPath;
+                            _szData += '\r';
+                            _szData += '\n';
+                        }
                     }
                 }
 
@@ -1454,9 +1632,6 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
         {
             for (auto& _Module : _AnalyzerInfo.second.Modules)
             {
-                if (g_AppFiles.find(_Module.second.szModuleName.MakeLower()) != g_AppFiles.end())
-                    continue;
-
                 auto _pExportModule = _pCache->GetExportModuleInfo(_Module.second.szModuleName);
 
                 const auto _LengthBackup = _szData.GetLength();
@@ -1469,8 +1644,8 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
                 _szData += '\r';
                 _szData += '\n';
 
-                _szData += "| API                                        | YY-Thunks Ready | Ref Module\r\n";
-                _szData += "| ----                                       | --------------  | --------\r\n";
+                _szData += "| API                                        | YY-Thunks Ready | Supported OS | Ref Module\r\n";
+                _szData += "| ----                                       | --------------  | ------------ | --------\r\n";
                 for (auto& _Proc : _Module.second.Procs)
                 {
                     if (_pExportModule)
@@ -1479,6 +1654,7 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
                             continue;
                     }
 
+                    CStringA _szIncludeTargets = FindInAllTarget(_Module.second.szModuleName, _Proc.second.szProc, _szDefRootPath, _szTarget, _AnalyzerInfo.first);
                     TryGetFirendlyName(_AnalyzerInfo.first, _Module.second.szModuleName, _Proc.second);
 
                     const auto _bYYReady = IsInYY_Thunks(_AnalyzerInfo.first, _Proc.second);
@@ -1490,10 +1666,8 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
                     _szData += ' ';
                     _szData += _Proc.second.szFriendlyName.GetLength() ? _Proc.second.szFriendlyName : _Proc.second.szProc;
                     _szData += ' ';
-                    _szData += ' ';
                     _szData += '|';
                     _szData += ' ';
-
 
                     _szData += _bYYReady ? "Yes" : "No";
                     if (!_bYYReady)
@@ -1501,19 +1675,19 @@ HRESULT BuildAnalyzer(CStringW _szOutputPath, CStringW _szTarget, std::map<WORD,
                         auto _iter = _pCache->ProcNameToModuleNameMap.find(_Proc.second.szProc);
                         if (_iter != _pCache->ProcNameToModuleNameMap.end())
                         {
-                            _szData += " ( try use ";
+                            _szData += ", but found in \"";
                             _szData += _iter->second;
-                            _szData += '?';
-                            _szData += '?';
-                            _szData += '?';
-                            _szData += ' ';
-                            _szData += ')';
+                            _szData += '\"';
+                            _szData += '.';
                         }
                     }
-
                     _szData += ' ';
                     _szData += '|';
                     _szData += ' ';
+                    _szIncludeTargets.Replace(", ", "<br>");
+                    _szData += _szIncludeTargets;
+                    _szData += ' ';
+                    _szData += '|';
 
                     bool _bFirst = true;
                     for (auto& _szRefPath : _Proc.second.Ref)

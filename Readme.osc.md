@@ -77,14 +77,18 @@ ULONGLONG WINAPI GetTickCount64(VOID)
 > 温馨提示：如果需要兼容 Vista，【所需的最低版本】无需修改，但是【附加依赖项】请选择 
   `objs\$(PlatformShortName)\YY_Thunks_for_Vista.obj`。
 
-#### 2.2.2. lib方式（适合LLD链接器）
-> LLD链接器无法使用obj方式，因为遇到重复符号会报告错误。
+#### 2.2.2. lib方式（适合LLD-Link链接器）
+> LLD-Link链接器无法使用obj方式，因为遇到重复符号会报告错误。
 
 1. 下载 [YY-Thunks-Lib](https://github.com/Chuyu-Team/YY-Thunks/releases)，
    然后解压到你的工程目录。
-2. 将 `-L YY-Thunks根目录/Lib/5.1.2600.0/x86` 类似的参数添加到链接器参数中，并确保顺序比系统SDK靠前。
-3. 如果是编译DLL，额外给链接器传递 `-e DllMainCRTStartupForYY_Thunks`，修改DLL入口点（不这样做XP下使用thread_local可能崩溃！）
-4. 重新编译代码。
+2. 将 `-LIBPATH:YY-Thunks根目录/Lib/5.1.2600.0/x86` 类似的参数添加到链接器参数中，并确保顺序比系统SDK靠前。
+3. 链接器额外传递 `-SUBSYSTEM:WINDOWS",5.1"` 或者 `-SUBSYSTEM:CONSOLE",5.1"` 或者 `-SUBSYSTEM:WINDOWS",5.2"` 或者 `-SUBSYSTEM:CONSOLE",5.2"`。
+4. 如果是编译DLL，额外给链接器传递 `-ENTRY:DllMainCRTStartupForYY_Thunks`，修改DLL入口点（不这样做XP下使用thread_local可能崩溃！）
+5. 重新编译代码。
+
+> 温馨提示：如果您看不懂链接器的配置指引那么请使用NuGet版！NuGet对新手友好。
+
 
 ## 3. 兼容性
 

@@ -79,14 +79,15 @@ as NuGet is designed to be foolproof and easier to use.
 > Note: If your app needs to be compatible with Vista or later, please set `Additional Dependencies` to 
   `objs\$(PlatformShortName)\YY_Thunks_for_Vista.obj`。
 
-#### 2.2.2. using lib files (LLD Link)
-> LLD linkers using obj files will encounter duplicate symbol errors.
+#### 2.2.2. using lib files (LLD-Link)
+> LLD-Link linkers using obj files will encounter duplicate symbol errors.
 
 1. Download and unzip [YY-Thunks-Lib](https://github.com/Chuyu-Team/YY-Thunks/releases) to project directory.
-2. Add a parameter like `-L YY-Thunks_Root_Dir/lib/5.1.2600.0/x86` to the linker and make sure the order is higher than WinSDK.
-3. 如If the project is a `Dynamic Link Library`, please add parameter `-e DllMainCRTStartupForYY_Thunks`
+2. Add a parameter like `-LIBPATH:YY-Thunks_Root_Dir/lib/5.1.2600.0/x86` to the linker and make sure the order is higher than WinSDK.
+3. Please add parameter `-SUBSYSTEM:WINDOWS",5.1"` or `-SUBSYSTEM:CONSOLE",5.1"` or `-SUBSYSTEM:WINDOWS",5.2"` or `-SUBSYSTEM:CONSOLE",5.2"` to linker.
+4. If the project is a `Dynamic Link Library`, please add parameter `-ENTRY:DllMainCRTStartupForYY_Thunks` to linker
     (If you ignore this step, the XP system may crash with `thread_local`).
-4. Rebuild the solution.
+5. Rebuild the solution.
 
 ## 3. Compatibility
 

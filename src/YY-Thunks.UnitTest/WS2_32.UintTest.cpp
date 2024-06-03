@@ -18,7 +18,7 @@ namespace WS2_32
 
         ~GetAddrInfoExCancel()
         {
-            WSACleanup();
+            // WSACleanup();
         }
 
         struct GetAddrInfoEx_OVERLAPPED : public OVERLAPPED
@@ -118,6 +118,8 @@ namespace WS2_32
                     _Hints.ai_family = AF_UNSPEC;
                     GetAddrInfoEx_OVERLAPPED _QueryOverlapped = {};
                     _QueryOverlapped.hEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+                    Assert::IsNotNull(_QueryOverlapped.hEvent);
+
                     PADDRINFOEXW _QueryResults;
 
                     HANDLE _hHandle;
@@ -170,6 +172,8 @@ namespace WS2_32
                     _Hints.ai_family = AF_UNSPEC;
                     GetAddrInfoEx_OVERLAPPED _QueryOverlapped = {};
                     _QueryOverlapped.hEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+                    Assert::IsNotNull(_QueryOverlapped.hEvent);
+
                     PADDRINFOEXA _QueryResults;
 
                     HANDLE _hHandle;
@@ -237,7 +241,7 @@ namespace WS2_32
 
         ~GetAddrInfoEx()
         {
-            WSACleanup();
+            // WSACleanup();
         }
 
         TEST_METHOD(Win2003_XPSP3模式)
