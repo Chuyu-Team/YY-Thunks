@@ -66,6 +66,9 @@
     _APPLY(NtSetInformationThread,                       ntdll                                         ) \
     _APPLY(NtQueryInformationProcess,                    ntdll                                         ) \
     _APPLY(NtSetInformationProcess,                      ntdll                                         ) \
+    _APPLY(NtDeleteKey,                                  ntdll                                         ) \
+    _APPLY(NtCreateKey,                                  ntdll                                         ) \
+    _APPLY(NtOpenKey,                                    ntdll                                         ) \
     _APPLY(NtOpenKeyedEvent,                             ntdll                                         ) \
     _APPLY(NtWaitForKeyedEvent,                          ntdll                                         ) \
     _APPLY(NtReleaseKeyedEvent,                          ntdll                                         ) \
