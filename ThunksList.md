@@ -4,6 +4,11 @@
 
 > 开头带`*`的函数并不建议使用，存在一些较大负面影响，仅用于编译通过处理，具体负面影响可参考注释内容。
 
+## api-ms-win-core-handle-l1-1-0.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| CompareObjectHandles                       | 不存在时，调用NtQueryObject以及DuplicateHandle。
+
 ## api-ms-win-core-path-l1-1-0.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
@@ -174,6 +179,11 @@
 | 函数                                       | Fallback
 | ----                                       | -----------
 | D3D11CreateDevice                          | 不存在时，返回 `E_NOINTERFACE`。
+
+## d3d12.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| D3D12CreateDevice                          | 不存在时，返回 `E_NOINTERFACE`。
 
 ## DbgHelp.dll
 | 函数                                       | Fallback
@@ -518,7 +528,7 @@
 | CreateRemoteThreadEx                       | 不存在时，调用CreateRemoteThread。
 | WerRegisterRuntimeExceptionModule          | 不存在时，返回S_OK。
 | WerUnregisterRuntimeExceptionModule        | 不存在时，返回S_OK。
-| Wow64GetThreadContext                      | 不存在时，返回ERROR_INVALID_PARAMETER。
+| Wow64GetThreadContext                      | 不存在时，调用GetThreadContext或者返回ERROR_INVALID_PARAMETER。
 
 ## mfplat.dll
 | 函数                                       | Fallback
@@ -649,6 +659,11 @@
 | DisplayConfigGetDeviceInfo                 | 不存在时，报告没有安装驱动。
 | GetDisplayConfigBufferSizes                | 不存在时，报告没有安装驱动。
 | QueryDisplayConfig                         | 不存在时，报告没有安装驱动。
+| RegisterPointerDeviceNotifications         | 不存在时，假装成功。
+| GetPointerDevices                          | 不存在时，假装没有触摸设备。
+| GetPointerDevice                           | 不存在时，假装没有触摸设备。
+| GetPointerPenInfo                          | 不存在时，假装没有触摸设备。
+| GetPointerType                             | 不存在时，假装没有触摸设备。
 
 ## userenv.dll
 | 函数                                       | Fallback

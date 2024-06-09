@@ -9,6 +9,7 @@
     _APPLY(dwmapi,                                       "dwmapi"                             , 0                 ) \
     _APPLY(d3d9,                                         "d3d9"                               , 0                 ) \
     _APPLY(d3d11,                                        "d3d11"                              , 0                 ) \
+    _APPLY(d3d12,                                        "d3d12"                              , 0                 ) \
     _APPLY(dbghelp,                                      "dbghelp"                            , USING_UNSAFE_LOAD ) \
     _APPLY(dxgi,                                         "dxgi"                               , 0                 ) \
     _APPLY(dwrite,                                       "dwrite"                             , 0                 ) \
@@ -38,6 +39,7 @@
     _APPLY(wevtapi,                                      "wevtapi"                            , 0                 ) \
     _APPLY(winhttp,                                      "winhttp"                            , 0                 ) \
     _APPLY(zipfldr,                                      "zipfldr"                            , LOAD_AS_DATA_FILE ) \
+    _APPLY(api_ms_win_core_handle_l1_1_0,                "api-ms-win-core-handle-l1-1-0"      , 0                 ) \
     _APPLY(api_ms_win_core_realtime_l1_1_1,              "api-ms-win-core-realtime-l1-1-1"    , 0                 ) \
     _APPLY(api_ms_win_core_winrt_l1_1_0,                 "api-ms-win-core-winrt-l1-1-0"       , 0                 ) \
     _APPLY(api_ms_win_core_winrt_string_l1_1_0,          "api-ms-win-core-winrt-string-l1-1-0", 0                 ) \
@@ -250,6 +252,34 @@ namespace YY::Thunks::internal
         {
             const auto _pPeb = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock;
             return internal::MakeVersion(_pPeb->OSMajorVersion, _pPeb->OSMinorVersion);
+        }
+
+        const SYSTEM_INFO& GetNativeSystemInfo()
+        {
+            static SYSTEM_INFO s_SystemInfo;
+            // 0： 尚未初始化
+            // 1：正在初始化
+            // 2：已经初始化完成
+            static volatile LONG s_InitOnce;
+
+            auto _nResult = InterlockedCompareExchange(&s_InitOnce, 1, 0);
+            if (_nResult == 0)
+            {
+                // 成功锁定
+                ::GetNativeSystemInfo(&s_SystemInfo);
+                InterlockedExchange(&s_InitOnce, 2);
+            }
+            else if (_nResult == 1)
+            {
+                // 其他线程正在初始化
+                do
+                {
+                    YieldProcessor();
+
+                } while (s_InitOnce == 1);
+            }
+
+            return s_SystemInfo;
         }
 
         _Check_return_
@@ -783,6 +813,28 @@ namespace YY::Thunks::internal
             return ERROR_SUCCESS;
         }
 
+        static bool __fastcall IsEqualI(const UNICODE_STRING& _Left, const UNICODE_STRING& _Right)
+        {
+            if (_Left.Length != _Right.Length)
+                return false;
+
+            return __wcsnicmp_ascii(_Left.Buffer, _Right.Buffer, _Left.Length / 2) == 0;
+        }
+
+        static bool __fastcall IsEqual(const UNICODE_STRING& _Left, const UNICODE_STRING& _Right)
+        {
+            if (_Left.Length != _Right.Length)
+                return false;
+
+            return memcmp(_Left.Buffer, _Right.Buffer, _Left.Length) == 0;
+        }
+
+        template<size_t kLength>
+        static constexpr UNICODE_STRING __fastcall MakeStaticUnicodeString(const wchar_t (&_Right)[kLength])
+        {
+            UNICODE_STRING _Result = { (kLength - 1)* sizeof(_Right[0]), kLength * sizeof(_Right[0]), const_cast<PWSTR>(_Right) };
+            return _Result;
+        }
 	}
 
 } //namespace YY

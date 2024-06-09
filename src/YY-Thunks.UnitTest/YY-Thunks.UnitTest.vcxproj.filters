@@ -81,6 +81,9 @@
     <ClCompile Include="WinHttp.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
+    <ClCompile Include="api-ms-win-core-handle.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -317,19 +320,19 @@
     <ClInclude Include="..\Thunks\wevtapi.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="..\Thunks\propsys.hpp">
-      <Filter>Thunks</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Thunks\ncrypt.hpp">
-      <Filter>Thunks</Filter>
-    </ClInclude>
     <ClInclude Include="..\Thunks\esent.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="..\Thunks\credui.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-windowserrorreporting.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="..\Thunks\api-ms-win-core-windowserrorreporting.hpp">
+    <ClInclude Include="..\Thunks\api-ms-win-core-handle.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\d3d12.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\ext-ms-win-rtcore-ntuser-wmpointer.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
   </ItemGroup>

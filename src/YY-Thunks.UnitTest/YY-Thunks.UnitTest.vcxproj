@@ -175,6 +175,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="api-ms-win-core-handle.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-kernel32-legacy.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-power-base.UnitTest.cpp" />
     <ClCompile Include="bcrypt.UnitTest.cpp" />
@@ -213,6 +214,7 @@
     <ClInclude Include="..\Shared\InterlockedQueue.h" />
     <ClInclude Include="..\Shared\km.h" />
     <ClInclude Include="..\Thunks\api-ms-win-core-com.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-handle.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-kernel32-legacy.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-processtopology.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-rtlsupport.hpp" />
@@ -225,6 +227,7 @@
     <ClInclude Include="..\Thunks\bluetoothapis.hpp" />
     <ClInclude Include="..\Thunks\Crypt32.hpp" />
     <ClInclude Include="..\Thunks\d3d11.hpp" />
+    <ClInclude Include="..\Thunks\d3d12.hpp" />
     <ClInclude Include="..\Thunks\d3d9.hpp" />
     <ClInclude Include="..\Thunks\dbghelp.hpp" />
     <ClInclude Include="..\Thunks\DllMainCRTStartup.hpp" />
@@ -238,6 +241,7 @@
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-powermanagement.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-sysparams-ext.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-window.hpp" />
+    <ClInclude Include="..\Thunks\ext-ms-win-rtcore-ntuser-wmpointer.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-shell-shell32.hpp" />
     <ClInclude Include="..\Thunks\Iphlpapi.hpp" />
     <ClInclude Include="..\Thunks\mfplat.hpp" />

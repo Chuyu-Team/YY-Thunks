@@ -64,7 +64,7 @@ namespace YY::Thunks::internal
     static volatile LONG uStatus = 0;
     static TlsRawItem* volatile pRoot = nullptr;
 
-    static ULONG __fastcall GetTlsIndexBufferCount(TEB* _pTeb)
+    static SIZE_T __fastcall GetTlsIndexBufferCount(TEB* _pTeb)
     {
         auto _ppThreadLocalStoragePointer = (void**)_pTeb->ThreadLocalStoragePointer;
         if (!_ppThreadLocalStoragePointer)
@@ -135,7 +135,7 @@ namespace YY::Thunks::internal
         if (!_pfnNtQuerySystemInformation)
             return nullptr;
 
-        ULONG _cbBuffer = max(4096, _szBuffer.uBufferLength);
+        auto _cbBuffer = max(4096, _szBuffer.uBufferLength);
         ULONG _cbRet = 0;
         for (;;)
         {
@@ -157,7 +157,7 @@ namespace YY::Thunks::internal
         auto _pInfo = (SYSTEM_PROCESS_INFORMATION*)_szBuffer.GetBuffer(0);
         for (;;)
         {
-            if (_pInfo->ProcessId == (HANDLE)_uCurrentProcessId)
+            if (static_cast<DWORD>(reinterpret_cast<UINT_PTR>(_pInfo->ProcessId)) == _uCurrentProcessId)
                 return _pInfo;
 
             if (_pInfo->NextEntryDelta == 0)
@@ -316,10 +316,10 @@ namespace YY::Thunks::internal
             {
                 auto& _Thread = _pProcessInfo->Threads[i];
 
-                if (_uCurrentThreadId == (DWORD)_Thread.ClientId.UniqueThread)
+                if (_uCurrentThreadId == static_cast<DWORD>(reinterpret_cast<UINT_PTR>(_Thread.ClientId.UniqueThread)))
                     continue;
 
-                auto _hThread = OpenThread(THREAD_QUERY_INFORMATION, FALSE, (DWORD)_Thread.ClientId.UniqueThread);
+                auto _hThread = OpenThread(THREAD_QUERY_INFORMATION, FALSE, static_cast<DWORD>(reinterpret_cast<UINT_PTR>(_Thread.ClientId.UniqueThread)));
                 if (!_hThread)
                 {
                     continue;
