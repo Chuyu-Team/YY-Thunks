@@ -246,6 +246,7 @@
     <ClInclude Include="..\Thunks\ext-ms-win-shell-shell32.hpp" />
     <ClInclude Include="..\Thunks\Iphlpapi.hpp" />
     <ClInclude Include="..\Thunks\mfplat.hpp" />
+    <ClInclude Include="..\Thunks\ndfapi.hpp" />
     <ClInclude Include="..\Thunks\netapi32.hpp" />
     <ClInclude Include="..\Thunks\ntdll.hpp" />
     <ClInclude Include="..\Thunks\Pdh.hpp" />

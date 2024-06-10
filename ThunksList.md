@@ -544,6 +544,13 @@
 | MFLockDXGIDeviceManager                    | 不存在时，返回E_NOTIMPL。
 | MFUnlockDXGIDeviceManager                  | 不存在时，返回E_NOTIMPL。
 
+## ndfapi.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| NdfCreateWebIncident                       | 不存在时，返回一个伪句柄假装成功。
+| NdfCloseIncident                           | 不存在时，假装成功关闭句柄。
+| NdfExecuteDiagnosis                        | 不存在时，假装什么问题也没有发现。
+
 ## netapi32.dll
 | 函数                                       | Fallback
 | ----                                       | -----------

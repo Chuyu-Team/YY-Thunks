@@ -34,6 +34,7 @@
     _APPLY(iphlpapi,                                     "iphlpapi"                           , 0                 ) \
     _APPLY(userenv,                                      "userenv"                            , 0                 ) \
     _APPLY(mfplat,                                       "mfplat"                             , 0                 ) \
+    _APPLY(ndfapi,                                       "ndfapi"                             , 0                 ) \
     _APPLY(bluetoothapis,                                "bluetoothapis"                      , 0                 ) \
     _APPLY(netapi32,                                     "netapi32"                           , 0                 ) \
     _APPLY(powrprof,                                     "powrprof"                           , 0                 ) \
