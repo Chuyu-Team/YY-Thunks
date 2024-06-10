@@ -102,6 +102,10 @@ YY-Thunks支持的控制宏：
     _APPLY(RtlCutoverTimeToSystemTime,                   ntdll                                         ) \
     _APPLY(NtCancelIoFile,                               ntdll                                         ) \
     _APPLY(NtWow64ReadVirtualMemory64,                   ntdll                                         ) \
+    _APPLY(RtlValidSid,                                  ntdll                                         ) \
+    _APPLY(RtlValidAcl,                                  ntdll                                         ) \
+    _APPLY(RtlFirstFreeAce,                              ntdll                                         ) \
+    _APPLY(RtlCopySid,                                   ntdll                                         ) \
     _APPLY(AddDllDirectory,                              kernel32                                      ) \
     _APPLY(SystemFunction036,                            advapi32                                      )
 

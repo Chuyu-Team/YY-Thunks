@@ -5222,6 +5222,21 @@ typedef struct _KUSER_SHARED_DATA
 #define KI_USER_SHARED_DATA 0x7ffe0000
 const auto SharedUserData = reinterpret_cast<const KUSER_SHARED_DATA*>(KI_USER_SHARED_DATA);
 
+EXTERN_C NTSYSAPI BOOLEAN NTAPI RtlValidSid(_In_ PSID Sid);
+
+EXTERN_C NTSYSAPI BOOLEAN NTAPI RtlValidAcl(IN PACL Acl);
+
+EXTERN_C NTSYSAPI BOOLEAN NTAPI RtlFirstFreeAce(
+    IN PACL Acl,
+    OUT PVOID* FirstFree
+    );
+
+EXTERN_C NTSYSAPI NTSTATUS NTAPI RtlCopySid(
+    IN ULONG DestinationSidLength,
+    OUT PSID DestinationSid,
+    IN PSID SourceSid
+    );
+
 #pragma warning(pop)
 #if defined __cplusplus && !defined _Disallow_YY_KM_Namespace
 } //namespace YY

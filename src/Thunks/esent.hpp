@@ -332,7 +332,7 @@ namespace YY::Thunks
                         return JET_errInstanceUnavailable;
                     }
 
-                    szParam[min(_iResult, _cchMax - 1)] = L'\0';
+                    szParam[min(size_t(_iResult), _cchMax - 1)] = L'\0';
                     return JET_wrnBufferTruncated;
                 }
                 return JET_errBufferTooSmall;
@@ -347,7 +347,7 @@ namespace YY::Thunks
                         return JET_errInstanceUnavailable;
                     }
                     
-                    if (_iResult < _cchMax)
+                    if (size_t(_iResult) < _cchMax)
                     {
                         szParam[_iResult] = L'\0';
                         return JET_errSuccess;
@@ -371,7 +371,7 @@ namespace YY::Thunks
                     return JET_errInstanceUnavailable;
                 }
 
-                szParam[min(_iResult, _cchMax - 1)] = L'\0';
+                szParam[min(size_t(_iResult), _cchMax - 1)] = L'\0';
                 return JET_wrnBufferTruncated;
             }
             return JET_errBufferTooSmall;

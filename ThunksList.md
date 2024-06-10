@@ -126,6 +126,7 @@
 | EventWriteEx                               | 不存在时，调用EventWriteTransfer。
 | EventWriteString                           | 不存在时，返回ERROR_NOT_SUPPORTED。
 | GetDynamicTimeZoneInformationEffectiveYears| 不存在时，直接读取`Time Zones`注册表。
+| AddMandatoryAce                            | 不存在时，调用RtlCopySid。
 
 ## bcrypt.dll
 | 函数                                       | Fallback
