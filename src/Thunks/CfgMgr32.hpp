@@ -149,6 +149,7 @@ namespace YY::Thunks::Fallback
 
             if (PropertyKey == nullptr || PropertyKey->pid  < kBaseIndex  || PropertyKey->pid >= (kBaseIndex + _countof(s_Map)) || IsEqualGUID(PropertyKey->fmtid, s_BaseId) == false)
                 return nullptr;
+
             auto& _Item = s_Map[PropertyKey->pid];
             if (_Item.PropertyType == DEVPROP_TYPE_EMPTY)
                 return nullptr;
@@ -166,12 +167,16 @@ namespace YY::Thunks::Fallback
         static const ClassPropertyToClassRegistryPropertyItem* __fastcall ClassPropertyToClassRegistryProperty(_In_ const DEVPROPKEY* PropertyKey) noexcept
         {
             static const GUID s_BaseId = { 0x4321918b, 0xf69e, 0x470d, { 0xa5, 0xde, 0x4d, 0x88, 0xc7, 0x5a, 0xd2, 0x4b } };
-            constexpr auto kBaseIndex = 25;
+            constexpr auto kBaseIndex = 19;
 
             static const ClassPropertyToClassRegistryPropertyItem s_Map[] =
             {
-                // { CM_CRP_UPPERFILTERS, SPCRP_UPPERFILTERS, DEVPROP_TYPE_STRING_LIST }, // 19 DEVPKEY_DeviceClass_UpperFilters Vista开始才支持
-                // { CM_CRP_LOWERFILTERS, SPCRP_LOWERFILTERS, DEVPROP_TYPE_STRING_LIST }, // 20 DEVPKEY_DeviceClass_LowerFilters Vista开始才支持
+                { CM_CRP_UPPERFILTERS, SPCRP_UPPERFILTERS, DEVPROP_TYPE_STRING_LIST }, // 19 DEVPKEY_DeviceClass_UpperFilters Vista开始才支持
+                { CM_CRP_LOWERFILTERS, SPCRP_LOWERFILTERS, DEVPROP_TYPE_STRING_LIST }, // 20 DEVPKEY_DeviceClass_LowerFilters Vista开始才支持
+                {}, // 21
+                {}, // 22
+                {}, // 23
+                {}, // 24
                 { CM_CRP_SECURITY, SPCRP_SECURITY, DEVPROP_TYPE_SECURITY_DESCRIPTOR }, // 25 DEVPKEY_DeviceClass_Security
                 { CM_CRP_SECURITY_SDS, SPCRP_SECURITY_SDS, DEVPROP_TYPE_SECURITY_DESCRIPTOR_STRING }, // 26 DEVPKEY_DeviceClass_SecuritySDS
                 { CM_CRP_DEVTYPE, SPCRP_DEVTYPE, DEVPROP_TYPE_UINT32 }, // 27 DEVPKEY_DeviceClass_DevType
@@ -181,6 +186,7 @@ namespace YY::Thunks::Fallback
 
             if (PropertyKey == nullptr || PropertyKey->pid < kBaseIndex || PropertyKey->pid >= (kBaseIndex + _countof(s_Map)) || IsEqualGUID(PropertyKey->fmtid, s_BaseId) == false)
                 return nullptr;
+
             auto& _Item = s_Map[PropertyKey->pid];
             if (_Item.PropertyType == DEVPROP_TYPE_EMPTY)
                 return nullptr;
@@ -195,9 +201,10 @@ namespace YY::Thunks::Fallback
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
     // 最低受支持的客户端	在 Microsoft Windows Vista 和更高版本的 Windows 中可用。
+    // 实际Windows Vista RTM根本就没有这个接口
     __DEFINE_THUNK(
     cfgmgr32,
     24,
@@ -253,9 +260,10 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
     // 最低受支持的客户端	在 Microsoft Windows Vista 和更高版本的 Windows 中可用。
+    // 实际Windows Vista RTM根本就没有这个接口
     __DEFINE_THUNK(
     cfgmgr32,
     24,
