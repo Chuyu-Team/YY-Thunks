@@ -335,6 +335,9 @@
     <ClInclude Include="..\Thunks\ext-ms-win-rtcore-ntuser-wmpointer.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
+    <ClInclude Include="..\Thunks\CfgMgr32.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\def\x86\PSAPI2Kernel32.def">

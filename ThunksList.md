@@ -164,6 +164,12 @@
 | BluetoothGATTSetCharacteristicValue        | 不存在时，返回ERROR_NOT_SUPPORTED。
 | BluetoothGATTSetDescriptorValue            | 不存在时，返回ERROR_NOT_SUPPORTED。
 
+## CfgMgr32.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| CM_Get_DevNode_PropertyW                   | 不存在时，调用CM_Get_DevNode_Registry_PropertyW。
+| CM_Set_DevNode_PropertyW                   | 不存在时，调用CM_Set_DevNode_Registry_PropertyW。
+
 ## Crypt32.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
@@ -548,6 +554,7 @@
 | 函数                                       | Fallback
 | ----                                       | -----------
 | NtCancelIoFileEx                           | 不存在时，调用 NtCancelIoFile。注意：将取消此文件的所有IO请求。
+| NtOpenKeyEx                                | 不存在时，调用 NtOpenKey 或者 NtCreateKey。
 
 ## ole32.dll
 | 函数                                       | Fallback

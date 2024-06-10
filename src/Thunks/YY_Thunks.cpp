@@ -5,6 +5,7 @@
 #define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                                     \
     _APPLY(ntdll,                                        "ntdll"                              , USING_UNSAFE_LOAD ) \
     _APPLY(kernel32,                                     "kernel32"                           , USING_UNSAFE_LOAD ) \
+    _APPLY(cfgmgr32,                                     "cfgmgr32"                           , 0                 ) \
     _APPLY(crypt32,                                      "crypt32"                            , 0                 ) \
     _APPLY(dwmapi,                                       "dwmapi"                             , 0                 ) \
     _APPLY(d3d9,                                         "d3d9"                               , 0                 ) \
@@ -748,12 +749,13 @@ namespace YY::Thunks::internal
                 if (!bCanFree)
                     return nullptr;
 
-                auto _szNewBuffer = (Char*)internal::ReAlloc(szBuffer, _cNewBufferLength);
+                auto _szNewBuffer = (Char*)internal::ReAlloc(szBuffer, _cNewBufferLength * sizeof(Char));
                 if (!_szNewBuffer)
                     return nullptr;
 
                 szBuffer = _szNewBuffer;
                 uBufferLength = _cNewBufferLength;
+                szBuffer[uLength] = 0;
                 return _szNewBuffer;
             }
 
@@ -783,6 +785,64 @@ namespace YY::Thunks::internal
                 {
                     GetBuffer(max(uBufferLength * 2, _uNew));
                 }
+            }
+
+            bool __fastcall AppendGUID(_In_ const GUID& _Id)
+            {
+                TryBuy(36);
+
+                const auto _uLengthNew = uLength + 36;
+                if (_uLengthNew >= uBufferLength)
+                {
+                    return false;
+                }
+
+                // C0F8B35B-3CA6-4E57-9B65-B654B33AE583
+                auto _szHexChar = "0123456789abcdef";
+                auto _pBuffer = szBuffer + uLength;
+                *_pBuffer++ = _szHexChar[_Id.Data1 >> 28];
+                *_pBuffer++ = _szHexChar[(_Id.Data1 >> 24) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data1 >> 20) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data1 >> 16) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data1 >> 12) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data1 >> 8) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data1 >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data1 & 0xF];
+
+                *_pBuffer++ = '-';
+                *_pBuffer++ = _szHexChar[(_Id.Data2 >> 12) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data2 >> 8) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data2 >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data2 & 0xF];
+
+                *_pBuffer++ = '-';
+                *_pBuffer++ = _szHexChar[(_Id.Data3 >> 12) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data3 >> 8) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data3 >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data3 & 0xF];
+
+                *_pBuffer++ = '-';
+                *_pBuffer++ = _szHexChar[(_Id.Data4[0] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[0] & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data4[1] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[1] & 0xF];
+
+                *_pBuffer++ = '-';
+                *_pBuffer++ = _szHexChar[(_Id.Data4[2] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[2] & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data4[3] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[3] & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data4[4] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[4] & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data4[5] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[5] & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data4[6] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[6] & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data4[7] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[7] & 0xF];
+                *_pBuffer = 0;
+                uLength = _uLengthNew;
+                return true;
             }
         };
 
