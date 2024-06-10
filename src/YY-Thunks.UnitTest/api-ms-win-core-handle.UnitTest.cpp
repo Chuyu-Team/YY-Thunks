@@ -1,6 +1,8 @@
 ﻿#include "pch.h"
 #include "Thunks/api-ms-win-core-handle.hpp"
 
+#pragma comment(lib, "KtmW32.lib")
+
 namespace api_ms_win_core_handle
 {
     TEST_CLASS(CompareObjectHandles)
@@ -15,6 +17,86 @@ namespace api_ms_win_core_handle
 
         TEST_METHOD(常规比较)
         {
+            {
+                HANDLE _hHandle1 = CreateTransaction(nullptr, 0, 0, 0, 0, 0, nullptr);
+                Assert::IsNotNull(_hHandle1);
+
+                HANDLE _hHandle2 = CreateTransaction(nullptr, 0, 0, 0, 0, 0, nullptr);
+                Assert::IsNotNull(_hHandle2);
+
+                Assert::IsFalse(::CompareObjectHandles(_hHandle1, _hHandle2));
+
+                CloseHandle(_hHandle1);
+                CloseHandle(_hHandle2);
+            }
+
+            if(ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL::SecurityImpersonation))
+            {
+                HANDLE _hHandle1;
+                Assert::IsTrue(OpenThreadToken(NtCurrentThread(), TOKEN_QUERY_SOURCE, FALSE, &_hHandle1));
+
+                HANDLE _hHandle2;
+                Assert::IsTrue(OpenThreadToken(NtCurrentThread(), TOKEN_QUERY_SOURCE, FALSE, &_hHandle2));
+
+                bool _bRet = false;
+                auto _hThread = CreateThread(nullptr, 0,
+                    [](void* _pUserData) -> DWORD
+                    {
+                        if (ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL::SecurityImpersonation))
+                        {
+                            for (;;)
+                            {
+                                if (*(volatile bool*)_pUserData)
+                                    break;
+
+                                Sleep(10);
+                            }
+                            RevertToSelf();
+                        }
+
+                        return 0;
+                    }, & _bRet, 0, nullptr);
+
+                Assert::IsNotNull(_hThread);
+
+                Assert::IsTrue(::CompareObjectHandles(_hHandle1, _hHandle2));
+
+                Sleep(500);
+                HANDLE _hHandle3;
+                Assert::IsTrue(OpenThreadToken(_hThread, TOKEN_QUERY_SOURCE, FALSE, &_hHandle3));
+
+                HANDLE _hHandle4;
+                Assert::IsTrue(OpenThreadToken(_hThread, TOKEN_QUERY, FALSE, &_hHandle4));
+
+                Assert::IsTrue(::CompareObjectHandles(_hHandle3, _hHandle4));
+                Assert::IsFalse(::CompareObjectHandles(_hHandle1, _hHandle4));
+
+                _bRet = true;
+                CloseHandle(_hHandle1);
+                CloseHandle(_hHandle2);
+                CloseHandle(_hHandle3);
+                CloseHandle(_hHandle4);
+
+                WaitForSingleObject(_hThread, INFINITE);
+                CloseHandle(_hThread);
+
+                RevertToSelf();
+            }
+
+
+            {
+                HANDLE _hHandle1;
+                Assert::IsTrue(OpenProcessToken(NtCurrentProcess(), TOKEN_QUERY, &_hHandle1));
+
+                HANDLE _hHandle2;
+                Assert::IsTrue(OpenProcessToken(NtCurrentProcess(), TOKEN_QUERY, &_hHandle2));
+
+                Assert::IsTrue(::CompareObjectHandles(_hHandle1, _hHandle2));
+
+                CloseHandle(_hHandle1);
+                CloseHandle(_hHandle2);
+            }
+
             {
                 constexpr const wchar_t Name[] = L"\\KernelObjects\\CritSecOutOfMemoryEvent";
                 auto pNtOpenKeyedEvent = (decltype(NtOpenKeyedEvent)*) GetProcAddress(GetModuleHandleW(L"ntdll"), "NtOpenKeyedEvent");

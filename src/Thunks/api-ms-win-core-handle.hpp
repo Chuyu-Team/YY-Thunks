@@ -14,7 +14,7 @@ namespace YY::Thunks
             OBJECT_BASIC_INFORMATION BaseInfo;
             OBJECT_NAME_INFORMATION NameInfo;
             BY_HANDLE_FILE_INFORMATION FileInformation;
-            TOKEN_SOURCE TokenSource;
+            TOKEN_STATISTICS TokenStatistics;
         };
 
         typedef bool(__fastcall* CompareObjectFunType)(HANDLE _hLeft, ObjectStaticBuffer& _LeftBuffer, HANDLE _hRigth, ObjectStaticBuffer& _RightBuffer);
@@ -40,19 +40,16 @@ namespace YY::Thunks
 
             LONG _Status = _pfnNtQueryObject(_hLeft, ObjectNameInformation, &_LeftBuffer, sizeof(_LeftBuffer), nullptr);
             if (_Status < 0)
-            {
                 return false;
-            }
+
             _Status = _pfnNtQueryObject(_hRigth, ObjectNameInformation, &_RightBuffer, sizeof(_RightBuffer), nullptr);
             if (_Status < 0)
-            {
                 return false;
-            }
 
             return internal::IsEqual(_LeftBuffer.NameInfo.Name, _RightBuffer.NameInfo.Name);
         }
 
-        bool __fastcall CompareProcessId(HANDLE _hLeft, ObjectStaticBuffer& _LeftBuffer, HANDLE _hRigth, ObjectStaticBuffer& _RightBuffer) noexcept
+        bool __fastcall CompareProcessHandle(HANDLE _hLeft, ObjectStaticBuffer& _LeftBuffer, HANDLE _hRigth, ObjectStaticBuffer& _RightBuffer) noexcept
         {
             decltype(DuplicateHandle)* _pfnDuplicateHandle = nullptr;
             decltype(CloseHandle)* _pfnCloseHandle = nullptr;
@@ -60,6 +57,9 @@ namespace YY::Thunks
             auto _uFirstProcessId = GetProcessId(_hLeft);
             if (_uFirstProcessId == 0)
             {
+                if (GetLastError() != ERROR_ACCESS_DENIED)
+                    return false;
+
                 _pfnDuplicateHandle = try_get_DuplicateHandle();
                 _pfnCloseHandle = try_get_CloseHandle();
                 if (_pfnDuplicateHandle == nullptr || _pfnCloseHandle == nullptr)
@@ -67,9 +67,7 @@ namespace YY::Thunks
 
                 HANDLE _hProcessTmp;
                 if (!_pfnDuplicateHandle(NtGetCurrentProcess(), _hLeft, NtGetCurrentProcess(), &_hProcessTmp, PROCESS_QUERY_INFORMATION, FALSE, 0))
-                {
                     return false;
-                }
 
                 _uFirstProcessId = GetProcessId(_hProcessTmp);
                 _pfnCloseHandle(_hProcessTmp);
@@ -80,6 +78,9 @@ namespace YY::Thunks
             auto _uSecondProcessId = GetProcessId(_hRigth);
             if (_uSecondProcessId == 0)
             {
+                if (GetLastError() != ERROR_ACCESS_DENIED)
+                    return false;
+
                 if (!_pfnDuplicateHandle)
                 {
                     _pfnDuplicateHandle = try_get_DuplicateHandle();
@@ -91,9 +92,7 @@ namespace YY::Thunks
 
                 HANDLE _hProcessTmp;
                 if (!_pfnDuplicateHandle(NtGetCurrentProcess(), _hRigth, NtGetCurrentProcess(), &_hProcessTmp, PROCESS_QUERY_INFORMATION, FALSE, 0))
-                {
                     return false;
-                }
 
                 _uSecondProcessId = GetProcessId(_hProcessTmp);
                 _pfnCloseHandle(_hProcessTmp);
@@ -104,7 +103,7 @@ namespace YY::Thunks
             return _uFirstProcessId == _uSecondProcessId;
         }
 
-        bool __fastcall CompareThreadId(HANDLE _hLeft, ObjectStaticBuffer& _LeftBuffer, HANDLE _hRigth, ObjectStaticBuffer& _RightBuffer) noexcept
+        bool __fastcall CompareThreadHandle(HANDLE _hLeft, ObjectStaticBuffer& _LeftBuffer, HANDLE _hRigth, ObjectStaticBuffer& _RightBuffer) noexcept
         {
             decltype(DuplicateHandle)* _pfnDuplicateHandle = nullptr;
             decltype(CloseHandle)* _pfnCloseHandle = nullptr;
@@ -112,6 +111,9 @@ namespace YY::Thunks
             auto _uFirstThreadId = GetThreadId(_hLeft);
             if (_uFirstThreadId == 0)
             {
+                if (GetLastError() != ERROR_ACCESS_DENIED)
+                    return false;
+
                 _pfnDuplicateHandle = try_get_DuplicateHandle();
                 _pfnCloseHandle = try_get_CloseHandle();
                 if (_pfnDuplicateHandle == nullptr || _pfnCloseHandle == nullptr)
@@ -119,9 +121,7 @@ namespace YY::Thunks
 
                 HANDLE _hHandleTmp;
                 if (!_pfnDuplicateHandle(NtGetCurrentProcess(), _hLeft, NtGetCurrentProcess(), &_hHandleTmp, THREAD_QUERY_INFORMATION, FALSE, 0))
-                {
                     return false;
-                }
 
                 _uFirstThreadId = GetThreadId(_hHandleTmp);
                 _pfnCloseHandle(_hHandleTmp);
@@ -132,6 +132,9 @@ namespace YY::Thunks
             auto _uSecondThreadId = GetThreadId(_hRigth);
             if (_uSecondThreadId == 0)
             {
+                if (GetLastError() != ERROR_ACCESS_DENIED)
+                    return false;
+
                 if (!_pfnDuplicateHandle)
                 {
                     _pfnDuplicateHandle = try_get_DuplicateHandle();
@@ -267,6 +270,57 @@ namespace YY::Thunks
             }
 
             return CompareObjectRef(_hFirstObjectHandle, _FirstObjectBuffer, _hSecondObjectHandle, _SecondObjectBuffer);
+        }
+
+        bool __fastcall CompareTokenHandle(HANDLE _hFirstObjectHandle, ObjectStaticBuffer& _FirstObjectBuffer, HANDLE _hSecondObjectHandle, ObjectStaticBuffer& _SecondObjectBuffer) noexcept
+        {
+            decltype(DuplicateHandle)* _pfnDuplicateHandle = nullptr;
+            decltype(CloseHandle)* _pfnCloseHandle = nullptr;
+
+            if (!GetTokenInformation(_hFirstObjectHandle, TokenStatistics, &_FirstObjectBuffer.TokenStatistics, sizeof(_FirstObjectBuffer.TokenStatistics), nullptr))
+            {
+                if (GetLastError() != ERROR_ACCESS_DENIED)
+                    return false;
+
+                _pfnDuplicateHandle = try_get_DuplicateHandle();
+                _pfnCloseHandle = try_get_CloseHandle();
+                if (_pfnDuplicateHandle == nullptr || _pfnCloseHandle == nullptr)
+                    return false;
+
+                HANDLE _hTmp;
+                if (!_pfnDuplicateHandle(NtCurrentProcess(), _hFirstObjectHandle, NtCurrentProcess(), &_hTmp, TOKEN_QUERY, FALSE, 0))
+                    return false;
+
+                const auto _bRet = GetTokenInformation(_hTmp, TokenStatistics, &_FirstObjectBuffer.TokenStatistics, sizeof(_FirstObjectBuffer.TokenStatistics), nullptr);
+                _pfnCloseHandle(_hTmp);
+                if (!_bRet)
+                    return false;
+            }
+
+            if (!GetTokenInformation(_hSecondObjectHandle, TokenStatistics, &_SecondObjectBuffer.TokenStatistics, sizeof(_SecondObjectBuffer.TokenStatistics), nullptr))
+            {
+                if (GetLastError() != ERROR_ACCESS_DENIED)
+                    return false;
+
+                if (!_pfnDuplicateHandle)
+                {
+                    _pfnDuplicateHandle = try_get_DuplicateHandle();
+                    _pfnCloseHandle = try_get_CloseHandle();
+                    if (_pfnDuplicateHandle == nullptr || _pfnCloseHandle == nullptr)
+                        return false;
+                }
+                HANDLE _hTmp;
+                if (!_pfnDuplicateHandle(NtCurrentProcess(), _hSecondObjectHandle, NtCurrentProcess(), &_hTmp, TOKEN_QUERY, FALSE, 0))
+                    return false;
+
+                const auto _bRet = GetTokenInformation(_hTmp, TokenStatistics, &_SecondObjectBuffer.TokenStatistics, sizeof(_SecondObjectBuffer.TokenStatistics), nullptr);
+                _pfnCloseHandle(_hTmp);
+                if (!_bRet)
+                    return false;
+            }
+
+            return _FirstObjectBuffer.TokenStatistics.TokenId.LowPart == _SecondObjectBuffer.TokenStatistics.TokenId.LowPart
+                && _FirstObjectBuffer.TokenStatistics.TokenId.HighPart == _SecondObjectBuffer.TokenStatistics.TokenId.HighPart;
         }
 #endif
     }
@@ -465,13 +519,14 @@ namespace YY::Thunks
             return FALSE;
         }
 
-        // 我们不直接比较句柄的Name，因为某些句柄获取Name会导致阻塞。
-        // 下面这个表格存储了所有仅比较Name就可以确定是否是同一内核对象。
+        // 我们不直接比较句柄的Name，因为某些句柄获取Name会导致阻塞，而比如文件，文件相同也并非意味着是同一对象。
+        // 我们也不能无脑判断ObjectRef，因为它也带有锁，而且无法完全保证其他代码不复制句柄。
+        // 下面这个表格存储了所有已知的内核对象快速判断是否同一对象的方法。
         static const CompareObjectItem s_CompareObjectTable[] =
         {
             { L"Event", &CompareObjectName },
-            { L"Process", &CompareProcessId },
-            { L"Thread", &CompareThreadId },
+            { L"Process", &CompareProcessHandle },
+            { L"Thread", &CompareThreadHandle },
             { L"Section", &CompareObjectName },
             { L"Mutant", &CompareObjectName },
             { L"Semaphore", &CompareObjectName },
@@ -481,6 +536,8 @@ namespace YY::Thunks
             { L"Directory", &CompareObjectName },
             { L"Timer", &CompareObjectName },
             { L"KeyedEvent", &CompareObjectName },
+            { L"Token", &CompareTokenHandle },
+            { L"ALPC Port", &CompareObjectName },
         };
 
         for (auto& _CompareObject : s_CompareObjectTable)
@@ -491,12 +548,10 @@ namespace YY::Thunks
             }
         }
 
-        __WarningMessage__("Token: OpenProcessToken 返回同一个内核对象，但是没有Name。");
-
-        // 某些句柄无法直接判断Name，即使名称相同在内核中也不完全是同一个内核对象。
-        // 而引用计数一样，那么可以说明他们是同一个对象。但是需要注意的是该方法比较缓慢，因为需要加锁！！！
+        // 保底逻辑，判断二个句柄的引用计数是否同步。但是需要注意的是该方法比较缓慢，因为需要加锁！如果这里有更好方案，欢迎PR。
         // Key : 重复打开时不是同一个内核对象
         // CreateIoCompletionPort : 无法获取名称
+        // TmTx : 无法获取名称
         return CompareObjectRef(_hFirstObjectHandle, _FirstObjectBuffer, _hSecondObjectHandle, _SecondObjectBuffer);
     }
 #endif
