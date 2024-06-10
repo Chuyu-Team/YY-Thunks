@@ -634,6 +634,7 @@
 | UiaGetReservedMixedAttributeValue          | 不存在时，报告错误 E_NOTIMPL。
 | UiaGetReservedNotSupportedValue            | 不存在时，报告错误 E_NOTIMPL。
 | UiaRaiseStructureChangedEvent              | 不存在时，报告错误 E_NOTIMPL。
+| UiaRaiseNotificationEvent                  | 不存在时，假装成功。
 
 ## user32.dll
 | 函数                                       | Fallback

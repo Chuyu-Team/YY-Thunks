@@ -201,4 +201,31 @@ namespace YY::Thunks
         return E_NOTIMPL;
     }
 #endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN10_RS3)
+
+    // 最低受支持的客户端	Windows 10版本 1709 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2016[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    uiautomationcore,
+    20,
+    HRESULT,
+    WINAPI,
+    UiaRaiseNotificationEvent,
+        _In_ IRawElementProviderSimple* _pProvider,
+        enum NotificationKind _eNotificationKind,
+        enum NotificationProcessing _eNotificationProcessing,
+        _In_opt_ BSTR _szDisplayString,
+        _In_ BSTR _szActivityId
+        )
+    {
+        if (auto const _pfnUiaRaiseNotificationEvent = try_get_UiaRaiseNotificationEvent())
+        {
+            return _pfnUiaRaiseNotificationEvent(_pProvider, _eNotificationKind, _eNotificationProcessing, _szDisplayString, _szActivityId);
+        }
+        
+        return S_OK;
+    }
+#endif
 }
