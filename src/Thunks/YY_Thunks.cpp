@@ -6,7 +6,6 @@ YY-Thunks支持的控制宏：
 特殊支持的变通方案：
 1. __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng
 兼容方案1：让GetProcAddress也能取到ProcessPrng函数地址。某些代码可能强制依赖ProcessPrng。
-注意，开启`__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng`也将开启`__USING_NTDLL_LIB`。
 
 2. __ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL
 兼容方案2：Windows 8.1以前的版本对于匿名对象无法生效DACL。就会导致Chrome的CheckPlatformHandlePermissionsCorrespondToMode判断不准确。
@@ -23,8 +22,8 @@ YY-Thunks支持的控制宏：
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 
 #define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                                     \
-    _APPLY(ntdll,                                        "ntdll"                              , USING_UNSAFE_LOAD ) \
-    _APPLY(kernel32,                                     "kernel32"                           , USING_UNSAFE_LOAD ) \
+    _APPLY(ntdll,                                        "ntdll"                              , USING_GET_MODULE_HANDLE ) \
+    _APPLY(kernel32,                                     "kernel32"                           , USING_GET_MODULE_HANDLE ) \
     _APPLY(cfgmgr32,                                     "cfgmgr32"                           , 0                 ) \
     _APPLY(crypt32,                                      "crypt32"                            , 0                 ) \
     _APPLY(dwmapi,                                       "dwmapi"                             , 0                 ) \
@@ -139,12 +138,6 @@ YY-Thunks支持的控制宏：
 #define __ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL
 #endif
 #endif // defined(__APPLY_CHROMIUM_WORKAROUNDS)
-
-#if defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng)
-#if !defined(__USING_NTDLL_LIB)
-#define __USING_NTDLL_LIB
-#endif
-#endif // defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng)
 
 #define _Disallow_YY_KM_Namespace
 #include "km.h"

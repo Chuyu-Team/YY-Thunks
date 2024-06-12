@@ -283,7 +283,8 @@ namespace YY::Thunks
             decltype(DuplicateHandle)* _pfnDuplicateHandle = nullptr;
             decltype(CloseHandle)* _pfnCloseHandle = nullptr;
 
-            if (!GetTokenInformation(_hFirstObjectHandle, TokenStatistics, &_FirstObjectBuffer.TokenStatistics, sizeof(_FirstObjectBuffer.TokenStatistics), nullptr))
+            DWORD _uResultLength;
+            if (!GetTokenInformation(_hFirstObjectHandle, TokenStatistics, &_FirstObjectBuffer.TokenStatistics, sizeof(_FirstObjectBuffer.TokenStatistics), &_uResultLength))
             {
                 if (GetLastError() != ERROR_ACCESS_DENIED)
                     return false;
@@ -297,13 +298,13 @@ namespace YY::Thunks
                 if (!_pfnDuplicateHandle(NtCurrentProcess(), _hFirstObjectHandle, NtCurrentProcess(), &_hTmp, TOKEN_QUERY, FALSE, 0))
                     return false;
 
-                const auto _bRet = GetTokenInformation(_hTmp, TokenStatistics, &_FirstObjectBuffer.TokenStatistics, sizeof(_FirstObjectBuffer.TokenStatistics), nullptr);
+                const auto _bRet = GetTokenInformation(_hTmp, TokenStatistics, &_FirstObjectBuffer.TokenStatistics, sizeof(_FirstObjectBuffer.TokenStatistics), &_uResultLength);
                 _pfnCloseHandle(_hTmp);
                 if (!_bRet)
                     return false;
             }
 
-            if (!GetTokenInformation(_hSecondObjectHandle, TokenStatistics, &_SecondObjectBuffer.TokenStatistics, sizeof(_SecondObjectBuffer.TokenStatistics), nullptr))
+            if (!GetTokenInformation(_hSecondObjectHandle, TokenStatistics, &_SecondObjectBuffer.TokenStatistics, sizeof(_SecondObjectBuffer.TokenStatistics), &_uResultLength))
             {
                 if (GetLastError() != ERROR_ACCESS_DENIED)
                     return false;
@@ -319,7 +320,7 @@ namespace YY::Thunks
                 if (!_pfnDuplicateHandle(NtCurrentProcess(), _hSecondObjectHandle, NtCurrentProcess(), &_hTmp, TOKEN_QUERY, FALSE, 0))
                     return false;
 
-                const auto _bRet = GetTokenInformation(_hTmp, TokenStatistics, &_SecondObjectBuffer.TokenStatistics, sizeof(_SecondObjectBuffer.TokenStatistics), nullptr);
+                const auto _bRet = GetTokenInformation(_hTmp, TokenStatistics, &_SecondObjectBuffer.TokenStatistics, sizeof(_SecondObjectBuffer.TokenStatistics), &_uResultLength);
                 _pfnCloseHandle(_hTmp);
                 if (!_bRet)
                     return false;

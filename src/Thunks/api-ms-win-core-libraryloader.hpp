@@ -4,6 +4,10 @@ namespace YY::Thunks::Fallback
 {
     namespace
     {
+#if YY_Thunks_Support_Version < NTDDI_WIN8
+        static DWORD s_DirectoryFlags/* = 0*/;
+#endif
+
         /*LSTATUS __fastcall BasepGetModuleHandleExParameterValidation(
             _In_ DWORD dwFlags,
             _In_opt_ LPCSTR lpModuleName,
@@ -36,6 +40,7 @@ namespace YY::Thunks::Fallback
         template<typename Char>
         HMODULE __fastcall ForwardDll(_In_z_ const Char* _szLibFileName)
         {
+#if defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng) && (YY_Thunks_Support_Version < NTDDI_WIN7)
             if (_szLibFileName == nullptr || *_szLibFileName == L'\0')
                 return nullptr;
 
@@ -53,7 +58,7 @@ namespace YY::Thunks::Fallback
                 }
             }
 
-#if YY_Thunks_Support_Version < NTDDI_WIN7
+#if defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng) && (YY_Thunks_Support_Version < NTDDI_WIN7)
             if (internal::GetSystemVersion() < internal::MakeVersion(6, 1)
                 && StringCompareIgnoreCaseByAscii(_szFileName, L"bcryptprimitives", 16) == 0)
             {
@@ -65,8 +70,57 @@ namespace YY::Thunks::Fallback
                 }
             }
 #endif
+#endif 
             return nullptr;
         }
+
+#if defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng) && YY_Thunks_Support_Version < NTDDI_WIN8
+        void* __fastcall try_get_GetProcAddress(const ProcInfo& _ProcInfo)
+        {
+            auto _hModule = _ProcInfo.pfnGetModule();
+            if (!_hModule)
+                return nullptr;
+
+#if defined(__USING_NTDLL_LIB)
+            void* _pProc = nullptr;
+            ANSI_STRING _sFunctionName;
+            _sFunctionName.Length = strlen(_ProcInfo.szProcName);
+            _sFunctionName.MaximumLength = _sFunctionName.Length + 1;
+            _sFunctionName.Buffer = const_cast<PSTR>(_ProcInfo.szProcName);
+            const LONG _Status = LdrGetProcedureAddress(_hModule, &_sFunctionName, 0, &_pProc);
+            return _Status >= 0 ? _pProc : nullptr;
+#else // !defined(__USING_NTDLL_LIB)
+            ULONG _uSize;
+            auto _pExport = (_IMAGE_EXPORT_DIRECTORY*)YY_ImageDirectoryEntryToData(_hModule, IMAGE_DIRECTORY_ENTRY_EXPORT, &_uSize);
+            if (!_pExport)
+                return nullptr;
+
+            if (_pExport->AddressOfNames == 0 || _pExport->AddressOfFunctions == 0 || _pExport->AddressOfNameOrdinals == 0)
+                return nullptr;
+
+            auto _puFunctions = (const DWORD*)(PBYTE(_hModule) + _pExport->AddressOfFunctions);
+            auto _puNames = (const DWORD*)(PBYTE(_hModule) + _pExport->AddressOfNames);
+            auto _puNameOrdinals = (const WORD*)(PBYTE(_hModule) + _pExport->AddressOfNameOrdinals);
+
+            for (DWORD i = 0; i != _pExport->NumberOfNames; ++i)
+            {
+                auto _uName = _puNames[i];
+                if (_uName == 0)
+                    continue;
+
+                auto _szName = (char*)(PBYTE(_hModule) + _uName);
+
+                if (StringCompare(_szName, _ProcInfo.szProcName, -1) == 0)
+                {
+                    auto _pfn = PBYTE(_hModule) + _puFunctions[_puNameOrdinals[i]];
+                    return _pfn;
+                }
+            }
+
+            return nullptr;
+#endif // defined(__USING_NTDLL_LIB)
+        }
+#endif
     }
 }
 #endif
@@ -295,11 +349,15 @@ namespace YY::Thunks
 		}
 
 
-		if (try_get_AddDllDirectory() != nullptr)
+		if (dwFlags == 0 || try_get_AddDllDirectory() != nullptr)
 		{
 			//存在AddDllDirectory说明支持 LOAD_LIBRARY_SEARCH_SYSTEM32 等功能，直接调用pLoadLibraryExW即可。
 
-			return pLoadLibraryExW(lpLibFileName, hFile, dwFlags);
+			auto _hModule = pLoadLibraryExW(lpLibFileName, hFile, dwFlags);
+            if (_hModule)
+                return _hModule;
+
+            return Fallback::ForwardDll(lpLibFileName);
 		}
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
@@ -648,7 +706,10 @@ namespace YY::Thunks
 				YY::Thunks::internal::BaseSetLastNTError(Status);
 			}
 
-			return hModule;
+            if (hModule)
+                return hModule;
+
+            return Fallback::ForwardDll(lpLibFileName);
 		} while (false);
 
 #if defined(_X86_) || defined(_M_IX86)
@@ -669,7 +730,10 @@ namespace YY::Thunks
 			SetLastError(lStatus);
 		}
 #endif
-		return hModule;
+        if(hModule)
+            return hModule;
+
+        return Fallback::ForwardDll(lpLibFileName);
 	}
 #endif
 
@@ -698,11 +762,15 @@ namespace YY::Thunks
 		}
 
 
-		if (try_get_AddDllDirectory() != nullptr)
+		if (dwFlags == 0 || try_get_AddDllDirectory() != nullptr)
 		{
 			//存在AddDllDirectory说明支持 LOAD_LIBRARY_SEARCH_SYSTEM32 等功能，直接调用pLoadLibraryExW即可。
 
-			return pLoadLibraryExA(lpLibFileName, hFile, dwFlags);
+			auto _hModule = pLoadLibraryExA(lpLibFileName, hFile, dwFlags);
+            if (_hModule)
+                return _hModule;
+
+            return Fallback::ForwardDll(lpLibFileName);
 		}
 
 		wchar_t szLibFileNameUnicode[512];
@@ -921,7 +989,7 @@ namespace YY::Thunks
         _In_ LPCSTR lpProcName
         )
     {
-#if YY_Thunks_Support_Version < NTDDI_WIN8
+#if defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng) && YY_Thunks_Support_Version < NTDDI_WIN8
         if (uintptr_t(lpProcName) > UINT16_MAX)
         {
             if (StringCompare(lpProcName, "ProcessPrng", -1) == 0)
@@ -946,58 +1014,108 @@ namespace YY::Thunks
 #endif
 
 
-#if defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng) && YY_Thunks_Support_Version < NTDDI_WIN7
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-    // 所有系统都支持，但是这个函数的存在是为了能顺利取到 ProcessPrng，Windows 8开始原生支持ProcessPrng
+    // 所有系统都支持，但是现在为了支持 SetDefaultDllDirectories就Thunk下
     __DEFINE_THUNK(
     kernel32,
     4,
     HMODULE,
     WINAPI,
     LoadLibraryW,
-        _In_ LPCWSTR lpLibFileName
+        _In_ LPCWSTR _szLibFileName
         )
     {
-        const auto _pfnLoadLibraryW = try_get_LoadLibraryW();
-        if (!_pfnLoadLibraryW)
+        if (Fallback::s_DirectoryFlags == 0 || try_get_AddDllDirectory())
         {
-            SetLastError(ERROR_PROC_NOT_FOUND);
-            return nullptr;
+            const auto _pfnLoadLibraryW = try_get_LoadLibraryW();
+            if (!_pfnLoadLibraryW)
+            {
+                SetLastError(ERROR_PROC_NOT_FOUND);
+                return nullptr;
+            }
+
+            auto _hModule = _pfnLoadLibraryW(_szLibFileName);
+            if (_hModule)
+                return _hModule;
+
+            return Fallback::ForwardDll(_szLibFileName);
         }
-
-        auto _hModule = _pfnLoadLibraryW(lpLibFileName);
-        if (_hModule)
-            return _hModule;
-
-        return Fallback::ForwardDll(lpLibFileName);
+        else
+        {
+            return LoadLibraryExW(_szLibFileName, NULL, Fallback::s_DirectoryFlags);
+        }
     }
 #endif
 
 
-#if defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng) && YY_Thunks_Support_Version < NTDDI_WIN7
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
 
-    // 所有系统都支持，但是这个函数的存在是为了能顺利取到 ProcessPrng，Windows 8开始原生支持ProcessPrng
+    // 所有系统都支持，但是现在为了支持 SetDefaultDllDirectories
     __DEFINE_THUNK(
     kernel32,
     4,
     HMODULE,
     WINAPI,
     LoadLibraryA,
-        _In_ LPCSTR lpLibFileName
+        _In_ LPCSTR _szLibFileName
         )
     {
-        const auto _pfnLoadLibraryA = try_get_LoadLibraryA();
-        if (!_pfnLoadLibraryA)
+        if (Fallback::s_DirectoryFlags == 0 || try_get_AddDllDirectory())
         {
-            SetLastError(ERROR_PROC_NOT_FOUND);
-            return nullptr;
+            const auto _pfnLoadLibraryA = try_get_LoadLibraryA();
+            if (!_pfnLoadLibraryA)
+            {
+                SetLastError(ERROR_PROC_NOT_FOUND);
+                return nullptr;
+            }
+
+            auto _hModule = _pfnLoadLibraryA(_szLibFileName);
+            if (_hModule)
+                return _hModule;
+
+            return Fallback::ForwardDll(_szLibFileName);
+        }
+        else
+        {
+            return LoadLibraryExA(_szLibFileName, NULL, Fallback::s_DirectoryFlags);
+        }
+    }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]，在 Windows 7、Windows Server 2008 R2、Windows Vista 和 Windows Server 2008 上KB2533623
+    // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
+    __DEFINE_THUNK(
+    kernel32,
+    4,
+    BOOL,
+    WINAPI,
+    SetDefaultDllDirectories,
+        _In_ DWORD _fDirectoryFlags
+        )
+    {
+        if (const auto _pfnSetDefaultDllDirectories = try_get_SetDefaultDllDirectories())
+        {
+            return _pfnSetDefaultDllDirectories(_fDirectoryFlags);
         }
 
-        auto _hModule = _pfnLoadLibraryA(lpLibFileName);
-        if (_hModule)
-            return _hModule;
+        if (_fDirectoryFlags & LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)
+        {
+            _fDirectoryFlags &= ~LOAD_LIBRARY_SEARCH_DEFAULT_DIRS;
+            _fDirectoryFlags |= LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_LIBRARY_SEARCH_USER_DIRS;       
+        }
 
-        return Fallback::ForwardDll(lpLibFileName);
+        if (_fDirectoryFlags & ~(LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_LIBRARY_SEARCH_USER_DIRS))
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        Fallback::s_DirectoryFlags = _fDirectoryFlags;
+        return TRUE;
     }
 #endif
 

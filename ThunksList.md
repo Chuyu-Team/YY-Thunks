@@ -535,6 +535,7 @@
 | WerRegisterRuntimeExceptionModule          | 不存在时，返回S_OK。
 | WerUnregisterRuntimeExceptionModule        | 不存在时，返回S_OK。
 | Wow64GetThreadContext                      | 不存在时，调用GetThreadContext或者返回ERROR_INVALID_PARAMETER。
+| SetDefaultDllDirectories                   | 不存在时，手工控制LoadLibrary加载顺序。
 
 ## mfplat.dll
 | 函数                                       | Fallback

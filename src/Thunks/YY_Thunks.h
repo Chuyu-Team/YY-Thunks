@@ -179,6 +179,23 @@ static int _fastcall StringCompare(const Char1* string1, const Char2* string2, s
     return result;
 }
 
+static PVOID __fastcall YY_ImageDirectoryEntryToData(
+    __in PVOID pBaseAddress,
+    __in ULONG dwDirectory,
+    __out PULONG pSize
+    )
+{
+    auto _pDosHeader = (PIMAGE_DOS_HEADER)pBaseAddress;
+    auto _pNtHerder = reinterpret_cast<PIMAGE_NT_HEADERS>(PBYTE(pBaseAddress) + _pDosHeader->e_lfanew);
+    auto& _DataDirectory = _pNtHerder->OptionalHeader.DataDirectory[dwDirectory];
+
+    *pSize = _DataDirectory.Size;
+    if (_DataDirectory.Size == 0 || _DataDirectory.VirtualAddress == 0)
+        return nullptr;
+
+    return PBYTE(pBaseAddress) + _DataDirectory.VirtualAddress;
+}
+
 enum : int
 {
 	__crt_maximum_pointer_shift = sizeof(uintptr_t) * 8
@@ -280,16 +297,11 @@ static __forceinline T* __fastcall __crt_interlocked_read_pointer(T* const volat
 	return __crt_interlocked_compare_exchange_pointer(target, nullptr, nullptr);
 }
 
-
-
-static HMODULE __fastcall try_load_library_from_system_directory(wchar_t const* const name) noexcept
-{
-	return LoadLibraryExW(name, nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-}
-
-
-#define USING_UNSAFE_LOAD 0x00000001
+// 改选项非常危险，只调用GetModuleHandleW！！!
+#define USING_GET_MODULE_HANDLE 0x00000001
 #define LOAD_AS_DATA_FILE 0x00000002
+// 该加载模式存在劫持风险，使用前请确认。
+#define USING_UNSAFE_LOAD 0x00000004
 
 static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name, int Flags) noexcept
 {
@@ -312,21 +324,17 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
     {
         new_handle = LoadLibraryExW(module_name, NULL, LOAD_LIBRARY_AS_DATAFILE);
     }
+    else if (Flags & USING_GET_MODULE_HANDLE)
+    {
+        new_handle = GetModuleHandleW(module_name);
+    }
     else if (Flags & USING_UNSAFE_LOAD)
     {
-#if defined(__USING_NTDLL_LIB)
-        UNICODE_STRING _sModuleName;
-        _sModuleName.Length = wcslen(module_name) * sizeof(module_name[0]);
-        _sModuleName.MaximumLength = _sModuleName.Length + sizeof(module_name[0]);
-        _sModuleName.Buffer = const_cast<PWSTR>(module_name);
-        LdrLoadDll(nullptr, nullptr, &_sModuleName, &new_handle);
-#else
-        new_handle = LoadLibraryW(module_name);
-#endif
+        new_handle = LoadLibraryExW(module_name, nullptr, 0);
     }
     else
     {
-        new_handle = try_load_library_from_system_directory(module_name);
+        new_handle = LoadLibraryExW(module_name, nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
     }
     
 	if (!new_handle)
@@ -361,46 +369,33 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
 _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)
 #undef _APPLY
 
+struct ProcInfo;
 typedef HMODULE (__fastcall* try_get_module_fun)();
-typedef void*(__fastcall* try_get_proc_fallback_fun)();
+typedef void*(__fastcall* custom_try_get_proc_fun)(const ProcInfo& _ProcInfo);
 
 struct ProcInfo
 {
     char const* const szProcName;
     try_get_module_fun pfnGetModule;
-    try_get_proc_fallback_fun pfnGetProcFallback;
+    custom_try_get_proc_fun pfnCustomGetProcAddress;
 };
 
 static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
 	const ProcInfo& _ProcInfo
     ) noexcept
 {
+    if (_ProcInfo.pfnCustomGetProcAddress)
+    {
+        return _ProcInfo.pfnCustomGetProcAddress(_ProcInfo);
+    }
+
 	HMODULE const module_handle = _ProcInfo.pfnGetModule();
 	if (!module_handle)
 	{
 		return nullptr;
 	}
-    void* _pProc = nullptr;
-#if defined(__USING_NTDLL_LIB)
-    if (uintptr_t(_ProcInfo.szProcName) <= UINT16_MAX)
-    {
-        LdrGetProcedureAddress(module_handle, nullptr, static_cast<WORD>(reinterpret_cast<uintptr_t>(_ProcInfo.szProcName)), &_pProc);
-    }
-    else
-    {
-        ANSI_STRING _sFunctionName;
-        _sFunctionName.Length = strlen(_ProcInfo.szProcName);
-        _sFunctionName.MaximumLength = _sFunctionName.Length + 1;
-        _sFunctionName.Buffer = const_cast<PSTR>(_ProcInfo.szProcName);
-        LdrGetProcedureAddress(module_handle, &_sFunctionName, 0, &_pProc);
-    }
-#else
-	_pProc = reinterpret_cast<void*>(GetProcAddress(module_handle, _ProcInfo.szProcName));
-#endif
-    if (_pProc || _ProcInfo.pfnGetProcFallback == nullptr)
-        return _pProc;
 
-    return _ProcInfo.pfnGetProcFallback();
+	return reinterpret_cast<void*>(GetProcAddress(module_handle, _ProcInfo.szProcName));
 }
 
 

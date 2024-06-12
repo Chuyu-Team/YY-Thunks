@@ -10,11 +10,15 @@
 #if defined(YY_Thunks_Implemented) && defined(_X86_) && (YY_Thunks_Support_Version < NTDDI_WIN6)
 namespace YY::Thunks::Fallback
 {
-    static void* __fastcall try_get_DrawThemeTextEx() noexcept
+    static void* __fastcall try_get_DrawThemeTextEx(const ProcInfo& _ProcInfo) noexcept
     {
-        auto _pUxThemeBase = (const char*)try_get_module_uxtheme();
+        auto _pUxThemeBase = (const char*)_ProcInfo.pfnGetModule();
         if (!_pUxThemeBase)
             return nullptr;
+
+        auto _pfn = ::GetProcAddress((HMODULE)_pUxThemeBase, _ProcInfo.szProcName);
+        if (_pfn)
+            return _pfn;
 
         MEMORY_BASIC_INFORMATION _BaseInfo;
 
