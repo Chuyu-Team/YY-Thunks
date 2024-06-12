@@ -1,9 +1,9 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+﻿#if (YY_Thunks_Support_Version < NTDDI_WIN7)
 #include <cfgmgr32.h>
+#include <SetupAPI.h>
 #endif
 
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_cfgmgr32)
+#if (YY_Thunks_Support_Version < NTDDI_WIN7) && !defined(__Comment_Lib_cfgmgr32)
 #define __Comment_Lib_cfgmgr32
 #pragma comment(lib, "Cfgmgr32.lib")
 #endif
@@ -13,7 +13,7 @@ namespace YY::Thunks::Fallback
 {
     namespace
     {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
         struct DevNodeTempPropertyBufffer
         {
             wchar_t szId[39];
