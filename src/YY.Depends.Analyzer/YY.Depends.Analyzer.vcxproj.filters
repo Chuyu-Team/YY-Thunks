@@ -13,10 +13,57 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="资源文件\Config">
+      <UniqueIdentifier>{1b2150a9-3ecd-466c-8ed6-4c05d2b5feb9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="资源文件\Config\x64">
+      <UniqueIdentifier>{bd9cc60a-cd73-4766-a69b-50fdfa675fc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="资源文件\Config\x86">
+      <UniqueIdentifier>{367324e4-0b88-4554-b1e1-cb4204867029}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PEImportAnalyzer.cpp">
+    <ClCompile Include="YY.Depends.Analyzer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Config\x64\5.2.3790.txt">
+      <Filter>资源文件\Config\x64</Filter>
+    </Text>
+    <Text Include="Config\x64\6.0.6000.txt">
+      <Filter>资源文件\Config\x64</Filter>
+    </Text>
+    <Text Include="Config\x64\6.1.7600.txt">
+      <Filter>资源文件\Config\x64</Filter>
+    </Text>
+    <Text Include="Config\x64\6.2.9200.txt">
+      <Filter>资源文件\Config\x64</Filter>
+    </Text>
+    <Text Include="Config\x64\6.3.9600.txt">
+      <Filter>资源文件\Config\x64</Filter>
+    </Text>
+    <Text Include="Config\x64\OrdinalMap.txt">
+      <Filter>资源文件\Config\x64</Filter>
+    </Text>
+    <Text Include="Config\x86\5.1.2600.txt">
+      <Filter>资源文件\Config\x86</Filter>
+    </Text>
+    <Text Include="Config\x86\6.0.6000.txt">
+      <Filter>资源文件\Config\x86</Filter>
+    </Text>
+    <Text Include="Config\x86\6.1.7600.txt">
+      <Filter>资源文件\Config\x86</Filter>
+    </Text>
+    <Text Include="Config\x86\6.2.9200.txt">
+      <Filter>资源文件\Config\x86</Filter>
+    </Text>
+    <Text Include="Config\x86\6.3.9600.txt">
+      <Filter>资源文件\Config\x86</Filter>
+    </Text>
+    <Text Include="Config\x86\OrdinalMap.txt">
+      <Filter>资源文件\Config\x86</Filter>
+    </Text>
   </ItemGroup>
 </Project>
