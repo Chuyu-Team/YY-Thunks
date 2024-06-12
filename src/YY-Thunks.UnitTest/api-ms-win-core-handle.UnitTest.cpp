@@ -335,5 +335,27 @@ namespace api_ms_win_core_handle
                 CloseHandle(_hFile3);
             }
         }
+
+        TEST_METHOD(匿名对象)
+        {
+            {
+                auto _hHandle1 = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+                Assert::IsNotNull(_hHandle1);
+                auto _hHandle2 = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+                Assert::IsNotNull(_hHandle2);
+                HANDLE _hHandle3;
+                HANDLE _hHandle4;
+                Assert::IsTrue(DuplicateHandle(NtGetCurrentProcess(), _hHandle1, NtGetCurrentProcess(), &_hHandle3, 0, FALSE, DUPLICATE_SAME_ACCESS));
+                Assert::IsTrue(DuplicateHandle(NtGetCurrentProcess(), _hHandle2, NtGetCurrentProcess(), &_hHandle4, 0, FALSE, DUPLICATE_SAME_ACCESS));
+
+                Assert::IsFalse(::CompareObjectHandles(_hHandle1, _hHandle2));
+                Assert::IsTrue(::CompareObjectHandles(_hHandle1, _hHandle3));
+
+                CloseHandle(_hHandle1);
+                CloseHandle(_hHandle2);
+                CloseHandle(_hHandle3);
+                CloseHandle(_hHandle4);
+            }
+        }
     };
 }

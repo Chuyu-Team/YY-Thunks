@@ -32,6 +32,96 @@ namespace YY::Thunks
             }
         };
 
+        bool __fastcall CompareObjectRef(HANDLE _hFirstObjectHandle, ObjectStaticBuffer& _FirstObjectBuffer, HANDLE _hSecondObjectHandle, ObjectStaticBuffer& _SecondObjectBuffer) noexcept
+        {
+            const auto _pfnNtQueryObject = try_get_NtQueryObject();
+            if (!_pfnNtQueryObject)
+                return false;
+
+            const auto _pfnDuplicateHandle = try_get_DuplicateHandle();
+            const auto _pfnCloseHandle = try_get_CloseHandle();
+            if (_pfnDuplicateHandle == nullptr || _pfnCloseHandle == nullptr)
+                return false;
+
+            HANDLE _hFirstTmp = NULL;
+            BOOL _bHandleIsSame = FALSE;
+
+            ::AcquireSRWLockExclusive(&g_CompareObjectHandles);
+
+            do
+            {
+                if (!_pfnDuplicateHandle(NtGetCurrentProcess(), _hFirstObjectHandle, NtGetCurrentProcess(), &_hFirstTmp, 0, FALSE, 0))
+                {
+                    break;
+                }
+
+                LONG _Status = _pfnNtQueryObject(_hFirstObjectHandle, ObjectBasicInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer.BaseInfo), nullptr);
+
+                // 实际测试，ObjectBasicInformation 只出现无效句柄错误
+                if (_Status < 0)
+                {
+                    break;
+                }
+
+                if (_FirstObjectBuffer.BaseInfo.HandleCount == 1)
+                {
+                    // 引用计数为 1，这肯定不可能与另外一个句柄是同一个内核对象
+                    break;
+                }
+
+                _Status = _pfnNtQueryObject(_hSecondObjectHandle, ObjectBasicInformation, &_SecondObjectBuffer, sizeof(_SecondObjectBuffer.BaseInfo), nullptr);
+                if (_Status < 0)
+                {
+                    break;
+                }
+
+                if (_SecondObjectBuffer.BaseInfo.HandleCount != _FirstObjectBuffer.BaseInfo.HandleCount)
+                {
+                    // 引用计数为 1，这肯定不可能与另外一个句柄是同一个内核对象
+                    break;
+                }
+
+                _pfnCloseHandle(_hFirstTmp);
+                _hFirstTmp = NULL;
+
+                _Status = _pfnNtQueryObject(_hFirstObjectHandle, ObjectBasicInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer.BaseInfo), nullptr);
+
+                // 实际测试，ObjectBasicInformation 只出现无效句柄错误
+                if (_Status < 0)
+                {
+                    break;
+                }
+
+                if (_FirstObjectBuffer.BaseInfo.HandleCount == 1)
+                {
+                    // 引用计数为 1，这肯定不可能与另外一个句柄是同一个内核对象
+                    break;
+                }
+
+                _Status = _pfnNtQueryObject(_hSecondObjectHandle, ObjectBasicInformation, &_SecondObjectBuffer, sizeof(_SecondObjectBuffer.BaseInfo), nullptr);
+                if (_Status < 0)
+                {
+                    break;
+                }
+
+                if (_SecondObjectBuffer.BaseInfo.HandleCount != _FirstObjectBuffer.BaseInfo.HandleCount)
+                {
+                    // 引用计数为 1，这肯定不可能与另外一个句柄是同一个内核对象
+                    break;
+                }
+
+                _bHandleIsSame = TRUE;
+                break;
+            } while (false);
+
+            ::ReleaseSRWLockExclusive(&g_CompareObjectHandles);
+
+            if (_hFirstTmp)
+                _pfnCloseHandle(_hFirstTmp);
+
+            return _bHandleIsSame;
+        }
+
         bool __fastcall CompareObjectName(HANDLE _hLeft, ObjectStaticBuffer& _LeftBuffer, HANDLE _hRigth, ObjectStaticBuffer& _RightBuffer) noexcept
         {
             const auto _pfnNtQueryObject = try_get_NtQueryObject();
@@ -45,6 +135,12 @@ namespace YY::Thunks
             _Status = _pfnNtQueryObject(_hRigth, ObjectNameInformation, &_RightBuffer, sizeof(_RightBuffer), nullptr);
             if (_Status < 0)
                 return false;
+
+            if (_LeftBuffer.NameInfo.Name.Length == 0 && _RightBuffer.NameInfo.Name.Length == 0)
+            {
+                // 这是一个匿名对象，只能比较句柄的引用计数了。
+                return CompareObjectRef(_hLeft, _LeftBuffer, _hRigth, _RightBuffer);
+            }
 
             return internal::IsEqual(_LeftBuffer.NameInfo.Name, _RightBuffer.NameInfo.Name);
         }
@@ -157,96 +253,6 @@ namespace YY::Thunks
             }
 
             return _uFirstThreadId == _uSecondThreadId;
-        }
-
-        bool __fastcall CompareObjectRef(HANDLE _hFirstObjectHandle, ObjectStaticBuffer& _FirstObjectBuffer, HANDLE _hSecondObjectHandle, ObjectStaticBuffer& _SecondObjectBuffer) noexcept
-        {
-            const auto _pfnNtQueryObject = try_get_NtQueryObject();
-            if (!_pfnNtQueryObject)
-                return false;
-
-            const auto _pfnDuplicateHandle = try_get_DuplicateHandle();
-            const auto _pfnCloseHandle = try_get_CloseHandle();
-            if (_pfnDuplicateHandle == nullptr || _pfnCloseHandle == nullptr)
-                return false;
-
-            HANDLE _hFirstTmp = NULL;
-            BOOL _bHandleIsSame = FALSE;
-
-            ::AcquireSRWLockExclusive(&g_CompareObjectHandles);
-
-            do
-            {
-                if (!_pfnDuplicateHandle(NtGetCurrentProcess(), _hFirstObjectHandle, NtGetCurrentProcess(), &_hFirstTmp, 0, FALSE, 0))
-                {
-                    break;
-                }
-
-                LONG _Status = _pfnNtQueryObject(_hFirstObjectHandle, ObjectBasicInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer.BaseInfo), nullptr);
-
-                // 实际测试，ObjectBasicInformation 只出现无效句柄错误
-                if (_Status < 0)
-                {
-                    break;
-                }
-
-                if (_FirstObjectBuffer.BaseInfo.HandleCount == 1)
-                {
-                    // 引用计数为 1，这肯定不可能与另外一个句柄是同一个内核对象
-                    break;
-                }
-
-                _Status = _pfnNtQueryObject(_hSecondObjectHandle, ObjectBasicInformation, &_SecondObjectBuffer, sizeof(_SecondObjectBuffer.BaseInfo), nullptr);
-                if (_Status < 0)
-                {
-                    break;
-                }
-
-                if (_SecondObjectBuffer.BaseInfo.HandleCount != _FirstObjectBuffer.BaseInfo.HandleCount)
-                {
-                    // 引用计数为 1，这肯定不可能与另外一个句柄是同一个内核对象
-                    break;
-                }
-
-                _pfnCloseHandle(_hFirstTmp);
-                _hFirstTmp = NULL;
-
-                _Status = _pfnNtQueryObject(_hFirstObjectHandle, ObjectBasicInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer.BaseInfo), nullptr);
-
-                // 实际测试，ObjectBasicInformation 只出现无效句柄错误
-                if (_Status < 0)
-                {
-                    break;
-                }
-
-                if (_FirstObjectBuffer.BaseInfo.HandleCount == 1)
-                {
-                    // 引用计数为 1，这肯定不可能与另外一个句柄是同一个内核对象
-                    break;
-                }
-
-                _Status = _pfnNtQueryObject(_hSecondObjectHandle, ObjectBasicInformation, &_SecondObjectBuffer, sizeof(_SecondObjectBuffer.BaseInfo), nullptr);
-                if (_Status < 0)
-                {
-                    break;
-                }
-
-                if (_SecondObjectBuffer.BaseInfo.HandleCount != _FirstObjectBuffer.BaseInfo.HandleCount)
-                {
-                    // 引用计数为 1，这肯定不可能与另外一个句柄是同一个内核对象
-                    break;
-                }
-
-                _bHandleIsSame = TRUE;
-                break;
-            } while (false);
-
-            ::ReleaseSRWLockExclusive(&g_CompareObjectHandles);
-
-            if (_hFirstTmp)
-                _pfnCloseHandle(_hFirstTmp);
-
-            return _bHandleIsSame;
         }
 
         bool __fastcall CompareFileHandle(HANDLE _hFirstObjectHandle, ObjectStaticBuffer& _FirstObjectBuffer, HANDLE _hSecondObjectHandle, ObjectStaticBuffer& _SecondObjectBuffer) noexcept
