@@ -52,7 +52,7 @@ echo BuildLib %1 %2 %3
 
 md "Lib\\%1\\%Platform%"
 
-cl /O1 /Os /Oi /GS- /std:c++17 /arch:IA32 /Z7 /MT /Fo"Lib\\%1\\%Platform%\\YY_Thunks_for_%1.obj" /Zl /c /D "__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng" /D "NDEBUG" /D "YY_Thunks_Support_Version=%2" /D "__FALLBACK_PREFIX=YY_Thunks_" "%~dp0Thunks\YY_Thunks.cpp"
+cl /O1 /Os /Oi /GS- /std:c++17 /arch:IA32 /Z7 /MT /Fo"Lib\\%1\\%Platform%\\YY_Thunks_for_%1.obj" /Zl /c /D "__APPLY_CHROMIUM_WORKAROUNDS" /D "NDEBUG" /D "YY_Thunks_Support_Version=%2" /D "__FALLBACK_PREFIX=YY_Thunks_" "%~dp0Thunks\YY_Thunks.cpp"
 
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 

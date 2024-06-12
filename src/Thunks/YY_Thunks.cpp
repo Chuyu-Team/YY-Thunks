@@ -1,12 +1,20 @@
 ﻿/*
 YY-Thunks支持的控制宏：
-* __FALLBACK_PREFIX：编译Lib库模式使用的API前缀修饰。一般来说只能为空或者传递 "YY_Thunks_"。
-* __USING_NTDLL_LIB：假定构建环境存在ntdll.lib，这可以减少一些NTDLL相关函数的动态加载。
+1. __FALLBACK_PREFIX：编译Lib库模式使用的API前缀修饰。一般来说只能为空或者传递 "YY_Thunks_"。
+2. __USING_NTDLL_LIB：假定构建环境存在ntdll.lib，这可以减少一些NTDLL相关函数的动态加载。
 
 特殊支持的变通方案：
-* __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng
+1. __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng
 兼容方案1：让GetProcAddress也能取到ProcessPrng函数地址。某些代码可能强制依赖ProcessPrng。
 注意，开启`__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng`也将开启`__USING_NTDLL_LIB`。
+
+2. __ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL
+兼容方案2：Windows 8.1以前的版本对于匿名对象无法生效DACL。就会导致Chrome的CheckPlatformHandlePermissionsCorrespondToMode判断不准确。
+修复方案通过给匿名对象创建一个名字解决该问题。
+
+特定项目的兼容方案：
+1.  __APPLY_CHROMIUM_WORKAROUNDS
+开启Chrome项目的兼容能力，等效于同时指定__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng、__ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL。
 
 */
 
@@ -121,6 +129,16 @@ YY-Thunks支持的控制宏：
 #define STRING(x) STRING2(x)
 #define __WarningMessage__(msg) __pragma(message (__FILE__ "(" STRING(__LINE__) "): warning Thunks: " # msg))
 #endif
+
+#if defined(__APPLY_CHROMIUM_WORKAROUNDS)
+#ifndef __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng
+#define __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng
+#endif
+
+#ifndef __ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL
+#define __ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL
+#endif
+#endif // defined(__APPLY_CHROMIUM_WORKAROUNDS)
 
 #if defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng)
 #if !defined(__USING_NTDLL_LIB)
