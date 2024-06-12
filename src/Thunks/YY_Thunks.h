@@ -135,7 +135,8 @@ static uintptr_t __security_cookie_yy_thunks;
 // Implements wcsncpmp for ASCII chars only.
 // NOTE: We can't use wcsncmp in this context because we may end up trying to modify
 // locale data structs or even calling the same function in NLS code.
-static int _fastcall __wcsnicmp_ascii(const wchar_t* string1, const wchar_t* string2, size_t count) noexcept
+template<typename Char1, typename Char2>
+static int _fastcall StringCompareIgnoreCaseByAscii(const Char1* string1, const Char2* string2, size_t count) noexcept
 {
 	wchar_t f, l;
 	int result = 0;
@@ -154,6 +155,28 @@ static int _fastcall __wcsnicmp_ascii(const wchar_t* string1, const wchar_t* str
 	}
 
 	return result;
+}
+
+template<typename Char1, typename Char2>
+static int _fastcall StringCompare(const Char1* string1, const Char2* string2, size_t count) noexcept
+{
+    wchar_t f, l;
+    int result = 0;
+
+    if (count)
+    {
+        /* validation section */
+        do {
+            f = *string1;
+            l = *string2;
+            string1++;
+            string2++;
+        } while ((--count) && f && (f == l));
+
+        result = (int)(f - l);
+    }
+
+    return result;
 }
 
 enum : int
@@ -291,7 +314,15 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
     }
     else if (Flags & USING_UNSAFE_LOAD)
     {
+#if defined(__USING_NTDLL_LIB)
+        UNICODE_STRING _sModuleName;
+        _sModuleName.Length = wcslen(module_name) * sizeof(module_name[0]);
+        _sModuleName.MaximumLength = _sModuleName.Length + sizeof(module_name[0]);
+        _sModuleName.Buffer = const_cast<PWSTR>(module_name);
+        LdrLoadDll(nullptr, nullptr, &_sModuleName, &new_handle);
+#else
         new_handle = LoadLibraryW(module_name);
+#endif
     }
     else
     {
@@ -349,8 +380,23 @@ static __forceinline void* __fastcall try_get_proc_address_from_first_available_
 	{
 		return nullptr;
 	}
-
-	auto _pProc = reinterpret_cast<void*>(GetProcAddress(module_handle, _ProcInfo.szProcName));
+    void* _pProc = nullptr;
+#if defined(__USING_NTDLL_LIB)
+    if (uintptr_t(_ProcInfo.szProcName) <= UINT16_MAX)
+    {
+        LdrGetProcedureAddress(module_handle, nullptr, static_cast<WORD>(reinterpret_cast<uintptr_t>(_ProcInfo.szProcName)), &_pProc);
+    }
+    else
+    {
+        ANSI_STRING _sFunctionName;
+        _sFunctionName.Length = strlen(_ProcInfo.szProcName);
+        _sFunctionName.MaximumLength = _sFunctionName.Length + 1;
+        _sFunctionName.Buffer = const_cast<PSTR>(_ProcInfo.szProcName);
+        LdrGetProcedureAddress(module_handle, &_sFunctionName, 0, &_pProc);
+    }
+#else
+	_pProc = reinterpret_cast<void*>(GetProcAddress(module_handle, _ProcInfo.szProcName));
+#endif
     if (_pProc || _ProcInfo.pfnGetProcFallback == nullptr)
         return _pProc;
 

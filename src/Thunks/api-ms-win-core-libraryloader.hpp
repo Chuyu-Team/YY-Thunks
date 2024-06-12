@@ -1,6 +1,6 @@
 ﻿
 #ifdef YY_Thunks_Implemented
-namespace YY::Thunks::internal
+namespace YY::Thunks::Fallback
 {
     namespace
     {
@@ -30,10 +30,46 @@ namespace YY::Thunks::internal
 				SetLastError(ERROR_INVALID_PARAMETER);                        \
 				return FALSE;                                                 \
 			}
+
+#define __FORWARD_DLL_MODULE HMODULE(((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ImageBaseAddress)
+
+        template<typename Char>
+        HMODULE __fastcall ForwardDll(_In_z_ const Char* _szLibFileName)
+        {
+            if (_szLibFileName == nullptr || *_szLibFileName == L'\0')
+                return nullptr;
+
+            auto _szFileName = _szLibFileName;
+            for (; *_szLibFileName; )
+            {
+                if (*_szLibFileName == Char('\\') || *_szLibFileName == Char('/'))
+                {
+                    ++_szLibFileName;
+                    _szFileName = _szLibFileName;
+                }
+                else
+                {
+                    ++_szLibFileName;
+                }
+            }
+
+#if YY_Thunks_Support_Version < NTDDI_WIN7
+            if (internal::GetSystemVersion() < internal::MakeVersion(6, 1)
+                && StringCompareIgnoreCaseByAscii(_szFileName, L"bcryptprimitives", 16) == 0)
+            {
+                _szFileName += 16;
+                if (*_szFileName == L'\0' || StringCompareIgnoreCaseByAscii(_szFileName, ".dll", -1) == 0)
+                {
+                    // Windows 7以下平台没有这个DLL，用进程模块句柄伪装一下。
+                    return __FORWARD_DLL_MODULE;
+                }
+            }
+#endif
+            return nullptr;
+        }
     }
 }
 #endif
-
 
 namespace YY::Thunks
 {
@@ -870,4 +906,99 @@ namespace YY::Thunks
 		return TRUE;
 	}
 #endif
+
+
+#if defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng) && YY_Thunks_Support_Version < NTDDI_WIN8
+
+    // 所有系统都支持，但是这个函数的存在是为了能顺利取到 ProcessPrng，Windows 8开始原生支持ProcessPrng
+    __DEFINE_THUNK(
+    kernel32,
+    8,
+    FARPROC,
+    WINAPI,
+    GetProcAddress,
+        _In_ HMODULE hModule,
+        _In_ LPCSTR lpProcName
+        )
+    {
+#if YY_Thunks_Support_Version < NTDDI_WIN8
+        if (uintptr_t(lpProcName) > UINT16_MAX)
+        {
+            if (StringCompare(lpProcName, "ProcessPrng", -1) == 0)
+            {
+                if (hModule == __FORWARD_DLL_MODULE || hModule == try_get_module_bcryptprimitives())
+                {
+                    const auto _pfn = try_get_ProcessPrng();
+                    return reinterpret_cast<FARPROC>(_pfn ? _pfn : &ProcessPrng);
+                }
+            }
+        }
+#endif
+        const auto _pfnGetProcAddress = try_get_GetProcAddress();
+        if (!_pfnGetProcAddress)
+        {
+            SetLastError(ERROR_PROC_NOT_FOUND);
+            return nullptr;
+        }
+
+        return _pfnGetProcAddress(hModule, lpProcName);
+    }
+#endif
+
+
+#if defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng) && YY_Thunks_Support_Version < NTDDI_WIN7
+
+    // 所有系统都支持，但是这个函数的存在是为了能顺利取到 ProcessPrng，Windows 8开始原生支持ProcessPrng
+    __DEFINE_THUNK(
+    kernel32,
+    4,
+    HMODULE,
+    WINAPI,
+    LoadLibraryW,
+        _In_ LPCWSTR lpLibFileName
+        )
+    {
+        const auto _pfnLoadLibraryW = try_get_LoadLibraryW();
+        if (!_pfnLoadLibraryW)
+        {
+            SetLastError(ERROR_PROC_NOT_FOUND);
+            return nullptr;
+        }
+
+        auto _hModule = _pfnLoadLibraryW(lpLibFileName);
+        if (_hModule)
+            return _hModule;
+
+        return Fallback::ForwardDll(lpLibFileName);
+    }
+#endif
+
+
+#if defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng) && YY_Thunks_Support_Version < NTDDI_WIN7
+
+    // 所有系统都支持，但是这个函数的存在是为了能顺利取到 ProcessPrng，Windows 8开始原生支持ProcessPrng
+    __DEFINE_THUNK(
+    kernel32,
+    4,
+    HMODULE,
+    WINAPI,
+    LoadLibraryA,
+        _In_ LPCSTR lpLibFileName
+        )
+    {
+        const auto _pfnLoadLibraryA = try_get_LoadLibraryA();
+        if (!_pfnLoadLibraryA)
+        {
+            SetLastError(ERROR_PROC_NOT_FOUND);
+            return nullptr;
+        }
+
+        auto _hModule = _pfnLoadLibraryA(lpLibFileName);
+        if (_hModule)
+            return _hModule;
+
+        return Fallback::ForwardDll(lpLibFileName);
+    }
+#endif
+
 }

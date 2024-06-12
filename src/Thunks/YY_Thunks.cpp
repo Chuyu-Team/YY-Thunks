@@ -1,4 +1,16 @@
-﻿// 忽略非标准的 0 数组警告。
+﻿/*
+YY-Thunks支持的控制宏：
+* __FALLBACK_PREFIX：编译Lib库模式使用的API前缀修饰。一般来说只能为空或者传递 "YY_Thunks_"。
+* __USING_NTDLL_LIB：假定构建环境存在ntdll.lib，这可以减少一些NTDLL相关函数的动态加载。
+
+特殊支持的变通方案：
+* __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng
+兼容方案1：让GetProcAddress也能取到ProcessPrng函数地址。某些代码可能强制依赖ProcessPrng。
+注意，开启`__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng`也将开启`__USING_NTDLL_LIB`。
+
+*/
+
+// 忽略非标准的 0 数组警告。
 #pragma warning(disable:4200)
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 
@@ -110,6 +122,12 @@
 #define __WarningMessage__(msg) __pragma(message (__FILE__ "(" STRING(__LINE__) "): warning Thunks: " # msg))
 #endif
 
+#if defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng)
+#if !defined(__USING_NTDLL_LIB)
+#define __USING_NTDLL_LIB
+#endif
+#endif // defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng)
+
 #define _Disallow_YY_KM_Namespace
 #include "km.h"
 #include <Shlwapi.h>
@@ -189,6 +207,10 @@ RtlCutoverTimeToSystemTime(
 #if (YY_Thunks_Support_Version < NTDDI_WIN10) && !defined(__Comment_Lib_user32)
 #define __Comment_Lib_user32
 #pragma comment(lib, "User32.lib")
+#endif
+
+#if defined(__USING_NTDLL_LIB)
+#pragma comment(lib, "ntdll.lib")
 #endif
 
 #include <HookThunk.h>
@@ -882,7 +904,7 @@ namespace YY::Thunks::internal
             if (_Left.Length != _Right.Length)
                 return false;
 
-            return __wcsnicmp_ascii(_Left.Buffer, _Right.Buffer, _Left.Length / 2) == 0;
+            return StringCompareIgnoreCaseByAscii(_Left.Buffer, _Right.Buffer, _Left.Length / 2) == 0;
         }
 
         static bool __fastcall IsEqual(const UNICODE_STRING& _Left, const UNICODE_STRING& _Right)
