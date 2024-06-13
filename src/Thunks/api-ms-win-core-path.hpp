@@ -2,7 +2,7 @@
 #define PATHCCH_NO_DEPRECATE
 #include <pathcch.h>
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8) && !defined(__Comment_Lib_pathcch)
+#if (YY_Thunks_Support_Version < NTDDI_WIN8) && !defined(__Comment_Lib_pathcch) && !defined(__FALLBACK_PREFIX_DISABLE)
 #define __Comment_Lib_pathcch
 #pragma comment(lib, "Pathcch.lib")
 #endif
