@@ -641,6 +641,28 @@ namespace YY::Thunks::internal
         }
 
 
+        /// <summary>
+        /// 计算字符串长度，某些场景我们特意不依赖wcslen之类的，防止发生死锁。
+        /// </summary>
+        /// <typeparam name="Char"></typeparam>
+        /// <param name="_szString"></param>
+        /// <param name="_cchMaxLength"></param>
+        /// <returns></returns>
+        template<typename Char>
+        constexpr size_t StringLength(_In_z_ const Char* _szString, size_t _cchMaxLength = -1)
+        {
+            if (!_szString)
+                return 0;
+
+            size_t _cchString = 0;
+            for (;_cchMaxLength && *_szString;--_cchMaxLength, ++_szString)
+            {
+                ++_cchString;
+            }
+
+            return _cchString;
+        }
+
         template<typename Char>
         class StringBuffer
         {
@@ -930,6 +952,21 @@ namespace YY::Thunks::internal
             return memcmp(_Left.Buffer, _Right.Buffer, _Left.Length) == 0;
         }
 
+        static constexpr UNICODE_STRING __fastcall MakeNtString(_In_z_ const wchar_t* _szString)
+        {
+            const auto _cbString = StringLength(_szString) * sizeof(_szString[0]);
+            UNICODE_STRING _Result = { (USHORT)max(UINT16_MAX, _cbString),  (USHORT)max(UINT16_MAX, _cbString + sizeof(_szString[0])), const_cast<PWSTR>(_szString) };
+            return _Result;
+        }
+
+        static constexpr ANSI_STRING __fastcall MakeNtString(_In_z_ const char* _szString)
+        {
+            const auto _cbString = StringLength(_szString) * sizeof(_szString[0]);
+
+            ANSI_STRING _Result = { (USHORT)max(UINT16_MAX, _cbString),  (USHORT)max(UINT16_MAX, _cbString + sizeof(_szString[0])), const_cast<PSTR>(_szString)};
+            return _Result;
+        }
+
         template<size_t kLength>
         static constexpr UNICODE_STRING __fastcall MakeStaticUnicodeString(const wchar_t (&_Right)[kLength])
         {
@@ -979,3 +1016,136 @@ __if_exists(YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION))        
 
 #undef __DEFINE_THUNK
 #undef YY_Thunks_Implemented
+
+static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name, int Flags) noexcept
+{
+    // First check to see if we've cached the module handle:
+    if (HMODULE const cached_handle = __crt_interlocked_read_pointer(pModule))
+    {
+        if (cached_handle == INVALID_HANDLE_VALUE)
+        {
+            return nullptr;
+        }
+
+        return cached_handle;
+    }
+
+    // If we haven't yet cached the module handle, try to load the library.  If
+    // this fails, cache the sentinel handle value INVALID_HANDLE_VALUE so that
+    // we don't attempt to load the module again:
+    HMODULE new_handle = NULL;
+    if (Flags & USING_GET_MODULE_HANDLE)
+    {
+        new_handle = GetModuleHandleW(module_name);
+    }
+    else
+    {
+        // 我们不能直接使用 LoadLibraryExW，因为它可能被Thunk。
+        __if_exists(YY::Thunks::try_get_LoadLibraryExW)
+        {
+            const auto LoadLibraryExW = YY::Thunks::try_get_LoadLibraryExW();
+            if (!LoadLibraryExW)
+                return nullptr;
+        }
+
+        if (Flags & LOAD_AS_DATA_FILE)
+        {
+            new_handle = LoadLibraryExW(module_name, NULL, LOAD_LIBRARY_AS_DATAFILE);
+        }
+        else if (Flags & USING_UNSAFE_LOAD)
+        {
+            new_handle = LoadLibraryExW(module_name, nullptr, 0);
+        }
+        else
+        {
+            // 使用DLL安全加载
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+            if (!try_get_AddDllDirectory())
+            {
+#if !defined(__USING_NTDLL_LIB)
+                const auto LdrLoadDll = try_get_LdrLoadDll();
+                if (!LdrLoadDll)
+                    return nullptr;
+#endif
+                wchar_t szFilePathBuffer[MAX_PATH] = {};
+                const auto _cchSystemPath = GetSystemDirectoryW(szFilePathBuffer, _countof(szFilePathBuffer));
+                if (_cchSystemPath == 0 || _cchSystemPath >= _countof(szFilePathBuffer))
+                {
+                    // 回落普通加载，按理说 GetSystemDirectoryW不应该发生这样的失败。
+                    new_handle = LoadLibraryExW(module_name, nullptr, 0);
+                }
+                else
+                {
+                    auto _sModuleName = YY::Thunks::internal::MakeNtString(module_name);
+                    LdrLoadDll(szFilePathBuffer, nullptr, &_sModuleName, &new_handle);
+                }
+            }
+            else
+#endif
+            {
+                new_handle = LoadLibraryExW(module_name, nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+            }
+        }
+    }
+
+    if (!new_handle)
+    {
+        if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(pModule, INVALID_HANDLE_VALUE))
+        {
+            _ASSERTE(cached_handle == INVALID_HANDLE_VALUE);
+        }
+
+        return nullptr;
+    }
+
+    // Swap the new handle into the cache.  If the cache no longer contained a
+    // null handle, then some other thread loaded the module and cached the
+    // handle while we were doing the same.  In that case, we free the handle
+    // once to maintain the reference count:
+    if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(pModule, new_handle))
+    {
+        _ASSERTE(cached_handle == new_handle);
+        FreeLibrary(new_handle);
+    }
+
+    return new_handle;
+}
+
+static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
+    const ProcInfo& _ProcInfo
+    ) noexcept
+{
+    if (_ProcInfo.pfnCustomGetProcAddress)
+    {
+        return _ProcInfo.pfnCustomGetProcAddress(_ProcInfo);
+    }
+
+    HMODULE const module_handle = _ProcInfo.pfnGetModule();
+    if (!module_handle)
+    {
+        return nullptr;
+    }
+
+    // 无法直接调用GetProcAddress，因为GetProcAddress可能被Thunk
+    // 我们需要严格判断，避免发生死锁。
+#if defined(__USING_NTDLL_LIB)
+    void* _pProc = nullptr;
+    if (uintptr_t(_ProcInfo.szProcName) > UINT16_MAX)
+    {
+        ANSI_STRING _sFunctionName = YY::Thunks::internal::MakeNtString(_ProcInfo.szProcName);
+        LdrGetProcedureAddress(module_handle, &_sFunctionName, 0, &_pProc);
+    }
+    else
+    {
+        LdrGetProcedureAddress(module_handle, nullptr, (WORD)uintptr_t(_ProcInfo.szProcName), &_pProc);
+    }
+    return _pProc;
+#else // !defined(__USING_NTDLL_LIB)
+    __if_exists(YY::Thunks::try_get_GetProcAddress)
+    {
+        const auto GetProcAddress = YY::Thunks::try_get_GetProcAddress();
+    }
+
+    return reinterpret_cast<void*>(GetProcAddress(module_handle, _ProcInfo.szProcName));
+#endif // defined(__USING_NTDLL_LIB)
+}

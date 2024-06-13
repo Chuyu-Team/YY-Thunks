@@ -83,40 +83,44 @@ namespace YY::Thunks::Fallback
 
 #if defined(__USING_NTDLL_LIB)
             void* _pProc = nullptr;
-            ANSI_STRING _sFunctionName;
-            _sFunctionName.Length = strlen(_ProcInfo.szProcName);
-            _sFunctionName.MaximumLength = _sFunctionName.Length + 1;
-            _sFunctionName.Buffer = const_cast<PSTR>(_ProcInfo.szProcName);
+            ANSI_STRING _sFunctionName = YY::Thunks::internal::MakeNtString(_ProcInfo.szProcName);
             const LONG _Status = LdrGetProcedureAddress(_hModule, &_sFunctionName, 0, &_pProc);
             return _Status >= 0 ? _pProc : nullptr;
 #else // !defined(__USING_NTDLL_LIB)
-            ULONG _uSize;
-            auto _pExport = (_IMAGE_EXPORT_DIRECTORY*)YY_ImageDirectoryEntryToData(_hModule, IMAGE_DIRECTORY_ENTRY_EXPORT, &_uSize);
-            if (!_pExport)
-                return nullptr;
 
-            if (_pExport->AddressOfNames == 0 || _pExport->AddressOfFunctions == 0 || _pExport->AddressOfNameOrdinals == 0)
-                return nullptr;
-
-            auto _puFunctions = (const DWORD*)(PBYTE(_hModule) + _pExport->AddressOfFunctions);
-            auto _puNames = (const DWORD*)(PBYTE(_hModule) + _pExport->AddressOfNames);
-            auto _puNameOrdinals = (const WORD*)(PBYTE(_hModule) + _pExport->AddressOfNameOrdinals);
-
-            for (DWORD i = 0; i != _pExport->NumberOfNames; ++i)
+            // 防止遇到畸形的DLL，抓个异常
+            __try
             {
-                auto _uName = _puNames[i];
-                if (_uName == 0)
-                    continue;
+                ULONG _uSize;
+                auto _pExport = (_IMAGE_EXPORT_DIRECTORY*)YY_ImageDirectoryEntryToData(_hModule, IMAGE_DIRECTORY_ENTRY_EXPORT, &_uSize);
+                if (!_pExport)
+                    return nullptr;
 
-                auto _szName = (char*)(PBYTE(_hModule) + _uName);
+                if (_pExport->AddressOfNames == 0 || _pExport->AddressOfFunctions == 0 || _pExport->AddressOfNameOrdinals == 0)
+                    return nullptr;
 
-                if (StringCompare(_szName, _ProcInfo.szProcName, -1) == 0)
+                auto _puFunctions = (const DWORD*)(PBYTE(_hModule) + _pExport->AddressOfFunctions);
+                auto _puNames = (const DWORD*)(PBYTE(_hModule) + _pExport->AddressOfNames);
+                auto _puNameOrdinals = (const WORD*)(PBYTE(_hModule) + _pExport->AddressOfNameOrdinals);
+
+                for (DWORD i = 0; i != _pExport->NumberOfNames; ++i)
                 {
-                    auto _pfn = PBYTE(_hModule) + _puFunctions[_puNameOrdinals[i]];
-                    return _pfn;
+                    auto _uName = _puNames[i];
+                    if (_uName == 0)
+                        continue;
+
+                    auto _szName = (char*)(PBYTE(_hModule) + _uName);
+
+                    if (StringCompare(_szName, _ProcInfo.szProcName, -1) == 0)
+                    {
+                        auto _pfn = PBYTE(_hModule) + _puFunctions[_puNameOrdinals[i]];
+                        return _pfn;
+                    }
                 }
             }
-
+            __except (EXCEPTION_EXECUTE_HANDLER)
+            {
+            }
             return nullptr;
 #endif // defined(__USING_NTDLL_LIB)
         }

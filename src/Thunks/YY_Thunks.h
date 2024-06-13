@@ -303,62 +303,7 @@ static __forceinline T* __fastcall __crt_interlocked_read_pointer(T* const volat
 // 该加载模式存在劫持风险，使用前请确认。
 #define USING_UNSAFE_LOAD 0x00000004
 
-static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name, int Flags) noexcept
-{
-	// First check to see if we've cached the module handle:
-	if (HMODULE const cached_handle = __crt_interlocked_read_pointer(pModule))
-	{
-		if (cached_handle == INVALID_HANDLE_VALUE)
-		{
-			return nullptr;
-		}
-
-		return cached_handle;
-	}
-
-	// If we haven't yet cached the module handle, try to load the library.  If
-	// this fails, cache the sentinel handle value INVALID_HANDLE_VALUE so that
-	// we don't attempt to load the module again:
-    HMODULE new_handle = NULL;
-    if (Flags & LOAD_AS_DATA_FILE)
-    {
-        new_handle = LoadLibraryExW(module_name, NULL, LOAD_LIBRARY_AS_DATAFILE);
-    }
-    else if (Flags & USING_GET_MODULE_HANDLE)
-    {
-        new_handle = GetModuleHandleW(module_name);
-    }
-    else if (Flags & USING_UNSAFE_LOAD)
-    {
-        new_handle = LoadLibraryExW(module_name, nullptr, 0);
-    }
-    else
-    {
-        new_handle = LoadLibraryExW(module_name, nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-    }
-    
-	if (!new_handle)
-	{
-		if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(pModule, INVALID_HANDLE_VALUE))
-		{
-			_ASSERTE(cached_handle == INVALID_HANDLE_VALUE);
-		}
-
-		return nullptr;
-	}
-
-	// Swap the new handle into the cache.  If the cache no longer contained a
-	// null handle, then some other thread loaded the module and cached the
-	// handle while we were doing the same.  In that case, we free the handle
-	// once to maintain the reference count:
-	if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(pModule, new_handle))
-	{
-		_ASSERTE(cached_handle == new_handle);
-		FreeLibrary(new_handle);
-	}
-
-	return new_handle;
-}
+static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name, int Flags) noexcept;
 
 #define _APPLY(_MODULE, _NAME, _FLAGS)                                                         \
     static HMODULE __fastcall _CRT_CONCATENATE(try_get_module_, _MODULE)() noexcept            \
@@ -382,22 +327,7 @@ struct ProcInfo
 
 static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
 	const ProcInfo& _ProcInfo
-    ) noexcept
-{
-    if (_ProcInfo.pfnCustomGetProcAddress)
-    {
-        return _ProcInfo.pfnCustomGetProcAddress(_ProcInfo);
-    }
-
-	HMODULE const module_handle = _ProcInfo.pfnGetModule();
-	if (!module_handle)
-	{
-		return nullptr;
-	}
-
-	return reinterpret_cast<void*>(GetProcAddress(module_handle, _ProcInfo.szProcName));
-}
-
+    ) noexcept;
 
 static __forceinline void* __cdecl invalid_function_sentinel() noexcept
 {
