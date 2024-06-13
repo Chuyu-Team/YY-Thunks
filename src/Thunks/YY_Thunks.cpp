@@ -188,6 +188,9 @@ RtlCutoverTimeToSystemTime(
 
 #ifndef __FALLBACK_PREFIX
 #define __FALLBACK_PREFIX
+#define __YY_Thunks_libs 0
+#else
+#define __YY_Thunks_libs 1
 #endif
 
 //展开函数的所有的 声明 以及 try_get_ 函数

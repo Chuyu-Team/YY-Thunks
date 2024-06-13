@@ -355,3 +355,5 @@ MigrationBackup/
 /src/Thunks/YY_Thunks_List.hpp
 /objs
 /Lib
+/src/YY-Thunks.UnitTest/TestProject/Example/Win32/Static
+/src/YY-Thunks.UnitTest/TestProject/Example/x64/Static

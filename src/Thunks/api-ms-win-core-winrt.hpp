@@ -1,4 +1,11 @@
-﻿#include <roapi.h>
+﻿#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#include <roapi.h>
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN8) && !defined(__Comment_Lib_ole32)
+#define __Comment_Lib_ole32
+#pragma comment(lib, "Ole32.lib")
+#endif
 
 namespace YY::Thunks
 {

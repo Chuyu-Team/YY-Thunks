@@ -17,7 +17,9 @@ jobs:
           # Procdump工具，用于单元测试崩溃诊断
           Invoke-WebRequest -Uri https://download.sysinternals.com/files/Procdump.zip  -OutFile Bin\Procdump.zip
           &7z e Bin\Procdump.zip "-o$Env:GITHUB_WORKSPACE\Bin"
-
+          
+          Invoke-WebRequest -Uri https://github.com/mingkuang-Chuyu/Visual_Studio_Platform_Toolset/releases/download/v1.0.2/Visual.Studio.2008.Platform.Toolset.v1.0.2.7z  -OutFile Bin\Visual.Studio.2008.Platform.Toolset.v1.0.2.7z
+          &7z x Bin\Visual.Studio.2008.Platform.Toolset.v1.0.2.7z "-o$Env:GITHUB_WORKSPACE\Bin"
 
           Invoke-WebRequest -Uri https://github.com/Chuyu-Team/LibMaker/releases/download/v1.0.3/LibMaker.exe -OutFile Bin\LibMaker.exe
           Invoke-WebRequest -Uri https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.2.8/MinimumRequiredVersionHelper.exe -OutFile Bin\MinimumRequiredVersionHelper.exe
@@ -118,6 +120,8 @@ jobs:
           # MSBuild、PROCDUMP_PATH目录更新到 Path
           $Env:Path="$Env:GITHUB_WORKSPACE\Bin;${{env.MSBuildBinPath}};${{env.LatestVisualStudioRoot}}\Common7\IDE\CommonExtensions\Microsoft\TestWindow;" + $Env:Path
           
+          $Env:WindowsSdkDir_60A_TestPath="$Env:GITHUB_WORKSPACE\Bin\Program Files\Microsoft SDKs\Windows\v6.0A"
+
           # 编译单元测试项目
           &msbuild src\YY-Thunks.UnitTest\YY-Thunks.UnitTest.vcxproj "-p:Configuration=Release;Platform=Win32;SolutionDir=$Env:GITHUB_WORKSPACE\src\\"
           if($lastexitcode -ne 0)
@@ -195,6 +199,8 @@ jobs:
             src\x64\Release\YY-Thunks.UnitTest.dll
             src\x64\Release\YY-Thunks.UnitTest.pdb
             src\x64\Release\*.log
+            src\YY-Thunks.UnitTest\TestProject\Example\Win32\Static
+            src\YY-Thunks.UnitTest\TestProject\Example\x64\Static
 
     - uses: xresloader/upload-to-github-release@v1
       env:

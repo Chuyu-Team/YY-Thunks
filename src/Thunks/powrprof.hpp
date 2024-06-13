@@ -2,11 +2,6 @@
 #include <powrprof.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA) && !defined(__Comment_Lib_powrProf)
-#define __Comment_Lib_powrProf
-#pragma comment(lib, "PowrProf.lib")
-#endif
-
 namespace YY::Thunks
 {
 #if (YY_Thunks_Support_Version < NTDDI_VISTA)

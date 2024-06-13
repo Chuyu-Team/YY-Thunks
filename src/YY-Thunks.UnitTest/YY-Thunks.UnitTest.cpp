@@ -127,30 +127,34 @@ LSTATUS CreateFileByData(LPCWSTR FilePath, const void* Data, DWORD ccbData)
 CString RunMSBuildTest(
     LPCWSTR szPlatform,
     LPCWSTR szConfiguration,
-    CStringW szYY_ThunksFilePath,
+    CStringW szSymbolsTestCppRootPath,
     LPCWSTR BuildProperty = nullptr
 )
 {
-    CStringW szSymbolsTestCppRootPath;
-    szSymbolsTestCppRootPath.Format(SymbolBuildTestPath L"Example\\%s\\%s\\%s", szPlatform, szConfiguration, PathFindFileNameW(szYY_ThunksFilePath));
+    if (szSymbolsTestCppRootPath.IsEmpty())
+        return CString();
+
+    if (szSymbolsTestCppRootPath[szSymbolsTestCppRootPath.GetLength() - 1] != L'\\')
+        szSymbolsTestCppRootPath += L'\\';
 
     CString Cmd;
 
-    Cmd.Format(L"\"%s\" \"%s\" -t:Rebuild \"-p:Configuration=%s;Platform=%s;YY_Thunks_File_Path=%s;SymbolsTestCppRootPath=%s\\\"",
+    Cmd.Format(L"\"%s\" \"%s\" -t:Rebuild \"-p:Configuration=%s;Platform=%s;SymbolsTestCppRootPath=%s",
         MSBuildBinPath LR"(MSBuild.exe)",
         SymbolBuildTestPath LR"(Example\SymbolBuildTest.vcxproj)",
         szConfiguration,
         szPlatform,
-        szYY_ThunksFilePath.GetString(),
         szSymbolsTestCppRootPath.GetString());
 
-    if (BuildProperty)
+    if (BuildProperty && *BuildProperty)
     {
-        Cmd.ReleaseBufferSetLength(Cmd.GetLength() - 1);
         Cmd += L';';
         Cmd += BuildProperty;
     }
 
+    if (Cmd[Cmd.GetLength() - 1] == L'\\')
+        Cmd += L'\\';
+    Cmd += L'\"';
     CString OutString;
 
     auto lStatus = RunCmd(nullptr, Cmd, &OutString, CStringW());
@@ -547,15 +551,138 @@ namespace Others
 
 			} while (false);
 		}
-
-        TEST_METHOD(可链接性检测)
-        {
-            RunMSBuildTest(L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_Win2K.obj");
-            RunMSBuildTest(L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_WinXP.obj");
-            RunMSBuildTest(L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_Vista.obj");
-
-            RunMSBuildTest(L"x64", L"Static", YY_ThunksRootPath L"objs\\x64\\YY_Thunks_for_WinXP.obj");
-            RunMSBuildTest(L"x64", L"Static", YY_ThunksRootPath L"objs\\x64\\YY_Thunks_for_Vista.obj");
-        }
 	};
+
+    TEST_CLASS(可链接性检测)
+    {
+    public:
+        TEST_METHOD(obj模式可链接性)
+        {
+            struct TestInfo
+            {
+                LPCWSTR szPlatform;
+                LPCWSTR szConfiguration;
+                LPCWSTR szYY_ThunksFilePath;
+            };
+
+            static const TestInfo s_TestInfo[] =
+            {
+                {L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_Win2K.obj"},
+                {L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_WinXP.obj"},
+                {L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_Vista.obj"},
+                {L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_Win7.obj"},
+                {L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_Win8.obj"},
+                {L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_Win10.0.10240.obj"},
+                {L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_Win10.0.19041.obj"},
+
+                {L"x64", L"Static", YY_ThunksRootPath L"objs\\x64\\YY_Thunks_for_WinXP.obj"},
+                {L"x64", L"Static", YY_ThunksRootPath L"objs\\x64\\YY_Thunks_for_Vista.obj"},
+                {L"x64", L"Static", YY_ThunksRootPath L"objs\\x64\\YY_Thunks_for_Win7.obj"},
+                {L"x64", L"Static", YY_ThunksRootPath L"objs\\x64\\YY_Thunks_for_Win8.obj"},
+                {L"x64", L"Static", YY_ThunksRootPath L"objs\\x64\\YY_Thunks_for_Win10.0.10240.obj"},
+                {L"x64", L"Static", YY_ThunksRootPath L"objs\\x64\\YY_Thunks_for_Win10.0.19041.obj"},
+            };
+
+
+            for (auto& _TestInfo : s_TestInfo)
+            {
+                CStringW _szSymbolsTestCppRootPath;
+                _szSymbolsTestCppRootPath.Format(SymbolBuildTestPath L"Example\\%s\\%s\\%s\\", _TestInfo.szPlatform, _TestInfo.szConfiguration, PathFindFileNameW(_TestInfo.szYY_ThunksFilePath));
+
+                CStringW _szBuildProperty = L"YY_Thunks_File_Path=";
+                _szBuildProperty += _TestInfo.szYY_ThunksFilePath;
+
+                RunMSBuildTest(_TestInfo.szPlatform, _TestInfo.szConfiguration, _szSymbolsTestCppRootPath, _szBuildProperty);
+            }
+        }
+
+        TEST_METHOD(lib模式可链接性)
+        {
+            struct TestInfo
+            {
+                LPCWSTR szPlatform;
+                LPCWSTR szConfiguration;
+                LPCWSTR szTargetVersion;
+            };
+
+            static const TestInfo s_TestInfo[] =
+            {
+                {L"Win32", L"Static", L"5.0.2195.0"},
+                {L"Win32", L"Static", L"5.1.2600.0"},
+                {L"Win32", L"Static", L"6.0.6000.0"},
+                {L"Win32", L"Static", L"6.1.7600.0"},
+                {L"Win32", L"Static", L"6.2.9200.0"},
+                {L"Win32", L"Static", L"10.0.10240.0"},
+                {L"Win32", L"Static", L"10.0.19041.0"},
+
+                {L"x64", L"Static", L"5.2.3790.1180"},
+                {L"x64", L"Static", L"6.0.6000.0"},
+                {L"x64", L"Static", L"6.1.7600.0"},
+                {L"x64", L"Static", L"6.2.9200.0"},
+                {L"x64", L"Static", L"10.0.10240.0"},
+                {L"x64", L"Static", L"10.0.19041.0"},
+            };
+
+
+            for (auto& _TestInfo : s_TestInfo)
+            {
+                CStringW szSymbolsTestCppRootPath;
+                szSymbolsTestCppRootPath.Format(SymbolBuildTestPath L"Example\\%s\\%s\\%s\\", _TestInfo.szPlatform, _TestInfo.szConfiguration, _TestInfo.szTargetVersion);
+
+                CStringW _szBuildProperty = L"YY_Thunks_Libs=";
+                _szBuildProperty.AppendFormat(YY_ThunksRootPath L"Lib\\%s\\", _TestInfo.szTargetVersion);
+
+                if (_wcsicmp(_TestInfo.szPlatform, L"Win32") == 0)
+                {
+                    _szBuildProperty += L"x86";
+                }
+                else
+                {
+                    _szBuildProperty += _TestInfo.szPlatform;
+                }
+
+                RunMSBuildTest(_TestInfo.szPlatform, _TestInfo.szConfiguration, szSymbolsTestCppRootPath, _szBuildProperty);
+            }
+        }
+
+        TEST_METHOD(SDK6可链接性)
+        {
+            struct TestInfo
+            {
+                LPCWSTR szPlatform;
+                LPCWSTR szConfiguration;
+                LPCWSTR szYY_ThunksFilePath;
+            };
+
+            static const TestInfo s_TestInfo[] =
+            {
+                {L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_Win2K.obj"},
+                {L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_WinXP.obj"},
+                {L"Win32", L"Static", YY_ThunksRootPath L"objs\\x86\\YY_Thunks_for_Vista.obj"},
+
+                // 打包的SDK6有点问题，缺了很多场景的lib，暂时x64先不管了，懒得再找SDK了。
+                // {L"x64", L"Static", YY_ThunksRootPath L"objs\\x64\\YY_Thunks_for_WinXP.obj"},
+                // {L"x64", L"Static", YY_ThunksRootPath L"objs\\x64\\YY_Thunks_for_Vista.obj"},
+            };
+
+            wchar_t _szWindowsSdkDir_60A[MAX_PATH];
+            auto _uResult = GetEnvironmentVariableW(L"WindowsSdkDir_60A_TestPath", _szWindowsSdkDir_60A, _countof(_szWindowsSdkDir_60A));
+            if (_uResult && _uResult < _countof(_szWindowsSdkDir_60A))
+            {
+                for (auto& _TestInfo : s_TestInfo)
+                {
+                    CStringW szSymbolsTestCppRootPath;
+                    szSymbolsTestCppRootPath.Format(SymbolBuildTestPath L"Example\\%s\\%s\\%s_SDK6\\", _TestInfo.szPlatform, _TestInfo.szConfiguration, PathFindFileNameW(_TestInfo.szYY_ThunksFilePath));
+
+                    CStringW _szBuildProperty = L"YY_Thunks_File_Path=";
+                    _szBuildProperty += _TestInfo.szYY_ThunksFilePath;
+                    _szBuildProperty += L';';
+                    _szBuildProperty += L"WindowsSdkDir_60A=";
+                    _szBuildProperty += _szWindowsSdkDir_60A;
+
+                    RunMSBuildTest(_TestInfo.szPlatform, _TestInfo.szConfiguration, szSymbolsTestCppRootPath, _szBuildProperty);
+                }
+            }
+        }
+    };
 }

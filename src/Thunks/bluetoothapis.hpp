@@ -2,11 +2,6 @@
 #include <bluetoothleapis.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8) && !defined(__Comment_Lib_bluetoothapis)
-#define __Comment_Lib_bluetoothapis
-#pragma comment(lib, "BluetoothAPIs.lib")
-#endif
-
 namespace YY::Thunks
 {
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)

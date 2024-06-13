@@ -2,11 +2,6 @@
 #include <lmjoin.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN10) && !defined(__Comment_Lib_netapi32)
-#define __Comment_Lib_netapi32
-#pragma comment(lib, "Netapi32.lib")
-#endif
-
 namespace YY::Thunks
 {
 #if (YY_Thunks_Support_Version < NTDDI_WIN10)

@@ -2,9 +2,9 @@
 #include <ShellScalingAPI.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WINBLUE) && !defined(__Comment_Lib_shcore)
-#define __Comment_Lib_shcore
-#pragma comment(lib, "Shcore.lib")
+#if (YY_Thunks_Support_Version < NTDDI_WINBLUE) && !defined(__Comment_Lib_user32)
+#define __Comment_Lib_user32
+#pragma comment(lib, "User32.lib")
 #endif
 
 namespace YY::Thunks

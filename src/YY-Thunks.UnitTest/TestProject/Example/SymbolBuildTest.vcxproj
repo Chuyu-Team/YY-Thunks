@@ -48,11 +48,15 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SymbolsTestCppRootPathTmp)</OutDir>
     <IntDir>$(SymbolsTestCppRootPathTmp)</IntDir>
+    <LibraryPath Condition="'$(WindowsSdkDir_60A)' != ''">$(VC_LibraryPath_x86);$(WindowsSdkDir_60A)\lib</LibraryPath>
+    <LibraryPath Condition="'$(YY_Thunks_Libs)' != ''">$(YY_Thunks_Libs);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Static|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SymbolsTestCppRootPathTmp)</OutDir>
     <IntDir>$(SymbolsTestCppRootPathTmp)</IntDir>
+    <LibraryPath Condition="'$(WindowsSdkDir_60A)' != ''">$(VC_LibraryPath_x64);$(WindowsSdkDir_60A)\lib\x64</LibraryPath>
+    <LibraryPath Condition="'$(YY_Thunks_Libs)' != ''">$(YY_Thunks_Libs);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Static|Win32'">
     <ClCompile>
@@ -68,7 +72,7 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(YY_Thunks_File_Path)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(YY_Thunks_File_Path)' != ''">$(YY_Thunks_File_Path)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Static|x64'">
@@ -85,7 +89,8 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(YY_Thunks_File_Path)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(YY_Thunks_File_Path)' != ''">$(YY_Thunks_File_Path)</AdditionalDependencies>
+      <ShowProgress>LinkVerboseLib</ShowProgress>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

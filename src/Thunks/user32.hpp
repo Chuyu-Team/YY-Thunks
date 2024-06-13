@@ -7,9 +7,14 @@
 #pragma comment(lib, "User32.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN10_RS2) && !defined(__Comment_Lib_shcore)
+#if (YY_Thunks_Support_Version < NTDDI_WIN10_RS2) && (YY_Thunks_Support_Version >= NTDDI_WINBLUE || __YY_Thunks_libs) && !defined(__Comment_Lib_shcore)
 #define __Comment_Lib_shcore
 #pragma comment(lib, "Shcore.lib")
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN10_RS1) && !defined(__Comment_Lib_gdi32)
+#define __Comment_Lib_gdi32
+#pragma comment(lib, "Gdi32.lib")
 #endif
 
 #if defined(YY_Thunks_Implemented)

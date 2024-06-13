@@ -2,11 +2,6 @@
 #include <userenv.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8) && !defined(__Comment_Lib_userenv)
-#define __Comment_Lib_userenv
-#pragma comment(lib, "Userenv.lib")
-#endif
-
 namespace YY::Thunks
 {
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)

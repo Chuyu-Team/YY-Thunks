@@ -1,5 +1,17 @@
-﻿#include <shellapi.h>
+﻿#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#include <shellapi.h>
 #include <Shlobj.h>
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_shell32)
+#define __Comment_Lib_shell32
+#pragma comment(lib, "Shell32.lib")
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_ole32)
+#define __Comment_Lib_ole32
+#pragma comment(lib, "Ole32.lib")
+#endif
 
 namespace YY::Thunks
 {

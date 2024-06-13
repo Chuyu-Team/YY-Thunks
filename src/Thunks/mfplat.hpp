@@ -2,11 +2,6 @@
 #include <mfapi.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8) && !defined(__Comment_Lib_mfplat)
-#define __Comment_Lib_mfplat
-#pragma comment(lib, "Mfplat.lib")
-#endif
-
 namespace YY::Thunks
 {
 #if (YY_Thunks_Support_Version < NTDDI_WIN8)
