@@ -224,6 +224,8 @@ namespace YY::Thunks
             return _pfnCM_Get_DevNode_PropertyW(dnDevInst, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, ulFlags);
         }
 
+        __WarningMessage__("Opt，Vista系统的setuapi.dll存在CM_Get_DevNode_Property_ExW，但是没有导出。");
+
         if (!PropertyKey)
             return CR_INVALID_DEVINST;
 
