@@ -4,10 +4,13 @@ YY-Thunks支持的控制宏：
 2. __USING_NTDLL_LIB：假定构建环境存在ntdll.lib，这可以减少一些NTDLL相关函数的动态加载。
 
 特殊支持的变通方案：
-1. __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng
+1. __ENABLE_WORKAROUND_ALL
+启用所有兼容方案，即__ENABLE_WORKAROUND_1 ~ __ENABLE_WORKAROUND_N，全部开启。
+
+2. __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng
 兼容方案1：让GetProcAddress也能取到ProcessPrng函数地址。某些代码可能强制依赖ProcessPrng。
 
-2. __ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL
+3. __ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL
 兼容方案2：Windows 8.1以前的版本对于匿名对象无法生效DACL。就会导致Chrome的CheckPlatformHandlePermissionsCorrespondToMode判断不准确。
 修复方案通过给匿名对象创建一个名字解决该问题。
 
@@ -133,15 +136,25 @@ YY-Thunks支持的控制宏：
 #define __WarningMessage__(msg) __pragma(message (__FILE__ "(" STRING(__LINE__) "): warning Thunks: " # msg))
 #endif
 
-#if defined(__APPLY_CHROMIUM_WORKAROUNDS)
-#ifndef __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng
-#define __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng
+#if !defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng) && (defined(__ENABLE_WORKAROUND_ALL) || defined(__APPLY_CHROMIUM_WORKAROUNDS))
+#define __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng 1
 #endif
 
-#ifndef __ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL
-#define __ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL
+#if !defined(__ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL) && (defined(__ENABLE_WORKAROUND_ALL) || defined(__APPLY_CHROMIUM_WORKAROUNDS))
+#define __ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL 1
 #endif
-#endif // defined(__APPLY_CHROMIUM_WORKAROUNDS)
+
+#ifndef __FALLBACK_PREFIX
+#define __FALLBACK_PREFIX
+#define __YY_Thunks_libs 0
+#else
+#define __YY_Thunks_libs 1
+#endif
+
+#if !defined(__USING_NTDLL_LIB) && (__YY_Thunks_libs || YY_Thunks_Support_Version >= NTDDI_WIN10)
+// lib模式下必然存在 ntdll.lib，此外最小支持Windows 10时，我们因为强制依赖Windows 10 SDK，所以也必然存在ntdll.lib。
+#define __USING_NTDLL_LIB 1
+#endif
 
 #define _Disallow_YY_KM_Namespace
 #include "km.h"
@@ -229,13 +242,6 @@ RtlCutoverTimeToSystemTime(
 #endif
 
 #include <HookThunk.h>
-
-#ifndef __FALLBACK_PREFIX
-#define __FALLBACK_PREFIX
-#define __YY_Thunks_libs 0
-#else
-#define __YY_Thunks_libs 1
-#endif
 
 //展开函数的所有的 声明 以及 try_get_ 函数
 #define __DEFINE_THUNK_EXTERN_PREFIX(_PREFIX, _MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                      \

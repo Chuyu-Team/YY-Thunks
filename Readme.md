@@ -99,6 +99,17 @@ Compatible with all platforms.
 * All runtime modes are supported (such as: `/MD`, `/MT`, `/MDd`, `/MTd`).
 
 ### 3.2. Windows SDK Version Requirements
+| Thunks Target      | At Least Windows SDK Version is required
+| ------------------ | -----------
+| Windows 2000       | SDK 6.0 (VS2008 built-in)
+| Windows XP(2003)   | SDK 6.0 (VS2008 built-in)
+| Windows Vista      | SDK 6.0 (VS2008 built-in)
+| Windows 7          | SDK 7.0
+| Windows 8          | SDK 8.0
+| Windows 8.1        | SDK 8.1
+| Windows 10 10240   | SDK 10.0.10240
+| Windows 10 19041   | SDK 10.0.19041
+
 At least Windows SDK 6.0 is required.
 
 > Note: VC6.0 and VS2005 users should note that the SDK version that comes with these compilers by default is too low.
