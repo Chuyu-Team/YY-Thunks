@@ -1117,15 +1117,10 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
     return new_handle;
 }
 
-static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
-    const ProcInfo& _ProcInfo
+static __forceinline void* __fastcall try_get_proc_address_from_dll(
+	const ProcInfo& _ProcInfo
     ) noexcept
 {
-    if (_ProcInfo.pfnCustomGetProcAddress)
-    {
-        return _ProcInfo.pfnCustomGetProcAddress(_ProcInfo);
-    }
-
     HMODULE const module_handle = _ProcInfo.pfnGetModule();
     if (!module_handle)
     {
@@ -1154,4 +1149,16 @@ static __forceinline void* __fastcall try_get_proc_address_from_first_available_
 
     return reinterpret_cast<void*>(GetProcAddress(module_handle, _ProcInfo.szProcName));
 #endif // defined(__USING_NTDLL_LIB)
+}
+
+static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
+    const ProcInfo& _ProcInfo
+    ) noexcept
+{
+    if (_ProcInfo.pfnCustomGetProcAddress)
+    {
+        return _ProcInfo.pfnCustomGetProcAddress(_ProcInfo);
+    }
+
+    return try_get_proc_address_from_dll(_ProcInfo);
 }

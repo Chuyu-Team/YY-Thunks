@@ -168,8 +168,10 @@
 ## CfgMgr32.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
-| CM_Get_DevNode_PropertyW                   | 不存在时，调用CM_Get_DevNode_Registry_PropertyW。
-| CM_Set_DevNode_PropertyW                   | 不存在时，调用CM_Set_DevNode_Registry_PropertyW。
+| CM_Get_DevNode_Property_ExW                | 不存在时，调用CM_Get_DevNode_Registry_PropertyW。
+| CM_Set_DevNode_Property_ExW                | 不存在时，调用CM_Set_DevNode_Registry_PropertyW。
+| CM_Get_DevNode_PropertyW                   | 不存在时，调用CM_Get_DevNode_Property_ExW。
+| CM_Set_DevNode_PropertyW                   | 不存在时，调用CM_Set_DevNode_Property_ExW。
 
 ## Crypt32.dll
 | 函数                                       | Fallback

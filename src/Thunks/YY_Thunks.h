@@ -196,6 +196,16 @@ static PVOID __fastcall YY_ImageDirectoryEntryToData(
     return PBYTE(pBaseAddress) + _DataDirectory.VirtualAddress;
 }
 
+static DWORD __fastcall GetDllTimeDateStamp(_In_ HMODULE _hModule)
+{
+    if (!_hModule)
+        return 0;
+
+    auto _pDosHeader = (PIMAGE_DOS_HEADER)_hModule;
+    auto _pNtHerder = reinterpret_cast<PIMAGE_NT_HEADERS>(PBYTE(_hModule) + _pDosHeader->e_lfanew);
+    return _pNtHerder->FileHeader.TimeDateStamp;
+}
+
 enum : int
 {
 	__crt_maximum_pointer_shift = sizeof(uintptr_t) * 8
@@ -328,6 +338,47 @@ struct ProcInfo
 static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
 	const ProcInfo& _ProcInfo
     ) noexcept;
+
+static __forceinline void* __fastcall try_get_proc_address_from_dll(
+	const ProcInfo& _ProcInfo
+    ) noexcept;
+
+struct ProcOffsetInfo
+{
+    DWORD uTimeDateStamp;
+    DWORD uProcOffset;
+};
+
+template<size_t kLength>
+static __forceinline void* __fastcall try_get_proc_address_from_offset(
+	HMODULE _hModule,
+    const ProcOffsetInfo (&_ProcOffsetInfos)[kLength]
+    ) noexcept
+{
+    if (_hModule)
+    {
+        __try
+        {
+            const auto _uTimeDateStamp = GetDllTimeDateStamp(_hModule);
+            if (_uTimeDateStamp)
+            {
+                for (auto& _ProcOffsetInfo : _ProcOffsetInfos)
+                {
+                    if (_ProcOffsetInfo.uTimeDateStamp == _uTimeDateStamp)
+                    {
+                        return PBYTE(_hModule) + _ProcOffsetInfo.uProcOffset;
+                    }
+                }
+            }
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+            // 避免遇到畸形DLL而触发异常。
+        }
+    }
+
+    return nullptr;
+}
 
 static __forceinline void* __cdecl invalid_function_sentinel() noexcept
 {

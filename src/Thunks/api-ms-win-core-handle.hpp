@@ -1,4 +1,9 @@
 ﻿
+#if (YY_Thunks_Support_Version < NTDDI_WIN10) && !defined(__Comment_Lib_advapi32)
+#define __Comment_Lib_advapi32
+#pragma comment(lib, "Advapi32.lib")
+#endif
+
 #if defined(YY_Thunks_Implemented)
 namespace YY::Thunks
 {

@@ -3,9 +3,14 @@
 #include <SetupAPI.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7) && !defined(__Comment_Lib_cfgmgr32)
+#if (YY_Thunks_Support_Version < NTDDI_WIN7) && !defined(__Comment_Lib_setupapi)
+#define __Comment_Lib_setupapi
+#pragma comment(lib, "SetupAPI.Lib")
+#endif
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7) && __YY_Thunks_libs && !defined(__Comment_Lib_cfgmgr32)
 #define __Comment_Lib_cfgmgr32
-#pragma comment(lib, "Cfgmgr32.lib")
+#pragma comment(lib, "cfgmgr32.Lib")
 #endif
 
 #ifdef YY_Thunks_Implemented
@@ -194,6 +199,51 @@ namespace YY::Thunks::Fallback
             return &_Item;
         }
 
+        void* __fastcall try_get_CM_Get_DevNode_Property_ExW(const ProcInfo& _ProcInfo)
+        {
+             auto _pProc = try_get_proc_address_from_dll(_ProcInfo);
+             if (_pProc)
+                 return _pProc;
+
+             static constexpr const ProcOffsetInfo kProcInfo[] =
+             {
+#if defined(_X86_)
+                 { 0x4549BDB0ul, 0x7427B681ul - 0x74270000ul }, // 6.0.6000.16386 (Windows Vista RTM)
+                 { 0x4791A754ul, 0x738DB93Dul - 0x738D0000ul }, // 6.0.6002.18000 (Windows Vista SP1)
+                 { 0x49E037E9ul, 0x744DED36ul - 0x744D0000ul }, // 6.0.6002.18005 (Windows Vista SP2)
+#elif defined(_AMD64_)
+                 { 0x4549D318ul, 0x000007FF7C006400ull - 0x7FF7C000000ull }, // 6.0.6000.16386 (Windows Vista RTM)
+                 { 0x4791ADA3ul, 0x000007FF7BC06E00ull - 0x7FF7BC00000ull }, // 6.0.6002.18000 (Windows Vista SP1)
+                 { 0x49E041EDul, 0x000007FF7C007090ull - 0x7FF7C000000ull }, // 6.0.6002.18005 (Windows Vista SP2)
+#endif
+             };
+
+             __WarningMessage__("try_get_CM_Get_DevNode_Property_ExW 可能遗漏Vista/2008某些补丁中的setupapi.dll，如果你知道详细可以提交PR。");
+             return try_get_proc_address_from_offset(try_get_module_setupapi(), kProcInfo);
+        }
+
+        void* __fastcall try_get_CM_Set_DevNode_Property_ExW(const ProcInfo& _ProcInfo)
+        {
+            auto _pProc = try_get_proc_address_from_dll(_ProcInfo);
+            if (_pProc)
+                return _pProc;
+
+            static constexpr const ProcOffsetInfo kProcInfo[] =
+            {
+#if defined(_X86_)
+                { 0x4549BDB0ul, 0x7433C705ul - 0x74270000ul }, // 6.0.6000.16386 (Windows Vista RTM)
+                { 0x4791A754ul, 0x7399D7ADul - 0x738D0000ul }, // 6.0.6002.18000 (Windows Vista SP1)
+                { 0x49E037E9ul, 0x7459DC1Dul - 0x744D0000ul }, // 6.0.6002.18005 (Windows Vista SP2)
+#elif defined(_AMD64_)
+                { 0x4549D318ul, 0x000007FF7C0FDD70ull - 0x7FF7C000000ull }, // 6.0.6000.16386 (Windows Vista RTM)
+                { 0x4791ADA3ul, 0x000007FF7BCE1E08ull - 0x7FF7BC00000ull }, // 6.0.6002.18000 (Windows Vista SP1)
+                { 0x49E041EDul, 0x000007FF7C0E2550ull - 0x7FF7C000000ull }, // 6.0.6002.18005 (Windows Vista SP2)
+#endif
+            };
+
+            __WarningMessage__("try_get_CM_Set_DevNode_Property_ExW 可能遗漏Vista/2008某些补丁中的setupapi.dll，如果你知道详细可以提交PR。");
+            return try_get_proc_address_from_offset(try_get_module_setupapi(), kProcInfo);
+        }
 #endif
     }
 }
@@ -201,6 +251,115 @@ namespace YY::Thunks::Fallback
 
 namespace YY::Thunks
 {
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+    // Windows 7 RTM 导出
+    // Windows Vista有这个函数但是没有导出
+    __DEFINE_THUNK(
+    cfgmgr32,
+    28,
+    CONFIGRET,
+    WINAPI,
+    CM_Get_DevNode_Property_ExW,
+        _In_  DEVINST       dnDevInst,
+        _In_  CONST DEVPROPKEY* PropertyKey,
+        _Out_ DEVPROPTYPE* PropertyType,
+        _Out_writes_bytes_opt_(*PropertyBufferSize) PBYTE PropertyBuffer,
+        _Inout_ PULONG      PropertyBufferSize,
+        _In_  ULONG         ulFlags,
+        _In_opt_ HMACHINE   hMachine
+        )
+    {
+        if (const auto _pfnCM_Get_DevNode_Property_ExW = try_get_CM_Get_DevNode_Property_ExW())
+        {
+            return _pfnCM_Get_DevNode_Property_ExW(dnDevInst, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, ulFlags, hMachine);
+        }
+
+        if (!PropertyKey)
+            return CR_INVALID_DEVINST;
+
+        if (PropertyKey == nullptr || PropertyType == nullptr || PropertyBufferSize == nullptr)
+            return CR_INVALID_POINTER;
+
+        if (ulFlags != 0)
+            return CR_INVALID_FLAG;
+
+        const auto _pProperty = Fallback::DevicePropertyToDeviceRegistryProperty(PropertyKey);
+        if (!_pProperty)
+            return CR_INVALID_PROPERTY;
+
+        *PropertyType = _pProperty->PropertyType;
+
+        if (!Fallback::DevNodeTempPropertyBufffer::HasTransform(_pProperty->PropertyType))
+        {
+            return CM_Get_DevNode_Registry_Property_ExW(dnDevInst, _pProperty->CM_DeviceRegistryProperty, nullptr, PropertyBuffer, PropertyBufferSize, ulFlags, hMachine);
+        }
+
+        Fallback::DevNodeTempPropertyBufffer TempBuffer = {};
+        ULONG _cbTempBuffer = sizeof(TempBuffer);
+        auto _Error = CM_Get_DevNode_Registry_Property_ExW(dnDevInst, _pProperty->CM_DeviceRegistryProperty, nullptr, &TempBuffer, &_cbTempBuffer, ulFlags, hMachine);
+        if (CR_SUCCESS != _Error)
+        {
+            return _Error;
+        }
+
+        if (!TempBuffer.TryTransformGetBuffer(_pProperty->PropertyType, PropertyBuffer, PropertyBufferSize))
+            return CR_BUFFER_SMALL;
+
+        return CR_SUCCESS;
+    }
+#endif
+
+
+#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+
+    // Windows 7 RTM 导出
+    // Windows Vista有这个函数但是没有导出
+    __DEFINE_THUNK(
+    cfgmgr32,
+    28,
+    CONFIGRET,
+    WINAPI,
+    CM_Set_DevNode_Property_ExW,
+        _In_  DEVINST       dnDevInst,
+        _In_  CONST DEVPROPKEY* PropertyKey,
+        _In_  DEVPROPTYPE   PropertyType,
+        _In_reads_bytes_opt_(PropertyBufferSize) PBYTE PropertyBuffer,
+        _In_  ULONG         PropertyBufferSize,
+        _In_  ULONG         ulFlags,
+        _In_opt_ HMACHINE   hMachine
+        )
+    {
+        if (const auto _pfnCM_Set_DevNode_Property_ExW = try_get_CM_Set_DevNode_Property_ExW())
+        {
+            return _pfnCM_Set_DevNode_Property_ExW(dnDevInst, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, ulFlags, hMachine);
+        }
+
+        if (!PropertyKey)
+            return CR_INVALID_DEVINST;
+
+        if (PropertyKey == nullptr || (PropertyBuffer == nullptr && PropertyBufferSize))
+            return CR_INVALID_POINTER;
+
+        if (ulFlags != 0)
+            return CR_INVALID_FLAG;
+
+        const auto _pProperty = Fallback::DevicePropertyToDeviceRegistryProperty(PropertyKey);
+        if (!_pProperty)
+            return CR_INVALID_PROPERTY;
+
+        if (_pProperty->PropertyType != PropertyType)
+            return CR_WRONG_TYPE;
+
+        Fallback::DevNodeTempPropertyBufffer TempBuffer;
+        if (!TempBuffer.TryTransformSetBuffer(PropertyType, &PropertyBuffer, &PropertyBufferSize))
+            return CR_BUFFER_SMALL;
+
+        return CM_Set_DevNode_Registry_Property_ExW(dnDevInst, _pProperty->CM_DeviceRegistryProperty, PropertyBuffer, PropertyBufferSize, ulFlags, hMachine);
+    }
+#endif
+
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
     // 最低受支持的客户端	在 Microsoft Windows Vista 和更高版本的 Windows 中可用。
@@ -224,40 +383,7 @@ namespace YY::Thunks
             return _pfnCM_Get_DevNode_PropertyW(dnDevInst, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, ulFlags);
         }
 
-        __WarningMessage__("Opt，Vista系统的setuapi.dll存在CM_Get_DevNode_Property_ExW，但是没有导出。");
-
-        if (!PropertyKey)
-            return CR_INVALID_DEVINST;
-
-        if (PropertyKey == nullptr || PropertyType == nullptr || PropertyBufferSize == nullptr)
-            return CR_INVALID_POINTER;
-
-        if (ulFlags != 0)
-            return CR_INVALID_FLAG;
-
-        const auto _pProperty = Fallback::DevicePropertyToDeviceRegistryProperty(PropertyKey);
-        if (!_pProperty)
-            return CR_INVALID_PROPERTY;
-
-        *PropertyType = _pProperty->PropertyType;
-
-        if (!Fallback::DevNodeTempPropertyBufffer::HasTransform(_pProperty->PropertyType))
-        {
-            return CM_Get_DevNode_Registry_PropertyW(dnDevInst, _pProperty->CM_DeviceRegistryProperty, nullptr, PropertyBuffer, PropertyBufferSize, ulFlags);
-        }
-
-        Fallback::DevNodeTempPropertyBufffer TempBuffer = {};
-        ULONG _cbTempBuffer = sizeof(TempBuffer);
-        auto _Error = CM_Get_DevNode_Registry_PropertyW(dnDevInst, _pProperty->CM_DeviceRegistryProperty, nullptr, &TempBuffer, &_cbTempBuffer, ulFlags);
-        if (CR_SUCCESS != _Error)
-        {
-            return _Error;
-        }
-
-        if(!TempBuffer.TryTransformGetBuffer(_pProperty->PropertyType, PropertyBuffer, PropertyBufferSize))
-            return CR_BUFFER_SMALL;
-
-        return CR_SUCCESS;
+        return ::CM_Get_DevNode_Property_ExW(dnDevInst, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, ulFlags, nullptr);
     }
 #endif
 
@@ -285,27 +411,7 @@ namespace YY::Thunks
             return _pfnCM_Set_DevNode_PropertyW(dnDevInst, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, ulFlags);
         }      
 
-        if (!PropertyKey)
-            return CR_INVALID_DEVINST;
-
-        if (PropertyKey == nullptr || (PropertyBuffer == nullptr && PropertyBufferSize))
-            return CR_INVALID_POINTER;
-
-        if (ulFlags != 0)
-            return CR_INVALID_FLAG;
-
-        const auto _pProperty = Fallback::DevicePropertyToDeviceRegistryProperty(PropertyKey);
-        if (!_pProperty)
-            return CR_INVALID_PROPERTY;
-
-        if (_pProperty->PropertyType != PropertyType)
-            return CR_WRONG_TYPE;
-
-        Fallback::DevNodeTempPropertyBufffer TempBuffer;
-        if (!TempBuffer.TryTransformSetBuffer(PropertyType, &PropertyBuffer, &PropertyBufferSize))
-            return CR_BUFFER_SMALL;
-
-        return CM_Set_DevNode_Registry_PropertyW(dnDevInst, _pProperty->CM_DeviceRegistryProperty, PropertyBuffer, PropertyBufferSize, ulFlags);
+        return ::CM_Set_DevNode_Property_ExW(dnDevInst, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, ulFlags, nullptr);
     }
 #endif
 }
