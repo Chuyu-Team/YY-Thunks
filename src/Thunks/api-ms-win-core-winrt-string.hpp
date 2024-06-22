@@ -345,10 +345,14 @@ namespace YY::Thunks
             if (!(OpaqueString->Header.Flags & WRHF_EMBEDDED_NULLS_COMPUTED))
             {
                 OpaqueString->Header.Flags |= WRHF_EMBEDDED_NULLS_COMPUTED;
-                OpaqueString->Header.Flags |=
-                    (nullptr != ::wcschr(
-                        OpaqueString->Header.StringRef,
-                        L'\0')) ? WRHF_HAS_EMBEDDED_NULLS : WRHF_NONE;
+                for (UINT32 i = 0; i < OpaqueString->Header.Length; ++i)
+                {
+                    if (OpaqueString->Header.StringRef[i] == L'\0')
+                    {
+                        OpaqueString->Header.Flags |= WRHF_HAS_EMBEDDED_NULLS;
+                        break;
+                    }
+                }
             }
             *hasEmbedNull = OpaqueString->Header.Flags & WRHF_HAS_EMBEDDED_NULLS;
         }
