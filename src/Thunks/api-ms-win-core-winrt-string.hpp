@@ -1,4 +1,5 @@
-﻿#include <winstring.h>
+﻿#include <hstring_private.h>
+#include <winstring.h>
 
 namespace YY
 {
@@ -25,10 +26,43 @@ namespace YY
                 return pWindowsCreateString(sourceString, length, string);
             }
 
-            if (string)
-                *string = nullptr;
+            if (!string)
+            {
+                return E_INVALIDARG;
+            }
+            *string = nullptr;
 
-            return E_NOTIMPL;
+            if (!sourceString && 0 != length)
+            {
+                return E_POINTER;
+            }
+
+            SIZE_T RequiredSize = sizeof(STRING_OPAQUE) + length * sizeof(WCHAR);
+            if (MAXUINT32 < RequiredSize)
+            {
+                return MEM_E_INVALID_SIZE;
+            }
+
+            PSTRING_OPAQUE Result =
+                reinterpret_cast<PSTRING_OPAQUE>(::HeapAlloc(
+                    ::GetProcessHeap(),
+                    HEAP_ZERO_MEMORY,
+                    RequiredSize));
+            if (!Result)
+            {
+                return E_OUTOFMEMORY;
+            }
+
+            Result->Header.Flags = WRHF_NONE;
+            Result->Header.Length = length;
+            Result->Header.StringRef = Result->String;
+            Result->RefCount = 1;
+            ::memcpy(Result->String, sourceString, length * sizeof(WCHAR));
+            Result->String[length] = L'\0';
+
+            *string = reinterpret_cast<HSTRING>(Result);
+
+            return S_OK;
         }
 #endif
 
@@ -54,10 +88,36 @@ namespace YY
                 return pWindowsCreateStringReference(sourceString, length, hstringHeader, string);
             }
 
-            if (string)
-                *string = nullptr;
+            if (!string || !hstringHeader)
+            {
+                return E_INVALIDARG;
+            }
+            *string = nullptr;
 
-            return E_NOTIMPL;
+            if (!sourceString && 0 != length)
+            {
+                return E_POINTER;
+            }
+
+            if (sourceString)
+            {
+                if (L'0' != sourceString[length])
+                {
+                    return E_STRING_NOT_NULL_TERMINATED;
+                }
+            }
+
+            HSTRING_HEADER_INTERNAL* Header =
+                reinterpret_cast<HSTRING_HEADER_INTERNAL*>(hstringHeader);
+            ::memset(Header, 0, sizeof(HSTRING_HEADER_INTERNAL));
+
+            Header->Flags = WRHF_STRING_REFERENCE;
+            Header->Length = length;
+            Header->StringRef = sourceString;
+
+            *string = reinterpret_cast<HSTRING>(Header);
+
+            return S_OK;
         }
 #endif
 
@@ -80,7 +140,21 @@ namespace YY
                 return pWindowsDeleteString(string);
             }
 
-            return E_NOTIMPL;
+            if (string)
+            {
+                STRING_OPAQUE* OpaqueString =
+                    reinterpret_cast<STRING_OPAQUE*>(string);
+                if (!(OpaqueString->Header.Flags & WRHF_STRING_REFERENCE))
+                {
+                    if (0 == ::InterlockedDecrement(
+                        reinterpret_cast<LONG volatile*>(&OpaqueString->RefCount)))
+                    {
+                        ::HeapFree(::GetProcessHeap(), 0, OpaqueString);
+                    }
+                }
+            }
+
+            return S_OK;
         }
 #endif
 
@@ -104,11 +178,30 @@ namespace YY
                 return pWindowsDuplicateString(string, newString);
             }
 
+            if (!newString)
+            {
+                return E_INVALIDARG;
+            }
+            *newString = nullptr;
 
-            if (newString)
-                *newString = nullptr;
+            if (string)
+            {
+                STRING_OPAQUE* OpaqueString =
+                    reinterpret_cast<STRING_OPAQUE*>(string);
+                if (OpaqueString->Header.Flags & WRHF_STRING_REFERENCE)
+                {
+                    return ::WindowsCreateString(
+                        OpaqueString->Header.StringRef,
+                        OpaqueString->Header.Length,
+                        newString);
+                }
 
-            return E_NOTIMPL;
+                ::InterlockedIncrement(
+                    reinterpret_cast<LONG volatile*>(&OpaqueString->RefCount));
+                *newString = string;
+            }
+
+            return S_OK;
         }
 #endif
 
@@ -129,6 +222,13 @@ namespace YY
             if (auto const pWindowsGetStringLen = try_get_WindowsGetStringLen())
             {
                 return pWindowsGetStringLen(string);
+            }
+
+            if (string)
+            {
+                STRING_OPAQUE* OpaqueString =
+                    reinterpret_cast<STRING_OPAQUE*>(string);
+                return OpaqueString->Header.Length;
             }
 
             return 0;
@@ -155,10 +255,24 @@ namespace YY
                 return pWindowsGetStringRawBuffer(string, length);
             }
 
-            if (length)
-                *length = 0;
+            if (!string)
+            {
+                if (length)
+                {
+                    *length = 0;
+                }
 
-            return nullptr;
+                return L"\0";
+            }
+
+            STRING_OPAQUE* OpaqueString =
+                reinterpret_cast<STRING_OPAQUE*>(string);
+            if (length)
+            {
+                *length = OpaqueString->Header.Length;
+            }
+
+            return OpaqueString->Header.StringRef;
         }
 #endif
 
@@ -179,6 +293,13 @@ namespace YY
             if (auto const pWindowsIsStringEmpty = try_get_WindowsIsStringEmpty())
             {
                 return pWindowsIsStringEmpty(string);
+            }
+
+            if (string)
+            {
+                STRING_OPAQUE* OpaqueString =
+                    reinterpret_cast<STRING_OPAQUE*>(string);
+                return 0 == OpaqueString->Header.Length;
             }
 
             return TRUE;
@@ -205,7 +326,28 @@ namespace YY
                 return pWindowsStringHasEmbeddedNull(string, hasEmbedNull);
             }
 
-            return E_NOTIMPL;
+            if (!hasEmbedNull)
+            {
+                return E_INVALIDARG;
+            }
+            *hasEmbedNull = FALSE;
+
+            if (string)
+            {
+                STRING_OPAQUE* OpaqueString =
+                    reinterpret_cast<STRING_OPAQUE*>(string);
+                if (!(OpaqueString->Header.Flags & WRHF_EMBEDDED_NULLS_COMPUTED))
+                {
+                    OpaqueString->Header.Flags |= WRHF_EMBEDDED_NULLS_COMPUTED;
+                    OpaqueString->Header.Flags |=
+                        (nullptr != ::wcschr(
+                            OpaqueString->Header.StringRef,
+                            L'\0')) ? WRHF_HAS_EMBEDDED_NULLS : WRHF_NONE;
+                }
+                *hasEmbedNull = OpaqueString->Header.Flags & WRHF_HAS_EMBEDDED_NULLS;
+            }
+
+            return S_OK;
         }
 #endif
 
@@ -230,7 +372,54 @@ namespace YY
                 return pWindowsCompareStringOrdinal(string1, string2, result);
             }
 
-            return E_NOTIMPL;
+            if (!result)
+            {
+                return E_INVALIDARG;
+            }
+            *result = 0;
+
+            if (string1 && string2)
+            {
+                STRING_OPAQUE* OpaqueString1 =
+                    reinterpret_cast<STRING_OPAQUE*>(string1);
+                STRING_OPAQUE* OpaqueString2 =
+                    reinterpret_cast<STRING_OPAQUE*>(string2);
+
+                int CompareResult = ::CompareStringOrdinal(
+                    OpaqueString1->Header.StringRef,
+                    OpaqueString1->Header.Length,
+                    OpaqueString2->Header.StringRef,
+                    OpaqueString2->Header.Length,
+                    FALSE);
+                if (CompareResult == CSTR_LESS_THAN)
+                {
+                    *result = -1;
+                }
+                else if (CompareResult == CSTR_GREATER_THAN)
+                {
+                    *result = 1;
+                }
+            }
+            else if (string1 && !string2)
+            {
+                STRING_OPAQUE* OpaqueString1 =
+                    reinterpret_cast<STRING_OPAQUE*>(string1);
+                if (OpaqueString1->Header.Length)
+                {
+                    *result = 1;
+                }
+            }
+            else if (!string1 && string2)
+            {
+                STRING_OPAQUE* OpaqueString2 =
+                    reinterpret_cast<STRING_OPAQUE*>(string2);
+                if (OpaqueString2->Header.Length)
+                {
+                    *result = 1;
+                }
+            }
+
+            return S_OK;
         }
 #endif
 
