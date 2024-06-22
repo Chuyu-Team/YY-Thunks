@@ -259,6 +259,7 @@
     <ClInclude Include="..\Thunks\uxtheme.hpp" />
     <ClInclude Include="..\Thunks\wevtapi.hpp" />
     <ClInclude Include="..\Thunks\WinHttp.hpp" />
+    <ClInclude Include="..\Thunks\WinUsb.hpp" />
     <ClInclude Include="..\Thunks\YY_Thunks.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="..\Thunks\api-ms-win-core-datetime.hpp" />

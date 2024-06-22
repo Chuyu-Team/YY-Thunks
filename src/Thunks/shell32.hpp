@@ -3,6 +3,14 @@
 #include <Shlobj.h>
 #endif
 
+#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+// FOLDERID_Windows
+#include <Knownfolders.h>
+
+// BHID_SFObject
+#include <ShlGuid.h>
+#endif
+
 #if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_shell32)
 #define __Comment_Lib_shell32
 #pragma comment(lib, "Shell32.lib")

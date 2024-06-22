@@ -59,7 +59,7 @@ namespace PropSys
                 VARIANT _Rigth = {};
 
                 _Left.vt = VT_R4;
-                _Left.fltVal = 8.1;
+                _Left.fltVal = 8.1f;
 
                 _Rigth.vt = VT_R4;
                 _Rigth.fltVal = 8;

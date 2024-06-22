@@ -60,9 +60,10 @@ YY-Thunks支持的控制宏：
     _APPLY(bluetoothapis,                                "bluetoothapis"                      , 0                 ) \
     _APPLY(netapi32,                                     "netapi32"                           , 0                 ) \
     _APPLY(powrprof,                                     "powrprof"                           , 0                 ) \
-    _APPLY(propsys,                                      "propsys"                           , 0                 ) \
+    _APPLY(propsys,                                      "propsys"                            , 0                 ) \
     _APPLY(wevtapi,                                      "wevtapi"                            , 0                 ) \
     _APPLY(winhttp,                                      "winhttp"                            , 0                 ) \
+    _APPLY(winusb,                                       "winusb"                             , 0                 ) \
     _APPLY(zipfldr,                                      "zipfldr"                            , LOAD_AS_DATA_FILE ) \
     _APPLY(api_ms_win_core_handle_l1_1_0,                "api-ms-win-core-handle-l1-1-0"      , 0                 ) \
     _APPLY(api_ms_win_core_realtime_l1_1_1,              "api-ms-win-core-realtime-l1-1-1"    , 0                 ) \

@@ -430,7 +430,7 @@ namespace YY::Thunks
                 int _nResult = 0;
                 if (SUCCEEDED(SafeArrayGetElement(_Rigth.parray, &i, &_RightItem)))
                 {
-                    _nResult = ::VariantCompare(_LeftItem, _RightItem);
+                    _nResult = _CRT_CONCATENATE(__FALLBACK_PREFIX, VariantCompare)(_LeftItem, _RightItem);
                     VariantClear(&_RightItem);
                 }
                 VariantClear(&_LeftItem);

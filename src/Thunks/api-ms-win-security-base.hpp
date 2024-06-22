@@ -82,7 +82,7 @@
             return FALSE;
         }
 
-        const auto _cbData =  (_pLabelSid->SubAuthorityCount + 4) * sizeof(DWORD);
+        const WORD _cbData =  (_pLabelSid->SubAuthorityCount + 4) * sizeof(DWORD);
         if (_pFirstFree == nullptr || PBYTE(_pFirstFree) + _cbData > PBYTE(_pAcl) + _pAcl->AclSize)
         {
             // internal::BaseSetLastNTError(0xC0000099);

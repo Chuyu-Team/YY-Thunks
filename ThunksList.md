@@ -731,6 +731,18 @@
 | WinHttpGetProxyResult                      | 不存在时，内部实现。
 | WinHttpFreeProxyResult                     | 不存在时，内部实现。
 
+## WinUsb.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| WinUsb_Free                                | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_GetAssociatedInterface              | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_GetOverlappedResult                 | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_Initialize                          | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_ReadPipe                            | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_ResetPipe                           | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_SetCurrentAlternateSetting          | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_WritePipe                           | 不存在时，报告ERROR_INVALID_HANDLE。
+
 ## ws2_32.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
