@@ -43,6 +43,7 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
+    <EnableASAN>true</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -59,6 +60,7 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
+    <EnableASAN>true</EnableASAN>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -105,6 +107,7 @@
       <TreatSpecificWarningsAsErrors>4715;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/execution-charset:utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -169,6 +172,7 @@
       <TreatSpecificWarningsAsErrors>4715;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/execution-charset:utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -181,6 +185,7 @@
   <ItemGroup>
     <ClCompile Include="api-ms-win-core-handle.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-kernel32-legacy.UnitTest.cpp" />
+    <ClCompile Include="api-ms-win-core-winrt-string.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-power-base.UnitTest.cpp" />
     <ClCompile Include="bcrypt.UnitTest.cpp" />
     <ClCompile Include="Iphlpapi.UnitTest.cpp" />
@@ -214,10 +219,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Shared\Heap.h" />
     <ClInclude Include="..\Shared\HookThunk.h" />
+    <ClInclude Include="..\Shared\HStringPrivate.h" />
     <ClInclude Include="..\Shared\InterlockedQueue.h" />
     <ClInclude Include="..\Shared\km.h" />
+    <ClInclude Include="..\Shared\SharedDefs.h" />
     <ClInclude Include="..\Thunks\api-ms-win-core-com.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-handle.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-kernel32-legacy.hpp" />

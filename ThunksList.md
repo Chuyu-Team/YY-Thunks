@@ -96,15 +96,15 @@
 ## api-ms-win-core-winrt-string-l1-1-0.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
-| WindowsCreateString                        | 不存在时，返回 E_NOTIMPL。
-| WindowsCreateStringReference               | 不存在时，返回 E_NOTIMPL。
-| WindowsDeleteString                        | 不存在时，返回 E_NOTIMPL。
-| WindowsDuplicateString                     | 不存在时，返回 E_NOTIMPL。
-| WindowsGetStringLen                        | 不存在时，返回 E_NOTIMPL。
-| WindowsGetStringRawBuffer                  | 不存在时，返回 E_NOTIMPL。
-| WindowsIsStringEmpty                       | 不存在时，返回 E_NOTIMPL。
-| WindowsStringHasEmbeddedNull               | 不存在时，返回 E_NOTIMPL。
-| WindowsCompareStringOrdinal                | 不存在时，返回 E_NOTIMPL。
+| WindowsCreateString                        | 不存在时，内部实现。
+| WindowsCreateStringReference               | 不存在时，内部实现。
+| WindowsDeleteString                        | 不存在时，内部实现。
+| WindowsDuplicateString                     | 不存在时，内部实现。
+| WindowsGetStringLen                        | 不存在时，内部实现。
+| WindowsGetStringRawBuffer                  | 不存在时，内部实现。
+| WindowsIsStringEmpty                       | 不存在时，内部实现。
+| WindowsStringHasEmbeddedNull               | 不存在时，内部实现。
+| WindowsCompareStringOrdinal                | 不存在时，内部实现。
 
 ## advapi32.dll
 | 函数                                       | Fallback

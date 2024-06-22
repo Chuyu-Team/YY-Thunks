@@ -965,7 +965,7 @@ namespace YY::Thunks::internal
         static constexpr UNICODE_STRING __fastcall MakeNtString(_In_z_ const wchar_t* _szString)
         {
             const auto _cbString = StringLength(_szString) * sizeof(_szString[0]);
-            UNICODE_STRING _Result = { (USHORT)max(UINT16_MAX, _cbString),  (USHORT)max(UINT16_MAX, _cbString + sizeof(_szString[0])), const_cast<PWSTR>(_szString) };
+            UNICODE_STRING _Result = { (USHORT)min(UINT16_MAX, _cbString),  (USHORT)min(UINT16_MAX, _cbString + sizeof(_szString[0])), const_cast<PWSTR>(_szString) };
             return _Result;
         }
 
@@ -973,7 +973,7 @@ namespace YY::Thunks::internal
         {
             const auto _cbString = StringLength(_szString) * sizeof(_szString[0]);
 
-            ANSI_STRING _Result = { (USHORT)max(UINT16_MAX, _cbString),  (USHORT)max(UINT16_MAX, _cbString + sizeof(_szString[0])), const_cast<PSTR>(_szString)};
+            ANSI_STRING _Result = { (USHORT)min(UINT16_MAX, _cbString),  (USHORT)min(UINT16_MAX, _cbString + sizeof(_szString[0])), const_cast<PSTR>(_szString)};
             return _Result;
         }
 
