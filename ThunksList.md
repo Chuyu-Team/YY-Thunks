@@ -543,10 +543,39 @@
 ## mfplat.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
+| MFCreateDeviceSource                       | 不存在时，返回E_NOTIMPL。
+| MFEnumDeviceSources                        | 不存在时，返回E_NOTIMPL。
+
+## mfplat.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
 | MFCreateDXGIDeviceManager                  | 不存在时，返回E_NOTIMPL。
 | MFCreateDXGISurfaceBuffer                  | 不存在时，返回E_NOTIMPL。
 | MFLockDXGIDeviceManager                    | 不存在时，返回E_NOTIMPL。
 | MFUnlockDXGIDeviceManager                  | 不存在时，返回E_NOTIMPL。
+| MFCreateAlignedMemoryBuffer                | 不存在时，返回E_NOTIMPL。
+| MFCreateAsyncResult                        | 不存在时，返回E_NOTIMPL。
+| MFCreateAttributes                         | 不存在时，返回E_NOTIMPL。
+| MFCreateEventQueue                         | 不存在时，返回E_NOTIMPL。
+| MFCreateMediaBufferWrapper                 | 不存在时，返回E_NOTIMPL。
+| MFCreateMediaEvent                         | 不存在时，返回E_NOTIMPL。
+| MFCreateMediaType                          | 不存在时，返回E_NOTIMPL。
+| MFCreateMemoryBuffer                       | 不存在时，返回E_NOTIMPL。
+| MFCreatePresentationDescriptor             | 不存在时，返回E_NOTIMPL。
+| MFCreateSample                             | 不存在时，返回E_NOTIMPL。
+| MFCreateStreamDescriptor                   | 不存在时，返回E_NOTIMPL。
+| MFCreateWaveFormatExFromMFMediaType        | 不存在时，返回E_NOTIMPL。
+| MFFrameRateToAverageTimePerFrame           | 不存在时，返回E_NOTIMPL。
+| MFGetSystemTime                            | 不存在时，调用GetSystemTimeAsFileTime。
+| MFInitMediaTypeFromWaveFormatEx            | 不存在时，返回E_NOTIMPL。
+| MFShutdown                                 | 不存在时，返回E_NOTIMPL。
+| MFStartup                                  | 不存在时，返回E_NOTIMPL。
+| MFTEnumEx                                  | 不存在时，返回E_NOTIMPL。
+
+## mfreadwrite.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| MFCreateSourceReaderFromMediaSource        | 不存在时，返回E_NOTIMPL。
 
 ## ndfapi.dll
 | 函数                                       | Fallback

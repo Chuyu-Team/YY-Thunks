@@ -226,7 +226,7 @@ namespace YY::Thunks::internal
                 {
                 case VT_I8:
                 {
-                    LONG64 _Tmp = _Left.dblVal;
+                    LONG64 _Tmp = LONG64(_Left.dblVal);
                     if (_Tmp < _Rigth.llVal)
                     {
                         return -1;
@@ -248,7 +248,7 @@ namespace YY::Thunks::internal
                     }
                     else
                     {
-                        ULONG64 _Tmp = _Left.dblVal;
+                        ULONG64 _Tmp = LONG64(_Left.dblVal);
                         if (_Tmp < _Rigth.ullVal)
                         {
                             return -1;
