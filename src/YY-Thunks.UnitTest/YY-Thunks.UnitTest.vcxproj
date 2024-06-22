@@ -216,6 +216,7 @@
   <ItemGroup>
     <ClInclude Include="..\Shared\Heap.h" />
     <ClInclude Include="..\Shared\HookThunk.h" />
+    <ClInclude Include="..\Shared\hstring_private.h" />
     <ClInclude Include="..\Shared\InterlockedQueue.h" />
     <ClInclude Include="..\Shared\km.h" />
     <ClInclude Include="..\Thunks\api-ms-win-core-com.hpp" />
