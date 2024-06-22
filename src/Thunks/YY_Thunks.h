@@ -135,7 +135,8 @@ static uintptr_t __security_cookie_yy_thunks;
 // Implements wcsncpmp for ASCII chars only.
 // NOTE: We can't use wcsncmp in this context because we may end up trying to modify
 // locale data structs or even calling the same function in NLS code.
-static int _fastcall __wcsnicmp_ascii(const wchar_t* string1, const wchar_t* string2, size_t count) noexcept
+template<typename Char1, typename Char2>
+static int _fastcall StringCompareIgnoreCaseByAscii(const Char1* string1, const Char2* string2, size_t count) noexcept
 {
 	wchar_t f, l;
 	int result = 0;
@@ -154,6 +155,55 @@ static int _fastcall __wcsnicmp_ascii(const wchar_t* string1, const wchar_t* str
 	}
 
 	return result;
+}
+
+template<typename Char1, typename Char2>
+static int _fastcall StringCompare(const Char1* string1, const Char2* string2, size_t count) noexcept
+{
+    wchar_t f, l;
+    int result = 0;
+
+    if (count)
+    {
+        /* validation section */
+        do {
+            f = *string1;
+            l = *string2;
+            string1++;
+            string2++;
+        } while ((--count) && f && (f == l));
+
+        result = (int)(f - l);
+    }
+
+    return result;
+}
+
+static PVOID __fastcall YY_ImageDirectoryEntryToData(
+    __in PVOID pBaseAddress,
+    __in ULONG dwDirectory,
+    __out PULONG pSize
+    )
+{
+    auto _pDosHeader = (PIMAGE_DOS_HEADER)pBaseAddress;
+    auto _pNtHerder = reinterpret_cast<PIMAGE_NT_HEADERS>(PBYTE(pBaseAddress) + _pDosHeader->e_lfanew);
+    auto& _DataDirectory = _pNtHerder->OptionalHeader.DataDirectory[dwDirectory];
+
+    *pSize = _DataDirectory.Size;
+    if (_DataDirectory.Size == 0 || _DataDirectory.VirtualAddress == 0)
+        return nullptr;
+
+    return PBYTE(pBaseAddress) + _DataDirectory.VirtualAddress;
+}
+
+static DWORD __fastcall GetDllTimeDateStamp(_In_ HMODULE _hModule)
+{
+    if (!_hModule)
+        return 0;
+
+    auto _pDosHeader = (PIMAGE_DOS_HEADER)_hModule;
+    auto _pNtHerder = reinterpret_cast<PIMAGE_NT_HEADERS>(PBYTE(_hModule) + _pDosHeader->e_lfanew);
+    return _pNtHerder->FileHeader.TimeDateStamp;
 }
 
 enum : int
@@ -257,69 +307,13 @@ static __forceinline T* __fastcall __crt_interlocked_read_pointer(T* const volat
 	return __crt_interlocked_compare_exchange_pointer(target, nullptr, nullptr);
 }
 
-
-
-static HMODULE __fastcall try_load_library_from_system_directory(wchar_t const* const name) noexcept
-{
-	return LoadLibraryExW(name, nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-}
-
-
-#define USING_UNSAFE_LOAD 0x00000001
+// 改选项非常危险，只调用GetModuleHandleW！！!
+#define USING_GET_MODULE_HANDLE 0x00000001
 #define LOAD_AS_DATA_FILE 0x00000002
+// 该加载模式存在劫持风险，使用前请确认。
+#define USING_UNSAFE_LOAD 0x00000004
 
-static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name, int Flags) noexcept
-{
-	// First check to see if we've cached the module handle:
-	if (HMODULE const cached_handle = __crt_interlocked_read_pointer(pModule))
-	{
-		if (cached_handle == INVALID_HANDLE_VALUE)
-		{
-			return nullptr;
-		}
-
-		return cached_handle;
-	}
-
-	// If we haven't yet cached the module handle, try to load the library.  If
-	// this fails, cache the sentinel handle value INVALID_HANDLE_VALUE so that
-	// we don't attempt to load the module again:
-    HMODULE new_handle = NULL;
-    if (Flags & LOAD_AS_DATA_FILE)
-    {
-        new_handle = LoadLibraryExW(module_name, NULL, LOAD_LIBRARY_AS_DATAFILE);
-    }
-    else if (Flags & USING_UNSAFE_LOAD)
-    {
-        new_handle = LoadLibraryW(module_name);
-    }
-    else
-    {
-        new_handle = try_load_library_from_system_directory(module_name);
-    }
-    
-	if (!new_handle)
-	{
-		if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(pModule, INVALID_HANDLE_VALUE))
-		{
-			_ASSERTE(cached_handle == INVALID_HANDLE_VALUE);
-		}
-
-		return nullptr;
-	}
-
-	// Swap the new handle into the cache.  If the cache no longer contained a
-	// null handle, then some other thread loaded the module and cached the
-	// handle while we were doing the same.  In that case, we free the handle
-	// once to maintain the reference count:
-	if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(pModule, new_handle))
-	{
-		_ASSERTE(cached_handle == new_handle);
-		FreeLibrary(new_handle);
-	}
-
-	return new_handle;
-}
+static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name, int Flags) noexcept;
 
 #define _APPLY(_MODULE, _NAME, _FLAGS)                                                         \
     static HMODULE __fastcall _CRT_CONCATENATE(try_get_module_, _MODULE)() noexcept            \
@@ -330,33 +324,61 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
 _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)
 #undef _APPLY
 
+struct ProcInfo;
 typedef HMODULE (__fastcall* try_get_module_fun)();
-typedef void*(__fastcall* try_get_proc_fallback_fun)();
+typedef void*(__fastcall* custom_try_get_proc_fun)(const ProcInfo& _ProcInfo);
 
 struct ProcInfo
 {
     char const* const szProcName;
     try_get_module_fun pfnGetModule;
-    try_get_proc_fallback_fun pfnGetProcFallback;
+    custom_try_get_proc_fun pfnCustomGetProcAddress;
 };
 
 static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
 	const ProcInfo& _ProcInfo
+    ) noexcept;
+
+static __forceinline void* __fastcall try_get_proc_address_from_dll(
+	const ProcInfo& _ProcInfo
+    ) noexcept;
+
+struct ProcOffsetInfo
+{
+    DWORD uTimeDateStamp;
+    DWORD uProcOffset;
+};
+
+template<size_t kLength>
+static __forceinline void* __fastcall try_get_proc_address_from_offset(
+	HMODULE _hModule,
+    const ProcOffsetInfo (&_ProcOffsetInfos)[kLength]
     ) noexcept
 {
-	HMODULE const module_handle = _ProcInfo.pfnGetModule();
-	if (!module_handle)
-	{
-		return nullptr;
-	}
+    if (_hModule)
+    {
+        __try
+        {
+            const auto _uTimeDateStamp = GetDllTimeDateStamp(_hModule);
+            if (_uTimeDateStamp)
+            {
+                for (auto& _ProcOffsetInfo : _ProcOffsetInfos)
+                {
+                    if (_ProcOffsetInfo.uTimeDateStamp == _uTimeDateStamp)
+                    {
+                        return PBYTE(_hModule) + _ProcOffsetInfo.uProcOffset;
+                    }
+                }
+            }
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+            // 避免遇到畸形DLL而触发异常。
+        }
+    }
 
-	auto _pProc = reinterpret_cast<void*>(GetProcAddress(module_handle, _ProcInfo.szProcName));
-    if (_pProc || _ProcInfo.pfnGetProcFallback == nullptr)
-        return _pProc;
-
-    return _ProcInfo.pfnGetProcFallback();
+    return nullptr;
 }
-
 
 static __forceinline void* __cdecl invalid_function_sentinel() noexcept
 {

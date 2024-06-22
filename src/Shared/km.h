@@ -106,6 +106,8 @@
 
 #define NtGetCurrentProcess() (HANDLE)-1
 
+#define NtGetCurrentThread() (HANDLE)-2
+
 // begin_access
 #define DUPLICATE_CLOSE_SOURCE      0x00000001  
 #define DUPLICATE_SAME_ACCESS       0x00000002  
@@ -1579,6 +1581,21 @@ NtQueryDirectoryFile (
 		ObjectDataInformation
 
 	};
+
+    typedef struct _OBJECT_BASIC_INFORMATION
+    {
+        ULONG Attributes;
+        ACCESS_MASK GrantedAccess;
+        ULONG HandleCount;
+        ULONG PointerCount;
+        ULONG PagedPoolCharge;
+        ULONG NonPagedPoolCharge;
+        ULONG Reserved[3];
+        ULONG NameInfoSize;
+        ULONG TypeInfoSize;
+        ULONG SecurityDescriptorSize;
+        LARGE_INTEGER CreationTime;
+    } OBJECT_BASIC_INFORMATION, * POBJECT_BASIC_INFORMATION;
 
 	typedef struct _OBJECT_NAME_INFORMATION
 	{
@@ -5204,6 +5221,21 @@ typedef struct _KUSER_SHARED_DATA
 
 #define KI_USER_SHARED_DATA 0x7ffe0000
 const auto SharedUserData = reinterpret_cast<const KUSER_SHARED_DATA*>(KI_USER_SHARED_DATA);
+
+EXTERN_C NTSYSAPI BOOLEAN NTAPI RtlValidSid(_In_ PSID Sid);
+
+EXTERN_C NTSYSAPI BOOLEAN NTAPI RtlValidAcl(IN PACL Acl);
+
+EXTERN_C NTSYSAPI BOOLEAN NTAPI RtlFirstFreeAce(
+    IN PACL Acl,
+    OUT PVOID* FirstFree
+    );
+
+EXTERN_C NTSYSAPI NTSTATUS NTAPI RtlCopySid(
+    IN ULONG DestinationSidLength,
+    OUT PSID DestinationSid,
+    IN PSID SourceSid
+    );
 
 #pragma warning(pop)
 #if defined __cplusplus && !defined _Disallow_YY_KM_Namespace

@@ -1,14 +1,38 @@
-﻿// 忽略非标准的 0 数组警告。
+﻿/*
+YY-Thunks支持的控制宏：
+1. __FALLBACK_PREFIX：编译Lib库模式使用的API前缀修饰。一般来说只能为空或者传递 "YY_Thunks_"。
+2. __USING_NTDLL_LIB：假定构建环境存在ntdll.lib，这可以减少一些NTDLL相关函数的动态加载。
+
+特殊支持的变通方案：
+1. __ENABLE_WORKAROUND_ALL
+启用所有兼容方案，即__ENABLE_WORKAROUND_1 ~ __ENABLE_WORKAROUND_N，全部开启。
+
+2. __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng
+兼容方案1：让GetProcAddress也能取到ProcessPrng函数地址。某些代码可能强制依赖ProcessPrng。
+
+3. __ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL
+兼容方案2：Windows 8.1以前的版本对于匿名对象无法生效DACL。就会导致Chrome的CheckPlatformHandlePermissionsCorrespondToMode判断不准确。
+修复方案通过给匿名对象创建一个名字解决该问题。
+
+特定项目的兼容方案：
+1.  __APPLY_CHROMIUM_WORKAROUNDS
+开启Chrome项目的兼容能力，等效于同时指定__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng、__ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL。
+
+*/
+
+// 忽略非标准的 0 数组警告。
 #pragma warning(disable:4200)
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 
 #define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                                     \
-    _APPLY(ntdll,                                        "ntdll"                              , USING_UNSAFE_LOAD ) \
-    _APPLY(kernel32,                                     "kernel32"                           , USING_UNSAFE_LOAD ) \
+    _APPLY(ntdll,                                        "ntdll"                              , USING_GET_MODULE_HANDLE ) \
+    _APPLY(kernel32,                                     "kernel32"                           , USING_GET_MODULE_HANDLE ) \
+    _APPLY(cfgmgr32,                                     "cfgmgr32"                           , 0                 ) \
     _APPLY(crypt32,                                      "crypt32"                            , 0                 ) \
     _APPLY(dwmapi,                                       "dwmapi"                             , 0                 ) \
     _APPLY(d3d9,                                         "d3d9"                               , 0                 ) \
     _APPLY(d3d11,                                        "d3d11"                              , 0                 ) \
+    _APPLY(d3d12,                                        "d3d12"                              , 0                 ) \
     _APPLY(dbghelp,                                      "dbghelp"                            , USING_UNSAFE_LOAD ) \
     _APPLY(dxgi,                                         "dxgi"                               , 0                 ) \
     _APPLY(dwrite,                                       "dwrite"                             , 0                 ) \
@@ -31,13 +55,19 @@
     _APPLY(ole32,                                        "ole32"                              , 0                 ) \
     _APPLY(iphlpapi,                                     "iphlpapi"                           , 0                 ) \
     _APPLY(userenv,                                      "userenv"                            , 0                 ) \
+    _APPLY(mf,                                           "mf"                                 , 0                 ) \
     _APPLY(mfplat,                                       "mfplat"                             , 0                 ) \
+    _APPLY(mfreadwrite,                                  "mfreadwrite"                        , 0                 ) \
+    _APPLY(ndfapi,                                       "ndfapi"                             , 0                 ) \
     _APPLY(bluetoothapis,                                "bluetoothapis"                      , 0                 ) \
     _APPLY(netapi32,                                     "netapi32"                           , 0                 ) \
     _APPLY(powrprof,                                     "powrprof"                           , 0                 ) \
+    _APPLY(propsys,                                      "propsys"                            , 0                 ) \
     _APPLY(wevtapi,                                      "wevtapi"                            , 0                 ) \
     _APPLY(winhttp,                                      "winhttp"                            , 0                 ) \
+    _APPLY(winusb,                                       "winusb"                             , 0                 ) \
     _APPLY(zipfldr,                                      "zipfldr"                            , LOAD_AS_DATA_FILE ) \
+    _APPLY(api_ms_win_core_handle_l1_1_0,                "api-ms-win-core-handle-l1-1-0"      , 0                 ) \
     _APPLY(api_ms_win_core_realtime_l1_1_1,              "api-ms-win-core-realtime-l1-1-1"    , 0                 ) \
     _APPLY(api_ms_win_core_winrt_l1_1_0,                 "api-ms-win-core-winrt-l1-1-0"       , 0                 ) \
     _APPLY(api_ms_win_core_winrt_string_l1_1_0,          "api-ms-win-core-winrt-string-l1-1-0", 0                 ) \
@@ -64,6 +94,9 @@
     _APPLY(NtSetInformationThread,                       ntdll                                         ) \
     _APPLY(NtQueryInformationProcess,                    ntdll                                         ) \
     _APPLY(NtSetInformationProcess,                      ntdll                                         ) \
+    _APPLY(NtDeleteKey,                                  ntdll                                         ) \
+    _APPLY(NtCreateKey,                                  ntdll                                         ) \
+    _APPLY(NtOpenKey,                                    ntdll                                         ) \
     _APPLY(NtOpenKeyedEvent,                             ntdll                                         ) \
     _APPLY(NtWaitForKeyedEvent,                          ntdll                                         ) \
     _APPLY(NtReleaseKeyedEvent,                          ntdll                                         ) \
@@ -76,6 +109,10 @@
     _APPLY(RtlCutoverTimeToSystemTime,                   ntdll                                         ) \
     _APPLY(NtCancelIoFile,                               ntdll                                         ) \
     _APPLY(NtWow64ReadVirtualMemory64,                   ntdll                                         ) \
+    _APPLY(RtlValidSid,                                  ntdll                                         ) \
+    _APPLY(RtlValidAcl,                                  ntdll                                         ) \
+    _APPLY(RtlFirstFreeAce,                              ntdll                                         ) \
+    _APPLY(RtlCopySid,                                   ntdll                                         ) \
     _APPLY(AddDllDirectory,                              kernel32                                      ) \
     _APPLY(SystemFunction036,                            advapi32                                      )
 
@@ -101,6 +138,26 @@
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
 #define __WarningMessage__(msg) __pragma(message (__FILE__ "(" STRING(__LINE__) "): warning Thunks: " # msg))
+#endif
+
+#if !defined(__ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng) && (defined(__ENABLE_WORKAROUND_ALL) || defined(__APPLY_CHROMIUM_WORKAROUNDS))
+#define __ENABLE_WORKAROUND_1_GetProcAddress_ProcessPrng 1
+#endif
+
+#if !defined(__ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL) && (defined(__ENABLE_WORKAROUND_ALL) || defined(__APPLY_CHROMIUM_WORKAROUNDS))
+#define __ENABLE_WORKAROUND_2_UNNAME_OBJECT_DACL 1
+#endif
+
+#ifndef __FALLBACK_PREFIX
+#define __FALLBACK_PREFIX
+#define __YY_Thunks_libs 0
+#else
+#define __YY_Thunks_libs 1
+#endif
+
+#if !defined(__USING_NTDLL_LIB) && (__YY_Thunks_libs || YY_Thunks_Support_Version >= NTDDI_WIN10)
+// lib模式下必然存在 ntdll.lib，此外最小支持Windows 10时，我们因为强制依赖Windows 10 SDK，所以也必然存在ntdll.lib。
+#define __USING_NTDLL_LIB 1
 #endif
 
 #define _Disallow_YY_KM_Namespace
@@ -184,14 +241,11 @@ RtlCutoverTimeToSystemTime(
 #pragma comment(lib, "User32.lib")
 #endif
 
-#include <HookThunk.h>
-
-#ifndef __FALLBACK_PREFIX
-#define __FALLBACK_PREFIX
-#define __YY_Thunks_libs 0
-#else
-#define __YY_Thunks_libs 1
+#if defined(__USING_NTDLL_LIB)
+#pragma comment(lib, "ntdll.lib")
 #endif
+
+#include <HookThunk.h>
 
 //展开函数的所有的 声明 以及 try_get_ 函数
 #define __DEFINE_THUNK_EXTERN_PREFIX(_PREFIX, _MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                      \
@@ -250,6 +304,34 @@ namespace YY::Thunks::internal
         {
             const auto _pPeb = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock;
             return internal::MakeVersion(_pPeb->OSMajorVersion, _pPeb->OSMinorVersion);
+        }
+
+        const SYSTEM_INFO& GetNativeSystemInfo()
+        {
+            static SYSTEM_INFO s_SystemInfo;
+            // 0： 尚未初始化
+            // 1：正在初始化
+            // 2：已经初始化完成
+            static volatile LONG s_InitOnce;
+
+            auto _nResult = InterlockedCompareExchange(&s_InitOnce, 1, 0);
+            if (_nResult == 0)
+            {
+                // 成功锁定
+                ::GetNativeSystemInfo(&s_SystemInfo);
+                InterlockedExchange(&s_InitOnce, 2);
+            }
+            else if (_nResult == 1)
+            {
+                // 其他线程正在初始化
+                do
+                {
+                    YieldProcessor();
+
+                } while (s_InitOnce == 1);
+            }
+
+            return s_SystemInfo;
         }
 
         _Check_return_
@@ -569,6 +651,28 @@ namespace YY::Thunks::internal
         }
 
 
+        /// <summary>
+        /// 计算字符串长度，某些场景我们特意不依赖wcslen之类的，防止发生死锁。
+        /// </summary>
+        /// <typeparam name="Char"></typeparam>
+        /// <param name="_szString"></param>
+        /// <param name="_cchMaxLength"></param>
+        /// <returns></returns>
+        template<typename Char>
+        constexpr size_t StringLength(_In_z_ const Char* _szString, size_t _cchMaxLength = -1)
+        {
+            if (!_szString)
+                return 0;
+
+            size_t _cchString = 0;
+            for (;_cchMaxLength && *_szString;--_cchMaxLength, ++_szString)
+            {
+                ++_cchString;
+            }
+
+            return _cchString;
+        }
+
         template<typename Char>
         class StringBuffer
         {
@@ -715,12 +819,13 @@ namespace YY::Thunks::internal
                 if (!bCanFree)
                     return nullptr;
 
-                auto _szNewBuffer = (Char*)internal::ReAlloc(szBuffer, _cNewBufferLength);
+                auto _szNewBuffer = (Char*)internal::ReAlloc(szBuffer, _cNewBufferLength * sizeof(Char));
                 if (!_szNewBuffer)
                     return nullptr;
 
                 szBuffer = _szNewBuffer;
                 uBufferLength = _cNewBufferLength;
+                szBuffer[uLength] = 0;
                 return _szNewBuffer;
             }
 
@@ -750,6 +855,64 @@ namespace YY::Thunks::internal
                 {
                     GetBuffer(max(uBufferLength * 2, _uNew));
                 }
+            }
+
+            bool __fastcall AppendGUID(_In_ const GUID& _Id)
+            {
+                TryBuy(36);
+
+                const auto _uLengthNew = uLength + 36;
+                if (_uLengthNew >= uBufferLength)
+                {
+                    return false;
+                }
+
+                // C0F8B35B-3CA6-4E57-9B65-B654B33AE583
+                auto _szHexChar = "0123456789abcdef";
+                auto _pBuffer = szBuffer + uLength;
+                *_pBuffer++ = _szHexChar[_Id.Data1 >> 28];
+                *_pBuffer++ = _szHexChar[(_Id.Data1 >> 24) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data1 >> 20) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data1 >> 16) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data1 >> 12) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data1 >> 8) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data1 >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data1 & 0xF];
+
+                *_pBuffer++ = '-';
+                *_pBuffer++ = _szHexChar[(_Id.Data2 >> 12) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data2 >> 8) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data2 >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data2 & 0xF];
+
+                *_pBuffer++ = '-';
+                *_pBuffer++ = _szHexChar[(_Id.Data3 >> 12) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data3 >> 8) & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data3 >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data3 & 0xF];
+
+                *_pBuffer++ = '-';
+                *_pBuffer++ = _szHexChar[(_Id.Data4[0] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[0] & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data4[1] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[1] & 0xF];
+
+                *_pBuffer++ = '-';
+                *_pBuffer++ = _szHexChar[(_Id.Data4[2] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[2] & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data4[3] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[3] & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data4[4] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[4] & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data4[5] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[5] & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data4[6] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[6] & 0xF];
+                *_pBuffer++ = _szHexChar[(_Id.Data4[7] >> 4) & 0xF];
+                *_pBuffer++ = _szHexChar[_Id.Data4[7] & 0xF];
+                *_pBuffer = 0;
+                uLength = _uLengthNew;
+                return true;
             }
         };
 
@@ -783,6 +946,43 @@ namespace YY::Thunks::internal
             return ERROR_SUCCESS;
         }
 
+        static bool __fastcall IsEqualI(const UNICODE_STRING& _Left, const UNICODE_STRING& _Right)
+        {
+            if (_Left.Length != _Right.Length)
+                return false;
+
+            return StringCompareIgnoreCaseByAscii(_Left.Buffer, _Right.Buffer, _Left.Length / 2) == 0;
+        }
+
+        static bool __fastcall IsEqual(const UNICODE_STRING& _Left, const UNICODE_STRING& _Right)
+        {
+            if (_Left.Length != _Right.Length)
+                return false;
+
+            return memcmp(_Left.Buffer, _Right.Buffer, _Left.Length) == 0;
+        }
+
+        static constexpr UNICODE_STRING __fastcall MakeNtString(_In_z_ const wchar_t* _szString)
+        {
+            const auto _cbString = StringLength(_szString) * sizeof(_szString[0]);
+            UNICODE_STRING _Result = { (USHORT)max(UINT16_MAX, _cbString),  (USHORT)max(UINT16_MAX, _cbString + sizeof(_szString[0])), const_cast<PWSTR>(_szString) };
+            return _Result;
+        }
+
+        static constexpr ANSI_STRING __fastcall MakeNtString(_In_z_ const char* _szString)
+        {
+            const auto _cbString = StringLength(_szString) * sizeof(_szString[0]);
+
+            ANSI_STRING _Result = { (USHORT)max(UINT16_MAX, _cbString),  (USHORT)max(UINT16_MAX, _cbString + sizeof(_szString[0])), const_cast<PSTR>(_szString)};
+            return _Result;
+        }
+
+        template<size_t kLength>
+        static constexpr UNICODE_STRING __fastcall MakeStaticUnicodeString(const wchar_t (&_Right)[kLength])
+        {
+            UNICODE_STRING _Result = { (kLength - 1)* sizeof(_Right[0]), kLength * sizeof(_Right[0]), const_cast<PWSTR>(_Right) };
+            return _Result;
+        }
 	}
 
 } //namespace YY
@@ -826,3 +1026,143 @@ __if_exists(YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION))        
 
 #undef __DEFINE_THUNK
 #undef YY_Thunks_Implemented
+
+static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name, int Flags) noexcept
+{
+    // First check to see if we've cached the module handle:
+    if (HMODULE const cached_handle = __crt_interlocked_read_pointer(pModule))
+    {
+        if (cached_handle == INVALID_HANDLE_VALUE)
+        {
+            return nullptr;
+        }
+
+        return cached_handle;
+    }
+
+    // If we haven't yet cached the module handle, try to load the library.  If
+    // this fails, cache the sentinel handle value INVALID_HANDLE_VALUE so that
+    // we don't attempt to load the module again:
+    HMODULE new_handle = NULL;
+    if (Flags & USING_GET_MODULE_HANDLE)
+    {
+        new_handle = GetModuleHandleW(module_name);
+    }
+    else
+    {
+        // 我们不能直接使用 LoadLibraryExW，因为它可能被Thunk。
+        __if_exists(YY::Thunks::try_get_LoadLibraryExW)
+        {
+            const auto LoadLibraryExW = YY::Thunks::try_get_LoadLibraryExW();
+            if (!LoadLibraryExW)
+                return nullptr;
+        }
+
+        if (Flags & LOAD_AS_DATA_FILE)
+        {
+            new_handle = LoadLibraryExW(module_name, NULL, LOAD_LIBRARY_AS_DATAFILE);
+        }
+        else if (Flags & USING_UNSAFE_LOAD)
+        {
+            new_handle = LoadLibraryExW(module_name, nullptr, 0);
+        }
+        else
+        {
+            // 使用DLL安全加载
+#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+            if (!try_get_AddDllDirectory())
+            {
+#if !defined(__USING_NTDLL_LIB)
+                const auto LdrLoadDll = try_get_LdrLoadDll();
+                if (!LdrLoadDll)
+                    return nullptr;
+#endif
+                wchar_t szFilePathBuffer[MAX_PATH] = {};
+                const auto _cchSystemPath = GetSystemDirectoryW(szFilePathBuffer, _countof(szFilePathBuffer));
+                if (_cchSystemPath == 0 || _cchSystemPath >= _countof(szFilePathBuffer))
+                {
+                    // 回落普通加载，按理说 GetSystemDirectoryW不应该发生这样的失败。
+                    new_handle = LoadLibraryExW(module_name, nullptr, 0);
+                }
+                else
+                {
+                    auto _sModuleName = YY::Thunks::internal::MakeNtString(module_name);
+                    LdrLoadDll(szFilePathBuffer, nullptr, &_sModuleName, &new_handle);
+                }
+            }
+            else
+#endif
+            {
+                new_handle = LoadLibraryExW(module_name, nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+            }
+        }
+    }
+
+    if (!new_handle)
+    {
+        if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(pModule, INVALID_HANDLE_VALUE))
+        {
+            _ASSERTE(cached_handle == INVALID_HANDLE_VALUE);
+        }
+
+        return nullptr;
+    }
+
+    // Swap the new handle into the cache.  If the cache no longer contained a
+    // null handle, then some other thread loaded the module and cached the
+    // handle while we were doing the same.  In that case, we free the handle
+    // once to maintain the reference count:
+    if (HMODULE const cached_handle = __crt_interlocked_exchange_pointer(pModule, new_handle))
+    {
+        _ASSERTE(cached_handle == new_handle);
+        FreeLibrary(new_handle);
+    }
+
+    return new_handle;
+}
+
+static __forceinline void* __fastcall try_get_proc_address_from_dll(
+	const ProcInfo& _ProcInfo
+    ) noexcept
+{
+    HMODULE const module_handle = _ProcInfo.pfnGetModule();
+    if (!module_handle)
+    {
+        return nullptr;
+    }
+
+    // 无法直接调用GetProcAddress，因为GetProcAddress可能被Thunk
+    // 我们需要严格判断，避免发生死锁。
+#if defined(__USING_NTDLL_LIB)
+    void* _pProc = nullptr;
+    if (uintptr_t(_ProcInfo.szProcName) > UINT16_MAX)
+    {
+        ANSI_STRING _sFunctionName = YY::Thunks::internal::MakeNtString(_ProcInfo.szProcName);
+        LdrGetProcedureAddress(module_handle, &_sFunctionName, 0, &_pProc);
+    }
+    else
+    {
+        LdrGetProcedureAddress(module_handle, nullptr, (WORD)uintptr_t(_ProcInfo.szProcName), &_pProc);
+    }
+    return _pProc;
+#else // !defined(__USING_NTDLL_LIB)
+    __if_exists(YY::Thunks::try_get_GetProcAddress)
+    {
+        const auto GetProcAddress = YY::Thunks::try_get_GetProcAddress();
+    }
+
+    return reinterpret_cast<void*>(GetProcAddress(module_handle, _ProcInfo.szProcName));
+#endif // defined(__USING_NTDLL_LIB)
+}
+
+static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
+    const ProcInfo& _ProcInfo
+    ) noexcept
+{
+    if (_ProcInfo.pfnCustomGetProcAddress)
+    {
+        return _ProcInfo.pfnCustomGetProcAddress(_ProcInfo);
+    }
+
+    return try_get_proc_address_from_dll(_ProcInfo);
+}

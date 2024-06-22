@@ -7,111 +7,6 @@
 #pragma comment(lib, "Setupapi.lib")
 #endif
 
-#ifdef YY_Thunks_Implemented
-namespace YY::Thunks::internal
-{
-    namespace
-    {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-        static int __fastcall DevicePropertyKeyToPropertyType(CONST DEVPROPKEY* PropertyKey, _Out_ DEVPROPTYPE* pPropertyType)
-        {
-            static constexpr const GUID PropertyId = { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } };
-
-            constexpr int IndexStart = 2;
-
-            static constexpr const DEVPROPTYPE PropertyIdTypeIndex[] =
-            {
-                DEVPROP_TYPE_STRING,       //2
-                DEVPROP_TYPE_STRING_LIST,  //3
-                DEVPROP_TYPE_STRING_LIST,  //4
-                -1,                        //5
-                DEVPROP_TYPE_STRING,       //6
-                -1,                        //7
-                -1,                        //8
-                DEVPROP_TYPE_STRING,       //9
-                DEVPROP_TYPE_GUID,         //10
-                DEVPROP_TYPE_STRING,       //11
-                DEVPROP_TYPE_UINT32,       //12
-                DEVPROP_TYPE_STRING,       //13
-                DEVPROP_TYPE_STRING,       //14
-                DEVPROP_TYPE_STRING,       //15
-                DEVPROP_TYPE_STRING,       //16
-                DEVPROP_TYPE_UINT32,       //17
-                DEVPROP_TYPE_UINT32,       //18
-                DEVPROP_TYPE_STRING_LIST,  //19,
-                DEVPROP_TYPE_STRING_LIST,  //20
-                DEVPROP_TYPE_GUID,         //21
-                DEVPROP_TYPE_UINT32,       //22
-                DEVPROP_TYPE_UINT32,       //23
-                DEVPROP_TYPE_STRING,       //24
-                DEVPROP_TYPE_SECURITY_DESCRIPTOR,        //25
-                DEVPROP_TYPE_SECURITY_DESCRIPTOR_STRING, //26
-                DEVPROP_TYPE_UINT32,       //27
-                DEVPROP_TYPE_BOOLEAN,      //28
-                DEVPROP_TYPE_UINT32,       //29
-                DEVPROP_TYPE_UINT32,       //30
-                DEVPROP_TYPE_STRING,       //31
-                DEVPROP_TYPE_BINARY,       //32
-                DEVPROP_TYPE_UINT32,       //33
-                DEVPROP_TYPE_UINT32,       //34
-                DEVPROP_TYPE_UINT32,       //35
-                DEVPROP_TYPE_UINT32,       //36
-                DEVPROP_TYPE_STRING_LIST,  //37
-                DEVPROP_TYPE_GUID,         //38
-            };
-
-            if ( memcmp(&PropertyKey->fmtid, &PropertyId, sizeof(PropertyId)) != 0
-                || PropertyKey->pid < IndexStart || PropertyKey->pid >= _countof(PropertyIdTypeIndex) + IndexStart)
-            {
-                return -1;
-            }
-
-            const auto Property = PropertyKey->pid - IndexStart;
-            auto PropertyType = PropertyIdTypeIndex[Property];
-
-            if (PropertyType == -1)
-                return -1;
-                
-            *pPropertyType = PropertyType;
-
-            return Property;
-        }
-
-
-        static int __fastcall ClassPropertyKeyToPropertyType(CONST DEVPROPKEY* PropertyKey, _Out_ DEVPROPTYPE* PropertyType)
-        {
-            static constexpr const GUID PropertyId = { 0x4321918b, 0xf69e, 0x470d, { 0xa5, 0xde, 0x4d, 0x88, 0xc7, 0x5a, 0xd2, 0x4b } };
-
-            constexpr int IndexStart = 19;
-
-            static constexpr const DEVPROPTYPE PropertyIdTypeIndex[] =
-            {
-                DEVPROP_TYPE_STRING_LIST,
-                DEVPROP_TYPE_STRING_LIST,
-                DEVPROP_TYPE_SECURITY_DESCRIPTOR,
-                DEVPROP_TYPE_SECURITY_DESCRIPTOR_STRING,
-                DEVPROP_TYPE_UINT32,
-                DEVPROP_TYPE_BOOLEAN,
-                DEVPROP_TYPE_UINT32,
-            };
-
-            if (memcmp(&PropertyKey->fmtid, &PropertyId, sizeof(PropertyId)) != 0
-                || PropertyKey->pid < IndexStart || PropertyKey->pid >= _countof(PropertyIdTypeIndex) + IndexStart)
-            {
-                return -1;
-            }
-
-            auto Property = PropertyKey->pid - IndexStart;
-                
-            *PropertyType = PropertyIdTypeIndex[Property];
-
-            return Property + 0x11;
-        };
-#endif
-    }
-}
-#endif
-
 namespace YY::Thunks
 {
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
@@ -134,9 +29,21 @@ namespace YY::Thunks
         _In_         DWORD            Flags
         )
     {
-        if(const auto pSetupDiGetDevicePropertyW = try_get_SetupDiGetDevicePropertyW())
+        if(const auto _pfnSetupDiGetDevicePropertyW = try_get_SetupDiGetDevicePropertyW())
         {
-            return pSetupDiGetDevicePropertyW(DeviceInfoSet, DeviceInfoData, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, RequiredSize, Flags);
+            return _pfnSetupDiGetDevicePropertyW(DeviceInfoSet, DeviceInfoData, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, RequiredSize, Flags);
+        }
+
+        if (!DeviceInfoSet)
+        {
+            SetLastError(ERROR_INVALID_HANDLE);
+            return FALSE;
+        }
+
+        if (DeviceInfoData == nullptr || PropertyKey == nullptr || PropertyType == nullptr)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
         }
 
         if(Flags != 0)
@@ -145,33 +52,43 @@ namespace YY::Thunks
             return FALSE;
         }
 
-
-        DEVPROPTYPE Type;
-
-        const auto Property = internal::DevicePropertyKeyToPropertyType(PropertyKey, &Type);
-
-        if (Property == -1)
+        if (PropertyBuffer == nullptr && (PropertyBufferSize || RequiredSize == nullptr))
         {
-            SetLastError(ERROR_NOT_FOUND);
+            SetLastError(ERROR_INVALID_USER_BUFFER);
             return FALSE;
         }
 
-        if (!SetupDiGetDeviceRegistryPropertyW(DeviceInfoSet, DeviceInfoData, Property, NULL, PropertyBuffer, PropertyBufferSize, RequiredSize))
-            return FALSE;
-
-        if(PropertyType)
+        const auto _pProperty = Fallback::DevicePropertyToDeviceRegistryProperty(PropertyKey);
+        if (!_pProperty)
         {
-            *PropertyType = Type;
+            SetLastError(ERROR_INVALID_REG_PROPERTY);
+            return FALSE;
         }
 
-        return TRUE;
+        *PropertyType = _pProperty->PropertyType;
+        if (!Fallback::DevNodeTempPropertyBufffer::HasTransform(_pProperty->PropertyType))
+            return SetupDiGetDeviceRegistryPropertyW(DeviceInfoSet, DeviceInfoData, _pProperty->SP_DeviceRegistryProperty, NULL, PropertyBuffer, PropertyBufferSize, RequiredSize);
+
+        Fallback::DevNodeTempPropertyBufffer TempBuffer = {};
+        ULONG _cbTempBuffer = sizeof(TempBuffer);
+        if (!SetupDiGetDeviceRegistryPropertyW(DeviceInfoSet, DeviceInfoData, _pProperty->SP_DeviceRegistryProperty, NULL, PBYTE(&TempBuffer), _cbTempBuffer, &_cbTempBuffer))
+            return FALSE;
+
+        const auto _bRet = TempBuffer.TryTransformGetBuffer(_pProperty->PropertyType, PropertyBuffer, &PropertyBufferSize);
+        if (RequiredSize)
+            *RequiredSize = PropertyBufferSize;
+
+        if(!_bRet)
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+
+        return _bRet;
     }
 #endif //!YY_Thunks_Support_Version < NTDDI_WIN6
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    //Available in Windows Vista and later versions of Windows.
+    // Available in Windows Vista and later versions of Windows.
     __DEFINE_THUNK(
     setupapi,
     28,
@@ -182,14 +99,26 @@ namespace YY::Thunks
         _In_         PSP_DEVINFO_DATA DeviceInfoData,
         _In_   CONST DEVPROPKEY      *PropertyKey,
         _In_         DEVPROPTYPE      PropertyType,
-        _In_reads_bytes_opt_(PropertyBufferSize) CONST PBYTE PropertyBuffer,
+        _In_reads_bytes_opt_(PropertyBufferSize) PBYTE PropertyBuffer,
         _In_         DWORD            PropertyBufferSize,
         _In_         DWORD            Flags
         )
     {
-        if (const auto pSetupDiSetDevicePropertyW = try_get_SetupDiSetDevicePropertyW())
+        if (const auto _pfnSetupDiSetDevicePropertyW = try_get_SetupDiSetDevicePropertyW())
         {
-            return pSetupDiSetDevicePropertyW(DeviceInfoSet, DeviceInfoData, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, Flags);
+            return _pfnSetupDiSetDevicePropertyW(DeviceInfoSet, DeviceInfoData, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, Flags);
+        }
+
+        if (!DeviceInfoSet)
+        {
+            SetLastError(ERROR_INVALID_HANDLE);
+            return FALSE;
+        }
+
+        if (DeviceInfoData == nullptr || PropertyKey == nullptr)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
         }
 
         if (Flags != 0)
@@ -198,30 +127,40 @@ namespace YY::Thunks
             return FALSE;
         }
 
-        DEVPROPTYPE Type;
-
-        const auto Property = internal::DevicePropertyKeyToPropertyType(PropertyKey, &Type);
-
-        if (Property == -1)
+        if (PropertyBuffer == nullptr && PropertyBufferSize)
         {
-            SetLastError(ERROR_NOT_FOUND);
+            SetLastError(ERROR_INVALID_USER_BUFFER);
             return FALSE;
         }
 
-        if(Type == PropertyType)
+        const auto _pProperty = Fallback::DevicePropertyToDeviceRegistryProperty(PropertyKey);
+        if (!_pProperty)
+        {
+            SetLastError(ERROR_INVALID_REG_PROPERTY);
+            return FALSE;
+        }
+
+        if(_pProperty->PropertyType != PropertyType)
         {
             SetLastError(ERROR_INVALID_DATA);
             return FALSE;
         }
 
-        return SetupDiSetDeviceRegistryPropertyW(DeviceInfoSet, DeviceInfoData, Property, PropertyBuffer, PropertyBufferSize);
+        Fallback::DevNodeTempPropertyBufffer TempBuffer;
+        if (!TempBuffer.TryTransformSetBuffer(PropertyType, &PropertyBuffer, &PropertyBufferSize))
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
+
+        return SetupDiSetDeviceRegistryPropertyW(DeviceInfoSet, DeviceInfoData, PropertyType, PropertyBuffer, PropertyBufferSize);
     }
 #endif
 
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN6)
 
-    //Available in Windows Vista and later versions of Windows.
+    // Available in Windows Vista and later versions of Windows.
     __DEFINE_THUNK(
     setupapi,
     28,
@@ -238,32 +177,47 @@ namespace YY::Thunks
         _In_         DWORD            Flags
         )
     {
-        if(const auto pSetupDiGetClassPropertyW = try_get_SetupDiGetClassPropertyW())
+        if(const auto _pfnSetupDiGetClassPropertyW = try_get_SetupDiGetClassPropertyW())
         {
-            return pSetupDiGetClassPropertyW(ClassGuid, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, RequiredSize, Flags);
+            return _pfnSetupDiGetClassPropertyW(ClassGuid, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, RequiredSize, Flags);
         }
 
-        DEVPROPTYPE Type;
-
-        const auto Property = internal::ClassPropertyKeyToPropertyType(PropertyKey, &Type);
-
-        if (Property == -1)
+        if (ClassGuid == nullptr || PropertyType == nullptr || PropertyKey == nullptr)
         {
-            SetLastError(ERROR_NOT_FOUND);
+            SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
 
-        if(!SetupDiGetClassRegistryPropertyW(ClassGuid, Property, nullptr, PropertyBuffer, PropertyBufferSize, RequiredSize, nullptr, nullptr))
+        if (PropertyBuffer == nullptr && (PropertyBufferSize || RequiredSize == nullptr))
         {
+            SetLastError(ERROR_INVALID_USER_BUFFER);
             return FALSE;
         }
 
-        if (PropertyType)
+        const auto _pProperty = Fallback::ClassPropertyToClassRegistryProperty(PropertyKey);
+        if (!_pProperty)
         {
-            *PropertyType = Type;
+            SetLastError(ERROR_INVALID_REG_PROPERTY);
+            return FALSE;
         }
 
-        return TRUE;
+        *PropertyType = _pProperty->PropertyType;
+        if (!Fallback::DevNodeTempPropertyBufffer::HasTransform(_pProperty->PropertyType))
+            return SetupDiGetClassRegistryPropertyW(ClassGuid, _pProperty->SP_ClassRegistryProperty, nullptr, PropertyBuffer, PropertyBufferSize, RequiredSize, nullptr, nullptr);
+
+        Fallback::DevNodeTempPropertyBufffer TempBuffer = {};
+        ULONG _cbTempBuffer = sizeof(TempBuffer);
+        if (!SetupDiGetClassRegistryPropertyW(ClassGuid, _pProperty->SP_ClassRegistryProperty, nullptr, PBYTE(&TempBuffer), _cbTempBuffer, &_cbTempBuffer, nullptr, nullptr))
+            return FALSE;
+
+        const auto _bRet = TempBuffer.TryTransformGetBuffer(_pProperty->PropertyType, PropertyBuffer, &PropertyBufferSize);
+        if (RequiredSize)
+            *RequiredSize = PropertyBufferSize;
+
+        if (!_bRet)
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+
+        return _bRet;
     }
 #endif
 
@@ -288,32 +242,47 @@ namespace YY::Thunks
         _Reserved_   PVOID            Reserved
         )
     {
-        if (const auto pSetupDiGetClassPropertyExW = try_get_SetupDiGetClassPropertyExW())
+        if (const auto _pfnSetupDiGetClassPropertyExW = try_get_SetupDiGetClassPropertyExW())
         {
-            return pSetupDiGetClassPropertyExW(ClassGuid, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, RequiredSize, Flags, MachineName, Reserved);
+            return _pfnSetupDiGetClassPropertyExW(ClassGuid, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, RequiredSize, Flags, MachineName, Reserved);
         }
 
-        DEVPROPTYPE Type;
-
-        const auto Property = internal::ClassPropertyKeyToPropertyType(PropertyKey, &Type);
-
-        if (Property == -1)
+        if (ClassGuid == nullptr || PropertyType == nullptr || PropertyKey == nullptr)
         {
-            SetLastError(ERROR_NOT_FOUND);
+            SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
 
-        if (!SetupDiGetClassRegistryPropertyW(ClassGuid, Property, nullptr, PropertyBuffer, PropertyBufferSize, RequiredSize, MachineName, Reserved))
+        if (PropertyBuffer == nullptr && (PropertyBufferSize || RequiredSize == nullptr))
         {
+            SetLastError(ERROR_INVALID_USER_BUFFER);
             return FALSE;
         }
 
-        if (PropertyType)
+        const auto _pProperty = Fallback::ClassPropertyToClassRegistryProperty(PropertyKey);
+        if (!_pProperty)
         {
-            *PropertyType = Type;
+            SetLastError(ERROR_INVALID_REG_PROPERTY);
+            return FALSE;
         }
 
-        return TRUE;
+        *PropertyType = _pProperty->PropertyType;
+        if(!Fallback::DevNodeTempPropertyBufffer::HasTransform(_pProperty->PropertyType))
+            return SetupDiGetClassRegistryPropertyW(ClassGuid, _pProperty->SP_ClassRegistryProperty, nullptr, PropertyBuffer, PropertyBufferSize, RequiredSize, MachineName, Reserved);
+
+        Fallback::DevNodeTempPropertyBufffer TempBuffer = {};
+        ULONG _cbTempBuffer = sizeof(TempBuffer);
+        if (!SetupDiGetClassRegistryPropertyW(ClassGuid, _pProperty->SP_ClassRegistryProperty, nullptr, PBYTE(&TempBuffer), _cbTempBuffer, &_cbTempBuffer, MachineName, Reserved))
+            return FALSE;
+
+        const auto _bRet = TempBuffer.TryTransformGetBuffer(_pProperty->PropertyType, PropertyBuffer, &PropertyBufferSize);
+        if (RequiredSize)
+            *RequiredSize = PropertyBufferSize;
+
+        if (!_bRet)
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+
+        return _bRet;
     }
 #endif
 
@@ -330,33 +299,49 @@ namespace YY::Thunks
         _In_   CONST GUID            *ClassGuid,
         _In_   CONST DEVPROPKEY      *PropertyKey,
         _In_         DEVPROPTYPE      PropertyType,
-        _In_reads_bytes_opt_(PropertyBufferSize) CONST PBYTE PropertyBuffer,
+        _In_reads_bytes_opt_(PropertyBufferSize) PBYTE PropertyBuffer,
         _In_         DWORD            PropertyBufferSize,
         _In_         DWORD            Flags
         )
     {
-        if (const auto pSetupDiSetClassPropertyW = try_get_SetupDiSetClassPropertyW())
+        if (const auto _pfnSetupDiSetClassPropertyW = try_get_SetupDiSetClassPropertyW())
         {
-            return pSetupDiSetClassPropertyW(ClassGuid, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, Flags);
+            return _pfnSetupDiSetClassPropertyW(ClassGuid, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, Flags);
         }
 
-        DEVPROPTYPE Type;
-
-        const auto Property = internal::ClassPropertyKeyToPropertyType(PropertyKey, &Type);
-
-        if (Property == -1)
+        if (ClassGuid == nullptr || PropertyKey == nullptr)
         {
-            SetLastError(ERROR_NOT_FOUND);
+            SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
 
-        if (Type != PropertyType)
+        if (PropertyBuffer == nullptr && PropertyBufferSize)
+        {
+            SetLastError(ERROR_INVALID_USER_BUFFER);
+            return FALSE;
+        }
+
+        const auto _pProperty = Fallback::ClassPropertyToClassRegistryProperty(PropertyKey);
+        if (!_pProperty)
+        {
+            SetLastError(ERROR_INVALID_REG_PROPERTY);
+            return FALSE;
+        }
+
+        if (_pProperty->PropertyType != PropertyType)
         {
             SetLastError(ERROR_INVALID_DATA);
             return FALSE;
         }
 
-        return SetupDiSetClassRegistryPropertyW(ClassGuid, Property, PropertyBuffer, PropertyBufferSize, nullptr, nullptr);
+        Fallback::DevNodeTempPropertyBufffer TempBuffer;
+        if (!TempBuffer.TryTransformSetBuffer(PropertyType, &PropertyBuffer, &PropertyBufferSize))
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
+
+        return SetupDiSetClassRegistryPropertyW(ClassGuid, PropertyType, PropertyBuffer, PropertyBufferSize, nullptr, nullptr);
     }
 #endif
 
@@ -373,35 +358,51 @@ namespace YY::Thunks
         _In_   CONST GUID            *ClassGuid,
         _In_   CONST DEVPROPKEY      *PropertyKey,
         _In_         DEVPROPTYPE      PropertyType,
-        _In_reads_bytes_opt_(PropertyBufferSize) CONST PBYTE PropertyBuffer,
+        _In_reads_bytes_opt_(PropertyBufferSize) PBYTE PropertyBuffer,
         _In_         DWORD            PropertyBufferSize,
         _In_         DWORD            Flags,
         _In_opt_     PCWSTR           MachineName,
         _Reserved_   PVOID            Reserved
         )
     {
-        if (const auto pSetupDiSetClassPropertyExW = try_get_SetupDiSetClassPropertyExW())
+        if (const auto _pfnSetupDiSetClassPropertyExW = try_get_SetupDiSetClassPropertyExW())
         {
-            return pSetupDiSetClassPropertyExW(ClassGuid, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, Flags, MachineName, Reserved);
+            return _pfnSetupDiSetClassPropertyExW(ClassGuid, PropertyKey, PropertyType, PropertyBuffer, PropertyBufferSize, Flags, MachineName, Reserved);
         }
 
-        DEVPROPTYPE Type;
-
-        const auto Property = internal::ClassPropertyKeyToPropertyType(PropertyKey, &Type);
-
-        if (Property == -1)
+        if (ClassGuid == nullptr || PropertyKey == nullptr)
         {
-            SetLastError(ERROR_NOT_FOUND);
+            SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
 
-        if(Type != PropertyType)
+        if (PropertyBuffer == nullptr && PropertyBufferSize)
+        {
+            SetLastError(ERROR_INVALID_USER_BUFFER);
+            return FALSE;
+        }
+
+        const auto _pProperty = Fallback::ClassPropertyToClassRegistryProperty(PropertyKey);
+        if (!_pProperty)
+        {
+            SetLastError(ERROR_INVALID_REG_PROPERTY);
+            return FALSE;
+        }
+
+        if (_pProperty->PropertyType != PropertyType)
         {
             SetLastError(ERROR_INVALID_DATA);
             return FALSE;
         }
 
-        return SetupDiSetClassRegistryPropertyW(ClassGuid, Property, PropertyBuffer, PropertyBufferSize, MachineName, Reserved);
+        Fallback::DevNodeTempPropertyBufffer TempBuffer;
+        if (!TempBuffer.TryTransformSetBuffer(PropertyType, &PropertyBuffer, &PropertyBufferSize))
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
+
+        return SetupDiSetClassRegistryPropertyW(ClassGuid, PropertyType, PropertyBuffer, PropertyBufferSize, MachineName, Reserved);
     }
 #endif
 }

@@ -101,7 +101,17 @@ ULONGLONG WINAPI GetTickCount64(VOID)
 * 所有运行库模式均支持（比如：`/MD`、`/MT`、`/MDd`、`/MTd`）。
 
 ### 3.2. SDK版本要求
-至少需要SDK 6.0（VS2008默认附带）
+
+| Thunks等级         | 最低SDK要求
+| ------------------ | -----------
+| Windows 2000       | SDK 6.0（VS2008默认附带）
+| Windows XP(2003)   | SDK 6.0（VS2008默认附带）
+| Windows Vista      | SDK 6.0（VS2008默认附带）
+| Windows 7          | SDK 7.0
+| Windows 8          | SDK 8.0
+| Windows 8.1        | SDK 8.1
+| Windows 10 10240   | SDK 10.0.10240
+| Windows 10 19041   | SDK 10.0.19041
 
 > 温馨提示：VC6.0、VS2005用户请注意，由于这些编译器默认附带的SDK版本太低。请先将SDK升级到6.0或者更高版本，然后再使用YY-Thunks，否则将发生链接失败！
 高版本的SDK不影响对老系统的兼容性，请坐和放宽，安心升级。

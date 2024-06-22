@@ -70,7 +70,7 @@ namespace YY::Thunks
 					//始终保持 0 截断
 					StandardName[_countof(StandardName) - 1] = L'\0';
 
-					if (__wcsnicmp_ascii(StandardName, pTimeZoneInformation->StandardName, _countof(pTimeZoneInformation->StandardName)) == 0)
+					if (StringCompareIgnoreCaseByAscii(StandardName, pTimeZoneInformation->StandardName, _countof(pTimeZoneInformation->StandardName)) == 0)
 					{
 						memcpy(pTimeZoneInformation->TimeZoneKeyName, szTimeZoneKeyName, sizeof(szTimeZoneKeyName));
 

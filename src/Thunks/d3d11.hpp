@@ -1,4 +1,6 @@
-﻿#include <d3d11.h>
+﻿#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#include <d3d11.h>
+#endif
 
 namespace YY::Thunks
 {

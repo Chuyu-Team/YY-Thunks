@@ -96,7 +96,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>$(VCInstallDir)UnitTest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SymbolBuildTestPath=LR"($(ProjectDir)TestProject\)";YY_ThunksRootPath=LR"($(ProjectDir)..\..\)";MSBuildBinPath=LR"($(MSBuildBinPath)\)";__YY_Thunks_Unit_Test;WIN32;NDEBUG;YY_Thunks_Support_Version=NTDDI_WIN2K;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SymbolBuildTestPath=LR"($(ProjectDir)TestProject\)";YY_ThunksRootPath=LR"($(ProjectDir)..\..\)";MSBuildBinPath=LR"($(MSBuildBinPath)\)";__YY_Thunks_Unit_Test;WIN32;NDEBUG;YY_Thunks_Support_Version=NTDDI_WIN2K;__ENABLE_WORKAROUND_ALL;__USING_NTDLL_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UseFullPaths>true</UseFullPaths>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -104,6 +104,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <TreatSpecificWarningsAsErrors>4715;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/execution-charset:utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -117,7 +118,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(VCInstallDir)UnitTest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>SymbolBuildTestPath=LR"($(ProjectDir)TestProject\)";YY_ThunksRootPath=LR"($(ProjectDir)..\..\)";MSBuildBinPath=LR"($(MSBuildBinPath)\)";__YY_Thunks_Unit_Test;WIN32;_DEBUG;YY_Thunks_Support_Version=NTDDI_WIN2K;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SymbolBuildTestPath=LR"($(ProjectDir)TestProject\)";YY_ThunksRootPath=LR"($(ProjectDir)..\..\)";MSBuildBinPath=LR"($(MSBuildBinPath)\)";__YY_Thunks_Unit_Test;WIN32;_DEBUG;YY_Thunks_Support_Version=NTDDI_WIN2K;__ENABLE_WORKAROUND_ALL;__USING_NTDLL_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UseFullPaths>true</UseFullPaths>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -125,6 +126,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <TreatSpecificWarningsAsErrors>4715;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/execution-charset:utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -144,6 +146,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <TreatSpecificWarningsAsErrors>4715;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/execution-charset:utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -165,6 +168,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <TreatSpecificWarningsAsErrors>4715;%(TreatSpecificWarningsAsErrors)</TreatSpecificWarningsAsErrors>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/execution-charset:utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -175,6 +179,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="api-ms-win-core-handle.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-kernel32-legacy.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-power-base.UnitTest.cpp" />
     <ClCompile Include="bcrypt.UnitTest.cpp" />
@@ -190,6 +195,7 @@
     <ClCompile Include="api-ms-win-core-path.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-synch.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-threadpool.UnitTest.cpp" />
+    <ClCompile Include="PropSys.UnitTest.cpp" />
     <ClCompile Include="shell32.UnitTest.cpp" />
     <ClCompile Include="weak.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -213,6 +219,7 @@
     <ClInclude Include="..\Shared\InterlockedQueue.h" />
     <ClInclude Include="..\Shared\km.h" />
     <ClInclude Include="..\Thunks\api-ms-win-core-com.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-handle.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-kernel32-legacy.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-processtopology.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-rtlsupport.hpp" />
@@ -220,11 +227,14 @@
     <ClInclude Include="..\Thunks\api-ms-win-core-xstate.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-eventing-provider.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-power-base.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-security-base.hpp" />
     <ClInclude Include="..\Thunks\bcrypt.hpp" />
     <ClInclude Include="..\Thunks\BCryptPrimitives.hpp" />
     <ClInclude Include="..\Thunks\bluetoothapis.hpp" />
+    <ClInclude Include="..\Thunks\CfgMgr32.hpp" />
     <ClInclude Include="..\Thunks\Crypt32.hpp" />
     <ClInclude Include="..\Thunks\d3d11.hpp" />
+    <ClInclude Include="..\Thunks\d3d12.hpp" />
     <ClInclude Include="..\Thunks\d3d9.hpp" />
     <ClInclude Include="..\Thunks\dbghelp.hpp" />
     <ClInclude Include="..\Thunks\DllMainCRTStartup.hpp" />
@@ -238,19 +248,25 @@
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-powermanagement.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-sysparams-ext.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-window.hpp" />
+    <ClInclude Include="..\Thunks\ext-ms-win-rtcore-ntuser-wmpointer.hpp" />
     <ClInclude Include="..\Thunks\ext-ms-win-shell-shell32.hpp" />
     <ClInclude Include="..\Thunks\Iphlpapi.hpp" />
+    <ClInclude Include="..\Thunks\mf.hpp" />
     <ClInclude Include="..\Thunks\mfplat.hpp" />
+    <ClInclude Include="..\Thunks\mfreadwrite.hpp" />
+    <ClInclude Include="..\Thunks\ndfapi.hpp" />
     <ClInclude Include="..\Thunks\netapi32.hpp" />
     <ClInclude Include="..\Thunks\ntdll.hpp" />
     <ClInclude Include="..\Thunks\Pdh.hpp" />
     <ClInclude Include="..\Thunks\powrprof.hpp" />
+    <ClInclude Include="..\Thunks\PropSys.hpp" />
     <ClInclude Include="..\Thunks\ThreadRunner.h" />
     <ClInclude Include="..\Thunks\UIAutomationCore.hpp" />
     <ClInclude Include="..\Thunks\userenv.hpp" />
     <ClInclude Include="..\Thunks\uxtheme.hpp" />
     <ClInclude Include="..\Thunks\wevtapi.hpp" />
     <ClInclude Include="..\Thunks\WinHttp.hpp" />
+    <ClInclude Include="..\Thunks\WinUsb.hpp" />
     <ClInclude Include="..\Thunks\YY_Thunks.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="..\Thunks\api-ms-win-core-datetime.hpp" />

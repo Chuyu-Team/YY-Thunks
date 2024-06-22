@@ -259,7 +259,7 @@ namespace YY::Thunks
                 _In_                                        ULONG   dwFlags
                 ) override
             {
-                if (__wcsnicmp_ascii(BCRYPT_ALGORITHM_NAME, pszProperty, -1) == 0)
+                if (StringCompareIgnoreCaseByAscii(BCRYPT_ALGORITHM_NAME, pszProperty, -1) == 0)
                 {
                     *pcbResult = pMapItem->cbAlgId;
                     if (!pbOutput)
@@ -275,7 +275,7 @@ namespace YY::Thunks
                     memcpy(pbOutput, pMapItem->szAlgName, pMapItem->cbAlgId);
                     return STATUS_SUCCESS;
                 }
-                else if (__wcsnicmp_ascii(BCRYPT_PROVIDER_HANDLE, pszProperty, -1) == 0)
+                else if (StringCompareIgnoreCaseByAscii(BCRYPT_PROVIDER_HANDLE, pszProperty, -1) == 0)
                 {
                     *pcbResult = sizeof(BCRYPT_ALG_HANDLE);
                     if (!pbOutput)
@@ -511,7 +511,7 @@ namespace YY::Thunks
                 _In_                                        ULONG   dwFlags
                 ) override
             {
-                if (__wcsnicmp_ascii(BCRYPT_HASH_LENGTH, pszProperty, -1) == 0)
+                if (StringCompareIgnoreCaseByAscii(BCRYPT_HASH_LENGTH, pszProperty, -1) == 0)
                 {
                     *pcbResult = sizeof(DWORD);
                     if (!pbOutput)
@@ -527,7 +527,7 @@ namespace YY::Thunks
                     *reinterpret_cast<DWORD*>(pbOutput) = pAlgorithm->GetHashLength();
                     return STATUS_SUCCESS;
                 }
-                else if (__wcsnicmp_ascii(BCRYPT_ALGORITHM_NAME, pszProperty, -1) == 0)
+                else if (StringCompareIgnoreCaseByAscii(BCRYPT_ALGORITHM_NAME, pszProperty, -1) == 0)
                 {
                     *pcbResult = pAlgorithm->pMapItem->cbAlgId;
                     if (!pbOutput)
@@ -543,7 +543,7 @@ namespace YY::Thunks
                     memcpy(pbOutput, pAlgorithm->pMapItem->szAlgName, pAlgorithm->pMapItem->cbAlgId);
                     return STATUS_SUCCESS;
                 }
-                else if (__wcsnicmp_ascii(BCRYPT_PROVIDER_HANDLE, pszProperty, -1) == 0)
+                else if (StringCompareIgnoreCaseByAscii(BCRYPT_PROVIDER_HANDLE, pszProperty, -1) == 0)
                 {
                     *pcbResult = sizeof(BCRYPT_ALG_HANDLE);
                     if (!pbOutput)
@@ -583,7 +583,7 @@ namespace YY::Thunks
                 _In_                                        ULONG   dwFlags
                 ) override
             {
-                if (__wcsnicmp_ascii(BCRYPT_OBJECT_LENGTH, pszProperty, -1) == 0)
+                if (StringCompareIgnoreCaseByAscii(BCRYPT_OBJECT_LENGTH, pszProperty, -1) == 0)
                 {
                     *pcbResult = sizeof(DWORD);
                     if (!pbOutput)
@@ -599,7 +599,7 @@ namespace YY::Thunks
                     *reinterpret_cast<DWORD*>(pbOutput) = sizeof(BCryptHash);
                     return STATUS_SUCCESS;
                 }
-                else if (__wcsnicmp_ascii(BCRYPT_HASH_LENGTH, pszProperty, -1) == 0)
+                else if (StringCompareIgnoreCaseByAscii(BCRYPT_HASH_LENGTH, pszProperty, -1) == 0)
                 {
                     *pcbResult = sizeof(DWORD);
                     if (!pbOutput)
@@ -615,7 +615,7 @@ namespace YY::Thunks
                     *reinterpret_cast<DWORD*>(pbOutput) = GetHashLength();
                     return STATUS_SUCCESS;
                 }
-                else if (__wcsnicmp_ascii(BCRYPT_HASH_BLOCK_LENGTH, pszProperty, -1) == 0)
+                else if (StringCompareIgnoreCaseByAscii(BCRYPT_HASH_BLOCK_LENGTH, pszProperty, -1) == 0)
                 {
                     *pcbResult = sizeof(DWORD);
                     if (!pbOutput)
@@ -890,7 +890,7 @@ namespace YY::Thunks
                 _In_                                        ULONG   dwFlags
                 ) override
             {
-                if (__wcsnicmp_ascii(BCRYPT_BLOCK_LENGTH, pszProperty, -1) == 0)
+                if (StringCompareIgnoreCaseByAscii(BCRYPT_BLOCK_LENGTH, pszProperty, -1) == 0)
                 {
                     *pcbResult = sizeof(DWORD);
                     if (!pbOutput)
@@ -911,7 +911,7 @@ namespace YY::Thunks
                     *reinterpret_cast<DWORD*>(pbOutput) = _cbBlockLength;
                     return STATUS_SUCCESS;
                 }
-                else if (__wcsnicmp_ascii(BCRYPT_ALGORITHM_NAME, pszProperty, -1) == 0)
+                else if (StringCompareIgnoreCaseByAscii(BCRYPT_ALGORITHM_NAME, pszProperty, -1) == 0)
                 {
                     *pcbResult = pAlgorithm->pMapItem->cbAlgId;
                     if (!pbOutput)
@@ -927,7 +927,7 @@ namespace YY::Thunks
                     memcpy(pbOutput, pAlgorithm->pMapItem->szAlgName, pAlgorithm->pMapItem->cbAlgId);
                     return STATUS_SUCCESS;
                 }
-                else if (__wcsnicmp_ascii(BCRYPT_PROVIDER_HANDLE, pszProperty, -1) == 0)
+                else if (StringCompareIgnoreCaseByAscii(BCRYPT_PROVIDER_HANDLE, pszProperty, -1) == 0)
                 {
                     *pcbResult = sizeof(BCRYPT_ALG_HANDLE);
                     if (!pbOutput)
@@ -943,7 +943,7 @@ namespace YY::Thunks
                     *reinterpret_cast<BCRYPT_ALG_HANDLE*>(pbOutput) = pAlgorithm;
                     return STATUS_SUCCESS;
                 }
-                else if (__wcsnicmp_ascii(BCRYPT_CHAINING_MODE, pszProperty, -1) == 0)
+                else if (StringCompareIgnoreCaseByAscii(BCRYPT_CHAINING_MODE, pszProperty, -1) == 0)
                 {
                     DWORD _uCryptMode = 0;
                     DWORD _cbResult = sizeof(_uCryptMode);
@@ -1005,28 +1005,28 @@ namespace YY::Thunks
                 _In_                    ULONG   _cbInput,
                 _In_                    ULONG   _fFlags) override
             {
-                if (__wcsnicmp_ascii(BCRYPT_CHAINING_MODE, _szProperty, -1) == 0)
+                if (StringCompareIgnoreCaseByAscii(BCRYPT_CHAINING_MODE, _szProperty, -1) == 0)
                 {
                     DWORD _uCryptMode;
-                    if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_CBC) && __wcsnicmp_ascii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_CBC, _countof(BCRYPT_CHAIN_MODE_CBC)) == 0)
+                    if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_CBC) && StringCompareIgnoreCaseByAscii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_CBC, _countof(BCRYPT_CHAIN_MODE_CBC)) == 0)
                     {
                         _uCryptMode = CRYPT_MODE_CBC;
                     }
-                    else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_ECB) && __wcsnicmp_ascii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_ECB, _countof(BCRYPT_CHAIN_MODE_ECB)) == 0)
+                    else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_ECB) && StringCompareIgnoreCaseByAscii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_ECB, _countof(BCRYPT_CHAIN_MODE_ECB)) == 0)
                     {
                         _uCryptMode = CRYPT_MODE_ECB;
                     }
-                    else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_CFB) && __wcsnicmp_ascii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_CFB, _countof(BCRYPT_CHAIN_MODE_CFB)) == 0)
+                    else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_CFB) && StringCompareIgnoreCaseByAscii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_CFB, _countof(BCRYPT_CHAIN_MODE_CFB)) == 0)
                     {
                         _uCryptMode = CRYPT_MODE_CFB;
                     }
                     else
                     {
-                        /*if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_CCM) && __wcsnicmp_ascii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_CCM, _countof(BCRYPT_CHAIN_MODE_CCM)) == 0)
+                        /*if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_CCM) && StringCompareIgnoreCaseByAscii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_CCM, _countof(BCRYPT_CHAIN_MODE_CCM)) == 0)
                         {
                             _uCryptMode = ;
                         }
-                        else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_GCM) && __wcsnicmp_ascii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_GCM, _countof(BCRYPT_CHAIN_MODE_GCM)) == 0)
+                        else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_GCM) && StringCompareIgnoreCaseByAscii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_GCM, _countof(BCRYPT_CHAIN_MODE_GCM)) == 0)
                         {
                             _uCryptMode = ;
                         }*/
@@ -1252,7 +1252,7 @@ namespace YY::Thunks
                     return STATUS_INVALID_PARAMETER;
                 }
 
-                if (__wcsnicmp_ascii(_szBlobType, BCRYPT_KEY_DATA_BLOB, -1) == 0 || __wcsnicmp_ascii(_szBlobType, BCRYPT_OPAQUE_KEY_BLOB, -1) == 0)
+                if (StringCompareIgnoreCaseByAscii(_szBlobType, BCRYPT_KEY_DATA_BLOB, -1) == 0 || StringCompareIgnoreCaseByAscii(_szBlobType, BCRYPT_OPAQUE_KEY_BLOB, -1) == 0)
                 {
                     struct _PLAINTEXTKEYBLOB : public BLOBHEADER
                     {
@@ -1310,7 +1310,7 @@ namespace YY::Thunks
                 _In_                                        ULONG   dwFlags
                 ) override
             {
-                if (__wcsnicmp_ascii(BCRYPT_OBJECT_LENGTH, pszProperty, -1) == 0)
+                if (StringCompareIgnoreCaseByAscii(BCRYPT_OBJECT_LENGTH, pszProperty, -1) == 0)
                 {
                     *pcbResult = sizeof(DWORD);
                     if (!pbOutput)
@@ -1326,7 +1326,7 @@ namespace YY::Thunks
                     *reinterpret_cast<DWORD*>(pbOutput) = sizeof(BCryptKeyType);
                     return STATUS_SUCCESS;
                 }
-                else if (__wcsnicmp_ascii(BCRYPT_CHAINING_MODE, pszProperty, -1) == 0)
+                else if (StringCompareIgnoreCaseByAscii(BCRYPT_CHAINING_MODE, pszProperty, -1) == 0)
                 {
                     if (uCryptMode == 0)
                     {
@@ -1375,7 +1375,7 @@ namespace YY::Thunks
                         return STATUS_NOT_SUPPORTED;
                     }
                 }
-                else if(__wcsnicmp_ascii(BCRYPT_BLOCK_SIZE_LIST, pszProperty, -1) == 0)
+                else if(StringCompareIgnoreCaseByAscii(BCRYPT_BLOCK_SIZE_LIST, pszProperty, -1) == 0)
                 {
                     // 我也觉得有点奇怪，为什么AES这样的没有返回一个列表，仅仅返回一个值。
                     // 但是实际上微软的BCrypt也是如此。
@@ -1398,7 +1398,7 @@ namespace YY::Thunks
                     *reinterpret_cast<DWORD*>(pbOutput) = kDefaultBlockSize;
                     return STATUS_SUCCESS;
                 }
-                else if (__wcsnicmp_ascii(BCRYPT_EFFECTIVE_KEY_LENGTH, pszProperty, -1) == 0)
+                else if (StringCompareIgnoreCaseByAscii(BCRYPT_EFFECTIVE_KEY_LENGTH, pszProperty, -1) == 0)
                 {
                     if (uEffectiveKeyBitCount == 0)
                     {
@@ -1430,31 +1430,31 @@ namespace YY::Thunks
                 _In_                    ULONG   _cbInput,
                 _In_                    ULONG   _fFlags) override
             {
-                if (__wcsnicmp_ascii(BCRYPT_CHAINING_MODE, _szProperty, -1) == 0)
+                if (StringCompareIgnoreCaseByAscii(BCRYPT_CHAINING_MODE, _szProperty, -1) == 0)
                 {
                     if (uCryptMode == 0)
                     {
                         return STATUS_NOT_SUPPORTED;
                     }
-                    else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_CBC) && __wcsnicmp_ascii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_CBC, _countof(BCRYPT_CHAIN_MODE_CBC)) == 0)
+                    else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_CBC) && StringCompareIgnoreCaseByAscii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_CBC, _countof(BCRYPT_CHAIN_MODE_CBC)) == 0)
                     {
                         uCryptMode = CRYPT_MODE_CBC;
                     }
-                    else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_ECB) && __wcsnicmp_ascii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_ECB, _countof(BCRYPT_CHAIN_MODE_ECB)) == 0)
+                    else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_ECB) && StringCompareIgnoreCaseByAscii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_ECB, _countof(BCRYPT_CHAIN_MODE_ECB)) == 0)
                     {
                         uCryptMode = CRYPT_MODE_ECB;
                     }
-                    else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_CFB) && __wcsnicmp_ascii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_CFB, _countof(BCRYPT_CHAIN_MODE_CFB)) == 0)
+                    else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_CFB) && StringCompareIgnoreCaseByAscii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_CFB, _countof(BCRYPT_CHAIN_MODE_CFB)) == 0)
                     {
                         uCryptMode = CRYPT_MODE_CFB;
                     }
                     else
                     {
-                        /*if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_CCM) && __wcsnicmp_ascii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_CCM, _countof(BCRYPT_CHAIN_MODE_CCM)) == 0)
+                        /*if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_CCM) && StringCompareIgnoreCaseByAscii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_CCM, _countof(BCRYPT_CHAIN_MODE_CCM)) == 0)
                         {
                             uCryptMode = ;
                         }
-                        else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_GCM) && __wcsnicmp_ascii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_GCM, _countof(BCRYPT_CHAIN_MODE_GCM)) == 0)
+                        else if (_cbInput == sizeof(BCRYPT_CHAIN_MODE_GCM) && StringCompareIgnoreCaseByAscii((const wchar_t*)_pInput, BCRYPT_CHAIN_MODE_GCM, _countof(BCRYPT_CHAIN_MODE_GCM)) == 0)
                         {
                             uCryptMode = ;
                         }*/
@@ -1526,7 +1526,7 @@ namespace YY::Thunks
                     return STATUS_INVALID_PARAMETER;
                 }
                 
-                if (__wcsnicmp_ascii(_szBlobType, BCRYPT_KEY_DATA_BLOB, -1) == 0 || __wcsnicmp_ascii(_szBlobType, BCRYPT_OPAQUE_KEY_BLOB, -1) == 0)
+                if (StringCompareIgnoreCaseByAscii(_szBlobType, BCRYPT_KEY_DATA_BLOB, -1) == 0 || StringCompareIgnoreCaseByAscii(_szBlobType, BCRYPT_OPAQUE_KEY_BLOB, -1) == 0)
                 {
                     auto _pHerder = (_BCRYPT_KEY_DATA_BLOB_HEADER*)_pInput;
                     if (_pHerder == nullptr || _pHerder->dwMagic != BCRYPT_KEY_DATA_BLOB_MAGIC || _pHerder->dwVersion != BCRYPT_KEY_DATA_BLOB_VERSION1)
@@ -1692,7 +1692,7 @@ namespace YY::Thunks
 
         for (auto& _Item : g_Map)
         {
-            if (__wcsnicmp_ascii(_szAlgId, _Item.szAlgName, (size_t)-1) == 0)
+            if (StringCompareIgnoreCaseByAscii(_szAlgId, _Item.szAlgName, (size_t)-1) == 0)
             {
                 return _Item.pfnOpenAlgorithmProviderType(&_Item, _fFlags, reinterpret_cast<BCryptAlgorithm**>(_phAlgorithm));
             }
@@ -2179,7 +2179,7 @@ namespace YY::Thunks
         wchar_t szAlgorithmNameBuffer[4];
         if (hTargetAlg && cbDerivedKey == 16 && _uHashLength < 32
             && BCryptGetProperty(hTargetAlg, BCRYPT_ALGORITHM_NAME, (PUCHAR)szAlgorithmNameBuffer, sizeof(szAlgorithmNameBuffer), &_cbResult, 0) >= 0
-            && __wcsnicmp_ascii(szAlgorithmNameBuffer, L"AES", -1) == 0)
+            && StringCompareIgnoreCaseByAscii(szAlgorithmNameBuffer, L"AES", -1) == 0)
         {
             v19 = true;
         }

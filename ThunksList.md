@@ -4,6 +4,11 @@
 
 > 开头带`*`的函数并不建议使用，存在一些较大负面影响，仅用于编译通过处理，具体负面影响可参考注释内容。
 
+## api-ms-win-core-handle-l1-1-0.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| CompareObjectHandles                       | 不存在时，调用NtQueryObject以及DuplicateHandle。
+
 ## api-ms-win-core-path-l1-1-0.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
@@ -121,6 +126,7 @@
 | EventWriteEx                               | 不存在时，调用EventWriteTransfer。
 | EventWriteString                           | 不存在时，返回ERROR_NOT_SUPPORTED。
 | GetDynamicTimeZoneInformationEffectiveYears| 不存在时，直接读取`Time Zones`注册表。
+| AddMandatoryAce                            | 不存在时，调用RtlCopySid。
 
 ## bcrypt.dll
 | 函数                                       | Fallback
@@ -159,6 +165,14 @@
 | BluetoothGATTSetCharacteristicValue        | 不存在时，返回ERROR_NOT_SUPPORTED。
 | BluetoothGATTSetDescriptorValue            | 不存在时，返回ERROR_NOT_SUPPORTED。
 
+## CfgMgr32.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| CM_Get_DevNode_Property_ExW                | 不存在时，调用CM_Get_DevNode_Registry_PropertyW。
+| CM_Set_DevNode_Property_ExW                | 不存在时，调用CM_Set_DevNode_Registry_PropertyW。
+| CM_Get_DevNode_PropertyW                   | 不存在时，调用CM_Get_DevNode_Property_ExW。
+| CM_Set_DevNode_PropertyW                   | 不存在时，调用CM_Set_DevNode_Property_ExW。
+
 ## Crypt32.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
@@ -174,6 +188,11 @@
 | 函数                                       | Fallback
 | ----                                       | -----------
 | D3D11CreateDevice                          | 不存在时，返回 `E_NOINTERFACE`。
+
+## d3d12.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| D3D12CreateDevice                          | 不存在时，返回 `E_NOINTERFACE`。
 
 ## DbgHelp.dll
 | 函数                                       | Fallback
@@ -518,7 +537,14 @@
 | CreateRemoteThreadEx                       | 不存在时，调用CreateRemoteThread。
 | WerRegisterRuntimeExceptionModule          | 不存在时，返回S_OK。
 | WerUnregisterRuntimeExceptionModule        | 不存在时，返回S_OK。
-| Wow64GetThreadContext                      | 不存在时，返回ERROR_INVALID_PARAMETER。
+| Wow64GetThreadContext                      | 不存在时，调用GetThreadContext或者返回ERROR_INVALID_PARAMETER。
+| SetDefaultDllDirectories                   | 不存在时，手工控制LoadLibrary加载顺序。
+
+## mfplat.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| MFCreateDeviceSource                       | 不存在时，返回E_NOTIMPL。
+| MFEnumDeviceSources                        | 不存在时，返回E_NOTIMPL。
 
 ## mfplat.dll
 | 函数                                       | Fallback
@@ -527,6 +553,36 @@
 | MFCreateDXGISurfaceBuffer                  | 不存在时，返回E_NOTIMPL。
 | MFLockDXGIDeviceManager                    | 不存在时，返回E_NOTIMPL。
 | MFUnlockDXGIDeviceManager                  | 不存在时，返回E_NOTIMPL。
+| MFCreateAlignedMemoryBuffer                | 不存在时，返回E_NOTIMPL。
+| MFCreateAsyncResult                        | 不存在时，返回E_NOTIMPL。
+| MFCreateAttributes                         | 不存在时，返回E_NOTIMPL。
+| MFCreateEventQueue                         | 不存在时，返回E_NOTIMPL。
+| MFCreateMediaBufferWrapper                 | 不存在时，返回E_NOTIMPL。
+| MFCreateMediaEvent                         | 不存在时，返回E_NOTIMPL。
+| MFCreateMediaType                          | 不存在时，返回E_NOTIMPL。
+| MFCreateMemoryBuffer                       | 不存在时，返回E_NOTIMPL。
+| MFCreatePresentationDescriptor             | 不存在时，返回E_NOTIMPL。
+| MFCreateSample                             | 不存在时，返回E_NOTIMPL。
+| MFCreateStreamDescriptor                   | 不存在时，返回E_NOTIMPL。
+| MFCreateWaveFormatExFromMFMediaType        | 不存在时，返回E_NOTIMPL。
+| MFFrameRateToAverageTimePerFrame           | 不存在时，返回E_NOTIMPL。
+| MFGetSystemTime                            | 不存在时，调用GetSystemTimeAsFileTime。
+| MFInitMediaTypeFromWaveFormatEx            | 不存在时，返回E_NOTIMPL。
+| MFShutdown                                 | 不存在时，返回E_NOTIMPL。
+| MFStartup                                  | 不存在时，返回E_NOTIMPL。
+| MFTEnumEx                                  | 不存在时，返回E_NOTIMPL。
+
+## mfreadwrite.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| MFCreateSourceReaderFromMediaSource        | 不存在时，返回E_NOTIMPL。
+
+## ndfapi.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| NdfCreateWebIncident                       | 不存在时，返回一个伪句柄假装成功。
+| NdfCloseIncident                           | 不存在时，假装成功关闭句柄。
+| NdfExecuteDiagnosis                        | 不存在时，假装什么问题也没有发现。
 
 ## netapi32.dll
 | 函数                                       | Fallback
@@ -538,6 +594,7 @@
 | 函数                                       | Fallback
 | ----                                       | -----------
 | NtCancelIoFileEx                           | 不存在时，调用 NtCancelIoFile。注意：将取消此文件的所有IO请求。
+| NtOpenKeyEx                                | 不存在时，调用 NtOpenKey 或者 NtCreateKey。
 
 ## ole32.dll
 | 函数                                       | Fallback
@@ -556,6 +613,14 @@
 | PowerDeterminePlatformRoleEx               | 不存在时，调用PlatformRoleDesktop。
 | PowerRegisterSuspendResumeNotification     | 不存在时，使用窗口模拟。
 | PowerUnregisterSuspendResumeNotification   | 内部实现。
+
+## PropSys.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| InitPropVariantFromCLSID                   | 不存在时，CoTaskMemAlloc分配内存。
+| PSGetPropertyKeyFromName                   | 不存在时，返回 TYPE_E_ELEMENTNOTFOUND（属性不存在）。
+| PSCreateMemoryPropertyStore                | 不存在时，返回 E_NOTIMPL。
+| VariantCompare                             | 不存在时，内部实现。
 
 ## psapi.dll
 | 函数                                       | Fallback
@@ -617,6 +682,7 @@
 | UiaGetReservedMixedAttributeValue          | 不存在时，报告错误 E_NOTIMPL。
 | UiaGetReservedNotSupportedValue            | 不存在时，报告错误 E_NOTIMPL。
 | UiaRaiseStructureChangedEvent              | 不存在时，报告错误 E_NOTIMPL。
+| UiaRaiseNotificationEvent                  | 不存在时，假装成功。
 
 ## user32.dll
 | 函数                                       | Fallback
@@ -649,6 +715,11 @@
 | DisplayConfigGetDeviceInfo                 | 不存在时，报告没有安装驱动。
 | GetDisplayConfigBufferSizes                | 不存在时，报告没有安装驱动。
 | QueryDisplayConfig                         | 不存在时，报告没有安装驱动。
+| RegisterPointerDeviceNotifications         | 不存在时，假装成功。
+| GetPointerDevices                          | 不存在时，假装没有触摸设备。
+| GetPointerDevice                           | 不存在时，假装没有触摸设备。
+| GetPointerPenInfo                          | 不存在时，假装没有触摸设备。
+| GetPointerType                             | 不存在时，假装没有触摸设备。
 
 ## userenv.dll
 | 函数                                       | Fallback
@@ -688,6 +759,18 @@
 | WinHttpGetProxyForUrlEx                    | 不存在时，异步调用WinHttpGetProxyForUrl。
 | WinHttpGetProxyResult                      | 不存在时，内部实现。
 | WinHttpFreeProxyResult                     | 不存在时，内部实现。
+
+## WinUsb.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| WinUsb_Free                                | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_GetAssociatedInterface              | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_GetOverlappedResult                 | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_Initialize                          | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_ReadPipe                            | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_ResetPipe                           | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_SetCurrentAlternateSetting          | 不存在时，报告ERROR_INVALID_HANDLE。
+| WinUsb_WritePipe                           | 不存在时，报告ERROR_INVALID_HANDLE。
 
 ## ws2_32.dll
 | 函数                                       | Fallback

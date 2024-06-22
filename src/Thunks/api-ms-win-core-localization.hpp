@@ -444,7 +444,7 @@
                 while (bottom <= top)
                 {
                     int middle = (bottom + top) / 2;
-                    int testIndex = __wcsnicmp_ascii(szLocaleName, NeutralToSpecificMap[middle].szNeutralLocale, LOCALE_NAME_MAX_LENGTH);
+                    int testIndex = StringCompareIgnoreCaseByAscii(szLocaleName, NeutralToSpecificMap[middle].szNeutralLocale, LOCALE_NAME_MAX_LENGTH);
 
                     if (testIndex == 0)
                         return NeutralToSpecificMap[middle].szSpecificLocale;
@@ -908,7 +908,7 @@
 		{
 			return GetUserDefaultLCID();
 		}
-		else if (__wcsnicmp_ascii(lpName, LOCALE_NAME_SYSTEM_DEFAULT, _countof(LOCALE_NAME_SYSTEM_DEFAULT)) == 0)
+		else if (StringCompareIgnoreCaseByAscii(lpName, LOCALE_NAME_SYSTEM_DEFAULT, _countof(LOCALE_NAME_SYSTEM_DEFAULT)) == 0)
 		{
 			return GetSystemDefaultLCID();
 		}
@@ -1308,7 +1308,7 @@
 		while (bottom <= top)
 		{
 			int middle = (bottom + top) / 2;
-			int testIndex = __wcsnicmp_ascii(lpName, LocaleNameToLcidTable[middle].localeName, LOCALE_NAME_MAX_LENGTH);
+			int testIndex = StringCompareIgnoreCaseByAscii(lpName, LocaleNameToLcidTable[middle].localeName, LOCALE_NAME_MAX_LENGTH);
 
 			if (testIndex == 0)
 				return LocaleNameToLcidTable[middle].lcid;

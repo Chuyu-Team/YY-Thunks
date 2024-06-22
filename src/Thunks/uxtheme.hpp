@@ -7,35 +7,33 @@
 #pragma comment(lib, "UxTheme.lib")
 #endif
 
-#if defined(YY_Thunks_Implemented) && defined(_X86_) && (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WIN6)
 namespace YY::Thunks::Fallback
 {
-    static void* __fastcall try_get_DrawThemeTextEx() noexcept
+    static void* __fastcall try_get_DrawThemeTextEx(const ProcInfo& _ProcInfo) noexcept
     {
-        auto _pUxThemeBase = (const char*)try_get_module_uxtheme();
-        if (!_pUxThemeBase)
-            return nullptr;
+        auto _pProc = try_get_proc_address_from_dll(_ProcInfo);
+        if (_pProc)
+            return _pProc;
 
-        MEMORY_BASIC_INFORMATION _BaseInfo;
-
-        // Windows XP SP3 其实已经实现了DrawThemeTextEx，只是没有导出。
-        static const BYTE kAttributeCode_6_0_2900_5512[] =
+        static constexpr const ProcOffsetInfo kProcInfo[] =
         {
-            0x8B, 0xFF, 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x0C,
-            0x83, 0x4D, 0xF8, 0xFF, 0x83, 0x65, 0xF4, 0x00,
-            0x83, 0x7D, 0x0C, 0x00, 0x56, 
+#if defined(_X86_)
+            { 0x3B901769ul, 0x5ADC5C2Ful - 0x5ADC0000ul }, // 6.0.2600.0 (Windows XP RTM)
+            { 0x3D7D2609ul, 0x5ADC5AEDul - 0x5ADC0000ul }, // 6.0.2800.1106 (Windows XP SP1)
+            { 0x4121457Aul, 0x5ADC645Cul - 0x5ADC0000ul }, // 6.0.2900.2180 (Windows XP SP2)
+            { 0x4802BDC0ul, 0x5ADC2FF8ul - 0x5ADC0000ul }, // 6.0.2900.5512 (Windows XP SP3)
+            { 0x3E8024BEul, 0x71B8ACA0ul - 0x71B70000ul }, // 6.0.3790.0 (Windows 2003)
+            { 0x42437794ul, 0x7DF64466ul - 0x7DF50000ul }, // 6.0.3790.1830 (Windows 2003 SP1)
+            { 0x45D70ACBul, 0x71B91D41ul - 0x71B70000ul }, // 6.0.3790.3959 (Windows 2003 SP2)
+#elif defined(_AMD64_)
+            { 0x42438B57ul, 0x7FF77069A60ull - 0x7FF77060000ull }, // 6.0.3790.1830 (Windows 2003 SP1)
+            { 0x45D6CCAEul, 0x000007FF77239A70ull - 0x7FF77230000ull }, // 6.0.3790.3959 (Windows 2003 SP2)
+#endif
         };
-        constexpr auto kAttributeCode_6_0_2900_5512_Offset = 0x5ADC2FF8 - 0x5ADC0000;
-        auto _pTarget = _pUxThemeBase + kAttributeCode_6_0_2900_5512_Offset;
-        if (VirtualQuery(_pTarget, &_BaseInfo, sizeof(_BaseInfo)) && _BaseInfo.AllocationBase == _pUxThemeBase)
-        {
-            if (memcmp(_pTarget, kAttributeCode_6_0_2900_5512, sizeof(kAttributeCode_6_0_2900_5512)) == 0)
-            {
-                return (void*)_pTarget;
-            }
-        }
 
-        return nullptr;
+        __WarningMessage__("try_get_DrawThemeTextEx 可能遗漏某些XP/2003补丁中的uxtheme.dll，如果你知道详细可以提交PR。");
+        return try_get_proc_address_from_offset(try_get_module_uxtheme(), kProcInfo);
     }
 }
 #endif

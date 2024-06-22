@@ -64,29 +64,13 @@ namespace YY::Thunks::internal
     static volatile LONG uStatus = 0;
     static TlsRawItem* volatile pRoot = nullptr;
 
-    static ULONG __fastcall GetTlsIndexBufferCount(TEB* _pTeb)
+    static SIZE_T __fastcall GetTlsIndexBufferCount(TEB* _pTeb)
     {
         auto _ppThreadLocalStoragePointer = (void**)_pTeb->ThreadLocalStoragePointer;
         if (!_ppThreadLocalStoragePointer)
             return 0;
 
         return HeapSize(_pTeb->ProcessEnvironmentBlock->ProcessHeap, 0, _ppThreadLocalStoragePointer) / sizeof(void*);
-    }
-    static PVOID NTAPI RtlImageDirectoryEntryToData(
-        __in PVOID pBaseAddress,
-        __in ULONG dwDirectory,
-        __out PULONG pSize
-        )
-    {
-        auto _pDosHeader = (PIMAGE_DOS_HEADER)pBaseAddress;
-        auto _pNtHerder = reinterpret_cast<PIMAGE_NT_HEADERS>(PBYTE(pBaseAddress) + _pDosHeader->e_lfanew);
-        auto& _DataDirectory = _pNtHerder->OptionalHeader.DataDirectory[dwDirectory];
-
-        *pSize = _DataDirectory.Size;
-        if (_DataDirectory.Size == 0 || _DataDirectory.VirtualAddress == 0)
-            return nullptr;
-
-        return PBYTE(pBaseAddress) + _DataDirectory.VirtualAddress;
     }
     
     static ULONG __fastcall GetMaxTlsIndex() noexcept
@@ -106,7 +90,7 @@ namespace YY::Thunks::internal
                 /*if (!_pEntry->TlsIndex)
                     continue;*/
                 ULONG TlsSize;
-                auto pTlsImage = (PIMAGE_TLS_DIRECTORY)RtlImageDirectoryEntryToData(
+                auto pTlsImage = (PIMAGE_TLS_DIRECTORY)YY_ImageDirectoryEntryToData(
                     _pEntry->BaseAddress,
                     IMAGE_DIRECTORY_ENTRY_TLS,
                     &TlsSize);
@@ -135,7 +119,7 @@ namespace YY::Thunks::internal
         if (!_pfnNtQuerySystemInformation)
             return nullptr;
 
-        ULONG _cbBuffer = max(4096, _szBuffer.uBufferLength);
+        auto _cbBuffer = max(4096, _szBuffer.uBufferLength);
         ULONG _cbRet = 0;
         for (;;)
         {
@@ -157,7 +141,7 @@ namespace YY::Thunks::internal
         auto _pInfo = (SYSTEM_PROCESS_INFORMATION*)_szBuffer.GetBuffer(0);
         for (;;)
         {
-            if (_pInfo->ProcessId == (HANDLE)_uCurrentProcessId)
+            if (static_cast<DWORD>(reinterpret_cast<UINT_PTR>(_pInfo->ProcessId)) == _uCurrentProcessId)
                 return _pInfo;
 
             if (_pInfo->NextEntryDelta == 0)
@@ -316,10 +300,10 @@ namespace YY::Thunks::internal
             {
                 auto& _Thread = _pProcessInfo->Threads[i];
 
-                if (_uCurrentThreadId == (DWORD)_Thread.ClientId.UniqueThread)
+                if (_uCurrentThreadId == static_cast<DWORD>(reinterpret_cast<UINT_PTR>(_Thread.ClientId.UniqueThread)))
                     continue;
 
-                auto _hThread = OpenThread(THREAD_QUERY_INFORMATION, FALSE, (DWORD)_Thread.ClientId.UniqueThread);
+                auto _hThread = OpenThread(THREAD_QUERY_INFORMATION, FALSE, static_cast<DWORD>(reinterpret_cast<UINT_PTR>(_Thread.ClientId.UniqueThread)));
                 if (!_hThread)
                 {
                     continue;
