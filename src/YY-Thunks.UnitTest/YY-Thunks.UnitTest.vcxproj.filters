@@ -84,6 +84,9 @@
     <ClCompile Include="api-ms-win-core-handle.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
+    <ClCompile Include="PropSys.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -342,6 +345,9 @@
       <Filter>Thunks</Filter>
     </ClInclude>
     <ClInclude Include="..\Thunks\api-ms-win-security-base.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\PropSys.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
   </ItemGroup>

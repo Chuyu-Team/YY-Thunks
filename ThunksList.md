@@ -585,6 +585,14 @@
 | PowerRegisterSuspendResumeNotification     | 不存在时，使用窗口模拟。
 | PowerUnregisterSuspendResumeNotification   | 内部实现。
 
+## PropSys.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| InitPropVariantFromCLSID                   | 不存在时，CoTaskMemAlloc分配内存。
+| PSGetPropertyKeyFromName                   | 不存在时，返回 TYPE_E_ELEMENTNOTFOUND（属性不存在）。
+| PSCreateMemoryPropertyStore                | 不存在时，返回 E_NOTIMPL。
+| VariantCompare                             | 不存在时，内部实现。
+
 ## psapi.dll
 | 函数                                       | Fallback
 | ----                                       | -----------

@@ -252,6 +252,7 @@
     <ClInclude Include="..\Thunks\ntdll.hpp" />
     <ClInclude Include="..\Thunks\Pdh.hpp" />
     <ClInclude Include="..\Thunks\powrprof.hpp" />
+    <ClInclude Include="..\Thunks\PropSys.hpp" />
     <ClInclude Include="..\Thunks\ThreadRunner.h" />
     <ClInclude Include="..\Thunks\UIAutomationCore.hpp" />
     <ClInclude Include="..\Thunks\userenv.hpp" />
@@ -301,6 +302,7 @@
     <None Include="..\def\x64\PSAPI2Kernel32.def" />
     <None Include="..\def\x86\esent.def" />
     <None Include="..\def\x86\PSAPI2Kernel32.def" />
+    <ClCompile Include="PropSys.UnitTest.cpp" />
     <None Include="proxy.pac" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
