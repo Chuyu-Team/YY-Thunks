@@ -43,7 +43,7 @@ namespace YY::Thunks
             return E_POINTER;
         }
 
-        SIZE_T RequiredSize = sizeof(internal::STRING_OPAQUE) + length * sizeof(WCHAR);
+        SIZE_T RequiredSize = sizeof(internal::STRING_OPAQUE) + (length + 1) * sizeof(WCHAR);
         if (MAXUINT32 < RequiredSize)
         {
             return MEM_E_INVALID_SIZE;
