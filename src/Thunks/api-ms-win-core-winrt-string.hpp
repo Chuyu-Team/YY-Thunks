@@ -22,7 +22,7 @@ namespace YY::Thunks
     HRESULT,
     STDAPICALLTYPE,
     WindowsCreateString,
-        _In_reads_opt_(_cchLength) PCNZWCH _sSourceString,
+        _In_reads_opt_(_cLength) PCNZWCH _sSourceString,
         UINT32 _cLength,
         _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING* _phString
         )
