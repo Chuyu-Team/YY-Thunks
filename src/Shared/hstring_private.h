@@ -51,13 +51,6 @@ namespace YY::Thunks::internal
     } HSTRING_HEADER_INTERNAL, *PHSTRING_HEADER_INTERNAL;
     static_assert(sizeof(HSTRING_HEADER) == sizeof(HSTRING_HEADER_INTERNAL));
 
-#ifdef _MSC_VER
-#if (_MSC_VER >= 1200)
-#pragma warning(push)
-#endif
-#pragma warning(disable:4200) // zero length array
-#endif
-
     /*
      * @brief The internal structure of heap allocated Windows Runtime String.
      */
@@ -65,16 +58,8 @@ namespace YY::Thunks::internal
     {
         HSTRING_HEADER_INTERNAL Header;
         volatile INT RefCount;
-        WCHAR String[0];
+        WCHAR String[ANYSIZE_ARRAY];
     } STRING_OPAQUE, *PSTRING_OPAQUE;
-
-#ifdef _MSC_VER
-#if (_MSC_VER >= 1200)
-#pragma warning(pop)
-#else
-#pragma warning(default:4200) // zero length array
-#endif
-#endif
 }
 
 #endif // !YY_THUNKS_HSTRING_PRIVATE
