@@ -344,15 +344,19 @@ namespace YY::Thunks
                 reinterpret_cast<internal::PSTRING_OPAQUE>(string);
             if (!(OpaqueString->Header.Flags & WRHF_EMBEDDED_NULLS_COMPUTED))
             {
-                for (UINT32 i = 0; i < OpaqueString->Header.Length; ++i)
+                for (UINT32 i = 0; ; ++i)
                 {
-                    if (OpaqueString->Header.StringRef[i] == L'\0')
+                    if (i >= OpaqueString->Header.Length)
                     {
-                        OpaqueString->Header.Flags |= WRHF_HAS_EMBEDDED_NULLS;
+                        OpaqueString->Header.Flags |= WRHF_EMBEDDED_NULLS_COMPUTED;
+                        break;
+                    }
+                    else if (OpaqueString->Header.StringRef[i] == L'\0')
+                    {
+                        OpaqueString->Header.Flags |= WRHF_EMBEDDED_NULLS_COMPUTED | WRHF_HAS_EMBEDDED_NULLS;
                         break;
                     }
                 }
-                OpaqueString->Header.Flags |= WRHF_EMBEDDED_NULLS_COMPUTED;
             }
             *hasEmbedNull = OpaqueString->Header.Flags & WRHF_HAS_EMBEDDED_NULLS;
         }
