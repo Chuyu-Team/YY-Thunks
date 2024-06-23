@@ -1,5 +1,5 @@
 ﻿#if (YY_Thunks_Support_Version < NTDDI_WIN8)
-#include <hstring_private.h>
+#include <HStringPrivate.h>
 #include <winstring.h>
 #endif
 
@@ -22,52 +22,47 @@ namespace YY::Thunks
     HRESULT,
     STDAPICALLTYPE,
     WindowsCreateString,
-        _In_reads_opt_(length) PCNZWCH sourceString,
-        UINT32 length,
-        _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING* string
+        _In_reads_opt_(_cchLength) PCNZWCH _sSourceString,
+        UINT32 _cLength,
+        _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING* _phString
         )
     {
-        if (auto const pWindowsCreateString = try_get_WindowsCreateString())
+        if (auto const _pfnWindowsCreateString = try_get_WindowsCreateString())
         {
-            return pWindowsCreateString(sourceString, length, string);
+            return _pfnWindowsCreateString(_sSourceString, _cLength, _phString);
         }
 
-        if (!string)
+        if (!_phString)
         {
             return E_INVALIDARG;
         }
-        *string = nullptr;
 
-        if (!sourceString && 0 != length)
+        *_phString = nullptr;
+        if (_sSourceString == nullptr && 0 != _cLength)
         {
             return E_POINTER;
         }
 
-        SIZE_T RequiredSize = sizeof(internal::STRING_OPAQUE) + (length + 1) * sizeof(WCHAR);
-        if (MAXUINT32 < RequiredSize)
+        const uint64_t _cbRequiredSize = sizeof(internal::STRING_OPAQUE) + uint64_t(_cLength + 1) * sizeof(WCHAR);
+        if (MAXUINT32 < _cbRequiredSize)
         {
             return MEM_E_INVALID_SIZE;
         }
 
-        internal::PSTRING_OPAQUE Result =
-            reinterpret_cast<internal::PSTRING_OPAQUE>(::HeapAlloc(
-                ::GetProcessHeap(),
-                HEAP_ZERO_MEMORY,
-                RequiredSize));
-        if (!Result)
+        auto _pStringInternal = reinterpret_cast<internal::PSTRING_OPAQUE>(internal::Alloc(_cbRequiredSize, HEAP_ZERO_MEMORY));
+        if (!_pStringInternal)
         {
             return E_OUTOFMEMORY;
         }
 
-        Result->Header.Flags = WRHF_NONE;
-        Result->Header.Length = length;
-        Result->Header.StringRef = Result->String;
-        Result->RefCount = 1;
-        ::memcpy(Result->String, sourceString, length * sizeof(WCHAR));
-        Result->String[length] = L'\0';
+        _pStringInternal->Header.Flags = internal::RuntimeStringFlags::WRHF_NONE;
+        _pStringInternal->Header.Length = _cLength;
+        _pStringInternal->Header.StringRef = _pStringInternal->String;
+        _pStringInternal->RefCount = 1;
+        ::memcpy(_pStringInternal->String, _sSourceString, _cLength * sizeof(WCHAR));
+        _pStringInternal->String[_cLength] = L'\0';
 
-        *string = reinterpret_cast<HSTRING>(Result);
-
+        *_phString = reinterpret_cast<HSTRING>(_pStringInternal);
         return S_OK;
     }
 #endif
@@ -83,46 +78,43 @@ namespace YY::Thunks
     HRESULT,
     STDAPICALLTYPE,
     WindowsCreateStringReference,
-        _In_reads_opt_(length + 1) PCWSTR sourceString,
-        UINT32 length,
-        _Out_ HSTRING_HEADER* hstringHeader,
-        _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING* string
+        _In_reads_opt_(_cLength + 1) PCWSTR _szSourceString,
+        UINT32 _cLength,
+        _Out_ HSTRING_HEADER* _phStringHeader,
+        _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING* _phString
         )
     {
-        if (auto const pWindowsCreateStringReference = try_get_WindowsCreateStringReference())
+        if (auto const pfnWindowsCreateStringReference = try_get_WindowsCreateStringReference())
         {
-            return pWindowsCreateStringReference(sourceString, length, hstringHeader, string);
+            return pfnWindowsCreateStringReference(_szSourceString, _cLength, _phStringHeader, _phString);
         }
 
-        if (!string || !hstringHeader)
+        if (_phString == nullptr || _phStringHeader == nullptr)
         {
             return E_INVALIDARG;
         }
-        *string = nullptr;
+        *_phString = nullptr;
 
-        if (!sourceString && 0 != length)
+        if (_szSourceString == nullptr && 0 != _cLength)
         {
             return E_POINTER;
         }
 
-        if (sourceString)
+        if (_szSourceString)
         {
-            if (L'0' != sourceString[length])
+            if (L'\0' != _szSourceString[_cLength])
             {
                 return E_STRING_NOT_NULL_TERMINATED;
             }
         }
 
-        internal::PHSTRING_HEADER_INTERNAL Header =
-            reinterpret_cast<internal::PHSTRING_HEADER_INTERNAL>(hstringHeader);
-        ::memset(Header, 0, sizeof(internal::HSTRING_HEADER_INTERNAL));
+        auto _pHeader = reinterpret_cast<internal::PHSTRING_HEADER_INTERNAL>(_phStringHeader);
+        ::memset(_pHeader, 0, sizeof(*_pHeader));
 
-        Header->Flags = WRHF_STRING_REFERENCE;
-        Header->Length = length;
-        Header->StringRef = sourceString;
-
-        *string = reinterpret_cast<HSTRING>(Header);
-
+        _pHeader->Flags = internal::RuntimeStringFlags::WRHF_STRING_REFERENCE;
+        _pHeader->Length = _cLength;
+        _pHeader->StringRef = _szSourceString;
+        *_phString = reinterpret_cast<HSTRING>(_pHeader);
         return S_OK;
     }
 #endif
@@ -138,27 +130,25 @@ namespace YY::Thunks
     HRESULT,
     STDAPICALLTYPE,
     WindowsDeleteString,
-        _In_opt_ HSTRING string
+        _In_opt_ HSTRING _hString
         )
     {
-        if (auto const pWindowsDeleteString = try_get_WindowsDeleteString())
+        if (auto const _pfnWindowsDeleteString = try_get_WindowsDeleteString())
         {
-            return pWindowsDeleteString(string);
+            return _pfnWindowsDeleteString(_hString);
         }
 
-        if (string)
-        {
-            internal::PSTRING_OPAQUE OpaqueString =
-                reinterpret_cast<internal::PSTRING_OPAQUE>(string);
-            if (!(OpaqueString->Header.Flags & WRHF_STRING_REFERENCE))
-            {
-                if (0 == ::InterlockedDecrement(
-                    reinterpret_cast<LONG volatile*>(&OpaqueString->RefCount)))
-                {
-                    ::HeapFree(::GetProcessHeap(), 0, OpaqueString);
-                }
-            }
-        }
+        if (!_hString)
+            return S_OK;
+
+        auto _pStringInternal = reinterpret_cast<internal::PSTRING_OPAQUE>(_hString);
+
+        // WRHF_STRING_REFERENCE 表示内存被调用者接管，所以我们无需从栈空间释放它。
+        if (internal::HasFlags(_pStringInternal->Header.Flags, internal::RuntimeStringFlags::WRHF_STRING_REFERENCE))
+            return S_OK;
+
+        if (0 == ::InterlockedDecrement(&_pStringInternal->RefCount))
+            internal::Free(_pStringInternal);
 
         return S_OK;
     }
@@ -175,39 +165,33 @@ namespace YY::Thunks
     HRESULT,
     STDAPICALLTYPE,
     WindowsDuplicateString,
-        _In_opt_ HSTRING string,
-        _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING* newString
+        _In_opt_ HSTRING _hString,
+        _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING* _phNewString
         )
     {
-        if (auto const pWindowsDuplicateString = try_get_WindowsDuplicateString())
+        if (auto const _pfnWindowsDuplicateString = try_get_WindowsDuplicateString())
         {
-            return pWindowsDuplicateString(string, newString);
+            return _pfnWindowsDuplicateString(_hString, _phNewString);
         }
 
-        if (!newString)
-        {
+        if (!_phNewString)
             return E_INVALIDARG;
-        }
-        *newString = nullptr;
 
-        if (string)
+        *_phNewString = nullptr;
+        if (!_hString)
+            return S_OK;
+
+        auto _pStringInternal = reinterpret_cast<internal::PSTRING_OPAQUE>(_hString);
+        if (!internal::HasFlags(_pStringInternal->Header.Flags, internal::RuntimeStringFlags::WRHF_STRING_REFERENCE))
         {
-            internal::PSTRING_OPAQUE OpaqueString =
-                reinterpret_cast<internal::PSTRING_OPAQUE>(string);
-            if (OpaqueString->Header.Flags & WRHF_STRING_REFERENCE)
-            {
-                return ::WindowsCreateString(
-                    OpaqueString->Header.StringRef,
-                    OpaqueString->Header.Length,
-                    newString);
-            }
-
-            ::InterlockedIncrement(
-                reinterpret_cast<LONG volatile*>(&OpaqueString->RefCount));
-            *newString = string;
+            ::InterlockedIncrement(&_pStringInternal->RefCount);
+            *_phNewString = _hString;
+            return S_OK;
         }
 
-        return S_OK;
+        // WRHF_STRING_REFERENCE 时内存生命周期被调用者接管，无法简单增加引用计数延长生命周期。
+        // 所以需要使用 WindowsCreateString 创建副本。
+        return ::WindowsCreateString(_pStringInternal->Header.StringRef, _pStringInternal->Header.Length, _phNewString);
     }
 #endif
 
@@ -222,22 +206,19 @@ namespace YY::Thunks
     UINT32,
     STDAPICALLTYPE,
     WindowsGetStringLen,
-        _In_opt_ HSTRING string
+        _In_opt_ HSTRING _hString
         )
     {
-        if (auto const pWindowsGetStringLen = try_get_WindowsGetStringLen())
+        if (auto const _pfnWindowsGetStringLen = try_get_WindowsGetStringLen())
         {
-            return pWindowsGetStringLen(string);
+            return _pfnWindowsGetStringLen(_hString);
         }
 
-        if (string)
-        {
-            internal::PSTRING_OPAQUE OpaqueString =
-                reinterpret_cast<internal::PSTRING_OPAQUE>(string);
-            return OpaqueString->Header.Length;
-        }
+        if (!_hString)
+            return 0ul;
 
-        return 0;
+        auto _pHeader = reinterpret_cast<internal::PHSTRING_HEADER_INTERNAL>(_hString);
+        return _pHeader->Length;
     }
 #endif
 
@@ -252,33 +233,32 @@ namespace YY::Thunks
     PCWSTR,
     STDAPICALLTYPE,
     WindowsGetStringRawBuffer,
-        _In_opt_ HSTRING string,
-        _Out_opt_ UINT32* length
+        _In_opt_ HSTRING _hString,
+        _Out_opt_ UINT32* _pcLength
         )
     {
-        if (auto const pWindowsGetStringRawBuffer = try_get_WindowsGetStringRawBuffer())
+        if (auto const _pfnWindowsGetStringRawBuffer = try_get_WindowsGetStringRawBuffer())
         {
-            return pWindowsGetStringRawBuffer(string, length);
+            return _pfnWindowsGetStringRawBuffer(_hString, _pcLength);
         }
 
-        if (!string)
+        if (!_hString)
         {
-            if (length)
+            if (_pcLength)
             {
-                *length = 0;
+                *_pcLength = 0;
             }
 
-            return L"\0";
+            return L"";
         }
 
-        internal::PSTRING_OPAQUE OpaqueString =
-            reinterpret_cast<internal::PSTRING_OPAQUE>(string);
-        if (length)
+        auto _pHeader = reinterpret_cast<internal::PHSTRING_HEADER_INTERNAL>(_hString);
+        if (_pcLength)
         {
-            *length = OpaqueString->Header.Length;
+            *_pcLength = _pHeader->Length;
         }
 
-        return OpaqueString->Header.StringRef;
+        return _pHeader->StringRef;
     }
 #endif
 
@@ -293,22 +273,16 @@ namespace YY::Thunks
     BOOL,
     STDAPICALLTYPE,
     WindowsIsStringEmpty,
-        _In_opt_ HSTRING string
+        _In_opt_ HSTRING _hString
         )
     {
-        if (auto const pWindowsIsStringEmpty = try_get_WindowsIsStringEmpty())
+        if (auto const _pfnWindowsIsStringEmpty = try_get_WindowsIsStringEmpty())
         {
-            return pWindowsIsStringEmpty(string);
+            return _pfnWindowsIsStringEmpty(_hString);
         }
 
-        if (string)
-        {
-            internal::PSTRING_OPAQUE OpaqueString =
-                reinterpret_cast<internal::PSTRING_OPAQUE>(string);
-            return 0 == OpaqueString->Header.Length;
-        }
-
-        return TRUE;
+        auto _pHeader = reinterpret_cast<internal::PHSTRING_HEADER_INTERNAL>(_hString);
+        return _pHeader == nullptr || 0ul == _pHeader->Length;      
     }
 #endif
 
@@ -323,44 +297,46 @@ namespace YY::Thunks
     HRESULT,
     STDAPICALLTYPE,
     WindowsStringHasEmbeddedNull,
-        _In_opt_ HSTRING string,
-        _Out_ BOOL* hasEmbedNull
+        _In_opt_ HSTRING _hString,
+        _Out_ BOOL* _pbHasEmbedNull
         )
     {
-        if (auto const pWindowsStringHasEmbeddedNull = try_get_WindowsStringHasEmbeddedNull())
+        if (auto const _pfnWindowsStringHasEmbeddedNull = try_get_WindowsStringHasEmbeddedNull())
         {
-            return pWindowsStringHasEmbeddedNull(string, hasEmbedNull);
+            return _pfnWindowsStringHasEmbeddedNull(_hString, _pbHasEmbedNull);
         }
 
-        if (!hasEmbedNull)
-        {
+        if (!_pbHasEmbedNull)
             return E_INVALIDARG;
-        }
-        *hasEmbedNull = FALSE;
 
-        if (string)
+        *_pbHasEmbedNull = FALSE;
+        if (!_hString)
+            return S_OK;
+
+        auto _pHeader = reinterpret_cast<internal::PHSTRING_HEADER_INTERNAL>(_hString);
+
+        // 已经存在缓存，直接从缓存获取 WRHF_HAS_EMBEDDED_NULLS 即可
+        // 这样做是合理的，因为微软将HSTRING定义为一个只读的String。
+        if (internal::HasFlags(_pHeader->Flags, internal::RuntimeStringFlags::WRHF_EMBEDDED_NULLS_COMPUTED))
         {
-            internal::PSTRING_OPAQUE OpaqueString =
-                reinterpret_cast<internal::PSTRING_OPAQUE>(string);
-            if (!(OpaqueString->Header.Flags & WRHF_EMBEDDED_NULLS_COMPUTED))
-            {
-                for (UINT32 i = 0; ; ++i)
-                {
-                    if (i >= OpaqueString->Header.Length)
-                    {
-                        OpaqueString->Header.Flags |= WRHF_EMBEDDED_NULLS_COMPUTED;
-                        break;
-                    }
-                    else if (OpaqueString->Header.StringRef[i] == L'\0')
-                    {
-                        OpaqueString->Header.Flags |= WRHF_EMBEDDED_NULLS_COMPUTED | WRHF_HAS_EMBEDDED_NULLS;
-                        break;
-                    }
-                }
-            }
-            *hasEmbedNull = OpaqueString->Header.Flags & WRHF_HAS_EMBEDDED_NULLS;
+            *_pbHasEmbedNull = internal::HasFlags(_pHeader->Flags, internal::RuntimeStringFlags::WRHF_HAS_EMBEDDED_NULLS);
+            return S_OK;
         }
 
+        auto _szEnd = _pHeader->StringRef + _pHeader->Length;
+        for (auto _szStr = _pHeader->StringRef; _szStr < _szEnd; ++_szStr)
+        {
+            if (*_szStr == L'\0')
+            {
+                constexpr auto kHasEmbedNullFlags = internal::RuntimeStringFlags::WRHF_EMBEDDED_NULLS_COMPUTED | internal::RuntimeStringFlags::WRHF_HAS_EMBEDDED_NULLS;
+                InterlockedOr((LONG*)&_pHeader->Flags, LONG(kHasEmbedNullFlags));
+                *_pbHasEmbedNull = TRUE;
+                return S_OK;
+            }
+        }
+
+        InterlockedOr((LONG*)&_pHeader->Flags, LONG(internal::RuntimeStringFlags::WRHF_EMBEDDED_NULLS_COMPUTED));
+        *_pbHasEmbedNull = FALSE;
         return S_OK;
     }
 #endif
@@ -376,65 +352,43 @@ namespace YY::Thunks
     HRESULT,
     STDAPICALLTYPE,
     WindowsCompareStringOrdinal,
-        _In_opt_ HSTRING string1,
-        _In_opt_ HSTRING string2,
-        _Out_ INT32* result
+        _In_opt_ HSTRING _hStringLeft,
+        _In_opt_ HSTRING _hStringRigth,
+        _Out_ INT32* _pnResult
         )
     {
-        if (auto const pWindowsCompareStringOrdinal = try_get_WindowsCompareStringOrdinal())
+        if (auto const _pfnWindowsCompareStringOrdinal = try_get_WindowsCompareStringOrdinal())
         {
-            return pWindowsCompareStringOrdinal(string1, string2, result);
+            return _pfnWindowsCompareStringOrdinal(_hStringLeft, _hStringRigth, _pnResult);
         }
 
-        if (!result)
-        {
+        if (!_pnResult)
             return E_INVALIDARG;
-        }
-        *result = 0;
 
-        if (string1 && string2)
+        *_pnResult = 0;
+        const auto _hHeaderLeft = reinterpret_cast<internal::PHSTRING_HEADER_INTERNAL>(_hStringLeft);
+        const auto _hHeaderRigth = reinterpret_cast<internal::PHSTRING_HEADER_INTERNAL>(_hStringRigth);
+        if (_hHeaderLeft && _hHeaderLeft->Length)
         {
-            internal::PSTRING_OPAQUE OpaqueString1 =
-                reinterpret_cast<internal::PSTRING_OPAQUE>(string1);
-            internal::PSTRING_OPAQUE OpaqueString2 =
-                reinterpret_cast<internal::PSTRING_OPAQUE>(string2);
-
-            int CompareResult = ::CompareStringOrdinal(
-                OpaqueString1->Header.StringRef,
-                OpaqueString1->Header.Length,
-                OpaqueString2->Header.StringRef,
-                OpaqueString2->Header.Length,
-                FALSE);
-            if (CompareResult == CSTR_LESS_THAN)
+            if (_hHeaderRigth && _hHeaderRigth->Length)
             {
-                *result = -1;
+                const auto _nResult = ::CompareStringOrdinal(_hHeaderLeft->StringRef, _hHeaderLeft->Length, _hHeaderRigth->StringRef, _hHeaderRigth->Length, FALSE);
+                if (_nResult)
+                {
+                    *_pnResult = _nResult - CSTR_EQUAL;
+                }
             }
-            else if (CompareResult == CSTR_GREATER_THAN)
+            else
             {
-                *result = 1;
+                *_pnResult = 1;
             }
         }
-        else if (string1 && !string2)
+        else
         {
-            internal::PSTRING_OPAQUE OpaqueString1 =
-                reinterpret_cast<internal::PSTRING_OPAQUE>(string1);
-            if (OpaqueString1->Header.Length)
-            {
-                *result = 1;
-            }
-        }
-        else if (!string1 && string2)
-        {
-            internal::PSTRING_OPAQUE OpaqueString2 =
-                reinterpret_cast<internal::PSTRING_OPAQUE>(string2);
-            if (OpaqueString2->Header.Length)
-            {
-                *result = 1;
-            }
+            *_pnResult = _hHeaderRigth && _hHeaderRigth->Length ? -1 : 0;
         }
 
         return S_OK;
     }
 #endif
-
 }
