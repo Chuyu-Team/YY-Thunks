@@ -87,6 +87,9 @@
     <ClCompile Include="PropSys.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
+    <ClCompile Include="api-ms-win-core-winrt-string.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -278,9 +281,6 @@
     <ClInclude Include="..\Shared\InterlockedQueue.h">
       <Filter>Shared</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shared\Heap.h">
-      <Filter>Shared</Filter>
-    </ClInclude>
     <ClInclude Include="..\Thunks\ext-ms-win-ntuser-misc.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
@@ -359,7 +359,10 @@
     <ClInclude Include="..\Thunks\mf.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shared\hstring_private.h">
+    <ClInclude Include="..\Shared\HStringPrivate.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\SharedDefs.h">
       <Filter>Shared</Filter>
     </ClInclude>
   </ItemGroup>

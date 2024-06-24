@@ -1,6 +1,7 @@
 ﻿#if (YY_Thunks_Support_Version < NTDDI_WIN8)
-#include <HStringPrivate.h>
 #include <winstring.h>
+
+#include <HStringPrivate.h>
 #endif
 
 #if (YY_Thunks_Support_Version < NTDDI_WIN8) && __YY_Thunks_libs && !defined(__Comment_Lib_runtimeobject)
