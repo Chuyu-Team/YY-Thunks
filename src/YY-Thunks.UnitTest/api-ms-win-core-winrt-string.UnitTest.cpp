@@ -93,20 +93,20 @@ namespace api_ms_win_core_winrt_string
         }
     };
 
-	TEST_CLASS(WindowsStringHasEmbeddedNull)
-	{
+    TEST_CLASS(WindowsStringHasEmbeddedNull)
+    {
         AwaysNullGuard Guard;
 
-	public:
+    public:
         WindowsStringHasEmbeddedNull()
-		{
+        {
             Guard |= YY::Thunks::aways_null_try_get_WindowsCreateString;
             Guard |= YY::Thunks::aways_null_try_get_WindowsDeleteString;
             Guard |= YY::Thunks::aways_null_try_get_WindowsStringHasEmbeddedNull;
-		}
+        }
 
-		TEST_METHOD(标准C字符串)
-		{
+        TEST_METHOD(标准C字符串)
+        {
             const wchar_t _szInput[] = L"TestString";
             const auto _cInput = _countof(_szInput) - 1;
 
@@ -120,7 +120,7 @@ namespace api_ms_win_core_winrt_string
             Assert::IsFalse(_bEmbeddedNull);
 
             ::WindowsDeleteString(_hString);
-		}
+        }
 
         TEST_METHOD(中途带零的字符串)
         {
@@ -155,7 +155,7 @@ namespace api_ms_win_core_winrt_string
 
             ::WindowsDeleteString(_hString);
         }
-	};
+    };
 
     TEST_CLASS(WindowsCompareStringOrdinal)
     {
