@@ -610,9 +610,12 @@
 | 函数                                       | Fallback
 | ----                                       | -----------
 | PowerDeterminePlatformRole                 | 不存在时，返回PlatformRoleDesktop。
-| PowerDeterminePlatformRoleEx               | 不存在时，调用PlatformRoleDesktop。
+| PowerDeterminePlatformRoleEx               | 不存在时，调用PowerDeterminePlatformRole。
 | PowerRegisterSuspendResumeNotification     | 不存在时，使用窗口模拟。
 | PowerUnregisterSuspendResumeNotification   | 内部实现。
+| PowerGetActiveScheme                       | 不存在时，始终认为是平衡模式。
+| PowerReadACValue                           | 不存在时，读取注册表。（目前仅支持ConsoleLock）
+| PowerReadDCValue                           | 不存在时，读取注册表。（目前仅支持ConsoleLock）
 
 ## PropSys.dll
 | 函数                                       | Fallback
