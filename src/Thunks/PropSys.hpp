@@ -1,14 +1,14 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+﻿#if (YY_Thunks_Target < __WindowsNT6)
 #include <propvarutil.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_oleaut32)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_oleaut32)
 #define __Comment_Lib_oleaut32
 // SafeArrayGetElement、SafeArrayGetLBound、SafeArrayGetUBound、VariantClear、VarCmp
 #pragma comment(lib, "OleAut32.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_ole32)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_ole32)
 #define __Comment_Lib_ole32
 // CoTaskMemAlloc
 #pragma comment(lib, "ole32.lib")
@@ -19,7 +19,7 @@ namespace YY::Thunks::internal
 {
     namespace
     {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
         static HRESULT __fastcall SafeArrayGetCount(SAFEARRAY* _pArray, LONG* _pnLbound)
         {
             *_pnLbound = 0;
@@ -289,7 +289,7 @@ namespace YY::Thunks::internal
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows XP SP2、Windows Vista [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2003 SP1[仅限桌面应用]
@@ -322,7 +322,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows XP SP2、Windows Vista [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2003 SP1[仅限桌面应用]
@@ -350,7 +350,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows XP SP2、Windows Vista [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2003 SP1[仅限桌面应用]
@@ -378,7 +378,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows XP SP2、Windows Vista [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2003 SP1[仅限桌面应用]

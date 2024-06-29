@@ -11,7 +11,7 @@ namespace YY::Thunks::internal
     // 如果希望自定义函数入口点，可以设置此函数
     extern "C" extern decltype(_DllMainCRTStartup)* const __pfnDllMainCRTStartupForYY_Thunks;
 
-#if YY_Thunks_Support_Version < NTDDI_WIN6
+#if YY_Thunks_Target < __WindowsNT6
     extern "C" ULONG _tls_index;
     static ULONG _tls_index_old;
 #ifdef _WIN64
@@ -375,7 +375,7 @@ namespace YY::Thunks::internal
         {
         }
     }
-#endif // YY_Thunks_Support_Version < NTDDI_WIN6
+#endif // YY_Thunks_Target < __WindowsNT6
 
     // 我们始终提供DllMainCRTStartupForYY_Thunks函数，虽然理论上Vista（包含）以上就不用修正了，但是为了做到体验统一
     // 避免Vista模式设置 DllMainCRTStartupForYY_Thunks 就发生链接失败问题。
@@ -394,7 +394,7 @@ namespace YY::Thunks::internal
         case DLL_PROCESS_ATTACH:
             _YY_initialize_winapi_thunks(ThunksInitStatus::InitByDllMain);
 
-#if YY_Thunks_Support_Version < NTDDI_WIN6
+#if YY_Thunks_Target < __WindowsNT6
             if (internal::GetSystemVersion() < internal::MakeVersion(6, 0))
             {
                 __declspec(allocate(".CRT$XLB")) static const PIMAGE_TLS_CALLBACK s_FirstCallback = FirstCallback;
@@ -413,7 +413,7 @@ namespace YY::Thunks::internal
 #endif
             return _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
             break;
-#if YY_Thunks_Support_Version < NTDDI_WIN6
+#if YY_Thunks_Target < __WindowsNT6
         case DLL_THREAD_ATTACH:
             if (internal::GetSystemVersion() < internal::MakeVersion(6, 0) && _tls_index_old == 0 && g_TlsMode == TlsMode::ByDllMainCRTStartupForYY_Thunks)
             {
@@ -437,11 +437,11 @@ namespace YY::Thunks::internal
             break;
 #endif
         case DLL_PROCESS_DETACH:
-#if (YY_Thunks_Support_Version < NTDDI_WINXP)
+#if (YY_Thunks_Target < __WindowsNT5_1)
             __YY_Thunks_Process_Terminating = _pReserved != nullptr;
 #endif
 
-#if YY_Thunks_Support_Version < NTDDI_WIN6
+#if YY_Thunks_Target < __WindowsNT6
             if (internal::GetSystemVersion() < internal::MakeVersion(6, 0) && _tls_index_old == 0 && g_TlsMode == TlsMode::ByDllMainCRTStartupForYY_Thunks)
             {
                 CallTlsCallback(_hInstance, _uReason);

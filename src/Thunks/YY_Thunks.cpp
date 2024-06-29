@@ -43,9 +43,9 @@ YY-Thunks支持的控制宏：
     _APPLY(psapi,                                        "psapi"                              , 0                 ) \
     _APPLY(pdh,                                          "pdh"                                , 0                 ) \
     _APPLY(version,                                      "version"                            , 0                 ) \
-	_APPLY(advapi32,                                     "advapi32"                           , 0                 ) \
-	_APPLY(bcrypt,                                       "bcrypt"                             , 0                 ) \
-	_APPLY(bcryptprimitives,                             "bcryptprimitives"                   , 0                 ) \
+    _APPLY(advapi32,                                     "advapi32"                           , 0                 ) \
+    _APPLY(bcrypt,                                       "bcrypt"                             , 0                 ) \
+    _APPLY(bcryptprimitives,                             "bcryptprimitives"                   , 0                 ) \
     _APPLY(user32,                                       "user32"                             , 0                 ) \
     _APPLY(ws2_32,                                       "ws2_32"                             , 0                 ) \
     _APPLY(shell32,                                      "shell32"                            , 0                 ) \
@@ -118,10 +118,7 @@ YY-Thunks支持的控制宏：
 
 
 #include <sdkddkver.h>
-
-#ifndef YY_Thunks_Support_Version
-#define YY_Thunks_Support_Version WDK_NTDDI_VERSION
-#endif
+#include <SharedDefs.h>
 
 #ifndef _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -130,7 +127,7 @@ YY-Thunks支持的控制宏：
 #define _WINSOCKAPI_
 #define PSAPI_VERSION 1
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 #define INITKNOWNFOLDERS
 #endif
 
@@ -155,7 +152,7 @@ YY-Thunks支持的控制宏：
 #define __YY_Thunks_libs 1
 #endif
 
-#if !defined(__USING_NTDLL_LIB) && (__YY_Thunks_libs || YY_Thunks_Support_Version >= NTDDI_WIN10)
+#if !defined(__USING_NTDLL_LIB) && (__YY_Thunks_libs || YY_Thunks_Target >= __WindowsNT10_10240)
 // lib模式下必然存在 ntdll.lib，此外最小支持Windows 10时，我们因为强制依赖Windows 10 SDK，所以也必然存在ntdll.lib。
 #define __USING_NTDLL_LIB 1
 #endif
@@ -190,53 +187,53 @@ RtlCutoverTimeToSystemTime(
 
 #include "YY_Thunks.h"
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03SP1) && !defined(__Comment_Lib_advapi32)
+#if (YY_Thunks_Target < __WindowsNT5_2_SP1) && !defined(__Comment_Lib_advapi32)
 #define __Comment_Lib_advapi32
 #pragma comment(lib, "Advapi32.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_shlwapi)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_shlwapi)
 #define __Comment_Lib_shlwapi
 #pragma comment(lib, "Shlwapi.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_ws2_32)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_ws2_32)
 #define __Comment_Lib_ws2_32
 #pragma comment(lib, "Ws2_32.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_version)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_version)
 #define __Comment_Lib_version
 #pragma comment(lib, "version.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_ole32)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_ole32)
 #define __Comment_Lib_ole32
 #pragma comment(lib, "ole32.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_shell32)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_shell32)
 #define __Comment_Lib_shell32
 #pragma comment(lib, "shell32.lib")
 #endif
 
 // PSAPI2Kernel32.def
-#if (YY_Thunks_Support_Version < NTDDI_WIN7) && !defined(__Comment_Lib_psapi)
+#if (YY_Thunks_Target < __WindowsNT6_1) && !defined(__Comment_Lib_psapi)
 #define __Comment_Lib_psapi
 #pragma comment(lib, "psapi.lib")
 #endif
 
-#if (YY_Thunks_Support_Version >= NTDDI_WINBLUE) && !defined(__Comment_Lib_shcore)
+#if (YY_Thunks_Target >= __WindowsNT6_3) && !defined(__Comment_Lib_shcore)
 #define __Comment_Lib_shcore
 #pragma comment(lib, "Shcore.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WINBLUE) && !defined(__Comment_Lib_gdi32)
+#if (YY_Thunks_Target < __WindowsNT6_3) && !defined(__Comment_Lib_gdi32)
 #define __Comment_Lib_gdi32
 #pragma comment(lib, "Gdi32.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN10) && !defined(__Comment_Lib_user32)
+#if (YY_Thunks_Target < __WindowsNT10_10240) && !defined(__Comment_Lib_user32)
 #define __Comment_Lib_user32
 #pragma comment(lib, "User32.lib")
 #endif
@@ -251,8 +248,8 @@ RtlCutoverTimeToSystemTime(
 #define __DEFINE_THUNK_EXTERN_PREFIX(_PREFIX, _MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                      \
     __APPLY_UNIT_TEST_BOOL(_FUNCTION);                                                                                     \
     EXTERN_C _RETURN_ _CONVENTION_ _CRT_CONCATENATE_(_PREFIX, _FUNCTION)(__VA_ARGS__);                                     \
-	static decltype(_CRT_CONCATENATE_(_PREFIX, _FUNCTION))* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept;      \
-	__if_not_exists(_CRT_CONCATENATE(try_get_, _FUNCTION))
+    static decltype(_CRT_CONCATENATE_(_PREFIX, _FUNCTION))* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept;      \
+    __if_not_exists(_CRT_CONCATENATE(try_get_, _FUNCTION))
 
 #define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...) __DEFINE_THUNK_EXTERN_PREFIX(__FALLBACK_PREFIX, _MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, __VA_ARGS__)
 
@@ -262,8 +259,8 @@ RtlCutoverTimeToSystemTime(
 
 namespace YY::Thunks::internal
 {
-	namespace
-	{
+    namespace
+    {
         inline UINT8 __fastcall BitsCount(ULONG32 _fBitMask)
         {
 #if defined(_M_IX86) || defined(_M_AMD64)
@@ -295,10 +292,10 @@ namespace YY::Thunks::internal
 #endif
         }
 
-		__forceinline constexpr DWORD __fastcall MakeVersion(_In_ DWORD _uMajorVersion, _In_ DWORD _uMinorVersion)
-		{
-			return (_uMajorVersion << 16) | _uMinorVersion;
-		}
+        __forceinline constexpr DWORD __fastcall MakeVersion(_In_ DWORD _uMajorVersion, _In_ DWORD _uMinorVersion)
+        {
+            return (_uMajorVersion << 16) | _uMinorVersion;
+        }
 
         __forceinline DWORD __fastcall GetSystemVersion()
         {
@@ -386,198 +383,198 @@ namespace YY::Thunks::internal
             }
         }
 
-		//代码块，分割任务
-		template<class Callback, typename... Params>
-		auto __forceinline Block(Callback&& _Callback, Params&&... args) -> decltype(_Callback(args...))
-		{
-			return _Callback(args...);
-		}
+        //代码块，分割任务
+        template<class Callback, typename... Params>
+        auto __forceinline Block(Callback&& _Callback, Params&&... args) -> decltype(_Callback(args...))
+        {
+            return _Callback(args...);
+        }
 
-		static DWORD __fastcall NtStatusToDosError(
-			_In_ NTSTATUS Status
-			)
-		{
-			if (STATUS_TIMEOUT == Status)
-			{
-				/*
-				https://github.com/Chuyu-Team/YY-Thunks/issues/10
+        static DWORD __fastcall NtStatusToDosError(
+            _In_ NTSTATUS Status
+            )
+        {
+            if (STATUS_TIMEOUT == Status)
+            {
+                /*
+                https://github.com/Chuyu-Team/YY-Thunks/issues/10
 
-				用户报告，Windows XP 无法转换 STATUS_TIMEOUT。实际结果也是rubin，因此，特殊处理一下。
-				*/
-				return ERROR_TIMEOUT;
-			}
-			else if (auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError())
-			{
-				return pRtlNtStatusToDosError(Status);
-			}
-			else
-			{
-				//如果没有RtlNtStatusToDosError就直接设置Status代码吧，反正至少比没有错误代码强
-				return Status;
-			}
+                用户报告，Windows XP 无法转换 STATUS_TIMEOUT。实际结果也是rubin，因此，特殊处理一下。
+                */
+                return ERROR_TIMEOUT;
+            }
+            else if (auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError())
+            {
+                return pRtlNtStatusToDosError(Status);
+            }
+            else
+            {
+                //如果没有RtlNtStatusToDosError就直接设置Status代码吧，反正至少比没有错误代码强
+                return Status;
+            }
 
-		}
+        }
 
-		static DWORD __fastcall BaseSetLastNTError(
-			_In_ NTSTATUS Status
-			)
-		{
-			auto lStatus = NtStatusToDosError(Status);
-			SetLastError(lStatus);
-			return lStatus;
-		}
+        static DWORD __fastcall BaseSetLastNTError(
+            _In_ NTSTATUS Status
+            )
+        {
+            auto lStatus = NtStatusToDosError(Status);
+            SetLastError(lStatus);
+            return lStatus;
+        }
 
-		static __analysis_noreturn void __fastcall RaiseStatus(NTSTATUS Status)
-		{
-			RaiseException(Status, EXCEPTION_NONCONTINUABLE, 0, NULL);
-		}
+        static __analysis_noreturn void __fastcall RaiseStatus(NTSTATUS Status)
+        {
+            RaiseException(Status, EXCEPTION_NONCONTINUABLE, 0, NULL);
+        }
 
-		static LARGE_INTEGER* __fastcall BaseFormatTimeOut(LARGE_INTEGER* Timeout, DWORD dwMilliseconds)
-		{
-			if (dwMilliseconds == INFINITE)
-				return nullptr;
+        static LARGE_INTEGER* __fastcall BaseFormatTimeOut(LARGE_INTEGER* Timeout, DWORD dwMilliseconds)
+        {
+            if (dwMilliseconds == INFINITE)
+                return nullptr;
 
-			Timeout->QuadPart = -10000ll * dwMilliseconds;
+            Timeout->QuadPart = -10000ll * dwMilliseconds;
 
-			return Timeout;
-		}
+            return Timeout;
+        }
 
-		static LSTATUS __fastcall Basep8BitStringToStaticUnicodeString(UNICODE_STRING* pDst, LPCSTR Src)
-		{
-			const UINT CodePage = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
+        static LSTATUS __fastcall Basep8BitStringToStaticUnicodeString(UNICODE_STRING* pDst, LPCSTR Src)
+        {
+            const UINT CodePage = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 
-			auto cchDst = MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, Src, -1, pDst->Buffer, pDst->MaximumLength / sizeof(wchar_t));
-			if (cchDst <= 0)
-			{
-				return GetLastError();
-			}
+            auto cchDst = MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, Src, -1, pDst->Buffer, pDst->MaximumLength / sizeof(wchar_t));
+            if (cchDst <= 0)
+            {
+                return GetLastError();
+            }
             cchDst *= sizeof(wchar_t);
             if (cchDst > MAXUINT16)
             {
                 return ERROR_BAD_PATHNAME;
             }
 
-			pDst->Length = static_cast<USHORT>(cchDst);
-			return ERROR_SUCCESS;
-		}
+            pDst->Length = static_cast<USHORT>(cchDst);
+            return ERROR_SUCCESS;
+        }
 
-		static BOOL __fastcall BasepGetVolumeGUIDFromNTName(const UNICODE_STRING* NtName, wchar_t szVolumeGUID[MAX_PATH])
-		{
+        static BOOL __fastcall BasepGetVolumeGUIDFromNTName(const UNICODE_STRING* NtName, wchar_t szVolumeGUID[MAX_PATH])
+        {
 #define __szVolumeMountPointPrefix__ L"\\\\?\\GLOBALROOT"
 
-			//一个设备名称 512 长度够多了吧？
-			wchar_t szVolumeMountPoint[512];
-				
-			//检查缓冲区是否充足
-			auto cbBufferNeed = sizeof(__szVolumeMountPointPrefix__) + NtName->Length;
+            //一个设备名称 512 长度够多了吧？
+            wchar_t szVolumeMountPoint[512];
+                
+            //检查缓冲区是否充足
+            auto cbBufferNeed = sizeof(__szVolumeMountPointPrefix__) + NtName->Length;
 
-			if (cbBufferNeed > sizeof(szVolumeMountPoint))
-			{
-				SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-				return FALSE;
-			}
-				
-			memcpy(szVolumeMountPoint, __szVolumeMountPointPrefix__, sizeof(__szVolumeMountPointPrefix__) - sizeof(__szVolumeMountPointPrefix__[0]));
-			memcpy((char*)szVolumeMountPoint + sizeof(__szVolumeMountPointPrefix__) - sizeof(__szVolumeMountPointPrefix__[0]), NtName->Buffer, NtName->Length);
+            if (cbBufferNeed > sizeof(szVolumeMountPoint))
+            {
+                SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+                return FALSE;
+            }
+                
+            memcpy(szVolumeMountPoint, __szVolumeMountPointPrefix__, sizeof(__szVolumeMountPointPrefix__) - sizeof(__szVolumeMountPointPrefix__[0]));
+            memcpy((char*)szVolumeMountPoint + sizeof(__szVolumeMountPointPrefix__) - sizeof(__szVolumeMountPointPrefix__[0]), NtName->Buffer, NtName->Length);
 
-			szVolumeMountPoint[cbBufferNeed / 2 - 1] = L'\0';
+            szVolumeMountPoint[cbBufferNeed / 2 - 1] = L'\0';
 
 
-			return GetVolumeNameForVolumeMountPointW(szVolumeMountPoint, szVolumeGUID, MAX_PATH);
+            return GetVolumeNameForVolumeMountPointW(szVolumeMountPoint, szVolumeGUID, MAX_PATH);
 
 #undef __szVolumeMountPointPrefix__
-		}
+        }
 
-		static BOOL __fastcall BasepGetVolumeDosLetterNameFromNTName(const UNICODE_STRING* NtName, wchar_t szVolumeDosLetter[MAX_PATH])
-		{
-			wchar_t szVolumeName[MAX_PATH];
+        static BOOL __fastcall BasepGetVolumeDosLetterNameFromNTName(const UNICODE_STRING* NtName, wchar_t szVolumeDosLetter[MAX_PATH])
+        {
+            wchar_t szVolumeName[MAX_PATH];
 
-			if (!BasepGetVolumeGUIDFromNTName(NtName, szVolumeName))
-			{
-				return FALSE;
-			}
+            if (!BasepGetVolumeGUIDFromNTName(NtName, szVolumeName))
+            {
+                return FALSE;
+            }
 
-			DWORD cchVolumePathName = 0;
+            DWORD cchVolumePathName = 0;
 
-			if (!GetVolumePathNamesForVolumeNameW(szVolumeName, szVolumeDosLetter + 4, MAX_PATH - 4, &cchVolumePathName))
-			{
-				return FALSE;
-			}
+            if (!GetVolumePathNamesForVolumeNameW(szVolumeName, szVolumeDosLetter + 4, MAX_PATH - 4, &cchVolumePathName))
+            {
+                return FALSE;
+            }
 
-			szVolumeDosLetter[0] = L'\\';
-			szVolumeDosLetter[1] = L'\\';
-			szVolumeDosLetter[2] = L'?';
-			szVolumeDosLetter[3] = L'\\';
+            szVolumeDosLetter[0] = L'\\';
+            szVolumeDosLetter[1] = L'\\';
+            szVolumeDosLetter[2] = L'?';
+            szVolumeDosLetter[3] = L'\\';
 
-			return TRUE;
-		}
+            return TRUE;
+        }
 
-		static unsigned __fastcall CharToHex(_In_ wchar_t _ch)
-		{
-			if (_ch >= L'0' && _ch <= L'9')
-			{
-				return _ch - L'0';
-			}
-			else if (_ch >= L'A' && _ch <= L'F')
-			{
-				return _ch - L'A' + 0xA;
-			}
-			else if (_ch >= L'a' && _ch <= L'f')
-			{
-				return _ch - L'a' + 0xA;
-			}
-			else
-			{
-				return -1;
-			}
-		}
+        static unsigned __fastcall CharToHex(_In_ wchar_t _ch)
+        {
+            if (_ch >= L'0' && _ch <= L'9')
+            {
+                return _ch - L'0';
+            }
+            else if (_ch >= L'A' && _ch <= L'F')
+            {
+                return _ch - L'A' + 0xA;
+            }
+            else if (_ch >= L'a' && _ch <= L'f')
+            {
+                return _ch - L'a' + 0xA;
+            }
+            else
+            {
+                return -1;
+            }
+        }
 
-		static BOOL __fastcall StringToGuid(_In_z_ const wchar_t* _szInput, _Out_ GUID* _pId)
-		{
-			*_pId = GUID{};
+        static BOOL __fastcall StringToGuid(_In_z_ const wchar_t* _szInput, _Out_ GUID* _pId)
+        {
+            *_pId = GUID{};
 
-			if (!_szInput)
-				return FALSE;
+            if (!_szInput)
+                return FALSE;
 
-			if (*_szInput == L'{')
-				++_szInput;
+            if (*_szInput == L'{')
+                ++_szInput;
 
 #define _IS_HEX_CHAR(C) (CharToHex(C) != (unsigned)-1)
 
-			if (!(_IS_HEX_CHAR(_szInput[0]) && _IS_HEX_CHAR(_szInput[1]) && _IS_HEX_CHAR(_szInput[2]) && _IS_HEX_CHAR(_szInput[3])
-				&& _IS_HEX_CHAR(_szInput[4]) && _IS_HEX_CHAR(_szInput[5]) && _IS_HEX_CHAR(_szInput[6]) && _IS_HEX_CHAR(_szInput[7])
-				&& _szInput[8] == L'-'
-				&& _IS_HEX_CHAR(_szInput[9]) && _IS_HEX_CHAR(_szInput[10]) && _IS_HEX_CHAR(_szInput[11]) && _IS_HEX_CHAR(_szInput[12])
-				&& _szInput[13] == L'-'
-				&& _IS_HEX_CHAR(_szInput[14]) && _IS_HEX_CHAR(_szInput[15]) && _IS_HEX_CHAR(_szInput[16]) && _IS_HEX_CHAR(_szInput[17])
-				&& _szInput[18] == L'-'
-				&& _IS_HEX_CHAR(_szInput[19]) && _IS_HEX_CHAR(_szInput[20]) && _IS_HEX_CHAR(_szInput[21]) && _IS_HEX_CHAR(_szInput[22])
-				&& _szInput[23] == L'-'
-				&& _IS_HEX_CHAR(_szInput[24]) && _IS_HEX_CHAR(_szInput[25]) && _IS_HEX_CHAR(_szInput[26]) && _IS_HEX_CHAR(_szInput[27])
-				&& _IS_HEX_CHAR(_szInput[28]) && _IS_HEX_CHAR(_szInput[29]) && _IS_HEX_CHAR(_szInput[30]) && _IS_HEX_CHAR(_szInput[31])
-				&& _IS_HEX_CHAR(_szInput[32]) && _IS_HEX_CHAR(_szInput[33]) && _IS_HEX_CHAR(_szInput[34]) && _IS_HEX_CHAR(_szInput[35])))
-			{
-				return FALSE;
-			}
+            if (!(_IS_HEX_CHAR(_szInput[0]) && _IS_HEX_CHAR(_szInput[1]) && _IS_HEX_CHAR(_szInput[2]) && _IS_HEX_CHAR(_szInput[3])
+                && _IS_HEX_CHAR(_szInput[4]) && _IS_HEX_CHAR(_szInput[5]) && _IS_HEX_CHAR(_szInput[6]) && _IS_HEX_CHAR(_szInput[7])
+                && _szInput[8] == L'-'
+                && _IS_HEX_CHAR(_szInput[9]) && _IS_HEX_CHAR(_szInput[10]) && _IS_HEX_CHAR(_szInput[11]) && _IS_HEX_CHAR(_szInput[12])
+                && _szInput[13] == L'-'
+                && _IS_HEX_CHAR(_szInput[14]) && _IS_HEX_CHAR(_szInput[15]) && _IS_HEX_CHAR(_szInput[16]) && _IS_HEX_CHAR(_szInput[17])
+                && _szInput[18] == L'-'
+                && _IS_HEX_CHAR(_szInput[19]) && _IS_HEX_CHAR(_szInput[20]) && _IS_HEX_CHAR(_szInput[21]) && _IS_HEX_CHAR(_szInput[22])
+                && _szInput[23] == L'-'
+                && _IS_HEX_CHAR(_szInput[24]) && _IS_HEX_CHAR(_szInput[25]) && _IS_HEX_CHAR(_szInput[26]) && _IS_HEX_CHAR(_szInput[27])
+                && _IS_HEX_CHAR(_szInput[28]) && _IS_HEX_CHAR(_szInput[29]) && _IS_HEX_CHAR(_szInput[30]) && _IS_HEX_CHAR(_szInput[31])
+                && _IS_HEX_CHAR(_szInput[32]) && _IS_HEX_CHAR(_szInput[33]) && _IS_HEX_CHAR(_szInput[34]) && _IS_HEX_CHAR(_szInput[35])))
+            {
+                return FALSE;
+            }
 #undef _IS_HEX_CHAR
 
-			_pId->Data1 = (CharToHex(_szInput[0]) << 28) | (CharToHex(_szInput[1]) << 24) | (CharToHex(_szInput[2]) << 20) | (CharToHex(_szInput[3]) << 16)
-				| (CharToHex(_szInput[4]) << 12) | (CharToHex(_szInput[5]) << 8) | (CharToHex(_szInput[6]) << 4) | (CharToHex(_szInput[7]) << 0);
+            _pId->Data1 = (CharToHex(_szInput[0]) << 28) | (CharToHex(_szInput[1]) << 24) | (CharToHex(_szInput[2]) << 20) | (CharToHex(_szInput[3]) << 16)
+                | (CharToHex(_szInput[4]) << 12) | (CharToHex(_szInput[5]) << 8) | (CharToHex(_szInput[6]) << 4) | (CharToHex(_szInput[7]) << 0);
 
-			_pId->Data2 = (CharToHex(_szInput[9]) << 12) | (CharToHex(_szInput[10]) << 8) | (CharToHex(_szInput[11]) << 4) | (CharToHex(_szInput[12]) << 0);
+            _pId->Data2 = (CharToHex(_szInput[9]) << 12) | (CharToHex(_szInput[10]) << 8) | (CharToHex(_szInput[11]) << 4) | (CharToHex(_szInput[12]) << 0);
 
-			_pId->Data3 = (CharToHex(_szInput[14]) << 12) | (CharToHex(_szInput[15]) << 8) | (CharToHex(_szInput[16]) << 4) | (CharToHex(_szInput[17]) << 0);
-				
-			_pId->Data4[0] = (CharToHex(_szInput[19]) << 4) | (CharToHex(_szInput[20]) << 0);
-			_pId->Data4[1] = (CharToHex(_szInput[21]) << 4) | (CharToHex(_szInput[22]) << 0);
-			_pId->Data4[2] = (CharToHex(_szInput[24]) << 4) | (CharToHex(_szInput[25]) << 0);
-			_pId->Data4[3] = (CharToHex(_szInput[26]) << 4) | (CharToHex(_szInput[27]) << 0);
-			_pId->Data4[4] = (CharToHex(_szInput[28]) << 4) | (CharToHex(_szInput[29]) << 0);
-			_pId->Data4[5] = (CharToHex(_szInput[30]) << 4) | (CharToHex(_szInput[31]) << 0);
-			_pId->Data4[6] = (CharToHex(_szInput[32]) << 4) | (CharToHex(_szInput[33]) << 0);
-			_pId->Data4[7] = (CharToHex(_szInput[34]) << 4) | (CharToHex(_szInput[35]) << 0);
-			return TRUE;
-		}
+            _pId->Data3 = (CharToHex(_szInput[14]) << 12) | (CharToHex(_szInput[15]) << 8) | (CharToHex(_szInput[16]) << 4) | (CharToHex(_szInput[17]) << 0);
+                
+            _pId->Data4[0] = (CharToHex(_szInput[19]) << 4) | (CharToHex(_szInput[20]) << 0);
+            _pId->Data4[1] = (CharToHex(_szInput[21]) << 4) | (CharToHex(_szInput[22]) << 0);
+            _pId->Data4[2] = (CharToHex(_szInput[24]) << 4) | (CharToHex(_szInput[25]) << 0);
+            _pId->Data4[3] = (CharToHex(_szInput[26]) << 4) | (CharToHex(_szInput[27]) << 0);
+            _pId->Data4[4] = (CharToHex(_szInput[28]) << 4) | (CharToHex(_szInput[29]) << 0);
+            _pId->Data4[5] = (CharToHex(_szInput[30]) << 4) | (CharToHex(_szInput[31]) << 0);
+            _pId->Data4[6] = (CharToHex(_szInput[32]) << 4) | (CharToHex(_szInput[33]) << 0);
+            _pId->Data4[7] = (CharToHex(_szInput[34]) << 4) | (CharToHex(_szInput[35]) << 0);
+            return TRUE;
+        }
 
         template<typename Char1, typename Char2>
         static bool __fastcall StringStartsWithI(_In_z_ const Char1* _szStr, _In_z_ const Char2* _szStartsWith, _Outptr_opt_result_z_ const Char1** _szEnd = nullptr)
@@ -983,7 +980,7 @@ namespace YY::Thunks::internal
             UNICODE_STRING _Result = { (kLength - 1)* sizeof(_Right[0]), kLength * sizeof(_Right[0]), const_cast<PWSTR>(_Right) };
             return _Result;
         }
-	}
+    }
 
 } //namespace YY
 
@@ -996,13 +993,13 @@ namespace YY::Thunks::internal
 #define YY_Thunks_Implemented
 #define __DEFINE_THUNK_IMP_PREFIX(_PREFIX, _MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                 \
     static decltype(_CRT_CONCATENATE_(_PREFIX, _FUNCTION))* __cdecl _CRT_CONCATENATE(try_get_, _FUNCTION)() noexcept       \
-	{                                                                                          \
+    {                                                                                          \
         __CHECK_UNIT_TEST_BOOL(_FUNCTION);                                                     \
         __declspec(allocate(".YYThr$AAA")) static void* _CRT_CONCATENATE(pInit_ ,_FUNCTION) =  \
               reinterpret_cast<void*>(&_CRT_CONCATENATE(try_get_, _FUNCTION));                 \
         /*为了避免编译器将 YYThr$AAA 节优化掉*/                                                \
         __foreinclude(_CRT_CONCATENATE(pInit_ ,_FUNCTION));                                    \
-		__declspec(allocate(".YYThu$AAB")) static void* _CRT_CONCATENATE(pFun_, _FUNCTION);    \
+        __declspec(allocate(".YYThu$AAB")) static void* _CRT_CONCATENATE(pFun_, _FUNCTION);    \
         static const ProcInfo _ProcInfo =                                                      \
         {                                                                                      \
             _CRT_STRINGIZE(_FUNCTION),                                                         \
@@ -1012,10 +1009,10 @@ __if_exists(YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION))        
             &YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION)                       \
 }                                                                                              \
         };                                                                                     \
-		return reinterpret_cast<decltype(_CRT_CONCATENATE_(_PREFIX, _FUNCTION))*>(try_get_function(                        \
-		&_CRT_CONCATENATE(pFun_ ,_FUNCTION),                                                   \
-		_ProcInfo));                                                                           \
-	}                                                                                          \
+        return reinterpret_cast<decltype(_CRT_CONCATENATE_(_PREFIX, _FUNCTION))*>(try_get_function(                        \
+        &_CRT_CONCATENATE(pFun_ ,_FUNCTION),                                                   \
+        _ProcInfo));                                                                           \
+    }                                                                                          \
     _DEFINE_IAT_SYMBOL_PREFIX(_PREFIX, _FUNCTION, _SIZE);                                                 \
     _YY_THUNKS_DEFINE_RUST_RAW_DYLIB_IAT_SYMBOL_PREFIX(_PREFIX, _FUNCTION, _SIZE);                             \
     EXTERN_C _RETURN_ _CONVENTION_ _CRT_CONCATENATE_(_PREFIX, _FUNCTION)(__VA_ARGS__)
@@ -1069,7 +1066,7 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
         else
         {
             // 使用DLL安全加载
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
             if (!try_get_AddDllDirectory())
             {
 #if !defined(__USING_NTDLL_LIB)
@@ -1122,7 +1119,7 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
 }
 
 static __forceinline void* __fastcall try_get_proc_address_from_dll(
-	const ProcInfo& _ProcInfo
+    const ProcInfo& _ProcInfo
     ) noexcept
 {
     HMODULE const module_handle = _ProcInfo.pfnGetModule();

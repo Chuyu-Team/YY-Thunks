@@ -1,163 +1,162 @@
 ﻿
 
-namespace YY::Thunks
+namespace YY::Thunks::Fallback
 {
-#if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WS03)
-    namespace Fallback
+#if defined(YY_Thunks_Implemented) && (YY_Thunks_Target < __WindowsNT5_2)
+    namespace
     {
-        namespace
+        //Vista的Fls数量只有128，所以我们将长度固定为128，模拟Vista
+        constexpr auto kMaxFlsIndexCount = 128;
+
+        struct FlsData
         {
-            //Vista的Fls数量只有128，所以我们将长度固定为128，模拟Vista
-            constexpr auto kMaxFlsIndexCount = 128;
+            FlsData* pNext;
+            FlsData* pPrev;
 
-            struct FlsData
+            //此线程存储的数据
+            LPVOID lpFlsData;
+        };
+
+        struct FlsDataBlock
+        {
+            FlsData FlsDataArray[kMaxFlsIndexCount] = {};
+            DWORD uRef = 1;
+
+            void AddRef()
             {
-                FlsData* pNext;
-                FlsData* pPrev;
-
-                //此线程存储的数据
-                LPVOID lpFlsData;
-            };
-
-            struct FlsDataBlock
-            {
-                FlsData FlsDataArray[kMaxFlsIndexCount] = {};
-                DWORD uRef = 1;
-
-                void AddRef()
-                {
-                    InterlockedIncrement(&uRef);
-                }
-
-                void Release()
-                {
-                    if (InterlockedDecrement(&uRef) == 0)
-                    {
-                        internal::Delete(this);
-                    }
-                }
-            };
-
-            static thread_local FlsDataBlock* s_pFlsDataBlock;
-
-            struct FlsIndex
-            {
-                volatile LONG fFlags;
-                //FlsAlloc 传入的参数
-                volatile PFLS_CALLBACK_FUNCTION pfnCallback;
-                FlsData Root;
-
-                enum
-                {
-                    TlsUsedBitIndex = 0,
-                    DataLockBitIndex,
-                };
-            };
-            static FlsIndex s_FlsIndexArray[kMaxFlsIndexCount];
-            static DWORD s_FlsIndexArrayBitMap[kMaxFlsIndexCount / 32];
-            static_assert(sizeof(s_FlsIndexArrayBitMap) * 8 == kMaxFlsIndexCount, "");
-
-            static VOID NTAPI ThreadDetachCallback(
-                PVOID DllHandle,
-                DWORD Reason,
-                PVOID Reserved
-                )
-            {
-                if (DLL_THREAD_DETACH == Reason && s_pFlsDataBlock)
-                {
-                    //线程退出时我们需要调用Fls的 Callback
-                    for (DWORD i = 0; i != kMaxFlsIndexCount; ++i)
-                    {
-                        auto& _FlsData = s_pFlsDataBlock->FlsDataArray[i];
-                        if (/*_FlsData.pPrev == nullptr ||*/ _FlsData.lpFlsData == nullptr)
-                            continue;
-
-                        auto& _FlsIndex = s_FlsIndexArray[i];
-
-                        for (auto _fLastFlags = _FlsIndex.fFlags; _FlsIndex.pfnCallback;)
-                        {
-                            if ((_fLastFlags & (1 << FlsIndex::TlsUsedBitIndex)) == 0)
-                            {
-                                break;
-                            }
-
-                            if (_fLastFlags & (1 << FlsIndex::DataLockBitIndex))
-                            {
-                                YieldProcessor();
-                                _fLastFlags = _FlsIndex.fFlags;
-                                continue;
-                            }
-
-                            auto _Result = InterlockedCompareExchange(&_FlsIndex.fFlags, _fLastFlags | (1 << FlsIndex::DataLockBitIndex), _fLastFlags);
-                            if (_Result == _fLastFlags)
-                            {
-                                auto pPrev = _FlsData.pPrev;
-                                auto pNext = _FlsData.pNext;
-                                _FlsData.pNext = nullptr;
-                                _FlsData.pPrev = nullptr;
-                                if (pNext)
-                                {
-                                    pNext->pPrev = pPrev;
-                                }
-                                pPrev->pNext = pNext;
-
-                                auto _pfnCallback = _FlsIndex.pfnCallback;
-                                _interlockedbittestandreset(&_FlsIndex.fFlags, FlsIndex::DataLockBitIndex);
-
-                                __try
-                                {
-                                    if (_pfnCallback && _FlsData.lpFlsData)
-                                    {
-                                        _pfnCallback(_FlsData.lpFlsData);
-                                    }
-                                }
-                                __except (EXCEPTION_EXECUTE_HANDLER)
-                                {
-                                }
-                                s_pFlsDataBlock->Release();
-                                break;
-                            }
-
-                            _fLastFlags = _Result;
-                        }
-                    }
-
-                    s_pFlsDataBlock->Release();
-                }
+                InterlockedIncrement(&uRef);
             }
 
-#pragma section(".CRT$XLY",    long, read) // MS CRT Loader TLS Callback
-            extern "C" extern bool _tls_used;
+            void Release()
+            {
+                if (InterlockedDecrement(&uRef) == 0)
+                {
+                    internal::Delete(this);
+                }
+            }
+        };
+
+        static thread_local FlsDataBlock* s_pFlsDataBlock;
+
+        struct FlsIndex
+        {
+            volatile LONG fFlags;
+            //FlsAlloc 传入的参数
+            volatile PFLS_CALLBACK_FUNCTION pfnCallback;
+            FlsData Root;
+
+            enum
+            {
+                TlsUsedBitIndex = 0,
+                DataLockBitIndex,
+            };
+        };
+        static FlsIndex s_FlsIndexArray[kMaxFlsIndexCount];
+        static DWORD s_FlsIndexArrayBitMap[kMaxFlsIndexCount / 32];
+        static_assert(sizeof(s_FlsIndexArrayBitMap) * 8 == kMaxFlsIndexCount, "");
+
+        static VOID NTAPI ThreadDetachCallback(
+            PVOID DllHandle,
+            DWORD Reason,
+            PVOID Reserved
+        )
+        {
+            if (DLL_THREAD_DETACH == Reason && s_pFlsDataBlock)
+            {
+                //线程退出时我们需要调用Fls的 Callback
+                for (DWORD i = 0; i != kMaxFlsIndexCount; ++i)
+                {
+                    auto& _FlsData = s_pFlsDataBlock->FlsDataArray[i];
+                    if (/*_FlsData.pPrev == nullptr ||*/ _FlsData.lpFlsData == nullptr)
+                        continue;
+
+                    auto& _FlsIndex = s_FlsIndexArray[i];
+
+                    for (auto _fLastFlags = _FlsIndex.fFlags; _FlsIndex.pfnCallback;)
+                    {
+                        if ((_fLastFlags & (1 << FlsIndex::TlsUsedBitIndex)) == 0)
+                        {
+                            break;
+                        }
+
+                        if (_fLastFlags & (1 << FlsIndex::DataLockBitIndex))
+                        {
+                            YieldProcessor();
+                            _fLastFlags = _FlsIndex.fFlags;
+                            continue;
+                        }
+
+                        auto _Result = InterlockedCompareExchange(&_FlsIndex.fFlags, _fLastFlags | (1 << FlsIndex::DataLockBitIndex), _fLastFlags);
+                        if (_Result == _fLastFlags)
+                        {
+                            auto pPrev = _FlsData.pPrev;
+                            auto pNext = _FlsData.pNext;
+                            _FlsData.pNext = nullptr;
+                            _FlsData.pPrev = nullptr;
+                            if (pNext)
+                            {
+                                pNext->pPrev = pPrev;
+                            }
+                            pPrev->pNext = pNext;
+
+                            auto _pfnCallback = _FlsIndex.pfnCallback;
+                            _interlockedbittestandreset(&_FlsIndex.fFlags, FlsIndex::DataLockBitIndex);
+
+                            __try
+                            {
+                                if (_pfnCallback && _FlsData.lpFlsData)
+                                {
+                                    _pfnCallback(_FlsData.lpFlsData);
+                                }
+                            }
+                            __except (EXCEPTION_EXECUTE_HANDLER)
+                            {
+                            }
+                            s_pFlsDataBlock->Release();
+                            break;
+                        }
+
+                        _fLastFlags = _Result;
+                    }
+                }
+
+                s_pFlsDataBlock->Release();
+            }
         }
+
+#pragma section(".CRT$XLY",    long, read) // MS CRT Loader TLS Callback
+        extern "C" extern bool _tls_used;
     }
 #endif
+}
 
+namespace YY::Thunks
+{
+#if (YY_Thunks_Target < __WindowsNT5_2)
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03)
+    //Minimum supported client	Windows Vista [desktop apps | UWP apps]
+    //Minimum supported server	Windows Server 2003 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    kernel32,
+    4,
+    DWORD,
+    WINAPI,
+    FlsAlloc,
+        _In_opt_ PFLS_CALLBACK_FUNCTION lpCallback
+        )
+    {
+        if (const auto pFlsAlloc = try_get_FlsAlloc())
+        {
+            return pFlsAlloc(lpCallback);
+        }
 
-	//Minimum supported client	Windows Vista [desktop apps | UWP apps]
-	//Minimum supported server	Windows Server 2003 [desktop apps | UWP apps]
-	__DEFINE_THUNK(
-	kernel32,
-	4,
-	DWORD,
-	WINAPI,
-	FlsAlloc,
-		_In_opt_ PFLS_CALLBACK_FUNCTION lpCallback
-		)
-	{
-		if (const auto pFlsAlloc = try_get_FlsAlloc())
-		{
-			return pFlsAlloc(lpCallback);
-		}
+        //当系统不支持时，我们使用TLS的机制来实现FLS的功能。
+        //当然这个模拟的不完整的，无法完全的支持纤程，但是我认为这不重要。
+        //因为很显然，使用纤程的代码很少。
+        __declspec(allocate(".CRT$XLY")) static PIMAGE_TLS_CALLBACK const s_ThreadDetachCallback = Fallback::ThreadDetachCallback;
 
-		//当系统不支持时，我们使用TLS的机制来实现FLS的功能。
-		//当然这个模拟的不完整的，无法完全的支持纤程，但是我认为这不重要。
-		//因为很显然，使用纤程的代码很少。
-		__declspec(allocate(".CRT$XLY")) static PIMAGE_TLS_CALLBACK const s_ThreadDetachCallback = Fallback::ThreadDetachCallback;
-
-		__foreinclude(s_ThreadDetachCallback);
-		__foreinclude(Fallback::_tls_used);
+        __foreinclude(s_ThreadDetachCallback);
+        __foreinclude(Fallback::_tls_used);
 
         DWORD _uFlsIndex;
         for (size_t i = 0; i != _countof(Fallback::s_FlsIndexArrayBitMap); ++i)
@@ -177,29 +176,29 @@ namespace YY::Thunks
             }
         }
 
-		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return FLS_OUT_OF_INDEXES;
-	}
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FLS_OUT_OF_INDEXES;
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03)
+#if (YY_Thunks_Target < __WindowsNT5_2)
 
-	//Minimum supported client	Windows Vista [desktop apps | UWP apps]
-	//Minimum supported server	Windows Server 2003 [desktop apps | UWP apps]
-	__DEFINE_THUNK(
-	kernel32,
-	4,
-	PVOID,
-	WINAPI,
-	FlsGetValue,
-		_In_ DWORD dwFlsIndex
-		)
-	{
-		if (const auto pFlsGetValue = try_get_FlsGetValue())
-		{
-			return pFlsGetValue(dwFlsIndex);
-		}
+    //Minimum supported client	Windows Vista [desktop apps | UWP apps]
+    //Minimum supported server	Windows Server 2003 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    kernel32,
+    4,
+    PVOID,
+    WINAPI,
+    FlsGetValue,
+        _In_ DWORD dwFlsIndex
+        )
+    {
+        if (const auto pFlsGetValue = try_get_FlsGetValue())
+        {
+            return pFlsGetValue(dwFlsIndex);
+        }
             
         if (dwFlsIndex >= Fallback::kMaxFlsIndexCount || Fallback::s_pFlsDataBlock == nullptr)
         {
@@ -207,32 +206,32 @@ namespace YY::Thunks
             return nullptr;
         }
 
-		return Fallback::s_pFlsDataBlock->FlsDataArray[dwFlsIndex].lpFlsData;
-	}
+        return Fallback::s_pFlsDataBlock->FlsDataArray[dwFlsIndex].lpFlsData;
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03)
+#if (YY_Thunks_Target < __WindowsNT5_2)
 
-	//Minimum supported client	Windows Vista [desktop apps | UWP apps]
-	//Minimum supported server	Windows Server 2003 [desktop apps | UWP apps]
-	__DEFINE_THUNK(
-	kernel32,
-	8,
-	BOOL,
-	WINAPI,
-	FlsSetValue,
-		_In_ DWORD dwFlsIndex,
-		_In_opt_ PVOID lpFlsData
-		)
-	{
-		if (const auto pFlsSetValue = try_get_FlsSetValue())
-		{
-			return pFlsSetValue(dwFlsIndex, lpFlsData);
-		}
+    //Minimum supported client	Windows Vista [desktop apps | UWP apps]
+    //Minimum supported server	Windows Server 2003 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    kernel32,
+    8,
+    BOOL,
+    WINAPI,
+    FlsSetValue,
+        _In_ DWORD dwFlsIndex,
+        _In_opt_ PVOID lpFlsData
+        )
+    {
+        if (const auto pFlsSetValue = try_get_FlsSetValue())
+        {
+            return pFlsSetValue(dwFlsIndex, lpFlsData);
+        }
 
-		do
-		{
+        do
+        {
             if (dwFlsIndex >= Fallback::kMaxFlsIndexCount)
                 break;
 
@@ -305,31 +304,31 @@ namespace YY::Thunks
                 break;
             }
             
-		} while (false);
+        } while (false);
 
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
-	}
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WS03)
+#if (YY_Thunks_Target < __WindowsNT5_2)
 
-	//Minimum supported client	Windows Vista [desktop apps | UWP apps]
-	//Minimum supported server	Windows Server 2003 [desktop apps | UWP apps]
-	__DEFINE_THUNK(
-	kernel32,
-	4,
-	BOOL,
-	WINAPI,
-	FlsFree,
-		_In_ DWORD dwFlsIndex
-		)
-	{
-		if (const auto pFlsFree = try_get_FlsFree())
-		{
-			return pFlsFree(dwFlsIndex);
-		}
+    //Minimum supported client	Windows Vista [desktop apps | UWP apps]
+    //Minimum supported server	Windows Server 2003 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    kernel32,
+    4,
+    BOOL,
+    WINAPI,
+    FlsFree,
+        _In_ DWORD dwFlsIndex
+        )
+    {
+        if (const auto pFlsFree = try_get_FlsFree())
+        {
+            return pFlsFree(dwFlsIndex);
+        }
 
         if (dwFlsIndex >= _countof(Fallback::s_FlsIndexArray))
         {
@@ -375,58 +374,58 @@ namespace YY::Thunks
 
         _interlockedbittestandreset((volatile LONG*)&Fallback::s_FlsIndexArrayBitMap[dwFlsIndex / 32], dwFlsIndex % 32);
         return TRUE;
-	}
+    }
 #endif
 
-		
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+        
+#if (YY_Thunks_Target < __WindowsNT6)
 
-	//Minimum supported client	Windows Vista [desktop apps | UWP apps]
-	//Minimum supported server	Windows Server 2008 [desktop apps | UWP apps]
-	__DEFINE_THUNK(
-	kernel32,
-	0,
-	BOOL,
-	WINAPI,
-	IsThreadAFiber,
-		VOID
-		)
-	{
-		if (const auto pIsThreadAFiber = try_get_IsThreadAFiber())
-		{
-			return pIsThreadAFiber();
-		}
+    //Minimum supported client	Windows Vista [desktop apps | UWP apps]
+    //Minimum supported server	Windows Server 2008 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    kernel32,
+    0,
+    BOOL,
+    WINAPI,
+    IsThreadAFiber,
+        VOID
+        )
+    {
+        if (const auto pIsThreadAFiber = try_get_IsThreadAFiber())
+        {
+            return pIsThreadAFiber();
+        }
 
-		//如果当前没有 Fiber，那么我们认为这不是一个纤程
-		auto pFiber = GetCurrentFiber();
+        //如果当前没有 Fiber，那么我们认为这不是一个纤程
+        auto pFiber = GetCurrentFiber();
 
-		//0x1e00 是一个魔幻数字，似乎所有NT系统都会这样，当前不是一个Fiber时，第一次会返回 0x1e00。
-		return pFiber != nullptr && pFiber != (void*)0x1e00;
-	}
+        //0x1e00 是一个魔幻数字，似乎所有NT系统都会这样，当前不是一个Fiber时，第一次会返回 0x1e00。
+        return pFiber != nullptr && pFiber != (void*)0x1e00;
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
-	//Minimum supported client	Windows Vista [desktop apps | UWP apps]
-	//Minimum supported server	Windows Server 2008 [desktop apps | UWP apps]
-	__DEFINE_THUNK(
-	kernel32,
-	8,
-	LPVOID,
-	WINAPI,
-	ConvertThreadToFiberEx,
-		_In_opt_ LPVOID lpParameter,
-		_In_     DWORD dwFlags
-		)
-	{
-		if (const auto pConvertThreadToFiberEx = try_get_ConvertThreadToFiberEx())
-		{
-			return pConvertThreadToFiberEx(lpParameter, dwFlags);
-		}
+    //Minimum supported client	Windows Vista [desktop apps | UWP apps]
+    //Minimum supported server	Windows Server 2008 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    kernel32,
+    8,
+    LPVOID,
+    WINAPI,
+    ConvertThreadToFiberEx,
+        _In_opt_ LPVOID lpParameter,
+        _In_     DWORD dwFlags
+        )
+    {
+        if (const auto pConvertThreadToFiberEx = try_get_ConvertThreadToFiberEx())
+        {
+            return pConvertThreadToFiberEx(lpParameter, dwFlags);
+        }
 
-		//FIBER_FLAG_FLOAT_SWITCH 无法使用，不过似乎关系不大。一些boost基础设施中都不切换浮点状态。
-		return ConvertThreadToFiber(lpParameter);
-	}
+        //FIBER_FLAG_FLOAT_SWITCH 无法使用，不过似乎关系不大。一些boost基础设施中都不切换浮点状态。
+        return ConvertThreadToFiber(lpParameter);
+    }
 #endif
 }

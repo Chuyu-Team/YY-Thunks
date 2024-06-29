@@ -1,21 +1,21 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+﻿#if (YY_Thunks_Target < __WindowsNT6)
 #include <Esent.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_esent)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_esent)
 #define __Comment_Lib_esent
 #pragma comment(lib, "esent.lib")
 #endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
-	// Minimum supported client	Windows Vista
-	// Minimum supported server	Windows Server 2008
-	__DEFINE_THUNK(
+    // Minimum supported client	Windows Vista
+    // Minimum supported server	Windows Server 2008
+    __DEFINE_THUNK(
     esent,
-	16,
+    16,
     JET_ERR,
     JET_API,
     JetAttachDatabase2W,
@@ -23,12 +23,12 @@ namespace YY::Thunks
         _In_ JET_PCWSTR             szFilename,
         _In_ const unsigned long    cpgDatabaseSizeMax,
         _In_ JET_GRBIT              grbit
-		)
-	{
-		if (auto const _pfnJetAttachDatabase2W = try_get_JetAttachDatabase2W())
-		{
-			return _pfnJetAttachDatabase2W(sesid, szFilename, cpgDatabaseSizeMax, grbit);
-		}
+        )
+    {
+        if (auto const _pfnJetAttachDatabase2W = try_get_JetAttachDatabase2W())
+        {
+            return _pfnJetAttachDatabase2W(sesid, szFilename, cpgDatabaseSizeMax, grbit);
+        }
 
         // 路径的话理论上MAX_PATH就足够了
         char szFilenameBufferA[512] = {};
@@ -42,11 +42,11 @@ namespace YY::Thunks
         }
 
         return JetAttachDatabase2A(sesid, szFilename ? szFilenameBufferA : nullptr, cpgDatabaseSizeMax, grbit);
-	}
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista
     // Minimum supported server	Windows Server 2008
@@ -91,7 +91,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     //Minimum supported client	Windows Vista
     //Minimum supported server	Windows Server 2008
@@ -123,7 +123,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista
     // Minimum supported server	Windows Server 2008
@@ -157,9 +157,9 @@ namespace YY::Thunks
         return JetGetTableColumnInfoA(sesid, tableid, szColumnName ? _szColumnNameBuffer.GetC_String() : nullptr, pvResult, cbMax, InfoLevel);
     }
 #endif
-		
+        
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista
     // Minimum supported server	Windows Server 2008
@@ -205,7 +205,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista
     // Minimum supported server	Windows Server 2008
@@ -244,7 +244,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     //Minimum supported client	Windows Vista
     //Minimum supported server	Windows Server 2008
@@ -281,7 +281,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     //Minimum supported client	Windows Vista
     //Minimum supported server	Windows Server 2008

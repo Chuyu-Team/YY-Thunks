@@ -1,5 +1,5 @@
 ﻿
-#if (YY_Thunks_Support_Version < NTDDI_WIN10) && !defined(__Comment_Lib_advapi32)
+#if (YY_Thunks_Target < __WindowsNT10_10240) && !defined(__Comment_Lib_advapi32)
 #define __Comment_Lib_advapi32
 #pragma comment(lib, "Advapi32.lib")
 #endif
@@ -9,7 +9,7 @@ namespace YY::Thunks
 {
     namespace
     {
-#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+#if (YY_Thunks_Target < __WindowsNT10_10240)
         static SRWLOCK g_CompareObjectHandles;
 
         union ObjectStaticBuffer
@@ -342,7 +342,7 @@ namespace YY::Thunks
 namespace YY::Thunks
 {
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+#if (YY_Thunks_Target < __WindowsNT10_10240)
 
     // 最低受支持的客户端	Windows 2000 专业版 [桌面应用 |UWP 应用]
     // 最低受支持的服务器	Windows 2000 Server[桌面应用 | UWP 应用]
@@ -378,7 +378,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+#if (YY_Thunks_Target < __WindowsNT10_10240)
 
     // 最低受支持的客户端	Windows 2000 专业版 [桌面应用 |UWP 应用]
     // 最低受支持的服务器	Windows 2000 Server[桌面应用 | UWP 应用]
@@ -434,7 +434,8 @@ namespace YY::Thunks
     }
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+
+#if (YY_Thunks_Target < __WindowsNT10_10240)
 
     // 最低受支持的客户端	Windows 10 [桌面应用 |UWP 应用]
     // 最低受支持的服务器	Windows Server 2016[桌面应用 | UWP 应用]

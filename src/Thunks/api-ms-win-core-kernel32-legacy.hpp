@@ -2,7 +2,7 @@
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN7) && defined(YY_Thunks_Implemented)
+#if (YY_Thunks_Target < __WindowsNT6_1) && defined(YY_Thunks_Implemented)
     namespace
     {
         struct PowerRequestTaskItem : public internal::TaskItem
@@ -202,216 +202,221 @@ namespace YY::Thunks
         }
     }
 #endif
+}
 
+namespace YY::Thunks
+{
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+    // 最低受支持的客户端	Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+    __DEFINE_THUNK(
+    kernel32,
+    4,
+    HANDLE,
+    WINAPI,
+    PowerCreateRequest,
+        _In_ PREASON_CONTEXT _pContext
+        )
+    {
+        if (const auto _pfnPowerCreateRequest = try_get_PowerCreateRequest())
+        {
+            return _pfnPowerCreateRequest(_pContext);
+        }
+            
+        if (_pContext == nullptr || _pContext->Version != POWER_REQUEST_CONTEXT_VERSION)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return INVALID_HANDLE_VALUE;
+        }
 
-	// 最低受支持的客户端	Windows 7 [仅限桌面应用]
-	// 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
-	__DEFINE_THUNK(
-	kernel32,
-	4,
-	HANDLE,
-	WINAPI,
-	PowerCreateRequest,
-		_In_ PREASON_CONTEXT _pContext
-		)
-	{
-		if (const auto _pfnPowerCreateRequest = try_get_PowerCreateRequest())
-		{
-			return _pfnPowerCreateRequest(_pContext);
-		}
-			
-		if (_pContext == nullptr || _pContext->Version != POWER_REQUEST_CONTEXT_VERSION)
-		{
-			SetLastError(ERROR_INVALID_PARAMETER);
-			return INVALID_HANDLE_VALUE;
-		}
+        // 因为 PowerCreateRequest创建的句柄需要使用 CloseHandle关闭
+        // 所以我们随便复制一个句柄给它……
+        HANDLE hTargetHandle;
+        if (DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(), &hTargetHandle, 0, FALSE, DUPLICATE_SAME_ACCESS))
+        {
+            return hTargetHandle;
+        }
 
-		// 因为 PowerCreateRequest创建的句柄需要使用 CloseHandle关闭
-		// 所以我们随便复制一个句柄给它……
-		HANDLE hTargetHandle;
-		if (DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(), &hTargetHandle, 0, FALSE, DUPLICATE_SAME_ACCESS))
-		{
-			return hTargetHandle;
-		}
-
-		return INVALID_HANDLE_VALUE;
-	}
-#endif
-		
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
-
-	// 最低受支持的客户端	Windows 7 [仅限桌面应用]
-	// 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
-	__DEFINE_THUNK(
-	kernel32,
-	8,
-	BOOL,
-	WINAPI,
-	PowerSetRequest,
-		_In_ HANDLE _hPowerRequest,
-		_In_ POWER_REQUEST_TYPE _eRequestType
-		)
-	{
-		if (const auto _pfnPowerSetRequest = try_get_PowerSetRequest())
-		{
-			return _pfnPowerSetRequest(_hPowerRequest, _eRequestType);
-		}
-
-		if ((DWORD)_eRequestType >= (DWORD)_countof(PowerRequestTaskItem::RequestTypeCount))
-		{
-			SetLastError(ERROR_INVALID_PARAMETER);
-			return FALSE;
-		}
-
-		const auto _uProcessId = GetProcessId(_hPowerRequest);
-		if (_uProcessId == 0)
-		{
-			return FALSE;
-		}
-
-		if (_uProcessId != GetCurrentProcessId())
-		{
-			SetLastError(ERROR_INVALID_PARAMETER);
-			return FALSE;
-		}
-
-		auto _lStatus = GetPowerRequestCache()->AddRef();
-		if (_lStatus == ERROR_SUCCESS)
-		{
-			auto _pTask = GetPowerRequestCache()->pTask;
-			InterlockedIncrement(&_pTask->uCount);
-
-			if (InterlockedIncrement(&_pTask->RequestTypeCount[_eRequestType]) == 0)
-			{
-				// 状态发生变化，通知进行更改
-				PostMessageW(
-					internal::GetGlobalThreadRunner()->hWnd,
-					internal::WM_RUNNER_CALL,
-					(WPARAM)_pTask,
-					0);
-			}
-
-			return TRUE;
-		}
-
-		SetLastError(_lStatus);
-		return FALSE;
-	}
-#endif
-		
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
-
-	// 最低受支持的客户端	Windows 7 [仅限桌面应用]
-	// 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
-	__DEFINE_THUNK(
-	kernel32,
-	8,
-	BOOL,
-	WINAPI,
-	PowerClearRequest,
-		_In_ HANDLE _hPowerRequest,
-		_In_ POWER_REQUEST_TYPE _eRequestType
-		)
-	{
-		if (const auto _pfnPowerClearRequest = try_get_PowerClearRequest())
-		{
-			return _pfnPowerClearRequest(_hPowerRequest, _eRequestType);
-		}
-
-		if ((DWORD)_eRequestType >= (DWORD)_countof(PowerRequestTaskItem::RequestTypeCount))
-		{
-			SetLastError(ERROR_INVALID_PARAMETER);
-			return FALSE;
-		}
-
-		const auto _uProcessId = GetProcessId(_hPowerRequest);
-		if (_uProcessId == 0)
-		{
-			return FALSE;
-		}
-
-		if (_uProcessId != GetCurrentProcessId())
-		{
-			SetLastError(ERROR_INVALID_PARAMETER);
-			return FALSE;
-		}
-
-		auto _pTask = GetPowerRequestCache()->pTask;
-		if (!_pTask)
-		{
-			SetLastError(ERROR_INVALID_PARAMETER);
-			return FALSE;
-		}
-
-		auto _uCurrent = _pTask->RequestTypeCount[_eRequestType];
-		for (;;)
-		{
-			if (_uCurrent == 0)
-			{
-				SetLastError(ERROR_INVALID_PARAMETER);
-				return FALSE;
-			}
-
-			const auto _uLast = InterlockedCompareExchange(&_pTask->RequestTypeCount[_eRequestType], _uCurrent - 1, _uCurrent);
-			if (_uLast != _uCurrent)
-			{
-				_uCurrent = _uLast;
-				continue;
-			}
-
-			if (_uCurrent == 1)
-			{
-				// 状态发生变化，通知进行更改
-				if (InterlockedDecrement(&_pTask->uCount) == 0)
-				{
-					// 引用归 0，必须保证状态刷新到系统，所以我们不在这里释放引用。
-					PostMessageW(
-						internal::GetGlobalThreadRunner()->hWnd,
-						internal::WM_RUNNER_CALL,
-						(WPARAM)_pTask,
-						(LPARAM)GetPowerRequestCache());
-
-					return TRUE;
-				}
-				else
-				{
-					PostMessageW(
-						internal::GetGlobalThreadRunner()->hWnd,
-						internal::WM_RUNNER_CALL,
-						(WPARAM)_pTask,
-						0);
-				}
-			}
-
-			break;
-		}
-
-		GetPowerRequestCache()->Release();
-		return TRUE;
-	}
+        return INVALID_HANDLE_VALUE;
+    }
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
 
-	// 支持的最低客户端	Windows Vista [桌面应用程序 |UWP 应用]
-	// 支持的最低服务器	Windows Server 2008 [桌面应用程序 |UWP 应用]
-	__DEFINE_THUNK(
-	kernel32,
-	8,
-	BOOL,
-	WINAPI,
-	SetFileCompletionNotificationModes,
-		_In_ HANDLE FileHandle,
-		_In_ UCHAR Flags
-		)
-	{
-		if (const auto _pfnSetFileCompletionNotificationModes = try_get_SetFileCompletionNotificationModes())
-		{
-#if (YY_Thunks_Support_Version >= NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
+
+    // 最低受支持的客户端	Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+    __DEFINE_THUNK(
+    kernel32,
+    8,
+    BOOL,
+    WINAPI,
+    PowerSetRequest,
+        _In_ HANDLE _hPowerRequest,
+        _In_ POWER_REQUEST_TYPE _eRequestType
+        )
+    {
+        if (const auto _pfnPowerSetRequest = try_get_PowerSetRequest())
+        {
+            return _pfnPowerSetRequest(_hPowerRequest, _eRequestType);
+        }
+
+        if ((DWORD)_eRequestType >= (DWORD)_countof(PowerRequestTaskItem::RequestTypeCount))
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        const auto _uProcessId = GetProcessId(_hPowerRequest);
+        if (_uProcessId == 0)
+        {
+            return FALSE;
+        }
+
+        if (_uProcessId != GetCurrentProcessId())
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        auto _lStatus = GetPowerRequestCache()->AddRef();
+        if (_lStatus == ERROR_SUCCESS)
+        {
+            auto _pTask = GetPowerRequestCache()->pTask;
+            InterlockedIncrement(&_pTask->uCount);
+
+            if (InterlockedIncrement(&_pTask->RequestTypeCount[_eRequestType]) == 0)
+            {
+                // 状态发生变化，通知进行更改
+                PostMessageW(
+                    internal::GetGlobalThreadRunner()->hWnd,
+                    internal::WM_RUNNER_CALL,
+                    (WPARAM)_pTask,
+                    0);
+            }
+
+            return TRUE;
+        }
+
+        SetLastError(_lStatus);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_1)
+
+    // 最低受支持的客户端	Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
+    __DEFINE_THUNK(
+    kernel32,
+    8,
+    BOOL,
+    WINAPI,
+    PowerClearRequest,
+        _In_ HANDLE _hPowerRequest,
+        _In_ POWER_REQUEST_TYPE _eRequestType
+        )
+    {
+        if (const auto _pfnPowerClearRequest = try_get_PowerClearRequest())
+        {
+            return _pfnPowerClearRequest(_hPowerRequest, _eRequestType);
+        }
+
+        if ((DWORD)_eRequestType >= (DWORD)_countof(PowerRequestTaskItem::RequestTypeCount))
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        const auto _uProcessId = GetProcessId(_hPowerRequest);
+        if (_uProcessId == 0)
+        {
+            return FALSE;
+        }
+
+        if (_uProcessId != GetCurrentProcessId())
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        auto _pTask = GetPowerRequestCache()->pTask;
+        if (!_pTask)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        auto _uCurrent = _pTask->RequestTypeCount[_eRequestType];
+        for (;;)
+        {
+            if (_uCurrent == 0)
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return FALSE;
+            }
+
+            const auto _uLast = InterlockedCompareExchange(&_pTask->RequestTypeCount[_eRequestType], _uCurrent - 1, _uCurrent);
+            if (_uLast != _uCurrent)
+            {
+                _uCurrent = _uLast;
+                continue;
+            }
+
+            if (_uCurrent == 1)
+            {
+                // 状态发生变化，通知进行更改
+                if (InterlockedDecrement(&_pTask->uCount) == 0)
+                {
+                    // 引用归 0，必须保证状态刷新到系统，所以我们不在这里释放引用。
+                    PostMessageW(
+                        internal::GetGlobalThreadRunner()->hWnd,
+                        internal::WM_RUNNER_CALL,
+                        (WPARAM)_pTask,
+                        (LPARAM)GetPowerRequestCache());
+
+                    return TRUE;
+                }
+                else
+                {
+                    PostMessageW(
+                        internal::GetGlobalThreadRunner()->hWnd,
+                        internal::WM_RUNNER_CALL,
+                        (WPARAM)_pTask,
+                        0);
+                }
+            }
+
+            break;
+        }
+
+        GetPowerRequestCache()->Release();
+        return TRUE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_1)
+
+    // 支持的最低客户端	Windows Vista [桌面应用程序 |UWP 应用]
+    // 支持的最低服务器	Windows Server 2008 [桌面应用程序 |UWP 应用]
+    __DEFINE_THUNK(
+    kernel32,
+    8,
+    BOOL,
+    WINAPI,
+    SetFileCompletionNotificationModes,
+        _In_ HANDLE FileHandle,
+        _In_ UCHAR Flags
+        )
+    {
+        if (const auto _pfnSetFileCompletionNotificationModes = try_get_SetFileCompletionNotificationModes())
+        {
+#if (YY_Thunks_Target >= __WindowsNT6_1)
             return _pfnSetFileCompletionNotificationModes(FileHandle, Flags);
-#else // (YY_Thunks_Support_Version < NTDDI_WIN7)
+#else // (YY_Thunks_Target < __WindowsNT6_1)
             if (_pfnSetFileCompletionNotificationModes(FileHandle, Flags))
             {
                 return TRUE;
@@ -425,13 +430,13 @@ namespace YY::Thunks
                 return TRUE;
             }
             return FALSE;
-#endif // (YY_Thunks_Support_Version < NTDDI_WIN7)
-		}
+#endif // (YY_Thunks_Target < __WindowsNT6_1)
+        }
 
-		// 初步看起来没有什么的，只是会降低完成端口的效率。
-		// 至少需要 Vista才支持 FileIoCompletionNotificationInformation
-		// 只能假定先返回成功。
-		return TRUE;
-	}
+        // 初步看起来没有什么的，只是会降低完成端口的效率。
+        // 至少需要 Vista才支持 FileIoCompletionNotificationInformation
+        // 只能假定先返回成功。
+        return TRUE;
+    }
 #endif
-} //namespace YY
+} //namespace YY::Thunks

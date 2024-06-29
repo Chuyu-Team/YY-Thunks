@@ -1,14 +1,14 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+﻿#if (YY_Thunks_Target < __WindowsNT6_2)
 #include <mfapi.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 #include <mfidl.h>
 #endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
     // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
@@ -38,7 +38,7 @@ namespace YY::Thunks
     }
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
     // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
@@ -67,7 +67,7 @@ namespace YY::Thunks
     }
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
     // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
@@ -96,7 +96,7 @@ namespace YY::Thunks
     }
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
     // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
@@ -118,7 +118,7 @@ namespace YY::Thunks
 #endif
     
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -147,7 +147,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -177,7 +177,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -205,7 +205,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -232,7 +232,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -262,7 +262,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -293,7 +293,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -320,7 +320,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -348,7 +348,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -377,7 +377,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -404,7 +404,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -434,7 +434,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -467,7 +467,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -496,7 +496,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -522,7 +522,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -548,7 +548,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -571,7 +571,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008[desktop apps | UWP apps]
@@ -596,7 +596,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
     // Minimum supported client	Windows 7 [desktop apps | UWP apps]
     // Minimum supported server	Windows Server 2008 R2[desktop apps | UWP apps]

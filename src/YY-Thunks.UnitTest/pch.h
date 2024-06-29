@@ -25,6 +25,8 @@
 #include <vector>
 #include <string>
 
+#include <SharedDefs.h>
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 #define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)     \

@@ -1,14 +1,14 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+﻿#if (YY_Thunks_Target < __WindowsNT6_1)
 #include <cfgmgr32.h>
 #include <SetupAPI.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7) && !defined(__Comment_Lib_setupapi)
+#if (YY_Thunks_Target < __WindowsNT6_1) && !defined(__Comment_Lib_setupapi)
 #define __Comment_Lib_setupapi
 #pragma comment(lib, "SetupAPI.Lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7) && __YY_Thunks_libs && !defined(__Comment_Lib_cfgmgr32)
+#if (YY_Thunks_Target < __WindowsNT6_1) && __YY_Thunks_libs && !defined(__Comment_Lib_cfgmgr32)
 #define __Comment_Lib_cfgmgr32
 #pragma comment(lib, "cfgmgr32.Lib")
 #endif
@@ -18,7 +18,7 @@ namespace YY::Thunks::Fallback
 {
     namespace
     {
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
         struct DevNodeTempPropertyBufffer
         {
             wchar_t szId[39];
@@ -251,7 +251,7 @@ namespace YY::Thunks::Fallback
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
     // Windows 7 RTM 导出
     // Windows Vista有这个函数但是没有导出
@@ -311,7 +311,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
     // Windows 7 RTM 导出
     // Windows Vista有这个函数但是没有导出
@@ -360,7 +360,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
     // 最低受支持的客户端	在 Microsoft Windows Vista 和更高版本的 Windows 中可用。
     // 实际Windows Vista RTM根本就没有这个接口
@@ -388,7 +388,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
     // 最低受支持的客户端	在 Microsoft Windows Vista 和更高版本的 Windows 中可用。
     // 实际Windows Vista RTM根本就没有这个接口

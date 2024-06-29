@@ -1,10 +1,10 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+﻿#if (YY_Thunks_Target < __WindowsNT6)
 #include <winusb.h>
 #endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持XP，但是XP需要打补丁，Vista开始直接内置
     __DEFINE_THUNK(
@@ -32,7 +32,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持XP，但是XP需要打补丁，Vista开始直接内置
     __DEFINE_THUNK(
@@ -55,7 +55,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持XP，但是XP需要打补丁，Vista开始直接内置
     __DEFINE_THUNK(
@@ -80,7 +80,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持XP，但是XP需要打补丁，Vista开始直接内置
     __DEFINE_THUNK(
@@ -106,7 +106,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持XP，但是XP需要打补丁，Vista开始直接内置
     __DEFINE_THUNK(
@@ -130,7 +130,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持XP，但是XP需要打补丁，Vista开始直接内置
     __DEFINE_THUNK(
@@ -158,7 +158,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持XP，但是XP需要打补丁，Vista开始直接内置
     __DEFINE_THUNK(
@@ -182,7 +182,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持XP，但是XP需要打补丁，Vista开始直接内置
     __DEFINE_THUNK(
@@ -206,7 +206,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持XP，但是XP需要打补丁，Vista开始直接内置
     __DEFINE_THUNK(

@@ -13,18 +13,18 @@
 
 
 #if defined(_M_IX86)
-	#define _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(_FUNCTION, _SIZE) _CRT_CONCATENATE(_CRT_CONCATENATE(_imp__, _FUNCTION), _CRT_CONCATENATE(_, _SIZE))
+    #define _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(_FUNCTION, _SIZE) _CRT_CONCATENATE(_CRT_CONCATENATE(_imp__, _FUNCTION), _CRT_CONCATENATE(_, _SIZE))
 #elif defined(_M_AMD64)
-	#define _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(_FUNCTION, _SIZE) _CRT_CONCATENATE(__imp_, _FUNCTION)
+    #define _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(_FUNCTION, _SIZE) _CRT_CONCATENATE(__imp_, _FUNCTION)
 #else
-	 #error "不支持此体系"
+     #error "不支持此体系"
 #endif
 
 #if defined(_M_IX86)
 //x86的符号存在@ 我们使用 identifier 特性解决
 #define _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION, _SIZE)                                                                       \
-	__pragma(warning(suppress:4483))                                                                                    \
-	extern "C" __declspec(selectany) void const* const __identifier(_CRT_STRINGIZE_(_imp__ ## _FUNCTION ## @ ## _SIZE)) \
+    __pragma(warning(suppress:4483))                                                                                    \
+    extern "C" __declspec(selectany) void const* const __identifier(_CRT_STRINGIZE_(_imp__ ## _FUNCTION ## @ ## _SIZE)) \
         = reinterpret_cast<void const*>(_FUNCTION)
 #else
 #define _LCRT_DEFINE_IAT_SYMBOL(_FUNCTION, _SIZE)                                                          \
@@ -43,11 +43,11 @@
 #endif
 
 #ifdef __YY_Thunks_Unit_Test
-	#define __APPLY_UNIT_TEST_BOOL(_FUNCTION) bool _CRT_CONCATENATE(aways_null_try_get_, _FUNCTION) = false
-	#define __CHECK_UNIT_TEST_BOOL(_FUNCTION) if(_CRT_CONCATENATE(aways_null_try_get_, _FUNCTION)) return nullptr
+    #define __APPLY_UNIT_TEST_BOOL(_FUNCTION) bool _CRT_CONCATENATE(aways_null_try_get_, _FUNCTION) = false
+    #define __CHECK_UNIT_TEST_BOOL(_FUNCTION) if(_CRT_CONCATENATE(aways_null_try_get_, _FUNCTION)) return nullptr
 #else
-	#define __APPLY_UNIT_TEST_BOOL(_FUNCTION)
-	#define __CHECK_UNIT_TEST_BOOL(_FUNCTION)
+    #define __APPLY_UNIT_TEST_BOOL(_FUNCTION)
+    #define __CHECK_UNIT_TEST_BOOL(_FUNCTION)
 #endif
 
 
@@ -75,7 +75,7 @@ __declspec(allocate(".YYThr$AAC")) static void* __YY_THUNKS_UNINIT_FUN_END[] = {
 typedef void* (__cdecl* InitFunType)();
 typedef void (__cdecl* UninitFunType)();
 
-#pragma detect_mismatch("YY-Thunks-Mode", "ver:" _CRT_STRINGIZE(YY_Thunks_Support_Version))
+#pragma detect_mismatch("YY-Thunks-Mode", "ver:" _CRT_STRINGIZE(YY_Thunks_Target))
 
 /*
 导出一个外部符号，指示当前鸭船Thunks等级。
@@ -83,15 +83,26 @@ typedef void (__cdecl* UninitFunType)();
 2. 当调用者同时使用多个鸭船时，使其链接失败！
 
 //自行定义为 C 弱符号，C++支持不佳！
-EXTERN_C const DWORD __YY_Thunks_Installed;
+EXTERN_C const UINT64 __YY_Thunks_Installed;
 
 if(__YY_Thunks_Installed)
-	wprintf(L"检测到使用YY-Thunks，Thunks级别=0x%.8X\n", __YY_Thunks_Installed);
+{
+    wprintf(
+        L"检测到使用YY-Thunks，Thunks级别=%hd.%hd.%hd.%hd。\n",
+        UINT16(__YY_Thunks_Installed >> 48),
+        UINT16(__YY_Thunks_Installed >> 32),
+        UINT16(__YY_Thunks_Installed >> 16),
+        UINT16(__YY_Thunks_Installed));
+}
 else
-	wprintf(L"没有使用YY-Thunks！\n");
+{
+    wprintf(L"没有使用YY-Thunks！\n");
+}
 
+// 如果选择兼容到Vista，上述代码将输出：检测到使用YY-Thunks，Thunks级别=6.0.6000.0。
+// 如果没有使用YY-Thunks，那么上述代码将输出：没有使用YY-Thunks！
 */
-EXTERN_C const DWORD __YY_Thunks_Installed = YY_Thunks_Support_Version;
+EXTERN_C const UINT64 __YY_Thunks_Installed = YY_Thunks_Target;
 
 /*
 导出一个外部弱符号，指示当前是否处于强行卸载模式。
@@ -100,22 +111,22 @@ EXTERN_C BOOL __YY_Thunks_Process_Terminating;
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
-	switch(dwReason)
-	{
-		case DLL_PROCESS_DETACH:
-		//我们可以通过 lpReserved != NULL 判断，当前是否处于强行卸载模式。
-		__YY_Thunks_Process_Terminating = lpReserved != NULL;
+    switch(dwReason)
+    {
+        case DLL_PROCESS_DETACH:
+        //我们可以通过 lpReserved != NULL 判断，当前是否处于强行卸载模式。
+        __YY_Thunks_Process_Terminating = lpReserved != NULL;
 
-		……
-		break;
-	……
+        ……
+        break;
+    ……
 */
-#if (YY_Thunks_Support_Version < NTDDI_WINXP)
+#if (YY_Thunks_Target < __WindowsNT5_1)
 //Windows 2000不支持RtlDllShutdownInProgress，因此依然引入__YY_Thunks_Process_Terminating
 EXTERN_C extern BOOL __YY_Thunks_Process_Terminating;
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 static HANDLE _GlobalKeyedEventHandle;
 #endif
 
@@ -123,12 +134,12 @@ static uintptr_t __security_cookie_yy_thunks;
 
 #define _APPLY(_SYMBOL, _NAME, ...) \
     constexpr const wchar_t* _CRT_CONCATENATE(module_name_, _SYMBOL) = _CRT_WIDE(_NAME);
-	_YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)
+    _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)
 #undef _APPLY
 
 #define _APPLY(_FUNCTION, _MODULES) \
     using _CRT_CONCATENATE(_FUNCTION, _pft) = decltype(_FUNCTION)*;
-	_YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)
+    _YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)
 #undef _APPLY
 
 
@@ -138,23 +149,23 @@ static uintptr_t __security_cookie_yy_thunks;
 template<typename Char1, typename Char2>
 static int _fastcall StringCompareIgnoreCaseByAscii(const Char1* string1, const Char2* string2, size_t count) noexcept
 {
-	wchar_t f, l;
-	int result = 0;
+    wchar_t f, l;
+    int result = 0;
 
-	if (count)
-	{
-		/* validation section */
-		do {
-			f = __ascii_towlower(*string1);
-			l = __ascii_towlower(*string2);
-			string1++;
-			string2++;
-		} while ((--count) && f && (f == l));
+    if (count)
+    {
+        /* validation section */
+        do {
+            f = __ascii_towlower(*string1);
+            l = __ascii_towlower(*string2);
+            string1++;
+            string2++;
+        } while ((--count) && f && (f == l));
 
-		result = (int)(f - l);
-	}
+        result = (int)(f - l);
+    }
 
-	return result;
+    return result;
 }
 
 template<typename Char1, typename Char2>
@@ -208,27 +219,27 @@ static DWORD __fastcall GetDllTimeDateStamp(_In_ HMODULE _hModule)
 
 enum : int
 {
-	__crt_maximum_pointer_shift = sizeof(uintptr_t) * 8
+    __crt_maximum_pointer_shift = sizeof(uintptr_t) * 8
 };
 
 static __forceinline unsigned int __fastcall __crt_rotate_pointer_value(unsigned int const value, int const shift) noexcept
 {
-	return RotateRight32(value, shift);
+    return RotateRight32(value, shift);
 }
 
 static __forceinline unsigned __int64 __fastcall __crt_rotate_pointer_value(unsigned __int64 const value, int const shift) noexcept
 {
-	return RotateRight64(value, shift);
+    return RotateRight64(value, shift);
 }
 
 #ifdef _WIN64
 #define __foreinclude(p)                          \
-	__pragma(warning(suppress:6031))              \
-	_bittest64((LONG_PTR*)(&p), 0)
+    __pragma(warning(suppress:6031))              \
+    _bittest64((LONG_PTR*)(&p), 0)
 #else
 #define __foreinclude(p)                          \
-	__pragma(warning(suppress:6031))              \
-	_bittest((LONG_PTR*)(&p), 0)
+    __pragma(warning(suppress:6031))              \
+    _bittest((LONG_PTR*)(&p), 0)
 #endif
 
 enum class ThunksInitStatus : LONG
@@ -247,64 +258,64 @@ enum class ThunksInitStatus : LONG
 static ThunksInitStatus __cdecl _YY_initialize_winapi_thunks(ThunksInitStatus _sInitStatus);
 
 static PVOID __fastcall __CRT_DecodePointer(
-		PVOID Ptr
-	)
+        PVOID Ptr
+    )
 {
-	return reinterpret_cast<PVOID>(
-		__crt_rotate_pointer_value(
-			reinterpret_cast<uintptr_t>(Ptr) ^ __security_cookie_yy_thunks,
-			__security_cookie_yy_thunks % __crt_maximum_pointer_shift
-		)
-		);
+    return reinterpret_cast<PVOID>(
+        __crt_rotate_pointer_value(
+            reinterpret_cast<uintptr_t>(Ptr) ^ __security_cookie_yy_thunks,
+            __security_cookie_yy_thunks % __crt_maximum_pointer_shift
+        )
+        );
 }
 
 static PVOID __fastcall __CRT_EncodePointer(PVOID const Ptr)
 {
-	return reinterpret_cast<PVOID>(
-		__crt_rotate_pointer_value(
-			reinterpret_cast<uintptr_t>(Ptr),
-			__crt_maximum_pointer_shift - (__security_cookie_yy_thunks % __crt_maximum_pointer_shift)
-		) ^ __security_cookie_yy_thunks
-		);
+    return reinterpret_cast<PVOID>(
+        __crt_rotate_pointer_value(
+            reinterpret_cast<uintptr_t>(Ptr),
+            __crt_maximum_pointer_shift - (__security_cookie_yy_thunks % __crt_maximum_pointer_shift)
+        ) ^ __security_cookie_yy_thunks
+        );
 }
 
 template <typename T>
 static __forceinline T __fastcall __crt_fast_decode_pointer(T const p) noexcept
 {
-	return reinterpret_cast<T>(__CRT_DecodePointer(p));
+    return reinterpret_cast<T>(__CRT_DecodePointer(p));
 }
 
 template <typename T>
 static __forceinline T __fastcall __crt_fast_encode_pointer(T const p) noexcept
 {
-	return reinterpret_cast<T>(__CRT_EncodePointer(p));
+    return reinterpret_cast<T>(__CRT_EncodePointer(p));
 }
 
 template <typename T, typename V>
 static __forceinline T* __fastcall __crt_interlocked_exchange_pointer(T* const volatile* target, V const value) noexcept
 {
-	// This is required to silence a spurious unreferenced formal parameter
-	// warning.
-	UNREFERENCED_PARAMETER(value);
+    // This is required to silence a spurious unreferenced formal parameter
+    // warning.
+    UNREFERENCED_PARAMETER(value);
 
-	return reinterpret_cast<T*>(_InterlockedExchangePointer((void**)target, (void*)value));
+    return reinterpret_cast<T*>(_InterlockedExchangePointer((void**)target, (void*)value));
 }
 
 template <typename T, typename E, typename C>
 static __forceinline T* __fastcall __crt_interlocked_compare_exchange_pointer(T* const volatile* target, E const exchange, C const comparand) noexcept
 {
-	UNREFERENCED_PARAMETER(exchange);  // These are required to silence spurious
-	UNREFERENCED_PARAMETER(comparand); // unreferenced formal parameter warnings.
+    UNREFERENCED_PARAMETER(exchange);  // These are required to silence spurious
+    UNREFERENCED_PARAMETER(comparand); // unreferenced formal parameter warnings.
 
-	return reinterpret_cast<T*>(_InterlockedCompareExchangePointer(
-		(void**)target, (void*)exchange, (void*)comparand));
+    return reinterpret_cast<T*>(_InterlockedCompareExchangePointer(
+        (void**)target, (void*)exchange, (void*)comparand));
 }
 
 
 template <typename T>
 static __forceinline T* __fastcall __crt_interlocked_read_pointer(T* const volatile* target) noexcept
 {
-	return __crt_interlocked_compare_exchange_pointer(target, nullptr, nullptr);
+    return __crt_interlocked_compare_exchange_pointer(target, nullptr, nullptr);
 }
 
 // 改选项非常危险，只调用GetModuleHandleW！！!
@@ -336,11 +347,11 @@ struct ProcInfo
 };
 
 static __forceinline void* __fastcall try_get_proc_address_from_first_available_module(
-	const ProcInfo& _ProcInfo
+    const ProcInfo& _ProcInfo
     ) noexcept;
 
 static __forceinline void* __fastcall try_get_proc_address_from_dll(
-	const ProcInfo& _ProcInfo
+    const ProcInfo& _ProcInfo
     ) noexcept;
 
 struct ProcOffsetInfo
@@ -351,7 +362,7 @@ struct ProcOffsetInfo
 
 template<size_t kLength>
 static __forceinline void* __fastcall try_get_proc_address_from_offset(
-	HMODULE _hModule,
+    HMODULE _hModule,
     const ProcOffsetInfo (&_ProcOffsetInfos)[kLength]
     ) noexcept
 {
@@ -382,12 +393,12 @@ static __forceinline void* __fastcall try_get_proc_address_from_offset(
 
 static __forceinline void* __cdecl invalid_function_sentinel() noexcept
 {
-	return reinterpret_cast<void*>(static_cast<uintptr_t>(-1));
+    return reinterpret_cast<void*>(static_cast<uintptr_t>(-1));
 }
 
 
 static void* __fastcall try_get_function(
-	void**      ppFunAddress,
+    void**      ppFunAddress,
     const ProcInfo& _ProcInfo
     ) noexcept
 {
@@ -397,58 +408,58 @@ static void* __fastcall try_get_function(
         _YY_initialize_winapi_thunks(ThunksInitStatus::InitByAPI);
     }
 
-	// First check to see if we've cached the function pointer:
-	{
-		void* const cached_fp = __crt_fast_decode_pointer(
-			__crt_interlocked_read_pointer(ppFunAddress));
+    // First check to see if we've cached the function pointer:
+    {
+        void* const cached_fp = __crt_fast_decode_pointer(
+            __crt_interlocked_read_pointer(ppFunAddress));
 
-		if (cached_fp == invalid_function_sentinel())
-		{
-			return nullptr;
-		}
+        if (cached_fp == invalid_function_sentinel())
+        {
+            return nullptr;
+        }
 
-		if (cached_fp)
-		{
-			return cached_fp;
-		}
-	}
+        if (cached_fp)
+        {
+            return cached_fp;
+        }
+    }
 
-	// If we haven't yet cached the function pointer, try to import it from any
-	// of the modules in which it might be defined.  If this fails, cache the
-	// sentinel pointer so that we don't attempt to load this function again:
-	void* const new_fp = try_get_proc_address_from_first_available_module(_ProcInfo);
-	if (!new_fp)
-	{
-		void* const cached_fp = __crt_fast_decode_pointer(
-			__crt_interlocked_exchange_pointer(
-				ppFunAddress,
-				__crt_fast_encode_pointer(invalid_function_sentinel())));
+    // If we haven't yet cached the function pointer, try to import it from any
+    // of the modules in which it might be defined.  If this fails, cache the
+    // sentinel pointer so that we don't attempt to load this function again:
+    void* const new_fp = try_get_proc_address_from_first_available_module(_ProcInfo);
+    if (!new_fp)
+    {
+        void* const cached_fp = __crt_fast_decode_pointer(
+            __crt_interlocked_exchange_pointer(
+                ppFunAddress,
+                __crt_fast_encode_pointer(invalid_function_sentinel())));
 
-		if (cached_fp)
-		{
-			_ASSERTE(cached_fp == invalid_function_sentinel());
-		}
+        if (cached_fp)
+        {
+            _ASSERTE(cached_fp == invalid_function_sentinel());
+        }
 
-		return nullptr;
-	}
+        return nullptr;
+    }
 
-	// Swap the newly obtained function pointer into the cache.  The cache may
-	// no longer contain an encoded null pointer if another thread obtained the
-	// function address while we were doing the same (both threads should have
-	// gotten the same function pointer):
-	{
-		void* const cached_fp = __crt_fast_decode_pointer(
-			__crt_interlocked_exchange_pointer(
-				ppFunAddress,
-				__crt_fast_encode_pointer(new_fp)));
+    // Swap the newly obtained function pointer into the cache.  The cache may
+    // no longer contain an encoded null pointer if another thread obtained the
+    // function address while we were doing the same (both threads should have
+    // gotten the same function pointer):
+    {
+        void* const cached_fp = __crt_fast_decode_pointer(
+            __crt_interlocked_exchange_pointer(
+                ppFunAddress,
+                __crt_fast_encode_pointer(new_fp)));
 
-		if (cached_fp)
-		{
-			_ASSERTE(cached_fp == new_fp);
-		}
-	}
+        if (cached_fp)
+        {
+            _ASSERTE(cached_fp == new_fp);
+        }
+    }
 
-	return new_fp;
+    return new_fp;
 }
 
 
@@ -475,7 +486,7 @@ __if_exists(YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION))        
             &_CRT_CONCATENATE(pFun_ ,_FUNCTION),                                                      \
             _ProcInfo));                                                                              \
     }
-	_YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)
+    _YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)
 #undef _APPLY
 
 
@@ -510,14 +521,14 @@ static UINT_PTR GetSecurityNewCookie()
     cookie ^= GetCurrentThreadId();
     cookie ^= GetCurrentProcessId();
 
-#if (YY_Thunks_Support_Version >= NTDDI_WIN6)
+#if (YY_Thunks_Target >= __WindowsNT6)
 #if defined (_WIN64)
     cookie ^= (((UINT_PTR)GetTickCount64()) << 56);
 #endif  /* defined (_WIN64) */
     cookie ^= (UINT_PTR)GetTickCount64();
-#else // (YY_Thunks_Support_Version < NTDDI_WIN6)
+#else // (YY_Thunks_Target < __WindowsNT6)
     cookie ^= (UINT_PTR)GetTickCount();
-#endif // !(YY_Thunks_Support_Version < NTDDI_WIN6)
+#endif // !(YY_Thunks_Target < __WindowsNT6)
 
     QueryPerformanceCounter(&perfctr);
 #if defined (_WIN64)
@@ -552,14 +563,14 @@ static volatile ThunksInitStatus s_eThunksStatus /*= ThunksInitStatus::None*/;
 
 static void __cdecl __YY_uninitialize_winapi_thunks()
 {
-	// 只反初始化一次
+    // 只反初始化一次
     const auto _eStatus = (ThunksInitStatus)InterlockedExchange((volatile LONG*)&s_eThunksStatus, LONG(ThunksInitStatus::Uninitialized));
 
     // Uninitialized : 已经反初始化，那么也就没有必要再次反初始化。
     // Wait : 其他线程还在等待……保险起见我就直接跳过反初始化吧。崩溃还是如何听天由命吧
     // None : 怎么还没初始化呢……这是在逗我？
-	if (LONG(_eStatus) <= 0)
-		return;
+    if (LONG(_eStatus) <= 0)
+        return;
 
     //当DLL被强行卸载时，我们什么都不做，因为依赖的函数指针可能是无效的。
     __if_exists(__YY_Thunks_Process_Terminating)
@@ -567,38 +578,38 @@ static void __cdecl __YY_uninitialize_winapi_thunks()
         if (__YY_Thunks_Process_Terminating)
             return;
     }
-	if (auto pRtlDllShutdownInProgress = (decltype(RtlDllShutdownInProgress)*)GetProcAddress(try_get_module_ntdll(), "RtlDllShutdownInProgress"))
-	{
-		if(pRtlDllShutdownInProgress())
-			return;
-	}
+    if (auto pRtlDllShutdownInProgress = (decltype(RtlDllShutdownInProgress)*)GetProcAddress(try_get_module_ntdll(), "RtlDllShutdownInProgress"))
+    {
+        if(pRtlDllShutdownInProgress())
+            return;
+    }
 
-	auto pModule = (HMODULE*)__YY_THUNKS_MODULE_START;
-	auto pModuleEnd = (HMODULE*)__YY_THUNKS_FUN_START;
+    auto pModule = (HMODULE*)__YY_THUNKS_MODULE_START;
+    auto pModuleEnd = (HMODULE*)__YY_THUNKS_FUN_START;
 
-	for (; pModule != pModuleEnd; ++pModule)
-	{
-		auto& module = *pModule;
-		if (module)
-		{
-			if (module != INVALID_HANDLE_VALUE)
-			{
-				FreeLibrary(module);
-			}
+    for (; pModule != pModuleEnd; ++pModule)
+    {
+        auto& module = *pModule;
+        if (module)
+        {
+            if (module != INVALID_HANDLE_VALUE)
+            {
+                FreeLibrary(module);
+            }
 
-			module = nullptr;
-		}
-	}
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-	CloseHandle(_GlobalKeyedEventHandle);
+            module = nullptr;
+        }
+    }
+#if (YY_Thunks_Target < __WindowsNT6)
+    CloseHandle(_GlobalKeyedEventHandle);
 #endif
 
-	//执行本库中所有的反初始化工作。
-	for (auto p = (UninitFunType*)__YY_THUNKS_UNINIT_FUN_START; p != (UninitFunType*)__YY_THUNKS_UNINIT_FUN_END; ++p)
-	{
-		if (auto pUninitFun = *p)
-			pUninitFun();
-	}
+    //执行本库中所有的反初始化工作。
+    for (auto p = (UninitFunType*)__YY_THUNKS_UNINIT_FUN_START; p != (UninitFunType*)__YY_THUNKS_UNINIT_FUN_END; ++p)
+    {
+        if (auto pUninitFun = *p)
+            pUninitFun();
+    }
 }
 
 static ThunksInitStatus __cdecl _YY_initialize_winapi_thunks(ThunksInitStatus _sInitStatus)
@@ -665,26 +676,26 @@ EXTERN_C extern void* __acrt_atexit_table;
 
 static int __cdecl __YY_initialize_winapi_thunks()
 {
-	const auto _eStatus = _YY_initialize_winapi_thunks(ThunksInitStatus::InitByCRT);
+    const auto _eStatus = _YY_initialize_winapi_thunks(ThunksInitStatus::InitByCRT);
     if (_eStatus != ThunksInitStatus::InitByCRT && _eStatus != ThunksInitStatus::InitByAPI)
     {
         // 不接管由DllMain触发的初始化，因为它可以自行反初始化。
         return 0;
     }
 
-	// 如果 == null，那么有2种情况：
-	//   1. 非UCRT，比如2008，VC6，这时，调用 atexit是安全的，因为atexit在 XIA初始化完成了。
-	//   2. UCRT 并且处于MD状态。这时 atexit初始化 会提与 XIA，这时也是没有问题的。
-	// 如果 != null：
-	//   那么说明UCRT处于静态状态（CRT DLL其实也是静态的一种）
-	//   这时，XTY是可以正确执行的，这时就不用调用atexit了
-	//   由于XTY晚于onexit，所以它是可靠的。
-	if (__acrt_atexit_table == nullptr)
-	{
-		atexit(__YY_uninitialize_winapi_thunks);
-	}
+    // 如果 == null，那么有2种情况：
+    //   1. 非UCRT，比如2008，VC6，这时，调用 atexit是安全的，因为atexit在 XIA初始化完成了。
+    //   2. UCRT 并且处于MD状态。这时 atexit初始化 会提与 XIA，这时也是没有问题的。
+    // 如果 != null：
+    //   那么说明UCRT处于静态状态（CRT DLL其实也是静态的一种）
+    //   这时，XTY是可以正确执行的，这时就不用调用atexit了
+    //   由于XTY晚于onexit，所以它是可靠的。
+    if (__acrt_atexit_table == nullptr)
+    {
+        atexit(__YY_uninitialize_winapi_thunks);
+    }
 
-	return 0;
+    return 0;
 }
 
 

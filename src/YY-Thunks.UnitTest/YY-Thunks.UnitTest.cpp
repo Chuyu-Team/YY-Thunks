@@ -615,7 +615,7 @@ namespace Others
                 {L"Win32", L"Static", L"10.0.10240.0"},
                 {L"Win32", L"Static", L"10.0.19041.0"},
 
-                {L"x64", L"Static", L"5.2.3790.1180"},
+                {L"x64", L"Static", L"5.2.3790.1830"},
                 {L"x64", L"Static", L"6.0.6000.0"},
                 {L"x64", L"Static", L"6.1.7600.0"},
                 {L"x64", L"Static", L"6.2.9200.0"},

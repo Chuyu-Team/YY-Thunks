@@ -1,26 +1,26 @@
 ﻿namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
     // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	advapi32,
-	20,
-	BOOL,
-	WINAPI,
-	AddMandatoryAce,
+    __DEFINE_THUNK(
+    advapi32,
+    20,
+    BOOL,
+    WINAPI,
+    AddMandatoryAce,
         _Inout_ PACL _pAcl,
         _In_ DWORD _uAceRevision,
         _In_ DWORD _fAceFlags,
         _In_ DWORD _uMandatoryPolicy,
         _In_ SID* _pLabelSid
         )
-	{
-		if (const auto _pfnAddMandatoryAce = try_get_AddMandatoryAce())
-		{
-			return _pfnAddMandatoryAce(_pAcl, _uAceRevision, _fAceFlags, _uMandatoryPolicy, _pLabelSid);
-		}
+    {
+        if (const auto _pfnAddMandatoryAce = try_get_AddMandatoryAce())
+        {
+            return _pfnAddMandatoryAce(_pAcl, _uAceRevision, _fAceFlags, _uMandatoryPolicy, _pLabelSid);
+        }
         
         // 参考 ntdll.RtlAddMandatoryAce 实现
 
@@ -99,6 +99,6 @@
         _pAcl->AclRevision = (BYTE)_uAceRevision;
 
         return TRUE;
-	}
+    }
 #endif
 } // namespace YY::Thunks

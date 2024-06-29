@@ -1,10 +1,10 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+﻿#if (YY_Thunks_Target < __WindowsNT6_1)
 #include <mfreadwrite.h>
 #endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
     // 最低受支持的客户端	适用于 Windows Vista 的 Windows 7、Windows Vista 和平台更新补充 [桌面应用 |UWP 应用]
     // 最低受支持的服务器	Windows Server 2008 R2[桌面应用 | UWP 应用]

@@ -1,11 +1,13 @@
-﻿#include <dwmapi.h>
+﻿#if (YY_Thunks_Target < __WindowsNT6)
+#include <dwmapi.h>
+#endif
 
 // 忽略deprecated，因为是Thunks项目肯定是需要调用老接口的。
 #pragma warning(disable:4995)
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端    Windows Vista [仅限桌面应用]
     // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
@@ -30,7 +32,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端    Windows Vista [仅限桌面应用]
     // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
@@ -59,7 +61,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端    Windows Vista [仅限桌面应用]
     // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
@@ -93,7 +95,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端    Windows Vista [仅限桌面应用]
     // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
@@ -121,7 +123,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端    Windows Vista [仅限桌面应用]
     // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
@@ -148,7 +150,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端    Windows Vista [仅限桌面应用]
     // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
@@ -177,7 +179,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端    Windows Vista [仅限桌面应用]
     // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
@@ -207,7 +209,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端    Windows Vista [仅限桌面应用]
     // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
@@ -238,7 +240,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端    Windows Vista [仅限桌面应用]
     // 最低受支持的服务器    Windows Server 2008[仅限桌面应用]
@@ -260,7 +262,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client    Windows Vista
     // Minimum supported server    Windows Server 2008
@@ -284,7 +286,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Windows Vista [desktop apps only]
     // Windows Server 2008 [desktop apps only]
@@ -307,7 +309,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Windows Vista [desktop apps only]
     // Windows Server 2008 [desktop apps only]
@@ -332,7 +334,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Windows Vista [desktop apps only]
     // Windows Server 2008 [desktop apps only]

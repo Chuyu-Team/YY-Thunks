@@ -1,8 +1,10 @@
-﻿#include <d3d9.h>
+﻿#if (YY_Thunks_Target < __WindowsNT6)
+#include <d3d9.h>
+#endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     __DEFINE_THUNK(
     d3d9,

@@ -1,10 +1,10 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+﻿#if (YY_Thunks_Target < __WindowsNT10_10240)
 #include <d3d12.h>
 #endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+#if (YY_Thunks_Target < __WindowsNT10_10240)
 
     // Windows 10
     __DEFINE_THUNK(

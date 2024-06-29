@@ -1,13 +1,13 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+﻿#if (YY_Thunks_Target < __WindowsNT6_2)
 #include <winhttp.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8) && !defined(__Comment_Lib_winhttp)
+#if (YY_Thunks_Target < __WindowsNT6_2) && !defined(__Comment_Lib_winhttp)
 #define __Comment_Lib_winhttp
 #pragma comment(lib, "winhttp.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8) && defined(YY_Thunks_Implemented)
+#if (YY_Thunks_Target < __WindowsNT6_2) && defined(YY_Thunks_Implemented)
 namespace YY::Thunks::Fallback
 {
     namespace 
@@ -363,24 +363,24 @@ namespace YY::Thunks::Fallback
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
-	// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
-	__DEFINE_THUNK(
-	winhttp,
-	8,
-	DWORD,
+    __DEFINE_THUNK(
+    winhttp,
+    8,
+    DWORD,
     WINAPI,
     WinHttpCreateProxyResolver,
         _In_ HINTERNET _hSession,
         _Out_ HINTERNET* _phResolver
         )
-	{
-		if (const auto _pfnWinHttpCreateProxyResolver = try_get_WinHttpCreateProxyResolver())
-		{
-			return _pfnWinHttpCreateProxyResolver(_hSession, _phResolver);
-		}
+    {
+        if (const auto _pfnWinHttpCreateProxyResolver = try_get_WinHttpCreateProxyResolver())
+        {
+            return _pfnWinHttpCreateProxyResolver(_hSession, _phResolver);
+        }
             
         // WinHttpConnect接口不会实际访问网络，这里调用以下主要是2个目的
         // 1. 维持 _hSession 的引用计数，避免hResolver存在期间调用者就主动关闭了hSession。
@@ -399,25 +399,25 @@ namespace YY::Thunks
         _pResolver->hSession = _hSession;
         _pResolver->hConnect = _hConnect;
         *_phResolver = reinterpret_cast<HINTERNET>(_pResolver);
-		return ERROR_SUCCESS;
-	}
+        return ERROR_SUCCESS;
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
-	// 最低受支持的客户端	Windows XP、Windows 2000 Professional SP3 [仅限桌面应用]
+    // 最低受支持的客户端	Windows XP、Windows 2000 Professional SP3 [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2003、Windows 2000 Server SP3[仅限桌面应用]
     // 1. 额外修正了Windows 8新增的ProxyResolver特性。
-	__DEFINE_THUNK(
-	winhttp,
-	4,
-	BOOL,
+    __DEFINE_THUNK(
+    winhttp,
+    4,
+    BOOL,
     WINAPI,
     WinHttpCloseHandle,
         IN HINTERNET _hInternet
         )
-	{
+    {
         if (!Fallback::Is<Fallback::WinHttpProxyResolver>(_hInternet))
         {
             if (const auto _pfnWinHttpCloseHandle = try_get_WinHttpCloseHandle())
@@ -430,22 +430,22 @@ namespace YY::Thunks
                 return FALSE;
             }
         }
-			
+            
         reinterpret_cast<Fallback::WinHttpProxyResolver*>(_hInternet)->Release();
         return TRUE;            
-	}
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
-	// 最低受支持的客户端	Windows XP、Windows 2000 Professional 和 SP3 [仅限桌面应用]
+    // 最低受支持的客户端	Windows XP、Windows 2000 Professional 和 SP3 [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2003、Windows 2000 Server SP3[仅限桌面应用]
     // 1. 额外修正了Windows 8新增的ProxyResolver特性。
-	__DEFINE_THUNK(
-	winhttp,
-	16,
-	WINHTTP_STATUS_CALLBACK,
+    __DEFINE_THUNK(
+    winhttp,
+    16,
+    WINHTTP_STATUS_CALLBACK,
     WINAPI,
     WinHttpSetStatusCallback,
         IN HINTERNET _hInternet,
@@ -453,7 +453,7 @@ namespace YY::Thunks
         IN DWORD _fNotificationFlags,
         IN DWORD_PTR _uReserved
         )
-	{
+    {
         if (!Fallback::Is<Fallback::WinHttpProxyResolver>(_hInternet))
         {
             if (const auto _pfnWinHttpSetStatusCallback = try_get_WinHttpSetStatusCallback())
@@ -477,18 +477,18 @@ namespace YY::Thunks
         auto _pResolver = reinterpret_cast<Fallback::WinHttpProxyResolver*>(_hInternet);
         _pResolver->fNotificationFlags = _fNotificationFlags;
         return (WINHTTP_STATUS_CALLBACK)InterlockedExchange((uintptr_t*)&_pResolver->pfnGetProxyForUrlCallback, (uintptr_t)_pfnInternetCallback);
-	}
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
-	// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
-	__DEFINE_THUNK(
-	winhttp,
-	16,
-	DWORD,
+    __DEFINE_THUNK(
+    winhttp,
+    16,
+    DWORD,
     WINAPI,
     WinHttpGetProxyForUrlEx,
         _In_ HINTERNET _hResolver,
@@ -496,11 +496,11 @@ namespace YY::Thunks
         _In_ WINHTTP_AUTOPROXY_OPTIONS* _pAutoProxyOptions,
         _In_opt_ DWORD_PTR _pContext
         )
-	{
-		if (const auto _pfnWinHttpGetProxyForUrlEx = try_get_WinHttpGetProxyForUrlEx())
-		{
-			return _pfnWinHttpGetProxyForUrlEx(_hResolver, _szUrl, _pAutoProxyOptions, _pContext);
-		}
+    {
+        if (const auto _pfnWinHttpGetProxyForUrlEx = try_get_WinHttpGetProxyForUrlEx())
+        {
+            return _pfnWinHttpGetProxyForUrlEx(_hResolver, _szUrl, _pAutoProxyOptions, _pContext);
+        }
 
         if (_szUrl == NULL)
             return ERROR_WINHTTP_INVALID_URL;
@@ -557,25 +557,25 @@ namespace YY::Thunks
             return ERROR_NOT_ENOUGH_MEMORY;
         }
             
-		return ERROR_IO_PENDING;
-	}
+        return ERROR_IO_PENDING;
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
-	// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
-	__DEFINE_THUNK(
-	winhttp,
-	8,
-	DWORD,
+    __DEFINE_THUNK(
+    winhttp,
+    8,
+    DWORD,
     WINAPI,
     WinHttpGetProxyResult,
         _In_ HINTERNET _hResolver,
         _Out_ WINHTTP_PROXY_RESULT* _pProxyResult
         )
-	{
+    {
         if (const auto _pfnWinHttpGetProxyResult = try_get_WinHttpGetProxyResult())
         {
             return _pfnWinHttpGetProxyResult(_hResolver, _pProxyResult);
@@ -653,31 +653,31 @@ namespace YY::Thunks
         _pResult->Release();
 
         return _lStatus;
-	}
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
-	// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
-	__DEFINE_THUNK(
-	winhttp,
-	4,
-	VOID,
+    __DEFINE_THUNK(
+    winhttp,
+    4,
+    VOID,
     WINAPI,
     WinHttpFreeProxyResult,
         _Inout_ WINHTTP_PROXY_RESULT* _pProxyResult
         )
-	{
-		if (const auto _pfnWinHttpFreeProxyResult = try_get_WinHttpFreeProxyResult())
-		{
-			return _pfnWinHttpFreeProxyResult(_pProxyResult);
-		}
+    {
+        if (const auto _pfnWinHttpFreeProxyResult = try_get_WinHttpFreeProxyResult())
+        {
+            return _pfnWinHttpFreeProxyResult(_pProxyResult);
+        }
             
         if(_pProxyResult)
             internal::Free(_pProxyResult->pEntries);
-		return;
-	}
+        return;
+    }
 #endif
 }

@@ -1,15 +1,15 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+﻿#if (YY_Thunks_Target < __WindowsNT6)
 #include <dbghelp.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_dbghelp)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_dbghelp)
 #define __Comment_Lib_dbghelp
 #pragma comment(lib, "Dbghelp.lib")
 #endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // XP SP3自带的没有W版
     __DEFINE_THUNK(
@@ -46,7 +46,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // XP SP3自带的没有W版
     __DEFINE_THUNK(

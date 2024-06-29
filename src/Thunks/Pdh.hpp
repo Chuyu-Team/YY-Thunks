@@ -1,15 +1,15 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+﻿#if (YY_Thunks_Target < __WindowsNT6)
 #include <pdh.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_pdh)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_pdh)
 #define __Comment_Lib_pdh
 #pragma comment(lib, "Pdh.lib")
 #endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Windows Vista [desktop apps only]
     // Windows Server 2008 [desktop apps only]
@@ -35,7 +35,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Windows Vista [desktop apps only]
     // Windows Server 2008 [desktop apps only]

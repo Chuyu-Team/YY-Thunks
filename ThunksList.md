@@ -221,7 +221,7 @@
 ## dwrite.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
-| DWriteCreateFactory                        | 不存在时，返回 `E_NOINTERFACE`。
+| DWriteCreateFactory                        | 不存在时，返回 `E_NOINTERFACE`。</br>此外NT6或者更高版本提供IDWriteFactory3模拟。
 
 ## dxgi.dll
 | 函数                                       | Fallback

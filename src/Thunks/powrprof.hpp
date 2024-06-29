@@ -1,13 +1,13 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+﻿#if (YY_Thunks_Target < __WindowsNT6)
 #include <powrprof.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA) && !defined(__Comment_Lib_powrprof)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_powrprof)
 #define __Comment_Lib_powrprof
 #pragma comment(lib, "PowrProf.lib")
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA) && !defined(__Comment_Lib_shlwapi)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_shlwapi)
 #define __Comment_Lib_shlwapi
 #pragma comment(lib, "Shlwapi.lib")
 #endif
@@ -17,7 +17,7 @@ namespace YY::Thunks::Fallback::PowrProf
 {
     namespace
     {
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Target < __WindowsNT6)
         // 节能模式
         static constexpr const GUID kPowerSaver = { 0xa1841308, 0x3541, 0x4fab, { 0xbc, 0x81, 0xf7, 0x15, 0x56, 0xf2, 0x0b, 0x4a } };
         // 平衡模式
@@ -109,7 +109,7 @@ namespace YY::Thunks::Fallback::PowrProf
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows Vista [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
@@ -132,7 +132,7 @@ namespace YY::Thunks
 #endif
 
     
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows Vista [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
@@ -201,7 +201,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows Vista [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
@@ -228,7 +228,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_VISTA)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows Vista [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]

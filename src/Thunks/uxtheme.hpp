@@ -1,13 +1,13 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+﻿#if (YY_Thunks_Target < __WindowsNT6)
 #include <uxtheme.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_uxtheme)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_uxtheme)
 #define __Comment_Lib_uxtheme
 #pragma comment(lib, "UxTheme.lib")
 #endif
 
-#if defined(YY_Thunks_Implemented) && (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if defined(YY_Thunks_Implemented) && (YY_Thunks_Target < __WindowsNT6)
 namespace YY::Thunks::Fallback
 {
     static void* __fastcall try_get_DrawThemeTextEx(const ProcInfo& _ProcInfo) noexcept
@@ -41,7 +41,7 @@ namespace YY::Thunks::Fallback
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows Vista [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
@@ -72,7 +72,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows Vista [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
@@ -106,7 +106,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows Vista [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
