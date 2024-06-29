@@ -141,30 +141,32 @@ namespace YY ::Thunks
         _In_ HANDLE Thread
         )
     {
-        if (auto pGetThreadId = try_get_GetThreadId())
+        if (const auto _pfnGetThreadId = try_get_GetThreadId())
         {
-            return pGetThreadId(Thread);
+            return _pfnGetThreadId(Thread);
         }
-        else if (auto pNtQueryInformationThread = try_get_NtQueryInformationThread())
-        {
-            THREAD_BASIC_INFORMATION ThreadBasicInfo;
 
-            auto Status = pNtQueryInformationThread(Thread, ThreadBasicInformation, &ThreadBasicInfo, sizeof(ThreadBasicInfo), nullptr);
-
-            if (Status < 0)
-            {
-                internal::BaseSetLastNTError(Status);
-                return 0;
-            }
-            else
-            {
-                return (DWORD)ThreadBasicInfo.ClientId.UniqueThread;
-            }
-        }
-        else
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtQueryInformationThread = try_get_NtQueryInformationThread();
+        if(!NtQueryInformationThread)
         {
             SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
             return 0;
+        }
+#endif
+
+        THREAD_BASIC_INFORMATION ThreadBasicInfo;
+
+        LONG Status = NtQueryInformationThread(Thread, ThreadBasicInformation, &ThreadBasicInfo, sizeof(ThreadBasicInfo), nullptr);
+
+        if (Status < 0)
+        {
+            internal::BaseSetLastNTError(Status);
+            return 0;
+        }
+        else
+        {
+            return (DWORD)ThreadBasicInfo.ClientId.UniqueThread;
         }
     }
 #endif
@@ -183,30 +185,30 @@ namespace YY ::Thunks
         _In_ HANDLE Thread
         )
     {
-        if (auto pGetProcessIdOfThread = try_get_GetProcessIdOfThread())
-        {
-            return pGetProcessIdOfThread(Thread);
-        }
-        else if (auto pNtQueryInformationThread = try_get_NtQueryInformationThread())
-        {
-            THREAD_BASIC_INFORMATION ThreadBasicInfo;
-
-            auto Status = pNtQueryInformationThread(Thread, ThreadBasicInformation, &ThreadBasicInfo, sizeof(ThreadBasicInfo), nullptr);
-
-            if (Status < 0)
-            {
-                internal::BaseSetLastNTError(Status);
-                return 0;
-            }
-            else
-            {
-                return (DWORD)ThreadBasicInfo.ClientId.UniqueProcess;
-            }
-        }
-        else
+        if (const auto _pfnGetProcessIdOfThread = try_get_GetProcessIdOfThread())
+            return _pfnGetProcessIdOfThread(Thread);
+        
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtQueryInformationThread = try_get_NtQueryInformationThread();
+        if (!NtQueryInformationThread)
         {
             SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
             return 0;
+        }
+#endif
+
+        THREAD_BASIC_INFORMATION ThreadBasicInfo;
+
+        LONG Status = NtQueryInformationThread(Thread, ThreadBasicInformation, &ThreadBasicInfo, sizeof(ThreadBasicInfo), nullptr);
+
+        if (Status < 0)
+        {
+            internal::BaseSetLastNTError(Status);
+            return 0;
+        }
+        else
+        {
+            return (DWORD)ThreadBasicInfo.ClientId.UniqueProcess;
         }
     }
 #endif
@@ -229,26 +231,27 @@ namespace YY ::Thunks
         {
             return pGetProcessId(Process);
         }
-        else if (auto pNtQueryInformationProcess = try_get_NtQueryInformationProcess())
-        {
-            PROCESS_BASIC_INFORMATION ProcessBasicInfo;
-
-            auto Status = pNtQueryInformationProcess(Process, ProcessBasicInformation, &ProcessBasicInfo, sizeof(ProcessBasicInfo), nullptr);
-
-            if (Status < 0)
-            {
-                internal::BaseSetLastNTError(Status);
-                return 0;
-            }
-            else
-            {
-                return (DWORD)ProcessBasicInfo.UniqueProcessId;
-            }
-        }
-        else
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtQueryInformationProcess = try_get_NtQueryInformationProcess();
+        if (!NtQueryInformationProcess)
         {
             SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
             return 0;
+        }
+#endif
+
+        PROCESS_BASIC_INFORMATION ProcessBasicInfo;
+
+        LONG Status = NtQueryInformationProcess(Process, ProcessBasicInformation, &ProcessBasicInfo, sizeof(ProcessBasicInfo), nullptr);
+
+        if (Status < 0)
+        {
+            internal::BaseSetLastNTError(Status);
+            return 0;
+        }
+        else
+        {
+            return (DWORD)ProcessBasicInfo.UniqueProcessId;
         }
     }
 #endif
@@ -744,12 +747,14 @@ namespace YY ::Thunks
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-        const auto _pfnNtQueryInformationProcess = try_get_NtQueryInformationProcess();
-        if (!_pfnNtQueryInformationProcess)
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtQueryInformationProcess = try_get_NtQueryInformationProcess();
+        if (!NtQueryInformationProcess)
         {
             SetLastError(ERROR_NOT_SUPPORTED);
             return FALSE;
         }
+#endif
 
         if (_eMitigationPolicy == ProcessDEPPolicy)
         {
@@ -759,7 +764,7 @@ namespace YY ::Thunks
                 return FALSE;
             }
             KEXECUTE_OPTIONS _DepOptions = {};
-            NTSTATUS _Status = _pfnNtQueryInformationProcess(_hProcess, ProcessExecuteFlags, &_DepOptions, sizeof(_DepOptions), nullptr);
+            NTSTATUS _Status = NtQueryInformationProcess(_hProcess, ProcessExecuteFlags, &_DepOptions, sizeof(_DepOptions), nullptr);
             if (_Status >= 0)
             {
                 auto _pDepPolicy = (PROCESS_MITIGATION_DEP_POLICY*)_pBuffer;
@@ -800,7 +805,7 @@ namespace YY ::Thunks
             }
 
             YY_ProcessPolicyInfo _Info = { static_cast<DWORD>(_eMitigationPolicy) };
-            NTSTATUS _Status = _pfnNtQueryInformationProcess(_hProcess, YY_ProcessPolicy, &_Info, sizeof(_Info), nullptr);
+            NTSTATUS _Status = NtQueryInformationProcess(_hProcess, YY_ProcessPolicy, &_Info, sizeof(_Info), nullptr);
             if (_Status >= 0)
             {
                 *(DWORD*)_pBuffer = _Info.Flags;
@@ -855,12 +860,14 @@ namespace YY ::Thunks
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-        const auto _pfnNtSetInformationProcess = try_get_NtSetInformationProcess();
-        if (!_pfnNtSetInformationProcess)
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtSetInformationProcess = try_get_NtSetInformationProcess();
+        if (!NtSetInformationProcess)
         {
             SetLastError(ERROR_NOT_SUPPORTED);
             return FALSE;
         }
+#endif
 
         NTSTATUS _Status;
         if (_eMitigationPolicy == ProcessDEPPolicy)
@@ -885,7 +892,7 @@ namespace YY ::Thunks
             _DepOptions.DisableThunkEmulation = _DepPolicy.DisableAtlThunkEmulation;
             _DepOptions.Permanent = _DepPolicy.Permanent;
 
-            _Status = _pfnNtSetInformationProcess(NtCurrentProcess(), YY_ProcessPolicy, &_DepOptions, sizeof(_DepOptions));
+            _Status = NtSetInformationProcess(NtCurrentProcess(), YY_ProcessPolicy, &_DepOptions, sizeof(_DepOptions));
                 
         }
         else
@@ -897,7 +904,7 @@ namespace YY ::Thunks
             }
 
             YY_ProcessPolicyInfo _Info = { static_cast<DWORD>(_eMitigationPolicy), *(DWORD*)_pBuffer };
-            _Status = _pfnNtSetInformationProcess(NtCurrentProcess(), YY_ProcessPolicy, &_Info, sizeof(_Info));
+            _Status = NtSetInformationProcess(NtCurrentProcess(), YY_ProcessPolicy, &_Info, sizeof(_Info));
         }
 
         if (_Status >= 0)
@@ -939,12 +946,14 @@ namespace YY ::Thunks
             return FALSE;
         }
 
-        const auto _pfnNtSetInformationProcess = try_get_NtSetInformationProcess();
-        if (!_pfnNtSetInformationProcess)
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtSetInformationProcess = try_get_NtSetInformationProcess();
+        if (!NtSetInformationProcess)
         {
             SetLastError(ERROR_NOT_SUPPORTED);
             return FALSE;
         }
+#endif
 
         NTSTATUS _Status;
         if (_eProcessInformationClass == ProcessMemoryPriority)
@@ -955,7 +964,7 @@ namespace YY ::Thunks
                 return FALSE;
             }
             // PAGE_PRIORITY_INFORMATION
-            _Status = _pfnNtSetInformationProcess(_hProcess, ProcessPagePriority, _pProcessInformation, sizeof(DWORD));
+            _Status = NtSetInformationProcess(_hProcess, ProcessPagePriority, _pProcessInformation, sizeof(DWORD));
         }
         else
         {
@@ -997,13 +1006,14 @@ namespace YY ::Thunks
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-
-        const auto _pfnNtSetInformationThread = try_get_NtSetInformationThread();
-        if (!_pfnNtSetInformationThread)
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtSetInformationThread = try_get_NtSetInformationThread();
+        if (!NtSetInformationThread)
         {
             SetLastError(ERROR_NOT_SUPPORTED);
             return FALSE;
         }
+#endif
 
         NTSTATUS _Status;
         if (_eThreadInformationClass == ThreadMemoryPriority)
@@ -1013,7 +1023,7 @@ namespace YY ::Thunks
                 SetLastError(ERROR_INVALID_PARAMETER);
                 return FALSE;
             }
-            _Status = _pfnNtSetInformationThread(_hThread, ThreadPagePriority, _pThreadInformation, sizeof(DWORD));
+            _Status = NtSetInformationThread(_hThread, ThreadPagePriority, _pThreadInformation, sizeof(DWORD));
         }
         else if (_eThreadInformationClass == ThreadAbsoluteCpuPriority)
         {
@@ -1022,7 +1032,7 @@ namespace YY ::Thunks
                 SetLastError(ERROR_INVALID_PARAMETER);
                 return FALSE;
             }
-            _Status = _pfnNtSetInformationThread(_hThread, ThreadActualBasePriority, _pThreadInformation, sizeof(DWORD));
+            _Status = NtSetInformationThread(_hThread, ThreadActualBasePriority, _pThreadInformation, sizeof(DWORD));
         }
         else
         {
@@ -1060,21 +1070,23 @@ namespace YY ::Thunks
             return _pfnGetThreadInformation(_hThread, _eThreadInformationClass, _pThreadInformation, _cbThreadInformationSize);
         }
 
-        const auto _pfnNtQueryInformationThread = try_get_NtQueryInformationThread();
-        if (!_pfnNtQueryInformationThread)
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtQueryInformationThread = try_get_NtQueryInformationThread();
+        if (!NtQueryInformationThread)
         {
             SetLastError(ERROR_NOT_SUPPORTED);
             return FALSE;
         }
+#endif
 
         long _Status;
         if (_eThreadInformationClass == ThreadMemoryPriority)
         {
-            _Status = _pfnNtQueryInformationThread(_hThread, ThreadPagePriority, _pThreadInformation, _cbThreadInformationSize, nullptr);
+            _Status = NtQueryInformationThread(_hThread, ThreadPagePriority, _pThreadInformation, _cbThreadInformationSize, nullptr);
         }
         else if (_eThreadInformationClass == ThreadAbsoluteCpuPriority)
         {
-            _Status = _pfnNtQueryInformationThread(_hThread, ThreadActualBasePriority, _pThreadInformation, _cbThreadInformationSize, nullptr);
+            _Status = NtQueryInformationThread(_hThread, ThreadActualBasePriority, _pThreadInformation, _cbThreadInformationSize, nullptr);
         }
         else
         {

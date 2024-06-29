@@ -96,33 +96,33 @@ namespace YY::Thunks
         {
             return pGetErrorMode();
         }
-        else if (auto pNtQueryInformationProcess = try_get_NtQueryInformationProcess())
-        {
-            DWORD dwDefaultHardErrorMode;
-
-            auto Status = pNtQueryInformationProcess(NtCurrentProcess(), ProcessDefaultHardErrorMode, &dwDefaultHardErrorMode, sizeof(dwDefaultHardErrorMode), nullptr);
-
-            if (Status >= 0)
-            {
-                if (dwDefaultHardErrorMode & 0x00000001)
-                {
-                    return dwDefaultHardErrorMode & 0xFFFFFFFE;
-                }
-                else
-                {
-                    return dwDefaultHardErrorMode | 0x00000001;
-                }
-            }
-
-            internal::BaseSetLastNTError(Status);
-
-            return 0;
-        }
-        else
+        
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtQueryInformationProcess = try_get_NtQueryInformationProcess();
+        if (!NtQueryInformationProcess)
         {
             SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
             return 0;
         }
+#endif
+        DWORD dwDefaultHardErrorMode;
+
+        LONG Status = NtQueryInformationProcess(NtCurrentProcess(), ProcessDefaultHardErrorMode, &dwDefaultHardErrorMode, sizeof(dwDefaultHardErrorMode), nullptr);
+
+        if (Status >= 0)
+        {
+            if (dwDefaultHardErrorMode & 0x00000001)
+            {
+                return dwDefaultHardErrorMode & 0xFFFFFFFE;
+            }
+            else
+            {
+                return dwDefaultHardErrorMode | 0x00000001;
+            }
+        }
+
+        internal::BaseSetLastNTError(Status);
+        return 0;
     }
 #endif
 } //namespace YY::Thunks

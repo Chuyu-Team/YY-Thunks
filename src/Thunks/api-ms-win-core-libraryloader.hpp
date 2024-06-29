@@ -166,14 +166,16 @@ namespace YY::Thunks
 
             if (dwFlags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS)
             {
-                auto pRtlPcToFileHeader = try_get_RtlPcToFileHeader();
-                if (!pRtlPcToFileHeader)
+#if !defined(__USING_NTDLL_LIB)
+                const auto RtlPcToFileHeader = try_get_RtlPcToFileHeader();
+                if (!RtlPcToFileHeader)
                 {
                     lStatus = ERROR_NOT_SUPPORTED;
                     break;
                 }
+#endif
 
-                hModule = (HMODULE)pRtlPcToFileHeader((PVOID)lpModuleName, (PVOID*)&hModule);
+                hModule = (HMODULE)RtlPcToFileHeader((PVOID)lpModuleName, (PVOID*)&hModule);
             }
             else
             {
@@ -192,14 +194,16 @@ namespace YY::Thunks
             }
             else
             {
-                const auto pLdrAddRefDll = try_get_LdrAddRefDll();
-                if (!pLdrAddRefDll)
+#if !defined(__USING_NTDLL_LIB)
+                const auto LdrAddRefDll = try_get_LdrAddRefDll();
+                if (!LdrAddRefDll)
                 {
                     lStatus = ERROR_NOT_SUPPORTED;
                     break;
                 }
+#endif
 
-                auto Status = pLdrAddRefDll(dwFlags& GET_MODULE_HANDLE_EX_FLAG_PIN, hModule);
+                LONG Status = LdrAddRefDll(dwFlags& GET_MODULE_HANDLE_EX_FLAG_PIN, hModule);
                 if (Status < 0)
                 {
                     lStatus = internal::BaseSetLastNTError(Status);
@@ -265,14 +269,16 @@ namespace YY::Thunks
 
             if (dwFlags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS)
             {
-                const auto pRtlPcToFileHeader = try_get_RtlPcToFileHeader();
-                if (!pRtlPcToFileHeader)
+#if !defined(__USING_NTDLL_LIB)
+                const auto RtlPcToFileHeader = try_get_RtlPcToFileHeader();
+                if (!RtlPcToFileHeader)
                 {
                     lStatus = ERROR_NOT_SUPPORTED;
                     break;
                 }
+#endif
 
-                hModule = (HMODULE)pRtlPcToFileHeader((PVOID)lpModuleName, (PVOID*)&hModule);
+                hModule = (HMODULE)RtlPcToFileHeader((PVOID)lpModuleName, (PVOID*)&hModule);
             }
             else
             {
@@ -291,14 +297,16 @@ namespace YY::Thunks
             }
             else
             {
-                const auto pLdrAddRefDll = try_get_LdrAddRefDll();
-                if (!pLdrAddRefDll)
+#if !defined(__USING_NTDLL_LIB)
+                const auto LdrAddRefDll = try_get_LdrAddRefDll();
+                if (!LdrAddRefDll)
                 {
                     lStatus = ERROR_NOT_SUPPORTED;
                     break;
                 }
+#endif
 
-                auto Status = pLdrAddRefDll(dwFlags & GET_MODULE_HANDLE_EX_FLAG_PIN, hModule);
+                LONG Status = LdrAddRefDll(dwFlags & GET_MODULE_HANDLE_EX_FLAG_PIN, hModule);
                 if (Status < 0)
                 {
                     lStatus = internal::BaseSetLastNTError(Status);
@@ -413,10 +421,12 @@ namespace YY::Thunks
 
                 break;
             }
-
-            const auto pRtlDetermineDosPathNameType_U = try_get_RtlDetermineDosPathNameType_U();
-
-            const auto PathType = pRtlDetermineDosPathNameType_U ? pRtlDetermineDosPathNameType_U(lpLibFileName) : RtlPathTypeUnknown;
+#if defined(__USING_NTDLL_LIB)
+            const auto PathType = RtlDetermineDosPathNameType_U(lpLibFileName);
+#else
+            const auto RtlDetermineDosPathNameType_U = try_get_RtlDetermineDosPathNameType_U();
+            const auto PathType = RtlDetermineDosPathNameType_U ? RtlDetermineDosPathNameType_U(lpLibFileName) : RtlPathTypeUnknown;
+#endif
 
             if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR)
             {
@@ -554,13 +564,14 @@ namespace YY::Thunks
 
 
             //以模块方式加载
-
-            const auto pLdrLoadDll = try_get_LdrLoadDll();
-            if (!pLdrLoadDll)
+#if !defined(__USING_NTDLL_LIB)
+            const auto LdrLoadDll = try_get_LdrLoadDll();
+            if (!LdrLoadDll)
             {
                 SetLastError(ERROR_FUNCTION_FAILED);
                 return nullptr;
             }
+#endif
 
             DWORD nSize = 0;
 
@@ -691,7 +702,7 @@ namespace YY::Thunks
                 dwLdrLoadDllFlags |= 0x800000;
             }
 
-#if defined(_X86_) || defined(_M_IX86)
+#if defined(_M_IX86) && YY_Thunks_Target < __WindowsNT6_1_SP1
             //我们先关闭重定向，再加载DLL，Windows 7 SP1以前的系统不会关闭重定向，而导致某些线程关闭重定向后DLL加载问题。
             PVOID OldFsRedirectionLevel;
 
@@ -699,9 +710,9 @@ namespace YY::Thunks
             auto StatusFsRedir = pRtlWow64EnableFsRedirectionEx ? pRtlWow64EnableFsRedirectionEx(nullptr, &OldFsRedirectionLevel) : 0;
 #endif
 
-            auto Status = pLdrLoadDll(szFilePathBuffer, &dwLdrLoadDllFlags, &ModuleFileName, &hModule);
+            LONG Status = LdrLoadDll(szFilePathBuffer, &dwLdrLoadDllFlags, &ModuleFileName, &hModule);
 
-#if defined(_X86_) || defined(_M_IX86)
+#if defined(_M_IX86) && YY_Thunks_Target < __WindowsNT6_1_SP1
             if (StatusFsRedir >= 0 && pRtlWow64EnableFsRedirectionEx)
                 pRtlWow64EnableFsRedirectionEx(OldFsRedirectionLevel, &OldFsRedirectionLevel);
 #endif
@@ -716,7 +727,7 @@ namespace YY::Thunks
             return Fallback::ForwardDll(lpLibFileName);
         } while (false);
 
-#if defined(_X86_) || defined(_M_IX86)
+#if defined(_M_IX86) && YY_Thunks_Target < __WindowsNT6_1_SP1
         //我们先关闭重定向，再加载DLL，Windows 7 SP1以前的系统不会关闭重定向，而导致某些线程关闭重定向后DLL加载问题。
         PVOID OldFsRedirectionLevel;
 
@@ -726,7 +737,7 @@ namespace YY::Thunks
 
         auto hModule = pLoadLibraryExW(lpLibFileName, hFile, dwFlags);
 
-#if defined(_X86_) || defined(_M_IX86)
+#if defined(_M_IX86) && YY_Thunks_Target < __WindowsNT6_1_SP1
         if (StatusFsRedir >= 0 && pRtlWow64EnableFsRedirectionEx)
         {
             LSTATUS lStatus = GetLastError();

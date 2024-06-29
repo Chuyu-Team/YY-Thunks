@@ -293,31 +293,36 @@ namespace YY::Thunks
             return FALSE;
         }
 
-        if (auto _pfnNtQuerySystemInformation = try_get_NtQuerySystemInformation())
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtQuerySystemInformation = try_get_NtQuerySystemInformation();
+        if (!NtQuerySystemInformation)
         {
-            SYSTEM_BOOT_ENVIRONMENT_INFORMATION _Information;
-            const auto _Status = (long)_pfnNtQuerySystemInformation(SystemBootEnvironmentInformation, &_Information, sizeof(_Information), nullptr);
-
-            if (_Status >= 0)
-            {
-                *_peFirmwareType = _Information.FirmwareType;
-                return TRUE;
-            }
-            else if (_Status != STATUS_INVALID_INFO_CLASS && _Status != STATUS_NOT_IMPLEMENTED)
-            {
-                internal::BaseSetLastNTError(_Status);
-                return FALSE;
-            }
-            else
-            {
-                // 当前系统不支持 SystemBootEnvironmentInformation，应该是 Windows 2000。
-            }
+            // 理论上不可能走到这里，最大的可能就是Windows 2000或者更早的系统了。
+            // 所以我们这里兜底返回 FirmwareTypeBios，因为以前的系统只能是这个了。
+            *_peFirmwareType = FIRMWARE_TYPE::FirmwareTypeBios;
+            return TRUE;
         }
+#endif
 
-        // 理论上不可能走到这里，最大的可能就是Windows 2000或者更早的系统了。
-        // 所以我们这里兜底返回 FirmwareTypeBios，因为以前的系统只能是这个了。
-        *_peFirmwareType = FIRMWARE_TYPE::FirmwareTypeBios;
-        return TRUE;
+        SYSTEM_BOOT_ENVIRONMENT_INFORMATION _Information;
+        const LONG _Status = NtQuerySystemInformation(SystemBootEnvironmentInformation, &_Information, sizeof(_Information), nullptr);
+
+        if (_Status >= 0)
+        {
+            *_peFirmwareType = _Information.FirmwareType;
+            return TRUE;
+        }
+        else if (_Status != STATUS_INVALID_INFO_CLASS && _Status != STATUS_NOT_IMPLEMENTED)
+        {
+            internal::BaseSetLastNTError(_Status);
+            return FALSE;
+        }
+        else
+        {
+            // 当前系统不支持 SystemBootEnvironmentInformation，应该是 Windows 2000。
+            *_peFirmwareType = FIRMWARE_TYPE::FirmwareTypeBios;
+            return TRUE;
+        }
     }
 #endif
 
@@ -346,59 +351,61 @@ namespace YY::Thunks
             return FALSE;
         }
 
-        // Windows 7支持VHD启动，但是没有这个接口，直接调用 NtQuerySystemInformation 兼容一下。
-        if (const auto _pfnNtQuerySystemInformation = try_get_NtQuerySystemInformation())
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtQuerySystemInformation = try_get_NtQuerySystemInformation();
+        if (!NtQuerySystemInformation)
         {
-            ULONG _uReturnLength = 0;
-            auto _Status = (long)_pfnNtQuerySystemInformation(SystemVhdBootInformation, nullptr, 0, &_uReturnLength);
-            if (_Status == STATUS_BUFFER_TOO_SMALL)
+            // 兜底处理，现在是早期不支持VHD启动的系统。
+            *_pbNativeVhdBoot = FALSE;
+            return TRUE;
+        }
+#endif
+        // Windows 7支持VHD启动，但是没有这个接口，直接调用 NtQuerySystemInformation 兼容一下。
+        ULONG _uReturnLength = 0;
+        LONG _Status = NtQuerySystemInformation(SystemVhdBootInformation, nullptr, 0, &_uReturnLength);
+        if (_Status == STATUS_BUFFER_TOO_SMALL)
+        {
+            union
             {
-                union
-                {
-                    char Buffer[1024];
-                    SYSTEM_VHD_BOOT_INFORMATION Info;
-                } _StaticBuffer;
+                char Buffer[1024];
+                SYSTEM_VHD_BOOT_INFORMATION Info;
+            } _StaticBuffer;
                     
-                if (_uReturnLength > sizeof(_StaticBuffer))
-                {
-                    const auto _hProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
-                    auto _pInformation = (SYSTEM_VHD_BOOT_INFORMATION*)HeapAlloc(_hProcessHeap, 0, _uReturnLength);
-                    if (!_pInformation)
-                    {
-                        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-                        return FALSE;
-                    }
-
-                    _Status = (long)_pfnNtQuerySystemInformation(SystemVhdBootInformation, _pInformation, _uReturnLength, &_uReturnLength);
-                    _StaticBuffer.Info.OsDiskIsVhd = _pInformation->OsDiskIsVhd;
-                    HeapFree(_hProcessHeap, 0, _pInformation);
-                }
-                else
-                {
-                    _Status = (long)_pfnNtQuerySystemInformation(SystemVhdBootInformation, &_StaticBuffer.Info, _uReturnLength, &_uReturnLength);
-                }
-
-                if (_Status >= 0)
-                {
-                    *_pbNativeVhdBoot = _StaticBuffer.Info.OsDiskIsVhd;
-                }
-            }
-            else if (_Status != STATUS_INVALID_INFO_CLASS && _Status != STATUS_NOT_IMPLEMENTED)
+            if (_uReturnLength > sizeof(_StaticBuffer))
             {
-                internal::BaseSetLastNTError(_Status);
-                return FALSE;
+                const auto _hProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
+                auto _pInformation = (SYSTEM_VHD_BOOT_INFORMATION*)HeapAlloc(_hProcessHeap, 0, _uReturnLength);
+                if (!_pInformation)
+                {
+                    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+                    return FALSE;
+                }
+
+                _Status = NtQuerySystemInformation(SystemVhdBootInformation, _pInformation, _uReturnLength, &_uReturnLength);
+                _StaticBuffer.Info.OsDiskIsVhd = _pInformation->OsDiskIsVhd;
+                HeapFree(_hProcessHeap, 0, _pInformation);
             }
             else
             {
-                // 当前系统不支持VHD，兜底处理。
+                _Status = NtQuerySystemInformation(SystemVhdBootInformation, &_StaticBuffer.Info, _uReturnLength, &_uReturnLength);
+            }
+
+            if (_Status >= 0)
+            {
+                *_pbNativeVhdBoot = _StaticBuffer.Info.OsDiskIsVhd;
+                return TRUE;
             }
         }
+        
+        if (_Status != STATUS_INVALID_INFO_CLASS && _Status != STATUS_NOT_IMPLEMENTED)
+        {
+            internal::BaseSetLastNTError(_Status);
+            return FALSE;
+        }
 
-        // 兜底处理，现在是早期不支持VHD启动的系统。
-        // 注意：这里故意设置 ERROR_INVALID_PARAMETER，因为从微软的行为看
-        // 未使用VHD时，它将返回这个错误代码。
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+        // 当前系统不支持VHD，兜底处理。
+        *_pbNativeVhdBoot = FALSE;
+        return TRUE;
     }
 #endif
 
@@ -448,14 +455,16 @@ namespace YY::Thunks
             return FALSE;
         }
 
-        const auto _pfnNtSetInformationProcess = try_get_NtSetInformationProcess();
-        if (!_pfnNtSetInformationProcess)
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtSetInformationProcess = try_get_NtSetInformationProcess();
+        if (!NtSetInformationProcess)
         {
             SetLastError(ERROR_NOT_SUPPORTED);
             return FALSE;
         }
+#endif
 
-        LONG _Status = _pfnNtSetInformationProcess(NtCurrentProcess(), PROCESSINFOCLASS::ProcessExecuteFlags, &_uInfo, sizeof(_uInfo));
+        LONG _Status = NtSetInformationProcess(NtCurrentProcess(), PROCESSINFOCLASS::ProcessExecuteFlags, &_uInfo, sizeof(_uInfo));
         if (_Status >=0 || STATUS_INVALID_INFO_CLASS == _Status || STATUS_NOT_SUPPORTED == _Status)
         {
             // 如果不支持这个接口，那么也认为是成功的。反正不支持DEP。

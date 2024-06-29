@@ -39,9 +39,11 @@ namespace YY::Thunks
 
         bool __fastcall CompareObjectRef(HANDLE _hFirstObjectHandle, ObjectStaticBuffer& _FirstObjectBuffer, HANDLE _hSecondObjectHandle, ObjectStaticBuffer& _SecondObjectBuffer) noexcept
         {
-            const auto _pfnNtQueryObject = try_get_NtQueryObject();
-            if (!_pfnNtQueryObject)
+#if !defined(__USING_NTDLL_LIB)
+            const auto NtQueryObject = try_get_NtQueryObject();
+            if (!NtQueryObject)
                 return false;
+#endif
 
             const auto _pfnDuplicateHandle = try_get_DuplicateHandle();
             const auto _pfnCloseHandle = try_get_CloseHandle();
@@ -60,7 +62,7 @@ namespace YY::Thunks
                     break;
                 }
 
-                LONG _Status = _pfnNtQueryObject(_hFirstObjectHandle, ObjectBasicInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer.BaseInfo), nullptr);
+                LONG _Status = NtQueryObject(_hFirstObjectHandle, ObjectBasicInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer.BaseInfo), nullptr);
 
                 // 实际测试，ObjectBasicInformation 只出现无效句柄错误
                 if (_Status < 0)
@@ -74,7 +76,7 @@ namespace YY::Thunks
                     break;
                 }
 
-                _Status = _pfnNtQueryObject(_hSecondObjectHandle, ObjectBasicInformation, &_SecondObjectBuffer, sizeof(_SecondObjectBuffer.BaseInfo), nullptr);
+                _Status = NtQueryObject(_hSecondObjectHandle, ObjectBasicInformation, &_SecondObjectBuffer, sizeof(_SecondObjectBuffer.BaseInfo), nullptr);
                 if (_Status < 0)
                 {
                     break;
@@ -89,7 +91,7 @@ namespace YY::Thunks
                 _pfnCloseHandle(_hFirstTmp);
                 _hFirstTmp = NULL;
 
-                _Status = _pfnNtQueryObject(_hFirstObjectHandle, ObjectBasicInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer.BaseInfo), nullptr);
+                _Status = NtQueryObject(_hFirstObjectHandle, ObjectBasicInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer.BaseInfo), nullptr);
 
                 // 实际测试，ObjectBasicInformation 只出现无效句柄错误
                 if (_Status < 0)
@@ -103,7 +105,7 @@ namespace YY::Thunks
                     break;
                 }
 
-                _Status = _pfnNtQueryObject(_hSecondObjectHandle, ObjectBasicInformation, &_SecondObjectBuffer, sizeof(_SecondObjectBuffer.BaseInfo), nullptr);
+                _Status = NtQueryObject(_hSecondObjectHandle, ObjectBasicInformation, &_SecondObjectBuffer, sizeof(_SecondObjectBuffer.BaseInfo), nullptr);
                 if (_Status < 0)
                 {
                     break;
@@ -129,15 +131,17 @@ namespace YY::Thunks
 
         bool __fastcall CompareObjectName(HANDLE _hLeft, ObjectStaticBuffer& _LeftBuffer, HANDLE _hRigth, ObjectStaticBuffer& _RightBuffer) noexcept
         {
-            const auto _pfnNtQueryObject = try_get_NtQueryObject();
-            if (!_pfnNtQueryObject)
+#if !defined(__USING_NTDLL_LIB)
+            const auto NtQueryObject = try_get_NtQueryObject();
+            if (!NtQueryObject)
                 return false;
+#endif
 
-            LONG _Status = _pfnNtQueryObject(_hLeft, ObjectNameInformation, &_LeftBuffer, sizeof(_LeftBuffer), nullptr);
+            LONG _Status = NtQueryObject(_hLeft, ObjectNameInformation, &_LeftBuffer, sizeof(_LeftBuffer), nullptr);
             if (_Status < 0)
                 return false;
 
-            _Status = _pfnNtQueryObject(_hRigth, ObjectNameInformation, &_RightBuffer, sizeof(_RightBuffer), nullptr);
+            _Status = NtQueryObject(_hRigth, ObjectNameInformation, &_RightBuffer, sizeof(_RightBuffer), nullptr);
             if (_Status < 0)
                 return false;
 
@@ -465,12 +469,14 @@ namespace YY::Thunks
                 return TRUE;
             }
 
-            const auto _pfnNtQueryObject = try_get_NtQueryObject();
-            if (!_pfnNtQueryObject)
+#if !defined(__USING_NTDLL_LIB)
+            const auto NtQueryObject = try_get_NtQueryObject();
+            if (!NtQueryObject)
                 return FALSE;
+#endif
 
             // 用来检测句柄是否合法
-            LONG _Status = _pfnNtQueryObject(_hFirstObjectHandle, ObjectBasicInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer.BaseInfo), nullptr);
+            LONG _Status = NtQueryObject(_hFirstObjectHandle, ObjectBasicInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer.BaseInfo), nullptr);
             if (_Status < 0)
             {
                 return FALSE;
@@ -478,12 +484,13 @@ namespace YY::Thunks
             return TRUE;
         }
 
-        const auto _pfnNtQueryObject = try_get_NtQueryObject();
-        if (!_pfnNtQueryObject)
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtQueryObject = try_get_NtQueryObject();
+        if (!NtQueryObject)
             return FALSE;
+#endif
 
-
-        LONG _Status = _pfnNtQueryObject(_hFirstObjectHandle, ObjectBasicInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer.BaseInfo), nullptr);
+        LONG _Status = NtQueryObject(_hFirstObjectHandle, ObjectBasicInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer.BaseInfo), nullptr);
 
         // 实际测试，ObjectBasicInformation 只出现无效句柄错误
         if (_Status < 0)
@@ -497,7 +504,7 @@ namespace YY::Thunks
             return FALSE;
         }
 
-        _Status = _pfnNtQueryObject(_hSecondObjectHandle, ObjectBasicInformation, &_SecondObjectBuffer, sizeof(_SecondObjectBuffer.BaseInfo), nullptr);
+        _Status = NtQueryObject(_hSecondObjectHandle, ObjectBasicInformation, &_SecondObjectBuffer, sizeof(_SecondObjectBuffer.BaseInfo), nullptr);
         if (_Status < 0)
         {
             return FALSE;
@@ -515,12 +522,12 @@ namespace YY::Thunks
             return FALSE;
         }
 
-        _Status = _pfnNtQueryObject(_hFirstObjectHandle, ObjectTypeInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer), nullptr);
+        _Status = NtQueryObject(_hFirstObjectHandle, ObjectTypeInformation, &_FirstObjectBuffer, sizeof(_FirstObjectBuffer), nullptr);
         if (_Status < 0)
         {
             return FALSE;
         }
-        _Status = _pfnNtQueryObject(_hSecondObjectHandle, ObjectTypeInformation, &_SecondObjectBuffer, sizeof(_SecondObjectBuffer), nullptr);
+        _Status = NtQueryObject(_hSecondObjectHandle, ObjectTypeInformation, &_SecondObjectBuffer, sizeof(_SecondObjectBuffer), nullptr);
         if (_Status < 0)
         {
             return FALSE;

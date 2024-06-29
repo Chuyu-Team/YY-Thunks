@@ -2,6 +2,7 @@
 #include "Thunks/api-ms-win-core-handle.hpp"
 
 #pragma comment(lib, "KtmW32.lib")
+#pragma comment(lib, "ntdll.lib")
 
 namespace api_ms_win_core_handle
 {
@@ -99,16 +100,14 @@ namespace api_ms_win_core_handle
 
             {
                 constexpr const wchar_t Name[] = L"\\KernelObjects\\CritSecOutOfMemoryEvent";
-                auto pNtOpenKeyedEvent = (decltype(NtOpenKeyedEvent)*) GetProcAddress(GetModuleHandleW(L"ntdll"), "NtOpenKeyedEvent");
-
                 UNICODE_STRING ObjectName = { sizeof(Name) - sizeof(wchar_t),sizeof(Name) - sizeof(wchar_t) ,(PWSTR)Name };
                 OBJECT_ATTRIBUTES attr = { sizeof(attr),nullptr,&ObjectName };
 
                 HANDLE _hHandle1;
-                pNtOpenKeyedEvent(&_hHandle1, MAXIMUM_ALLOWED, &attr);
+                NtOpenKeyedEvent(&_hHandle1, MAXIMUM_ALLOWED, &attr);
 
                 HANDLE _hHandle2;
-                pNtOpenKeyedEvent(&_hHandle2, MAXIMUM_ALLOWED, &attr);
+                NtOpenKeyedEvent(&_hHandle2, MAXIMUM_ALLOWED, &attr);
 
                 Assert::IsTrue(::CompareObjectHandles(_hHandle1, _hHandle2));
 

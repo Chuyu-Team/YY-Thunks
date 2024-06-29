@@ -110,14 +110,16 @@ namespace YY::Thunks
 
         if (bNtQueryDirectoryFile)
         {
-            auto pNtQueryDirectoryFile = try_get_NtQueryDirectoryFile();
-            if (!pNtQueryDirectoryFile)
+#if !defined(__USING_NTDLL_LIB)
+            const auto NtQueryDirectoryFile = try_get_NtQueryDirectoryFile();
+            if (!NtQueryDirectoryFile)
             {
                 SetLastError(ERROR_INVALID_FUNCTION);
                 return FALSE;
             }
+#endif
 
-            Status = pNtQueryDirectoryFile(
+            Status = NtQueryDirectoryFile(
                 hFile,
                 nullptr,
                 nullptr,
@@ -144,15 +146,16 @@ namespace YY::Thunks
         }
         else
         {
-            auto pNtQueryInformationFile = try_get_NtQueryInformationFile();
-
-            if (!pNtQueryInformationFile)
+#if !defined(__USING_NTDLL_LIB)
+            const auto NtQueryInformationFile = try_get_NtQueryInformationFile();
+            if (!NtQueryInformationFile)
             {
                 SetLastError(ERROR_INVALID_FUNCTION);
                 return FALSE;
             }
+#endif
 
-            Status = pNtQueryInformationFile(hFile, &IoStatusBlock, lpFileInformation, dwBufferSize, NtFileInformationClass);
+            Status = NtQueryInformationFile(hFile, &IoStatusBlock, lpFileInformation, dwBufferSize, NtFileInformationClass);
         }
 
         if (Status >= STATUS_SUCCESS)
@@ -170,7 +173,6 @@ namespace YY::Thunks
         else
         {
             internal::BaseSetLastNTError(Status);
-
             return FALSE;
         }
     }
@@ -197,13 +199,14 @@ namespace YY::Thunks
             return pSetFileInformationByHandle(hFile, FileInformationClass, lpFileInformation, dwBufferSize);
         }
 
-
-        auto pNtSetInformationFile = try_get_NtSetInformationFile();
-        if (!pNtSetInformationFile)
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtSetInformationFile = try_get_NtSetInformationFile();
+        if (!NtSetInformationFile)
         {
             SetLastError(ERROR_INVALID_FUNCTION);
             return FALSE;
         }
+#endif
 
         const auto ProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
         FILE_INFORMATION_CLASS NtFileInformationClass;
@@ -237,19 +240,21 @@ namespace YY::Thunks
 
                 if (pRenameInfo->FileNameLength < sizeof(wchar_t) || pRenameInfo->FileName[0] != L':')
                 {
-                    auto pRtlDosPathNameToNtPathName_U = try_get_RtlDosPathNameToNtPathName_U();
-                    auto pRtlFreeUnicodeString = try_get_RtlFreeUnicodeString();
+#if !defined(__USING_NTDLL_LIB)
+                    const auto RtlDosPathNameToNtPathName_U = try_get_RtlDosPathNameToNtPathName_U();
+                    const auto RtlFreeUnicodeString = try_get_RtlFreeUnicodeString();
 
-                    if (pRtlDosPathNameToNtPathName_U == nullptr || pRtlFreeUnicodeString ==nullptr)
+                    if (RtlDosPathNameToNtPathName_U == nullptr || RtlFreeUnicodeString == nullptr)
                     {
                         SetLastError(ERROR_INVALID_FUNCTION);
                         return FALSE;
                     }
+#endif
 
                     UNICODE_STRING NtName = {};
 
 
-                    if (!pRtlDosPathNameToNtPathName_U(pRenameInfo->FileName, &NtName, nullptr, nullptr))
+                    if (!RtlDosPathNameToNtPathName_U(pRenameInfo->FileName, &NtName, nullptr, nullptr))
                     {
                         SetLastError(ERROR_INVALID_PARAMETER);
 
@@ -263,7 +268,7 @@ namespace YY::Thunks
                     {
                         auto lStatus = GetLastError();
 
-                        pRtlFreeUnicodeString(&NtName);
+                        RtlFreeUnicodeString(&NtName);
 
                         SetLastError(lStatus);
                         return FALSE;
@@ -283,7 +288,7 @@ namespace YY::Thunks
                     lpFileInformation = NewRenameInfo;
                     dwBufferSize = dwNewBufferSize;
 
-                    pRtlFreeUnicodeString(&NtName);
+                    RtlFreeUnicodeString(&NtName);
                 }
             }
             break;
@@ -336,7 +341,7 @@ namespace YY::Thunks
 
         IO_STATUS_BLOCK IoStatusBlock;
 
-        auto Status = pNtSetInformationFile(hFile, &IoStatusBlock, lpFileInformation, dwBufferSize, NtFileInformationClass);
+        LONG Status = NtSetInformationFile(hFile, &IoStatusBlock, lpFileInformation, dwBufferSize, NtFileInformationClass);
 
         if (bFreeFileInformation)
         {
@@ -345,11 +350,8 @@ namespace YY::Thunks
 
         if (Status >= STATUS_SUCCESS)
             return TRUE;
-
-
     
         internal::BaseSetLastNTError(Status);
-
         return FALSE;
     }
 #endif
@@ -399,16 +401,17 @@ namespace YY::Thunks
             break;
         }
 
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtQueryObject = try_get_NtQueryObject();
+        const auto NtQueryInformationFile = try_get_NtQueryInformationFile();
 
-        auto pNtQueryObject = try_get_NtQueryObject();
-        auto pNtQueryInformationFile = try_get_NtQueryInformationFile();
-
-        if (nullptr == pNtQueryObject
-            || nullptr == pNtQueryInformationFile)
+        if (nullptr == NtQueryObject
+            || nullptr == NtQueryInformationFile)
         {
             SetLastError(ERROR_INVALID_FUNCTION);
             return 0;
         }
+#endif
 
         UNICODE_STRING VolumeNtName = {};
 
@@ -458,7 +461,7 @@ namespace YY::Thunks
                 }
             }
 
-            auto Status = pNtQueryObject(hFile, ObjectNameInformation, pObjectName, cbObjectName, &cbObjectName);
+            LONG Status = NtQueryObject(hFile, ObjectNameInformation, pObjectName, cbObjectName, &cbObjectName);
 
             if (STATUS_BUFFER_OVERFLOW == Status)
             {
@@ -503,7 +506,7 @@ namespace YY::Thunks
 
             IO_STATUS_BLOCK IoStatusBlock;
 
-            auto Status = pNtQueryInformationFile(hFile, &IoStatusBlock, pFileNameInfo, cbFileNameInfo, FileNameInformation);
+            LONG Status = NtQueryInformationFile(hFile, &IoStatusBlock, pFileNameInfo, cbFileNameInfo, FileNameInformation);
 
             if (STATUS_BUFFER_OVERFLOW == Status)
             {
@@ -906,12 +909,14 @@ namespace YY::Thunks
             return INVALID_HANDLE_VALUE;
         }
 
-        const auto pNtCreateFile = try_get_NtCreateFile();
-        if (!pNtCreateFile)
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtCreateFile = try_get_NtCreateFile();
+        if (!NtCreateFile)
         {
             SetLastError(ERROR_FUNCTION_FAILED);
             return INVALID_HANDLE_VALUE;
         }
+#endif
 
         dwDesiredAccess |= SYNCHRONIZE | FILE_READ_ATTRIBUTES;
 
@@ -982,7 +987,7 @@ namespace YY::Thunks
 
         IO_STATUS_BLOCK IoStatusBlock;
 
-        auto Status = pNtCreateFile(&hFile, dwDesiredAccess, &ObjectAttributes, &IoStatusBlock, nullptr, 0, dwShareMode, FILE_OPEN, CreateOptions, nullptr, 0);
+        auto Status = NtCreateFile(&hFile, dwDesiredAccess, &ObjectAttributes, &IoStatusBlock, nullptr, 0, dwShareMode, FILE_OPEN, CreateOptions, nullptr, 0);
 
         if (Status < 0)
         {
@@ -1074,13 +1079,14 @@ namespace YY::Thunks
 
         do
         {
-            const auto pNtCreateFile = try_get_NtCreateFile();
-            if (!pNtCreateFile)
+#if !defined(__USING_NTDLL_LIB)
+            const auto NtCreateFile = try_get_NtCreateFile();
+            if (!NtCreateFile)
             {
                 Status = STATUS_INVALID_INFO_CLASS;
                 break;
             }
-
+#endif
 
             if ((size_t(hOriginalFile) & 0x10000003) == 3)
             {
@@ -1194,7 +1200,7 @@ namespace YY::Thunks
 
             HANDLE hFile;
 
-            Status = pNtCreateFile(
+            Status = NtCreateFile(
                 &hFile,
                 dwDesiredAccess,
                 &ObjectAttributes,

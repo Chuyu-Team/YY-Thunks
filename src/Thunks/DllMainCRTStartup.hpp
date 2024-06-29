@@ -115,9 +115,11 @@ namespace YY::Thunks::internal
 
     static SYSTEM_PROCESS_INFORMATION* __fastcall GetCurrentProcessInfo(StringBuffer<char>& _szBuffer)
     {
-        const auto _pfnNtQuerySystemInformation = try_get_NtQuerySystemInformation();
-        if (!_pfnNtQuerySystemInformation)
+#if !defined(__USING_NTDLL_LIB)
+        const auto NtQuerySystemInformation = try_get_NtQuerySystemInformation();
+        if (!NtQuerySystemInformation)
             return nullptr;
+#endif
 
         auto _cbBuffer = max(4096, _szBuffer.uBufferLength);
         ULONG _cbRet = 0;
@@ -127,7 +129,7 @@ namespace YY::Thunks::internal
             if (!_pBuffer)
                 return nullptr;
 
-            LONG _Status = _pfnNtQuerySystemInformation(SystemProcessInformation, _pBuffer, _cbBuffer, &_cbRet);
+            LONG _Status = NtQuerySystemInformation(SystemProcessInformation, _pBuffer, _cbBuffer, &_cbRet);
             if (_Status >= 0)
                 break;
 
@@ -283,9 +285,11 @@ namespace YY::Thunks::internal
         // 同时给所有历史的线程追加新DLL产生的Tls内存
         do
         {
-            const auto _pfnNtQueryInformationThread = try_get_NtQueryInformationThread();
-            if (!_pfnNtQueryInformationThread)
+#if !defined(__USING_NTDLL_LIB)
+            const auto NtQueryInformationThread = try_get_NtQueryInformationThread();
+            if (!NtQueryInformationThread)
                 break;
+#endif
 
             StringBuffer<char> _Buffer;
             auto _pProcessInfo = GetCurrentProcessInfo(_Buffer);
@@ -310,7 +314,7 @@ namespace YY::Thunks::internal
                 }
 
                 THREAD_BASIC_INFORMATION _ThreadBasicInfo = {};
-                LONG _Status = _pfnNtQueryInformationThread(_hThread, ThreadBasicInformation, &_ThreadBasicInfo, sizeof(_ThreadBasicInfo), nullptr);
+                LONG _Status = NtQueryInformationThread(_hThread, ThreadBasicInformation, &_ThreadBasicInfo, sizeof(_ThreadBasicInfo), nullptr);
                 if (_Status >= 0 && _ThreadBasicInfo.TebBaseAddress)
                 {
                     AllocTlsData((TEB*)_ThreadBasicInfo.TebBaseAddress);

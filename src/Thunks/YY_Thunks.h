@@ -578,9 +578,11 @@ static void __cdecl __YY_uninitialize_winapi_thunks()
         if (__YY_Thunks_Process_Terminating)
             return;
     }
-    if (auto pRtlDllShutdownInProgress = (decltype(RtlDllShutdownInProgress)*)GetProcAddress(try_get_module_ntdll(), "RtlDllShutdownInProgress"))
+#if (YY_Thunks_Target < __WindowsNT5_1) || !defined(__USING_NTDLL_LIB)
+    if (const auto RtlDllShutdownInProgress = (decltype(::RtlDllShutdownInProgress)*)GetProcAddress(try_get_module_ntdll(), "RtlDllShutdownInProgress"))
+#endif
     {
-        if(pRtlDllShutdownInProgress())
+        if (RtlDllShutdownInProgress())
             return;
     }
 

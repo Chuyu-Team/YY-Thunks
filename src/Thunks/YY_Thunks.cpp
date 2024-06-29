@@ -403,16 +403,16 @@ namespace YY::Thunks::internal
                 */
                 return ERROR_TIMEOUT;
             }
-            else if (auto pRtlNtStatusToDosError = try_get_RtlNtStatusToDosError())
-            {
-                return pRtlNtStatusToDosError(Status);
-            }
-            else
+            
+#if !defined(__USING_NTDLL_LIB)
+            const auto RtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
+            if (!RtlNtStatusToDosError)
             {
                 //如果没有RtlNtStatusToDosError就直接设置Status代码吧，反正至少比没有错误代码强
                 return Status;
             }
-
+#endif
+            return RtlNtStatusToDosError(Status);
         }
 
         static DWORD __fastcall BaseSetLastNTError(

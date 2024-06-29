@@ -110,15 +110,17 @@ namespace YY::Thunks
                 return FALSE;
             }
 
-            const auto _pfnNtQueryInformationThread = try_get_NtQueryInformationThread();
-            if (!_pfnNtQueryInformationThread)
+#if !defined(__USING_NTDLL_LIB)
+            const auto NtQueryInformationThread = try_get_NtQueryInformationThread();
+            if (!NtQueryInformationThread)
             {
                 SetLastError(ERROR_INVALID_FUNCTION);
                 return FALSE;
             }
+#endif
 
             THREAD_BASIC_INFORMATION _ThreadBasicInfo;
-            long _Status = _pfnNtQueryInformationThread(_hThread, ThreadBasicInformation, &_ThreadBasicInfo, sizeof(_ThreadBasicInfo), nullptr);
+            long _Status = NtQueryInformationThread(_hThread, ThreadBasicInformation, &_ThreadBasicInfo, sizeof(_ThreadBasicInfo), nullptr);
 
             if (_Status < 0)
             {

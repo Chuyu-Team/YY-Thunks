@@ -159,13 +159,14 @@ namespace YY::Thunks
         }
 
         // 下面实现来自XP系统。
-
+#if !defined(__USING_NTDLL_LIB)
         // Win2K存在此函数
-        const auto _pfnRtlCutoverTimeToSystemTime = try_get_RtlCutoverTimeToSystemTime();
-        if (!_pfnRtlCutoverTimeToSystemTime)
+        const auto RtlCutoverTimeToSystemTime = try_get_RtlCutoverTimeToSystemTime();
+        if (!RtlCutoverTimeToSystemTime)
         {
             internal::RaiseStatus(STATUS_NOT_FOUND);
         }
+#endif
 
         // Get the timezone information into a useful format
         TIME_ZONE_INFORMATION _TmpTimeZoneInformation;
@@ -207,7 +208,7 @@ namespace YY::Thunks
             // We have timezone cutover information. Compute the
             // cutover dates and compute what our current bias
             // is
-            if (!_pfnRtlCutoverTimeToSystemTime(&_StandardStart, &_StandardTime, &_CurrentLocalTime, TRUE))
+            if (!RtlCutoverTimeToSystemTime(&_StandardStart, &_StandardTime, &_CurrentLocalTime, TRUE))
             {
                 SetLastError(ERROR_INVALID_PARAMETER);
                 return FALSE;
@@ -224,7 +225,7 @@ namespace YY::Thunks
             _DaylightStart.Second = _pTimeZoneInformation->DaylightDate.wSecond;
             _DaylightStart.Milliseconds = _pTimeZoneInformation->DaylightDate.wMilliseconds;
 
-            if (!_pfnRtlCutoverTimeToSystemTime(&_DaylightStart, &_DaylightTime, &_CurrentLocalTime, TRUE))
+            if (!RtlCutoverTimeToSystemTime(&_DaylightStart, &_DaylightTime, &_CurrentLocalTime, TRUE))
             {
                 SetLastError(ERROR_INVALID_PARAMETER);
                 return FALSE;

@@ -50,7 +50,7 @@ namespace YY::Thunks
             return MEM_E_INVALID_SIZE;
         }
 
-        auto _pStringInternal = reinterpret_cast<internal::PSTRING_OPAQUE>(internal::Alloc(_cbRequiredSize, HEAP_ZERO_MEMORY));
+        auto _pStringInternal = reinterpret_cast<internal::PSTRING_OPAQUE>(internal::Alloc((size_t)_cbRequiredSize, HEAP_ZERO_MEMORY));
         if (!_pStringInternal)
         {
             return E_OUTOFMEMORY;
