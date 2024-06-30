@@ -126,4 +126,36 @@ namespace User32
             }
         }
     };
+
+    TEST_CLASS(GetSystemMetricsForDpi)
+    {
+    public:
+        GetSystemMetricsForDpi()
+        {
+        }
+
+        TEST_METHOD(常规测试)
+        {
+            for (int _uIndex = 0; _uIndex != 100; ++_uIndex)
+            {
+                if (SM_CXMIN == _uIndex || SM_CYMIN == _uIndex
+                    || SM_CXMINTRACK == _uIndex || SM_CYMINTRACK == _uIndex
+                    || SM_CXMENUCHECK == _uIndex || SM_CYMENUCHECK == _uIndex)
+                {
+                    // 暂时无法做到完全一致
+                    continue;
+                }
+
+                const auto _nTarget = ::GetSystemMetricsForDpi(_uIndex, USER_DEFAULT_SCREEN_DPI * 2);
+                YY::Thunks::aways_null_try_get_GetSystemMetricsForDpi = true;
+                const auto _nCurrent = ::GetSystemMetricsForDpi(_uIndex, USER_DEFAULT_SCREEN_DPI * 2);
+                YY::Thunks::aways_null_try_get_GetSystemMetricsForDpi = false;
+
+                CStringW _szMessage;
+                _szMessage.Format(L"nIndex = %d", _uIndex);
+
+                Assert::AreEqual(_nTarget, _nCurrent, _szMessage.GetString());
+            }
+        }
+    };
 }

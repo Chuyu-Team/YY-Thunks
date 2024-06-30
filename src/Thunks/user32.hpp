@@ -258,70 +258,102 @@ namespace YY::Thunks
     int,
     WINAPI,
     GetSystemMetricsForDpi,
-        _In_ int nIndex,
-        _In_ UINT dpi
+        _In_ int _nIndex,
+        _In_ UINT _uDpi
         )
     {
-        if (auto const pGetSystemMetricsForDpi = try_get_GetSystemMetricsForDpi())
+        if (auto const _pfnGetSystemMetricsForDpi = try_get_GetSystemMetricsForDpi())
         {
-            return pGetSystemMetricsForDpi(nIndex, dpi);
+            return _pfnGetSystemMetricsForDpi(_nIndex, _uDpi);
         }
-    
-        auto nValue = GetSystemMetrics(nIndex);
 
-        if (nValue != 0)
+        if (_uDpi == 0ul)
         {
-            switch (nIndex)
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return 0;
+        }
+
+        auto _nValue = GetSystemMetrics(_nIndex);
+        if (_nValue != 0)
+        {
+            switch (_nIndex)
             {
-            case SM_CYSIZE:
             case SM_CXVSCROLL:
-            case SM_CYSMICON:
-            case SM_CYVSCROLL:
-            case SM_CXPADDEDBORDER:
-            case SM_CXSMICON:
-            case SM_CYSMSIZE:
-            case SM_CYICON:
             case SM_CYHSCROLL:
-            case SM_CYMENUCHECK:
-            case SM_CYCAPTION:
-            case SM_CXHSCROLL:
-            case SM_CXFRAME:
-            case SM_CYMENUSIZE:
-            case SM_CYFRAME:
-            case SM_CYMENU:
-            case SM_CXICON:
-            case SM_CXICONSPACING:
-            case SM_CYICONSPACING:
-            case SM_CYVTHUMB:
+            case SM_CYCAPTION: // 4
+
+            case SM_CYVTHUMB: // 9
             case SM_CXHTHUMB:
+            case SM_CXICON:
+            case SM_CYICON:
             case SM_CXCURSOR:
             case SM_CYCURSOR:
-            case SM_CXMIN:
-            case SM_CXMINTRACK:
+            case SM_CYMENU: // 15
+
+            case SM_CYVSCROLL: // 20
+            case SM_CXHSCROLL:
+
+            case SM_CXMIN: // 28
             case SM_CYMIN:
-            case SM_CYMINTRACK:
             case SM_CXSIZE:
+            case SM_CYSIZE:
+            case SM_CXMINTRACK:
+            case SM_CYMINTRACK: //35
+
+            case SM_CXICONSPACING: //38
+            case SM_CYICONSPACING: // 39
+
+            case SM_CXSMICON: // 49
+            case SM_CYSMICON:
             case SM_CYSMCAPTION:
             case SM_CXSMSIZE:
+            case SM_CYSMSIZE:
             case SM_CXMENUSIZE:
-            case SM_CXMENUCHECK:
+            case SM_CYMENUSIZE: // 55
+
+            case SM_CXMENUCHECK: // 71
+            case SM_CYMENUCHECK: // 72
+
+            case SM_CXPADDEDBORDER: // 92
             {
-                auto nDpiX = internal::GetDpiForSystemDownlevel();
-                if (nDpiX != dpi)
+                const auto _uBaseDpi = internal::GetDpiForSystemDownlevel();
+                if (_uBaseDpi != _uDpi)
                 {
-                    nValue *= dpi;
-                    nValue += nDpiX / 2;
-                    nValue /= nDpiX;
+                    int _nDelta = 0;
+                    switch (_nIndex)
+                    {
+                    case SM_CYCAPTION: // 4
+                    case SM_CYMENU: // 15
+                    case SM_CYSMCAPTION: // 51
+                        _nDelta = GetSystemMetrics(SM_CYBORDER);
+                        break;
+                    default:
+                        __WarningMessage__("SM_CXMIN、SM_CYMIN、SM_CXMINTRACK、SM_CYMINTRACK、SM_CXMENUCHECK、SM_CYMENUCHECK 存在一定偏差。");
+                        break;
+                    }
+                    _nValue = MulDiv(_nValue - _nDelta, _uDpi, _uBaseDpi) + _nDelta;
                 }
 
                 break;
             }
-            default:
+            case SM_CXFRAME:
+            {
+                const auto _nBorreder = GetSystemMetrics(SM_CXBORDER);
+                _nValue -= 2 * _nBorreder;
+                _nValue = MulDiv(_nValue, _uDpi, USER_DEFAULT_SCREEN_DPI) + _nBorreder;
                 break;
+            }
+            case SM_CYFRAME:
+            {
+                const auto _nBorreder = GetSystemMetrics(SM_CYBORDER);
+                _nValue -= 2 * _nBorreder;
+                _nValue = MulDiv(_nValue, _uDpi, USER_DEFAULT_SCREEN_DPI) + _nBorreder;
+                break;
+            }
             }
         }
 
-        return nValue;
+        return _nValue;
     }
 #endif
 
