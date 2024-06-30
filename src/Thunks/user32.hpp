@@ -714,4 +714,102 @@ namespace YY::Thunks
             const_cast<BLENDFUNCTION*>(pULWInfo->pblend), pULWInfo->dwFlags);
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端	Windows 2000 Professional [仅限桌面应用]
+    // 最低受支持的服务器	Windows 2000 Server[仅限桌面应用]
+    // 虽然 2000就支持，但是 SPI_GETNONCLIENTMETRICS 需要特殊处理。
+    __DEFINE_THUNK(
+    user32,
+    16,
+    BOOL,
+    WINAPI,
+    SystemParametersInfoW,
+        _In_ UINT _uAction,
+        _In_ UINT _uParam,
+        _Pre_maybenull_ _Post_valid_ PVOID _pParam,
+        _In_ UINT _fWinIni
+        )
+    {
+        const auto _pfnSystemParametersInfoW = try_get_SystemParametersInfoW();
+        if (!_pfnSystemParametersInfoW)
+        {
+            SetLastError(ERROR_FUNCTION_FAILED);
+            return FALSE;
+        } 
+
+        if (_pParam && internal::GetSystemVersion() < internal::MakeVersion(6, 0))
+        {
+            if (SPI_GETNONCLIENTMETRICS == _uAction)
+            {
+                // https://learn.microsoft.com/zh-cn/windows/win32/api/winuser/ns-winuser-nonclientmetricsw#remarks
+                // Windows XP等系统必须减去iPaddedBorderWidth大小。
+                auto _pInfo = (NONCLIENTMETRICSW*)_pParam;
+                if (_pInfo->cbSize == sizeof(NONCLIENTMETRICSW))
+                {
+                    _pInfo->cbSize = RTL_SIZEOF_THROUGH_FIELD(NONCLIENTMETRICSW, lfMessageFont);
+                    // XP不支持iPaddedBorderWidth，暂时设置为 0，如果有更佳值可以PR。
+                    _pInfo->iPaddedBorderWidth = 0;
+                    auto _bRet = _pfnSystemParametersInfoW(_uAction, RTL_SIZEOF_THROUGH_FIELD(NONCLIENTMETRICSW, lfMessageFont), _pParam, _fWinIni);
+                    // 重新恢复其大小
+                    _pInfo->cbSize = sizeof(NONCLIENTMETRICSW);
+                    return _bRet;
+                }
+            }
+        }
+        
+        return _pfnSystemParametersInfoW(_uAction, _uParam, _pParam, _fWinIni);
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端	Windows 2000 Professional [仅限桌面应用]
+    // 最低受支持的服务器	Windows 2000 Server[仅限桌面应用]
+    // 虽然 2000就支持，但是 SPI_GETNONCLIENTMETRICS 需要特殊处理。
+    __DEFINE_THUNK(
+    user32,
+    16,
+    BOOL,
+    WINAPI,
+    SystemParametersInfoA,
+        _In_ UINT _uAction,
+        _In_ UINT _uParam,
+        _Pre_maybenull_ _Post_valid_ PVOID _pParam,
+        _In_ UINT _fWinIni
+        )
+    {
+        const auto _pfnSystemParametersInfoA = try_get_SystemParametersInfoA();
+        if (!_pfnSystemParametersInfoA)
+        {
+            SetLastError(ERROR_FUNCTION_FAILED);
+            return FALSE;
+        } 
+
+#if (YY_Thunks_Target < __WindowsNT6)
+        if (_pParam && internal::GetSystemVersion() < internal::MakeVersion(6, 0))
+        {
+            if (SPI_GETNONCLIENTMETRICS == _uAction)
+            {
+                // https://learn.microsoft.com/zh-cn/windows/win32/api/winuser/ns-winuser-nonclientmetricsw#remarks
+                // Windows XP等系统必须减去iPaddedBorderWidth大小。
+                auto _pInfo = (NONCLIENTMETRICSA*)_pParam;
+                if (_pInfo->cbSize == sizeof(NONCLIENTMETRICSA))
+                {
+                    _pInfo->cbSize = RTL_SIZEOF_THROUGH_FIELD(NONCLIENTMETRICSA, lfMessageFont);
+                    _pInfo->iPaddedBorderWidth = 0;
+                    auto _bRet = _pfnSystemParametersInfoA(_uAction, RTL_SIZEOF_THROUGH_FIELD(NONCLIENTMETRICSA, lfMessageFont), _pParam, _fWinIni);
+                    // 重新恢复其大小
+                    _pInfo->cbSize = sizeof(NONCLIENTMETRICSA);
+                    return _bRet;
+                }
+            }
+        }
+#endif        
+        return _pfnSystemParametersInfoA(_uAction, _uParam, _pParam, _fWinIni);
+    }
+#endif
 } //namespace YY::Thunks

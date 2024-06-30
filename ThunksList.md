@@ -696,6 +696,7 @@
 | GetDpiForWindow                            | 不存在时，调用GetDpiForMonitor。
 | GetSystemMetricsForDpi                     | 不存在时，调用GetSystemMetrics。
 | AdjustWindowRectExForDpi                   | 不存在时，调用AdjustWindowRectEx。
+| SystemParametersInfoW(A)                   | SPI_GETNONCLIENTMETRICS修正。
 | SystemParametersInfoForDpi                 | 不存在时，调用SystemParametersInfoW。
 | RegisterSuspendResumeNotification          | 不存在时，使用窗口模拟。
 | UnregisterSuspendResumeNotification        | 不存在时，内部实现。
