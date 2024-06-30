@@ -170,7 +170,7 @@
 ## bcrypt.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
-| BCryptOpenAlgorithmProvider                | 调用CryptAcquireContextW。目前支持的算法有：RC2、RC4、AES、DES、3DES、3DES-112、MD2、MD4、MD5、SHA1、SHA256、SHA384、SHA512、RNG、FIPS186DSARNG、DUALECRNG。
+| BCryptOpenAlgorithmProvider                | 调用CryptAcquireContextW。目前支持的算法有：RSA、RSA_SING、RC2、RC4、AES、DES、3DES、3DES-112、MD2、MD4、MD5、SHA1、SHA256、SHA384、SHA512、RNG、FIPS186DSARNG、DUALECRNG。
 | BCryptCloseAlgorithmProvider               | 调用CryptReleaseContext。
 | BCryptGenRandom                            | 调用RtlGenRandom。
 | BCryptGetProperty                          | 调用CryptGetKeyParam。
@@ -187,6 +187,11 @@
 | BCryptDestroyKey                           | 调用CryptDestroyKey。
 | BCryptExportKey                            | 调用CryptExportKey。
 | BCryptImportKey                            | 调用CryptImportKey。
+| BCryptGenerateKeyPair                      | 调用CryptGenKey。
+| BCryptFinalizeKeyPair                      | 内部实现（兼容旧系统行为）。
+| BCryptImportKeyPair                        | 调用CryptImportKey。
+| BCryptSignHash                             | 调用CryptSignHashW（注意：只兼容BCRYPT_PAD_PKCS1）。
+| BCryptVerifySignature                      | 调用CryptVerifySignatureW（注意：只兼容BCRYPT_PAD_PKCS1）。
 
 ## bcryptprimitives.dll
 | 函数                                       | Fallback

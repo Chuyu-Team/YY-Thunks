@@ -35,46 +35,46 @@ CStringW GetStringHex(const BYTE* _pData, DWORD _cbData)
 
 namespace bcrypt
 {
-	TEST_CLASS(BCryptGenRandom)
-	{
+    TEST_CLASS(BCryptGenRandom)
+    {
         AwaysNullGuard Guard;
 
-	public:
-		BCryptGenRandom()
-		{
+    public:
+        BCryptGenRandom()
+        {
             Guard |= YY::Thunks::aways_null_try_get_BCryptOpenAlgorithmProvider;
             Guard |= YY::Thunks::aways_null_try_get_BCryptCloseAlgorithmProvider;
             Guard |= YY::Thunks::aways_null_try_get_BCryptGenRandom;
-		}
+        }
 
-		TEST_METHOD(BCRYPT_USE_SYSTEM_PREFERRED_RNG模式)
-		{
-			UCHAR _Temp[15] = {};
-			long _Status = ::BCryptGenRandom(nullptr, _Temp, sizeof(_Temp), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
-			Assert::IsTrue(_Status >= 0);
-			
-			const UCHAR _Temp2[15] = {};
-			Assert::IsFalse(memcpy(_Temp, _Temp2, sizeof(_Temp2)) == 0);
-		}
+        TEST_METHOD(BCRYPT_USE_SYSTEM_PREFERRED_RNG模式)
+        {
+            UCHAR _Temp[15] = {};
+            long _Status = ::BCryptGenRandom(nullptr, _Temp, sizeof(_Temp), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+            Assert::IsTrue(_Status >= 0);
+            
+            const UCHAR _Temp2[15] = {};
+            Assert::IsFalse(memcpy(_Temp, _Temp2, sizeof(_Temp2)) == 0);
+        }
 
-		TEST_METHOD(BCryptOpen在关闭)
-		{
-			BCRYPT_ALG_HANDLE _hAlg = nullptr;
-			auto _Status = ::BCryptOpenAlgorithmProvider(&_hAlg, BCRYPT_RNG_ALGORITHM, nullptr, 0);
-			Assert::IsTrue(_Status >= 0);
-			Assert::IsNotNull(_hAlg);
+        TEST_METHOD(BCryptOpen在关闭)
+        {
+            BCRYPT_ALG_HANDLE _hAlg = nullptr;
+            auto _Status = ::BCryptOpenAlgorithmProvider(&_hAlg, BCRYPT_RNG_ALGORITHM, nullptr, 0);
+            Assert::IsTrue(_Status >= 0);
+            Assert::IsNotNull(_hAlg);
 
-			UCHAR _Temp[15] = {};
-			_Status = ::BCryptGenRandom(_hAlg, _Temp, sizeof(_Temp), 0);
-			Assert::IsTrue(_Status >= 0);
+            UCHAR _Temp[15] = {};
+            _Status = ::BCryptGenRandom(_hAlg, _Temp, sizeof(_Temp), 0);
+            Assert::IsTrue(_Status >= 0);
 
-			const UCHAR _Temp2[15] = {};
-			Assert::IsFalse(memcpy(_Temp, _Temp2, sizeof(_Temp2)) == 0);
+            const UCHAR _Temp2[15] = {};
+            Assert::IsFalse(memcpy(_Temp, _Temp2, sizeof(_Temp2)) == 0);
 
-			_Status = ::BCryptCloseAlgorithmProvider(_hAlg, 0);
-			Assert::IsTrue(_Status >= 0);
-		}
-	};
+            _Status = ::BCryptCloseAlgorithmProvider(_hAlg, 0);
+            Assert::IsTrue(_Status >= 0);
+        }
+    };
 
     TEST_CLASS(BCryptHash)
     {
@@ -576,7 +576,10 @@ namespace bcrypt
             Guard |= YY::Thunks::aways_null_try_get_BCryptOpenAlgorithmProvider;
             Guard |= YY::Thunks::aways_null_try_get_BCryptCloseAlgorithmProvider;
             Guard |= YY::Thunks::aways_null_try_get_BCryptEncrypt;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptDecrypt;
             Guard |= YY::Thunks::aways_null_try_get_BCryptGenerateSymmetricKey;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptGenerateKeyPair;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptFinalizeKeyPair;
             Guard |= YY::Thunks::aways_null_try_get_BCryptDestroyKey;
             Guard |= YY::Thunks::aways_null_try_get_BCryptSetProperty;
             Guard |= YY::Thunks::aways_null_try_get_BCryptGetProperty;
@@ -1070,6 +1073,94 @@ namespace bcrypt
             _Status = ::BCryptCloseAlgorithmProvider(hAlgorithm, 0);
             Assert::IsTrue(_Status >= 0);
         }
+
+        TEST_METHOD(RSA加密测试)
+        {
+            static constexpr const BYTE kPlainText[] =
+            {
+                0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+            };
+
+            BCRYPT_ALG_HANDLE hAlgorithm = NULL;
+            auto _Status = ::BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RSA_ALGORITHM, nullptr, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            BCRYPT_KEY_HANDLE hKey = NULL;
+            _Status = ::BCryptGenerateKeyPair(hAlgorithm, &hKey, 1024, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptFinalizeKeyPair(hKey, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            ULONG cbCipherText = 0;
+            _Status = ::BCryptEncrypt(
+                hKey,
+                const_cast<PUCHAR>(kPlainText),
+                sizeof(kPlainText),
+                NULL,
+                nullptr,
+                0,
+                nullptr,
+                0,
+                &cbCipherText,
+                BCRYPT_PAD_PKCS1);
+            Assert::IsTrue(_Status >= 0);
+            Assert::IsTrue(cbCipherText != 0);
+
+            std::vector<BYTE> vecCipherText(cbCipherText);
+            _Status = ::BCryptEncrypt(
+                hKey,
+                const_cast<PUCHAR>(kPlainText),
+                sizeof(kPlainText),
+                NULL,
+                nullptr,
+                0,
+                vecCipherText.data(),
+                (ULONG)vecCipherText.size(),
+                &cbCipherText,
+                BCRYPT_PAD_PKCS1);
+            Assert::IsTrue(_Status >= 0);
+            vecCipherText.resize(cbCipherText);
+
+            ULONG cbPlainText = 0;
+            _Status = ::BCryptDecrypt(
+                hKey,
+                vecCipherText.data(),
+                (ULONG)vecCipherText.size(),
+                NULL,
+                nullptr,
+                0,
+                nullptr,
+                0,
+                &cbPlainText,
+                BCRYPT_PAD_PKCS1);
+            Assert::IsTrue(_Status >= 0);
+
+            std::vector<BYTE> vecPlainText(cbPlainText);
+            _Status = ::BCryptDecrypt(
+                hKey,
+                vecCipherText.data(),
+                (ULONG)vecCipherText.size(),
+                NULL,
+                nullptr,
+                0,
+                vecPlainText.data(),
+                (ULONG)vecPlainText.size(),
+                &cbPlainText,
+                BCRYPT_PAD_PKCS1);
+            Assert::IsTrue(_Status >= 0);
+            Assert::AreEqual((ULONG)sizeof(kPlainText), cbPlainText);
+            vecPlainText.resize(cbPlainText);
+
+            Assert::AreEqual(ToHexString(kPlainText), ToHexString(vecPlainText));
+
+            _Status = ::BCryptDestroyKey(hKey);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+            Assert::IsTrue(_Status >= 0);
+        }
     };
 
     TEST_CLASS(BCryptDecrypt)
@@ -1082,7 +1173,10 @@ namespace bcrypt
             Guard |= YY::Thunks::aways_null_try_get_BCryptOpenAlgorithmProvider;
             Guard |= YY::Thunks::aways_null_try_get_BCryptCloseAlgorithmProvider;
             Guard |= YY::Thunks::aways_null_try_get_BCryptDecrypt;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptEncrypt;
             Guard |= YY::Thunks::aways_null_try_get_BCryptGenerateSymmetricKey;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptGenerateKeyPair;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptFinalizeKeyPair;
             Guard |= YY::Thunks::aways_null_try_get_BCryptDestroyKey;
             Guard |= YY::Thunks::aways_null_try_get_BCryptSetProperty;
         }
@@ -1173,6 +1267,93 @@ namespace bcrypt
             _Status = ::BCryptCloseAlgorithmProvider(hAlgorithm, 0);
             Assert::IsTrue(_Status >= 0);
         }
+
+        TEST_METHOD(RSA解密测试)
+        {
+            static constexpr const BYTE kPlainText[] =
+            {
+                0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
+                0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+            };
+
+            BCRYPT_ALG_HANDLE hAlgorithm = NULL;
+            auto _Status = ::BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RSA_ALGORITHM, nullptr, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            BCRYPT_KEY_HANDLE hKey = NULL;
+            _Status = ::BCryptGenerateKeyPair(hAlgorithm, &hKey, 1024, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptFinalizeKeyPair(hKey, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            ULONG cbCipherText = 0;
+            _Status = ::BCryptEncrypt(
+                hKey,
+                const_cast<PUCHAR>(kPlainText),
+                sizeof(kPlainText),
+                NULL,
+                nullptr,
+                0,
+                nullptr,
+                0,
+                &cbCipherText,
+                BCRYPT_PAD_PKCS1);
+            Assert::IsTrue(_Status >= 0);
+
+            std::vector<BYTE> vecCipherText(cbCipherText);
+            _Status = ::BCryptEncrypt(
+                hKey,
+                const_cast<PUCHAR>(kPlainText),
+                sizeof(kPlainText),
+                NULL,
+                nullptr,
+                0,
+                vecCipherText.data(),
+                (ULONG)vecCipherText.size(),
+                &cbCipherText,
+                BCRYPT_PAD_PKCS1);
+            Assert::IsTrue(_Status >= 0);
+            vecCipherText.resize(cbCipherText);
+
+            ULONG cbPlainText = 0;
+            _Status = ::BCryptDecrypt(
+                hKey,
+                vecCipherText.data(),
+                (ULONG)vecCipherText.size(),
+                NULL,
+                nullptr,
+                0,
+                nullptr,
+                0,
+                &cbPlainText,
+                BCRYPT_PAD_PKCS1);
+            Assert::IsTrue(_Status >= 0);
+
+            std::vector<BYTE> vecPlainText(cbPlainText);
+            _Status = ::BCryptDecrypt(
+                hKey,
+                vecCipherText.data(),
+                (ULONG)vecCipherText.size(),
+                NULL,
+                nullptr,
+                0,
+                vecPlainText.data(),
+                (ULONG)vecPlainText.size(),
+                &cbPlainText,
+                BCRYPT_PAD_PKCS1);
+            Assert::IsTrue(_Status >= 0);
+            vecPlainText.resize(cbPlainText);
+            Assert::AreEqual((ULONG)sizeof(kPlainText), cbPlainText);
+
+            Assert::AreEqual(ToHexString(kPlainText), ToHexString(vecPlainText));
+
+            _Status = ::BCryptDestroyKey(hKey);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+            Assert::IsTrue(_Status >= 0);
+        }
     };
 
     TEST_CLASS(BCryptExportKey)
@@ -1186,7 +1367,10 @@ namespace bcrypt
             Guard |= YY::Thunks::aways_null_try_get_BCryptCloseAlgorithmProvider;
             Guard |= YY::Thunks::aways_null_try_get_BCryptExportKey;
             Guard |= YY::Thunks::aways_null_try_get_BCryptGenerateSymmetricKey;
-        }
+            Guard |= YY::Thunks::aways_null_try_get_BCryptGenerateKeyPair;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptDestroyKey;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptFinalizeKeyPair;
+       }
 
         TEST_METHOD(AES密钥导出)
         {
@@ -1228,10 +1412,60 @@ namespace bcrypt
             _Status = ::BCryptExportKey(hKey, NULL, BCRYPT_KEY_DATA_BLOB, _KeyDataBlobBuffer.data(), (ULONG)_KeyDataBlobBuffer.size(), &_cbResult, 0);
             Assert::IsTrue(_Status >= 0);
             _KeyDataBlobBuffer.resize(_cbResult);
+
+            _Status = ::BCryptDestroyKey(hKey);
+            Assert::IsTrue(_Status >= 0);
+
             _Status = ::BCryptCloseAlgorithmProvider(hAlgorithm, 0);
             Assert::IsTrue(_Status >= 0);
 
             Assert::AreEqual(ToHexString(_KeyDataBlobBuffer), ToHexString(kKeyDataBlob));
+        }
+
+        TEST_METHOD(RSA密钥导出)
+        {
+            BCRYPT_ALG_HANDLE hAlgorithm;
+            long _Status = ::BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RSA_ALGORITHM, nullptr, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            BCRYPT_KEY_HANDLE hKey;
+            _Status = ::BCryptGenerateKeyPair(hAlgorithm, &hKey, 1024, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptFinalizeKeyPair(hKey, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            ULONG _cbResult;
+            _Status = ::BCryptExportKey(hKey, NULL, BCRYPT_RSAPRIVATE_BLOB, nullptr, 0, &_cbResult, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            std::vector<BYTE> _KeyDataBlobBuffer(_cbResult);
+            _Status = ::BCryptExportKey(hKey, NULL, BCRYPT_RSAPRIVATE_BLOB, _KeyDataBlobBuffer.data(), (ULONG)_KeyDataBlobBuffer.size(), &_cbResult, 0);
+            Assert::IsTrue(_Status >= 0);
+            _KeyDataBlobBuffer.resize(_cbResult);
+
+            _Status = ::BCryptDestroyKey(hKey);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            constexpr auto kPublicExp = 3;
+            constexpr auto kModulus = 128;
+            constexpr auto kPrime1 = 64;
+            constexpr auto kPrime2 = 64;
+
+
+            struct _BCRYPT_RSAPRIVATE_BLOB : public BCRYPT_RSAKEY_BLOB
+            {
+                BYTE PublicExponent[kPublicExp]; // Big-endian.
+                BYTE Modulus[kModulus]; // Big-endian.
+                BYTE Prime1[kPrime1]; // Big-endian.
+                BYTE Prime2[kPrime2]; // Big-endian.
+            };
+
+            auto _pRsaKeyBlob = (_BCRYPT_RSAPRIVATE_BLOB*)_KeyDataBlobBuffer.data();
+            Assert::IsTrue(_Status >= 0);
         }
     };
 
@@ -1339,6 +1573,207 @@ namespace bcrypt
             Assert::IsTrue(_Status >= 0);
 
             Assert::AreEqual(ToHexString(vecCipherText), ToHexString(kTargetEncryptData));
+        }
+    };
+
+    TEST_CLASS(BCryptImportKeyPair)
+    {
+        AwaysNullGuard Guard;
+
+    public:
+        BCryptImportKeyPair()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_BCryptOpenAlgorithmProvider;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptCloseAlgorithmProvider;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptGenerateKeyPair;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptFinalizeKeyPair;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptExportKey;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptImportKeyPair;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptDestroyKey;
+        }
+
+        TEST_METHOD(RSA私钥导入)
+        {
+            BCRYPT_ALG_HANDLE hAlgorithm = NULL;
+            long _Status = ::BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RSA_ALGORITHM, nullptr, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            BCRYPT_KEY_HANDLE hSourceKey = NULL;
+            _Status = ::BCryptGenerateKeyPair(hAlgorithm, &hSourceKey, 1024, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptFinalizeKeyPair(hSourceKey, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            ULONG _cbPrivateBlob = 0;
+            _Status = ::BCryptExportKey(hSourceKey, NULL, BCRYPT_PRIVATE_KEY_BLOB, nullptr, 0, &_cbPrivateBlob, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            std::vector<BYTE> _PrivateBlob(_cbPrivateBlob);
+            _Status = ::BCryptExportKey(hSourceKey, NULL, BCRYPT_PRIVATE_KEY_BLOB, _PrivateBlob.data(), (ULONG)_PrivateBlob.size(), &_cbPrivateBlob, 0);
+            Assert::IsTrue(_Status >= 0);
+            _PrivateBlob.resize(_cbPrivateBlob);
+
+            _Status = ::BCryptDestroyKey(hSourceKey);
+            Assert::IsTrue(_Status >= 0);
+
+            BCRYPT_KEY_HANDLE hImportKey = NULL;
+            _Status = ::BCryptImportKeyPair(hAlgorithm, NULL, BCRYPT_PRIVATE_KEY_BLOB, &hImportKey, _PrivateBlob.data(), (ULONG)_PrivateBlob.size(), 0);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptFinalizeKeyPair(hImportKey, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptDestroyKey(hImportKey);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+            Assert::IsTrue(_Status >= 0);
+        }
+
+        TEST_METHOD(RSA公钥导入)
+        {
+            BCRYPT_ALG_HANDLE hAlgorithm = NULL;
+            long _Status = ::BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_RSA_ALGORITHM, nullptr, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            BCRYPT_KEY_HANDLE hSourceKey = NULL;
+            _Status = ::BCryptGenerateKeyPair(hAlgorithm, &hSourceKey, 1024, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptFinalizeKeyPair(hSourceKey, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            ULONG _cbPublicBlob = 0;
+            _Status = ::BCryptExportKey(hSourceKey, NULL, BCRYPT_RSAPUBLIC_BLOB, nullptr, 0, &_cbPublicBlob, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            std::vector<BYTE> _PublicBlob(_cbPublicBlob);
+            _Status = ::BCryptExportKey(hSourceKey, NULL, BCRYPT_RSAPUBLIC_BLOB, _PublicBlob.data(), (ULONG)_PublicBlob.size(), &_cbPublicBlob, 0);
+            Assert::IsTrue(_Status >= 0);
+            _PublicBlob.resize(_cbPublicBlob);
+
+            ULONG _cbLegacyPublicBlob = 0;
+            _Status = ::BCryptExportKey(hSourceKey, NULL, LEGACY_RSAPUBLIC_BLOB, nullptr, 0, &_cbLegacyPublicBlob, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            std::vector<BYTE> _LegacyPublicBlob(_cbLegacyPublicBlob);
+            _Status = ::BCryptExportKey(hSourceKey, NULL, LEGACY_RSAPUBLIC_BLOB, _LegacyPublicBlob.data(), (ULONG)_LegacyPublicBlob.size(), &_cbLegacyPublicBlob, 0);
+            Assert::IsTrue(_Status >= 0);
+            _LegacyPublicBlob.resize(_cbLegacyPublicBlob);
+
+            _Status = ::BCryptDestroyKey(hSourceKey);
+            Assert::IsTrue(_Status >= 0);
+
+            BCRYPT_KEY_HANDLE hImportKey = NULL;
+            _Status = ::BCryptImportKeyPair(hAlgorithm, NULL, BCRYPT_RSAPUBLIC_BLOB, &hImportKey, _PublicBlob.data(), (ULONG)_PublicBlob.size(), 0);
+            Assert::IsTrue(_Status >= 0);
+
+            ULONG _cbImportedLegacyPublicBlob = 0;
+            _Status = ::BCryptExportKey(hImportKey, NULL, LEGACY_RSAPUBLIC_BLOB, nullptr, 0, &_cbImportedLegacyPublicBlob, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            std::vector<BYTE> _ImportedLegacyPublicBlob(_cbImportedLegacyPublicBlob);
+            _Status = ::BCryptExportKey(hImportKey, NULL, LEGACY_RSAPUBLIC_BLOB, _ImportedLegacyPublicBlob.data(), (ULONG)_ImportedLegacyPublicBlob.size(), &_cbImportedLegacyPublicBlob, 0);
+            Assert::IsTrue(_Status >= 0);
+            _ImportedLegacyPublicBlob.resize(_cbImportedLegacyPublicBlob);
+
+            Assert::AreEqual(ToHexString(_LegacyPublicBlob), ToHexString(_ImportedLegacyPublicBlob));
+
+            _Status = ::BCryptDestroyKey(hImportKey);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+            Assert::IsTrue(_Status >= 0);
+        }
+    };
+
+    TEST_CLASS(BCryptSignVerifySignature)
+    {
+        AwaysNullGuard Guard;
+
+    public:
+        BCryptSignVerifySignature()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_BCryptOpenAlgorithmProvider;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptCloseAlgorithmProvider;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptGenerateKeyPair;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptFinalizeKeyPair;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptDestroyKey;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptCreateHash;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptHashData;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptFinishHash;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptDestroyHash;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptSignHash;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptVerifySignature;
+        }
+
+        void RunTest(LPCWSTR _szAlgId)
+        {
+            BCRYPT_ALG_HANDLE _hRsaAlgorithm = NULL;
+            auto _Status = ::BCryptOpenAlgorithmProvider(&_hRsaAlgorithm, _szAlgId, nullptr, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            BCRYPT_KEY_HANDLE _hKey = NULL;
+            _Status = ::BCryptGenerateKeyPair(_hRsaAlgorithm, &_hKey, 1024, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptFinalizeKeyPair(_hKey, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            BCRYPT_ALG_HANDLE _hHashAlgorithm = NULL;
+            _Status = ::BCryptOpenAlgorithmProvider(&_hHashAlgorithm, BCRYPT_SHA256_ALGORITHM, nullptr, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            BCRYPT_HASH_HANDLE _hHash = NULL;
+            _Status = ::BCryptCreateHash(_hHashAlgorithm, &_hHash, nullptr, 0, nullptr, 0, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            static const BYTE kData[] = { 0x10, 0x20, 0x30, 0x40, 0x50 };
+            _Status = ::BCryptHashData(_hHash, const_cast<PUCHAR>(kData), sizeof(kData), 0);
+            Assert::IsTrue(_Status >= 0);
+
+            BYTE _HashValue[32] = {};
+            _Status = ::BCryptFinishHash(_hHash, _HashValue, sizeof(_HashValue), 0);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptDestroyHash(_hHash);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptCloseAlgorithmProvider(_hHashAlgorithm, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            BCRYPT_PKCS1_PADDING_INFO _PaddingInfo = {};
+            _PaddingInfo.pszAlgId = BCRYPT_SHA256_ALGORITHM;
+
+            ULONG _cbSignature = 0;
+            _Status = ::BCryptSignHash(_hKey, &_PaddingInfo, _HashValue, sizeof(_HashValue), nullptr, 0, &_cbSignature, BCRYPT_PAD_PKCS1);
+            Assert::IsTrue(_Status >= 0);
+            Assert::IsTrue(_cbSignature != 0);
+
+            std::vector<BYTE> _Signature(_cbSignature);
+            _Status = ::BCryptSignHash(_hKey, &_PaddingInfo, _HashValue, sizeof(_HashValue), _Signature.data(), (ULONG)_Signature.size(), &_cbSignature, BCRYPT_PAD_PKCS1);
+            Assert::IsTrue(_Status >= 0);
+            _Signature.resize(_cbSignature);
+
+            _Status = ::BCryptVerifySignature(_hKey, &_PaddingInfo, _HashValue, sizeof(_HashValue), _Signature.data(), (ULONG)_Signature.size(), BCRYPT_PAD_PKCS1);
+            Assert::IsTrue(_Status >= 0);
+
+            _Signature[0] ^= 0x01;
+            _Status = ::BCryptVerifySignature(_hKey, &_PaddingInfo, _HashValue, sizeof(_HashValue), _Signature.data(), (ULONG)_Signature.size(), BCRYPT_PAD_PKCS1);
+            Assert::IsTrue(_Status < 0);
+
+            _Status = ::BCryptDestroyKey(_hKey);
+            Assert::IsTrue(_Status >= 0);
+
+            _Status = ::BCryptCloseAlgorithmProvider(_hRsaAlgorithm, 0);
+            Assert::IsTrue(_Status >= 0);
+        }
+
+        TEST_METHOD(RSA_PKCS1签名验签)
+        {
+            RunTest(BCRYPT_RSA_ALGORITHM);
+            RunTest(BCRYPT_RSA_SIGN_ALGORITHM);
         }
     };
 }
