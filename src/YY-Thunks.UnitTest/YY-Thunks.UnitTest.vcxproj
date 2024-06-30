@@ -202,6 +202,7 @@
     <ClCompile Include="api-ms-win-core-threadpool.UnitTest.cpp" />
     <ClCompile Include="PropSys.UnitTest.cpp" />
     <ClCompile Include="shell32.UnitTest.cpp" />
+    <ClCompile Include="User32.UnitTest.cpp" />
     <ClCompile Include="weak.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>

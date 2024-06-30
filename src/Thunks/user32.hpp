@@ -335,40 +335,69 @@ namespace YY::Thunks
     BOOL,
     WINAPI,
     AdjustWindowRectExForDpi,
-        _Inout_ LPRECT lpRect,
-        _In_ DWORD dwStyle,
-        _In_ BOOL bMenu,
-        _In_ DWORD dwExStyle,
-        _In_ UINT dpi
+        _Inout_ LPRECT _pRect,
+        _In_ DWORD _fStyle,
+        _In_ BOOL _bMenu,
+        _In_ DWORD _fExStyle,
+        _In_ UINT _uDpi
         )
     {
-        if (auto const pAdjustWindowRectExForDpi = try_get_AdjustWindowRectExForDpi())
+        if (auto const _pfnAdjustWindowRectExForDpi = try_get_AdjustWindowRectExForDpi())
         {
-            return pAdjustWindowRectExForDpi(lpRect, dwStyle, bMenu, dwExStyle, dpi);
+            return _pfnAdjustWindowRectExForDpi(_pRect, _fStyle, _bMenu, _fExStyle, _uDpi);
         }
 
-        RECT FrameRect = {};
+        if (_uDpi == 0ul)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
 
-        if (!AdjustWindowRectEx(&FrameRect, dwStyle, bMenu, dwExStyle))
+        RECT _DeltaRect = {};
+        if (!AdjustWindowRectEx(&_DeltaRect, _fStyle, _bMenu, _fExStyle))
         {
             return FALSE;
         }
 
-        auto nDpiX = internal::GetDpiForSystemDownlevel();
-
-        if (nDpiX != dpi)
+        const auto _uBaseDpi = internal::GetDpiForSystemDownlevel();
+        if (_uBaseDpi != _uDpi)
         {
-            FrameRect.left = MulDiv(FrameRect.left, dpi, nDpiX);
-            FrameRect.top = MulDiv(FrameRect.top, dpi, nDpiX);
-            FrameRect.right = MulDiv(FrameRect.right, dpi, nDpiX);
-            FrameRect.bottom = MulDiv(FrameRect.bottom, dpi, nDpiX);
+            RECT _DlgFrameRect = {};
+            if (_fStyle & (WS_THICKFRAME | WS_DLGFRAME))
+            {
+                AdjustWindowRectEx(&_DlgFrameRect, WS_DLGFRAME, FALSE, 0);
+                if (_bMenu || (_fStyle & WS_CAPTION) == WS_CAPTION)
+                {
+                    const auto _nSystemBorderWidth = GetSystemMetrics(SM_CXBORDER);
+                    _DlgFrameRect.top -= _nSystemBorderWidth;
+                }
+            }
+            else if (_fStyle & WS_BORDER)
+            {
+                AdjustWindowRectEx(&_DlgFrameRect, WS_BORDER, FALSE, 0);
+                if (_bMenu || (_fStyle & WS_CAPTION) == WS_CAPTION)
+                {
+                    // 特殊优化，不在调用 GetSystemMetrics(SM_CXBORDER)
+                    // 毕竟理论上 _DlgFrameRect.top == -GetSystemMetrics(SM_CXBORDER)
+                    _DlgFrameRect.top += _DlgFrameRect.top;
+                }
+            }
+
+            _DeltaRect.left -= _DlgFrameRect.left;
+            _DeltaRect.top -= _DlgFrameRect.top;
+            _DeltaRect.right -= _DlgFrameRect.right;
+            _DeltaRect.bottom -= _DlgFrameRect.bottom;
+
+            _DeltaRect.left = MulDiv(_DeltaRect.left, _uDpi, _uBaseDpi) + _DlgFrameRect.left;
+            _DeltaRect.top = MulDiv(_DeltaRect.top, _uDpi, _uBaseDpi) + _DlgFrameRect.top;
+            _DeltaRect.right = MulDiv(_DeltaRect.right, _uDpi, _uBaseDpi) + _DlgFrameRect.right;
+            _DeltaRect.bottom = MulDiv(_DeltaRect.bottom, _uDpi, _uBaseDpi) + _DlgFrameRect.bottom;
         }
 
-        lpRect->left += FrameRect.left;
-        lpRect->top += FrameRect.top;
-        lpRect->right += FrameRect.right;
-        lpRect->bottom += FrameRect.bottom;
-
+        _pRect->left += _DeltaRect.left;
+        _pRect->top += _DeltaRect.top;
+        _pRect->right += _DeltaRect.right;
+        _pRect->bottom += _DeltaRect.bottom;
         return TRUE;
     }
 #endif
