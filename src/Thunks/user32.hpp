@@ -412,104 +412,110 @@ namespace YY::Thunks
     BOOL,
     WINAPI,
     SystemParametersInfoForDpi,
-        _In_ UINT uiAction,
-        _In_ UINT uiParam,
-        _Pre_maybenull_ _Post_valid_ PVOID pvParam,
-        _In_ UINT fWinIni,
-        _In_ UINT dpi
+        _In_ UINT _uAction,
+        _In_ UINT _uParam,
+        _Pre_maybenull_ _Post_valid_ PVOID _pParam,
+        _In_ UINT _fWinIni,
+        _In_ UINT _uDpi
         )
     {
-        if (auto const pSystemParametersInfoForDpi = try_get_SystemParametersInfoForDpi())
+        if (auto const _pfnSystemParametersInfoForDpi = try_get_SystemParametersInfoForDpi())
+            return _pfnSystemParametersInfoForDpi(_uAction, _uParam, _pParam, _fWinIni, _uDpi);
+
+        // SystemParametersInfoW 函数始终拿到的是 DPI = _uBaseDpi 的情况
+        // 其结果与当前系统DPI值无关。
+        // 我们可以通过缩放来模拟 SystemParametersInfoForDpi
+        const auto _uBaseDpi = internal::GetDpiForSystemDownlevel();
+
+        switch (_uAction)
         {
-            return pSystemParametersInfoForDpi(uiAction, uiParam, pvParam, fWinIni, dpi);
+        case SPI_GETICONTITLELOGFONT:
+        {
+            if (!SystemParametersInfoW(_uAction, _uParam, _pParam, _fWinIni))
+                return FALSE;
+
+            if(_pParam == nullptr || _uDpi == 0 || _uDpi == _uBaseDpi)
+                return TRUE;
+
+            auto _pInfo = (LOGFONTW*)_pParam;
+            _pInfo->lfHeight = MulDiv(_pInfo->lfHeight, _uDpi, _uBaseDpi);
+            return TRUE;
         }
-
-        if (!SystemParametersInfoW(uiAction, uiParam, pvParam, fWinIni))
-            return FALSE;
-
-        if (SPI_GETICONTITLELOGFONT == uiAction
-            || SPI_GETICONMETRICS == uiAction
-            || SPI_GETNONCLIENTMETRICS == uiAction)
+        case SPI_GETICONMETRICS:
         {
-            auto nDpiX = internal::GetDpiForSystemDownlevel();
+            if (!SystemParametersInfoW(_uAction, _uParam, _pParam, _fWinIni))
+                return FALSE;
 
-            if (nDpiX != dpi)
+            if (_pParam == nullptr || _uDpi == 0 || _uDpi == _uBaseDpi)
+                return TRUE;
+
+            auto _pInfo = (ICONMETRICSW*)_pParam;
+            _pInfo->iHorzSpacing = MulDiv(_pInfo->iHorzSpacing, _uDpi, _uBaseDpi);
+            _pInfo->iVertSpacing = MulDiv(_pInfo->iVertSpacing, _uDpi, _uBaseDpi);
+            _pInfo->lfFont.lfHeight = MulDiv(_pInfo->lfFont.lfHeight, _uDpi, _uBaseDpi);
+            return TRUE;
+        }
+        case SPI_GETNONCLIENTMETRICS:
+        {
+            // 微软强制要求Size等于 sizeof(NONCLIENTMETRICSW)
+            auto _pInfo = (NONCLIENTMETRICSW*)_pParam;
+            if (_pInfo == nullptr || _pInfo->cbSize != sizeof(NONCLIENTMETRICSW))
             {
-                if (SPI_GETICONTITLELOGFONT == uiAction)
-                {
-                    if (auto pInfo = (LOGFONTW*)pvParam)
-                    {
-                        pInfo->lfHeight = MulDiv(pInfo->lfHeight, dpi, nDpiX);
-                    }
-                }
-                else if (SPI_GETICONMETRICS == uiAction)
-                {
-                    if (auto pInfo = (ICONMETRICSW*)pvParam)
-                    {
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, iHorzSpacing))
-                            pInfo->iHorzSpacing = MulDiv(pInfo->iHorzSpacing, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, iVertSpacing))
-                            pInfo->iVertSpacing = MulDiv(pInfo->iVertSpacing, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, lfFont))
-                            pInfo->lfFont.lfHeight = MulDiv(pInfo->lfFont.lfHeight, dpi, nDpiX);
-                    }
-                }
-                else if (SPI_GETNONCLIENTMETRICS == uiAction)
-                {
-                    if (auto pInfo = (NONCLIENTMETRICSW*)pvParam)
-                    {
-                        if(RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, iBorderWidth))
-                            pInfo->iBorderWidth = MulDiv(pInfo->iBorderWidth, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, iScrollWidth))
-                            pInfo->iScrollWidth = MulDiv(pInfo->iScrollWidth, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, iScrollHeight))
-                            pInfo->iScrollHeight = MulDiv(pInfo->iScrollHeight, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, iCaptionWidth))
-                            pInfo->iCaptionWidth= MulDiv(pInfo->iCaptionWidth, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, iCaptionHeight))
-                            pInfo->iCaptionHeight= MulDiv(pInfo->iCaptionHeight, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, lfCaptionFont))
-                            pInfo->lfCaptionFont.lfHeight = MulDiv(pInfo->lfCaptionFont.lfHeight, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, iSmCaptionWidth))
-                            pInfo->iSmCaptionWidth = MulDiv(pInfo->iSmCaptionWidth, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, iSmCaptionHeight))
-                            pInfo->iSmCaptionHeight = MulDiv(pInfo->iSmCaptionHeight, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, lfSmCaptionFont))
-                            pInfo->lfSmCaptionFont.lfHeight = MulDiv(pInfo->lfSmCaptionFont.lfHeight, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, iMenuWidth))
-                            pInfo->iMenuWidth = MulDiv(pInfo->iMenuWidth, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, iMenuHeight))
-                            pInfo->iMenuHeight = MulDiv(pInfo->iMenuHeight, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, lfMenuFont))
-                            pInfo->lfMenuFont.lfHeight = MulDiv(pInfo->lfMenuFont.lfHeight, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, lfStatusFont))
-                            pInfo->lfStatusFont.lfHeight = MulDiv(pInfo->lfStatusFont.lfHeight, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, lfMessageFont))
-                            pInfo->lfMessageFont.lfHeight = MulDiv(pInfo->lfMessageFont.lfHeight, dpi, nDpiX);
-
-                        if (RTL_CONTAINS_FIELD(pInfo, pInfo->cbSize, iPaddedBorderWidth))
-                            pInfo->iPaddedBorderWidth = MulDiv(pInfo->iPaddedBorderWidth, dpi, nDpiX);
-                    }
-                }
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return FALSE;
             }
+
+            if (!SystemParametersInfoW(_uAction, _uParam, _pParam, _fWinIni))
+                return FALSE;
+
+            if (_pParam == nullptr || _uDpi == 0)
+                return TRUE;
+
+            // GetSystemMetrics(SM_CYBORDER) 的大小始终跟 Dpi无关
+            const auto _nSystemBorderWidth = MulDiv(GetSystemMetrics(SM_CYBORDER), _uDpi, USER_DEFAULT_SCREEN_DPI);
+            if (_uDpi == _uBaseDpi)
+            {
+                // 如果DPI恰好 == _uBaseDpi，这时可以优化，避免无意义的MulDiv调用。
+                // 注意，主动传入DPI时，iBorderWidth默认为 GetSystemMetrics(SM_CYBORDER)。
+                const auto _nBorderWidth = _pInfo->iBorderWidth + _pInfo->iPaddedBorderWidth;
+                if (_nBorderWidth > 0)
+                {
+                    _pInfo->iPaddedBorderWidth = _nBorderWidth - _nSystemBorderWidth;
+                    _pInfo->iBorderWidth = _nSystemBorderWidth;
+                }
+                return TRUE;
+            }
+
+            // 跳过 iBorderWidth，通过后续的iPaddedBorderWidth调整。
+            // _pInfo->iBorderWidth = MulDiv(_pInfo->iBorderWidth, _uDpi, kBaseDpi);
+            _pInfo->iScrollWidth = MulDiv(_pInfo->iScrollWidth, _uDpi, _uBaseDpi);
+            _pInfo->iScrollHeight = MulDiv(_pInfo->iScrollHeight, _uDpi, _uBaseDpi);
+            _pInfo->iCaptionWidth = MulDiv(_pInfo->iCaptionWidth, _uDpi, _uBaseDpi);
+            _pInfo->iCaptionHeight = MulDiv(_pInfo->iCaptionHeight, _uDpi, _uBaseDpi);
+            _pInfo->lfCaptionFont.lfHeight = MulDiv(_pInfo->lfCaptionFont.lfHeight, _uDpi, _uBaseDpi);
+            _pInfo->iSmCaptionWidth = MulDiv(_pInfo->iSmCaptionWidth, _uDpi, _uBaseDpi);
+            _pInfo->iSmCaptionHeight = MulDiv(_pInfo->iSmCaptionHeight, _uDpi, _uBaseDpi);
+            _pInfo->lfSmCaptionFont.lfHeight = MulDiv(_pInfo->lfSmCaptionFont.lfHeight, _uDpi, _uBaseDpi);
+            _pInfo->iMenuWidth = MulDiv(_pInfo->iMenuWidth, _uDpi, _uBaseDpi);
+            _pInfo->iMenuHeight = MulDiv(_pInfo->iMenuHeight, _uDpi, _uBaseDpi);
+            _pInfo->lfMenuFont.lfHeight = MulDiv(_pInfo->lfMenuFont.lfHeight, _uDpi, _uBaseDpi);
+            _pInfo->lfStatusFont.lfHeight = MulDiv(_pInfo->lfStatusFont.lfHeight, _uDpi, _uBaseDpi);
+            _pInfo->lfMessageFont.lfHeight = MulDiv(_pInfo->lfMessageFont.lfHeight, _uDpi, _uBaseDpi);
+
+            const auto _nBorderWidth = _pInfo->iBorderWidth + _pInfo->iPaddedBorderWidth;
+            if (_nBorderWidth > 0)
+            {
+                _pInfo->iPaddedBorderWidth = MulDiv(_nBorderWidth, _uDpi, _uBaseDpi) - _nSystemBorderWidth;
+                _pInfo->iBorderWidth = _nSystemBorderWidth;
+            }
+            return TRUE;
+        }
         }
 
-        return TRUE;
+        // 微软原版这时不会返回错误代码，但是总感觉是微软的Bug
+        // 我们这里就随便返回一个错误代码吧。
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
     }
 #endif
 

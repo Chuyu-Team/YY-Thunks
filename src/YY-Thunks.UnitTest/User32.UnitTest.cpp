@@ -62,4 +62,68 @@ namespace User32
             Assert::IsFalse(::AdjustWindowRectExForDpi(&_Current, 0, 0, 0, 0));
         }
     };
+
+    TEST_CLASS(SystemParametersInfoForDpi)
+    {
+        AwaysNullGuard Guard;
+
+    public:
+        SystemParametersInfoForDpi()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_SystemParametersInfoForDpi;
+        }
+
+        TEST_METHOD(常规测试)
+        {
+            struct TestItem
+            {
+                UINT uAction;
+                UINT uParam;
+                UINT uDpi;
+            };
+
+            static constexpr TestItem kTestItems[] =
+            {
+                { SPI_GETICONTITLELOGFONT, sizeof(LOGFONTW), 0 },
+                { SPI_GETICONTITLELOGFONT, sizeof(LOGFONTW), USER_DEFAULT_SCREEN_DPI },
+                { SPI_GETICONTITLELOGFONT, sizeof(LOGFONTW), USER_DEFAULT_SCREEN_DPI * 1.5 },
+                { SPI_GETICONTITLELOGFONT, sizeof(LOGFONTW), USER_DEFAULT_SCREEN_DPI * 2 },
+
+                { SPI_GETICONMETRICS, sizeof(ICONMETRICSW), 0 },
+                { SPI_GETICONMETRICS, sizeof(ICONMETRICSW), USER_DEFAULT_SCREEN_DPI },
+                { SPI_GETICONMETRICS, sizeof(ICONMETRICSW), USER_DEFAULT_SCREEN_DPI * 1.5 },
+                { SPI_GETICONMETRICS, sizeof(ICONMETRICSW), USER_DEFAULT_SCREEN_DPI * 2 },
+
+                { SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), 0 },
+                { SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), USER_DEFAULT_SCREEN_DPI },
+                { SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), USER_DEFAULT_SCREEN_DPI * 1.5 },
+                { SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), USER_DEFAULT_SCREEN_DPI * 2 },
+            };
+
+            for (auto& _Item : kTestItems)
+            {
+                union
+                {
+                    LOGFONTW LogFont;
+                    ICONMETRICSW IconMeterics;
+                    NONCLIENTMETRICSW NonClientMeterocs;
+                } _Target, _Current;
+
+                if (SPI_GETICONTITLELOGFONT != _Item.uAction)
+                {
+                    _Target.IconMeterics.cbSize = _Item.uParam;
+                    _Current.IconMeterics.cbSize = _Item.uParam;
+                }
+                ::SystemParametersInfoForDpi(_Item.uAction, _Item.uParam, &_Current, 0, _Item.uDpi);
+
+                YY::Thunks::aways_null_try_get_SystemParametersInfoForDpi = false;
+                ::SystemParametersInfoForDpi(_Item.uAction, _Item.uParam, &_Target, 0, _Item.uDpi);
+                YY::Thunks::aways_null_try_get_SystemParametersInfoForDpi = true;
+
+                CStringW _szMessage;
+                _szMessage.Format(L"Action = %d", _Item.uAction);
+                Assert::IsTrue(memcmp(&_Current, &_Target, _Item.uParam) == 0, _szMessage.GetString());
+            }
+        }
+    };
 }
