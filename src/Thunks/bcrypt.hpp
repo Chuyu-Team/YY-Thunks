@@ -18,6 +18,297 @@ namespace YY::Thunks
 #if defined(YY_Thunks_Implemented) && YY_Thunks_Target < __WindowsNT6
     namespace
     {
+        /// <summary>
+        /// 将内存从 _pSrc 移动到 _pDst，同时颠倒字节序。
+        /// </summary>
+        /// <param name="_pDst"></param>
+        /// <param name="_pSrc"></param>
+        /// <param name="_cbData"></param>
+        /// <returns></returns>
+        static void __fastcall MoveAndReverse(BYTE* _pDst, const BYTE* _pSrc, size_t _cbData)
+        {
+            auto _pDstEnd = _pDst + _cbData;
+            auto _pSrcEnd = _pSrc + _cbData;
+
+            if (_pDstEnd <= _pSrc || _pSrcEnd <= _pDst)
+            {
+                // 无交叉
+                // Src: [--------]
+                // Dst:            [--------]
+                while (_pSrcEnd != _pSrc)
+                {
+                    --_pSrcEnd;
+                    *_pDst = *_pSrcEnd;
+                    ++_pDst;
+                }
+            }
+            else
+            {
+                // 存在交叉
+                if (_pDst <= _pSrc)
+                {
+                    // 交叉情况1
+                    // Src:    [--------]
+                    // Dst: [--------]
+                    while (_pDst != _pSrc)
+                    {
+                        --_pSrcEnd;
+                        *_pDst = *_pSrcEnd;
+                        ++_pDst;
+                    }
+                }
+                else
+                {
+                    // 交叉情况2
+                    // Dst:    [--------]
+                    // Src: [--------]
+                    while (_pSrc != _pDst)
+                    {
+                        --_pDstEnd;
+                        *_pDstEnd = *_pSrc;
+                        ++_pSrc;
+                    }
+                }
+
+                // 交换层叠区域
+                while (_pDst < _pDstEnd)
+                {
+                    --_pDstEnd;
+                    // std::swap
+                    auto _Tmp = *_pDst;
+                    *_pDst = *_pDstEnd;
+                    *_pDstEnd = _Tmp;
+                    ++_pDst;
+                }
+            }
+        }
+
+        static ULONG __fastcall GetBCryptPublicExpLength(DWORD _uPubExp) noexcept
+        {
+            if (_uPubExp <= 0xFFu)
+            {
+                return 1;
+            }
+            else if (_uPubExp <= 0xFF'FFu)
+            {
+                return 2;
+            }
+            else if (_uPubExp <= 0xFF'FF'FFu)
+            {
+                return 3;
+            }
+            else
+            {
+                return 4;
+            }
+        }
+
+        struct _BCRYPT_RSAFULLPRIVATE_BLOB : public BCRYPT_RSAKEY_BLOB
+        {
+            // BYTE PublicExponent[cbPublicExp]; Big-endian.
+            // BYTE Modulus[cbModulus]; Big-endian.
+            // BYTE Prime1[cbPrime1]; Big-endian.
+            // BYTE Prime2[cbPrime2]; Big-endian.
+            // BYTE Exponent1[cbPrime1]; Big-endian.
+            // BYTE Exponent2[cbPrime2]; Big-endian.
+            // BYTE Coefficient[cbPrime1]; Big-endian.
+            // BYTE PrivateExponent[cbModulus]; Big-endian.
+        };
+
+        struct _BCRYPT_RSAPRIVATE_BLOB : public BCRYPT_RSAKEY_BLOB
+        {
+            // BYTE PublicExponent[cbPublicExp]; Big-endian.
+            // 28 max
+            // BYTE Modulus[cbModulus]; Big-endian.
+            // BYTE Prime1[cbPrime1]; Big-endian.
+            // BYTE Prime2[cbPrime2]; Big-endian.
+        };
+
+        struct _BCRYPT_RSAPUBLIC_BLOB : public BCRYPT_RSAKEY_BLOB
+        {
+            // BYTE PublicExponent[cbPublicExp]; Big-endian.
+            // BYTE Modulus[cbModulus]; Big-endian.
+        };
+
+        struct _PRIVATEKEYBLOB
+            : public PUBLICKEYSTRUC
+            , public RSAPUBKEY
+        {
+            // 20
+            // BYTE modulus[bitlen / 8]; little endian
+            // BYTE prime1[bitlen / 16]; little endian
+            // BYTE prime2[bitlen / 16]; little endian
+            // BYTE exponent1[bitlen / 16]; little endian
+            // BYTE exponent2[bitlen / 16]; little endian
+            // BYTE coefficient[bitlen / 16]; little endian
+            // BYTE privateExponent[bitlen / 8]; little endian
+
+            template<typename Type>
+            Type* __fastcall To(_Inout_ ULONG* _pcbResult);
+
+            /// <summary>
+            /// 将 _PRIVATEKEYBLOB 结构体原地转换为 _BCRYPT_RSAPRIVATE_BLOB 结构
+            /// </summary>
+            /// <param name="_pcbResult"></param>
+            /// <returns></returns>
+            template<>
+            _BCRYPT_RSAPRIVATE_BLOB* __fastcall To<_BCRYPT_RSAPRIVATE_BLOB>(_Inout_ ULONG* _pcbResult)
+            {
+#ifdef _DEBUG
+                if (UFIELD_OFFSET(_PRIVATEKEYBLOB, magic) < UFIELD_OFFSET(_BCRYPT_RSAPRIVATE_BLOB, Magic))
+                {
+                    __debugbreak();
+                }
+#endif
+                _BCRYPT_RSAPRIVATE_BLOB _Header;
+                _Header.Magic = BCRYPT_RSAPRIVATE_MAGIC;
+                _Header.BitLength = bitlen;
+                _Header.cbPublicExp = GetBCryptPublicExpLength(pubexp);
+                _Header.cbModulus = bitlen / 8;
+                _Header.cbPrime1 = _Header.cbPrime2 = bitlen / 16;
+
+                const auto _cbIn = *_pcbResult;
+                const ULONG _cbOutResult = sizeof(_BCRYPT_RSAPRIVATE_BLOB) + _Header.cbPublicExp + bitlen / 4;
+                *_pcbResult = _cbOutResult;
+                if (_cbIn < _cbOutResult)
+                {
+                    return nullptr;
+                }
+
+                auto _pOut = (BYTE*)this + _cbOutResult;
+                auto _pIn = (const BYTE*)this + sizeof(_PRIVATEKEYBLOB) + bitlen / 16 * 9;
+
+                // 防止泄漏，全部重置为 0
+                // privateExponent
+                // coefficient
+                // exponent2
+                // exponent1
+                memset(PBYTE(this) + sizeof(_PRIVATEKEYBLOB) + bitlen / 4, 0, bitlen / 16 * 5);
+
+                // prime2
+                _pOut -= _Header.cbPrime2;
+                _pIn -= _Header.cbPrime2;
+                MoveAndReverse(_pOut, _pIn, _Header.cbPrime2);
+
+                // prime1
+                _pOut -= _Header.cbPrime1;
+                _pIn -= _Header.cbPrime1;
+                MoveAndReverse(_pOut, _pIn, _Header.cbPrime1);
+
+                // modulus
+                _pOut -= _Header.cbModulus;
+                _pIn -= _Header.cbModulus;
+                MoveAndReverse(_pOut, _pIn, _Header.cbModulus);
+
+                // PublicExponent
+                MoveAndReverse(PBYTE(this) + sizeof(_BCRYPT_RSAPRIVATE_BLOB), (const BYTE*)&pubexp, _Header.cbPublicExp);
+
+                memcpy(this, &_Header, sizeof(_Header));
+                return (_BCRYPT_RSAPRIVATE_BLOB*)this;
+            }
+            
+            template<>
+            _BCRYPT_RSAFULLPRIVATE_BLOB* __fastcall To<_BCRYPT_RSAFULLPRIVATE_BLOB>(_Inout_ ULONG* _pcbResult)
+            {
+                _BCRYPT_RSAFULLPRIVATE_BLOB _Header;
+                _Header.Magic = BCRYPT_RSAFULLPRIVATE_MAGIC;
+                _Header.BitLength = bitlen;
+                _Header.cbPublicExp = GetBCryptPublicExpLength(pubexp);
+                _Header.cbModulus = bitlen / 8;
+                _Header.cbPrime1 = _Header.cbPrime2 = bitlen / 16;
+
+                const auto _cbIn = *_pcbResult;
+                const ULONG _cbOutResult = sizeof(_BCRYPT_RSAPRIVATE_BLOB) + _Header.cbPublicExp + bitlen / 16 * 9;
+                *_pcbResult = _cbOutResult;
+                if (_cbIn < _cbOutResult)
+                {
+                    return nullptr;
+                }
+                auto _pOut = PBYTE(this) + _cbOutResult;
+                auto _pIn = PBYTE(this) + sizeof(_PRIVATEKEYBLOB) + bitlen / 16 * 9;
+
+                // PrivateExponent
+                _pIn -= _Header.cbModulus;
+                _pOut -= _Header.cbModulus;
+                MoveAndReverse(_pOut, _pIn, _Header.cbModulus);
+
+                // Coefficient
+                _pIn -= _Header.cbPrime1;
+                _pOut -= _Header.cbPrime1;
+                MoveAndReverse(_pOut, _pIn, _Header.cbPrime1);
+
+                // Exponent2
+                _pIn -= _Header.cbPrime2;
+                _pOut -= _Header.cbPrime2;
+                MoveAndReverse(_pOut, _pIn, _Header.cbPrime2);
+
+                // Exponent1
+                _pIn -= _Header.cbPrime1;
+                _pOut -= _Header.cbPrime1;
+                MoveAndReverse(_pOut, _pIn, _Header.cbPrime1);
+
+                // Prime2
+                _pIn -= _Header.cbPrime2;
+                _pOut -= _Header.cbPrime2;
+                MoveAndReverse(_pOut, _pIn, _Header.cbPrime2);
+
+                // Prime1
+                _pIn -= _Header.cbPrime1;
+                _pOut -= _Header.cbPrime1;
+                MoveAndReverse(_pOut, _pIn, _Header.cbPrime1);
+
+                // Modulus
+                _pIn -= _Header.cbModulus;
+                _pOut -= _Header.cbModulus;
+                MoveAndReverse(_pOut, _pIn, _Header.cbModulus);
+
+                // PublicExponent
+                MoveAndReverse(PBYTE(this) + sizeof(_BCRYPT_RSAFULLPRIVATE_BLOB), PBYTE(&pubexp), _Header.cbPublicExp);
+
+                memcpy(this, &_Header, sizeof(_Header));
+                return (_BCRYPT_RSAFULLPRIVATE_BLOB*)this;
+            }
+        };
+
+        struct _PUBLICKEYBLOB
+            : public PUBLICKEYSTRUC
+            , public RSAPUBKEY
+        {
+            // BYTE modulus[bitlen/8]; little endian
+
+            template<typename Type>
+            Type* __fastcall To(_Inout_ ULONG* _pcbResult);
+
+            template<>
+            _BCRYPT_RSAPUBLIC_BLOB* To<_BCRYPT_RSAPUBLIC_BLOB>(_Inout_ ULONG* _pcbResult)
+            {
+                _BCRYPT_RSAPUBLIC_BLOB _Header;
+                _Header.Magic = BCRYPT_RSAPUBLIC_MAGIC;
+                _Header.BitLength = bitlen;
+                _Header.cbPublicExp = GetBCryptPublicExpLength(pubexp);
+                _Header.cbModulus = bitlen / 8;
+                _Header.cbPrime1 = _Header.cbPrime2 = 0;
+
+                const auto _cbIn = *_pcbResult;
+                const ULONG _cbOutResult = sizeof(_BCRYPT_RSAPUBLIC_BLOB) + _Header.cbPublicExp + _Header.cbModulus;
+                *_pcbResult = _cbOutResult;
+                if (_cbIn < _cbOutResult)
+                {
+                    *_pcbResult = _cbOutResult;
+                    return nullptr;
+                }
+
+                // Modulus
+                MoveAndReverse(PBYTE(this) + sizeof(_BCRYPT_RSAPUBLIC_BLOB) + _Header.cbPublicExp, PBYTE(this + 1), _Header.cbModulus);
+
+                // PublicExponent
+                MoveAndReverse(PBYTE(this) + sizeof(_BCRYPT_RSAPUBLIC_BLOB), PBYTE(&pubexp), _Header.cbPublicExp);
+
+                memcpy(this, &_Header, sizeof(_Header));
+                return (_BCRYPT_RSAPUBLIC_BLOB*)this;
+            }
+        };
+
         struct BCryptHash;
         struct BCryptAlgorithm;
         struct BCryptKey;
@@ -335,6 +626,15 @@ namespace YY::Thunks
                 _In_reads_bytes_(_cbInput)                PUCHAR   _pInput,
                 _In_                                ULONG   _cbInput,
                 _In_                                ULONG   _fFlags
+                )
+            {
+                return STATUS_NOT_SUPPORTED;
+            }
+            
+            virtual NTSTATUS WINAPI GenerateKeyPair(
+                _Out_   BCryptKey** _ppKey,
+                _In_    ULONG _uBitLength,
+                _In_    ULONG _fFlags
                 )
             {
                 return STATUS_NOT_SUPPORTED;
@@ -1238,7 +1538,7 @@ namespace YY::Thunks
                 }
             }
 
-            NTSTATUS WINAPI ExportKey(
+            virtual NTSTATUS WINAPI ExportKey(
                 _In_opt_                                    BCryptKey*   _pExportKey,
                 _In_z_                                      LPCWSTR _szBlobType,
                 _Out_writes_bytes_to_opt_(_cbOutput, *_pcbResult) PUCHAR   _pOutput,
@@ -1574,7 +1874,201 @@ namespace YY::Thunks
         
         struct BCryptRC4Algorithm : public BCryptKeyAlgorithm<BCryptRC4Algorithm, BCryptKey, 0, 1>
         {
+        };
 
+        struct BCryptKeyPair : public BCryptKey
+        {
+            BCryptKeyPair(_In_ BCryptAlgorithm* _pAlgorithm)
+                : BCryptKey(_pAlgorithm)
+            {
+            }
+            
+            NTSTATUS WINAPI New(
+                _In_    ULONG _uBitLength,
+                _In_    ULONG _fFlags)
+            {
+                dwFlags = _fFlags;
+                ALG_ID _AlgId;
+                DWORD _fGenKeyFlags = CRYPT_EXPORTABLE;
+
+                if (pAlgorithm->pMapItem->uAlgId == CALG_RSA_KEYX)
+                {
+                    _AlgId = AT_KEYEXCHANGE;
+
+                    // https://learn.microsoft.com/zh-cn/windows/win32/api/bcrypt/nf-bcrypt-bcryptgeneratekeypair
+                    // 微软文档说明，只能是 512 ~ 16'384位 并且是64的倍数
+                    if (_uBitLength < 512 || _uBitLength > 16'384 || (_uBitLength & (64 -1)))
+                    {
+                        return STATUS_INVALID_PARAMETER;
+                    }
+
+                    _fGenKeyFlags |= (_uBitLength << 16);
+                }
+                //else if (pAlgorithm->pMapItem->uAlgId == CALG_RSA_SIGN)
+                //{
+                //    _AlgId = AT_SIGNATURE;
+
+                //    // https://learn.microsoft.com/zh-cn/windows/win32/api/bcrypt/nf-bcrypt-bcryptgeneratekeypair
+                //    // 微软文档说明，只能是 512 ~ 16'384位 并且是64的倍数
+                //    if (_uBitLength < 512 || _uBitLength > 16'384 || (_uBitLength & (64 - 1)))
+                //    {
+                //        return STATUS_INVALID_PARAMETER;
+                //    }
+
+                //    _fGenKeyFlags |= (_uBitLength << 16);
+                //}
+                else
+                {
+                    return STATUS_NOT_SUPPORTED;
+                }
+                
+                auto _bResult = CryptGenKey(pAlgorithm->hProv, _AlgId, _fGenKeyFlags, &hKey);
+
+                if (!_bResult)
+                {
+                    return STATUS_INVALID_PARAMETER;
+                }
+
+                return STATUS_SUCCESS;
+            }
+
+            NTSTATUS WINAPI ExportKey(
+                _In_opt_                                    BCryptKey* _pExportKey,
+                _In_z_                                      LPCWSTR _szBlobType,
+                _Out_writes_bytes_to_opt_(_cbOutput, *_pcbResult) PUCHAR _pOutput,
+                _In_                                        ULONG   _cbOutput,
+                _Out_                                       ULONG*  _pcbResult,
+                _In_                                        ULONG   _fFlags
+                ) override
+            {
+                const HCRYPTKEY _hExpKey = _pExportKey ? _pExportKey->hKey : NULL;
+
+                if (StringCompareIgnoreCaseByAscii(BCRYPT_RSAFULLPRIVATE_BLOB, _szBlobType, -1) == 0)
+                {
+                    DWORD _cbResult = _cbOutput;
+                    if (!CryptExportKey(hKey, _hExpKey, PRIVATEKEYBLOB, 0, (BYTE*)_pOutput, &_cbResult))
+                    {
+                        return BCryptAlgorithm::CryptoErrorToNTStatus(GetLastError());
+                    }
+
+                    if (!_pOutput)
+                    {
+                        // _BCRYPT_RSAFULLPRIVATE_BLOB 比 _PRIVATEKEYBLOB最多多8个字节
+                        *_pcbResult = _cbResult + 8;
+                        return STATUS_SUCCESS;
+                    }
+                    *_pcbResult = _cbOutput;
+                    // _BCRYPT_RSAPRIVATE_BLOB 大小必定小于 _PRIVATEKEYBLOB，所以转换必然成功。
+                    if (!((_PRIVATEKEYBLOB*)_pOutput)->To<_BCRYPT_RSAFULLPRIVATE_BLOB>(_pcbResult))
+                    {
+                        return STATUS_BUFFER_TOO_SMALL;
+                    }
+
+                    return STATUS_SUCCESS;
+                }
+                else if (StringCompareIgnoreCaseByAscii(BCRYPT_RSAPRIVATE_BLOB, _szBlobType, -1) == 0)
+                {
+                    if (!CryptExportKey(hKey, _hExpKey, PRIVATEKEYBLOB, 0, (BYTE*)_pOutput, &_cbOutput))
+                    {
+                        return BCryptAlgorithm::CryptoErrorToNTStatus(GetLastError());
+                    }
+
+                    *_pcbResult = _cbOutput;
+                    if (!_pOutput)
+                    {
+                        return STATUS_SUCCESS;
+                    }
+
+                    // _BCRYPT_RSAPRIVATE_BLOB 大小必定小于 _PRIVATEKEYBLOB，所以转换必然成功。
+                    ((_PRIVATEKEYBLOB*)_pOutput)->To<_BCRYPT_RSAPRIVATE_BLOB>(_pcbResult);
+                    return STATUS_SUCCESS;
+                }
+                else if (StringCompareIgnoreCaseByAscii(BCRYPT_RSAPUBLIC_BLOB, _szBlobType, -1) == 0
+                    || StringCompareIgnoreCaseByAscii(BCRYPT_PUBLIC_KEY_BLOB, _szBlobType, -1) == 0)
+                {
+                    DWORD _cbResult = _cbOutput;
+                    if (!CryptExportKey(hKey, _hExpKey, PUBLICKEYBLOB, 0, (BYTE*)_pOutput, &_cbResult))
+                    {
+                        return BCryptAlgorithm::CryptoErrorToNTStatus(GetLastError());
+                    }
+
+                    if (!_pOutput)
+                    {
+                        //  比 _PUBLICKEYBLOB 最多大 8个字节
+                        *_pcbResult = _cbResult + 8;
+                        return STATUS_SUCCESS;
+                    }
+                    
+                    *_pcbResult = _cbOutput;
+                    if (!((_PUBLICKEYBLOB*)_pOutput)->To<_BCRYPT_RSAPUBLIC_BLOB>(_pcbResult))
+                    {
+                        return STATUS_BUFFER_TOO_SMALL;
+                    }
+
+                    return STATUS_SUCCESS;
+                }
+                else if (StringCompareIgnoreCaseByAscii(LEGACY_RSAPRIVATE_BLOB, _szBlobType, -1) == 0
+                    || StringCompareIgnoreCaseByAscii(BCRYPT_PRIVATE_KEY_BLOB, _szBlobType, -1) == 0)
+                {
+                    if (!CryptExportKey(hKey, _hExpKey, PRIVATEKEYBLOB, 0, (BYTE*)_pOutput, &_cbOutput))
+                    {
+                        return BCryptAlgorithm::CryptoErrorToNTStatus(GetLastError());
+                    }
+                    *_pcbResult = _cbOutput;
+                    return STATUS_SUCCESS;
+                }
+                else if (StringCompareIgnoreCaseByAscii(LEGACY_RSAPUBLIC_BLOB, _szBlobType, -1) == 0)
+                {
+                    if (!CryptExportKey(hKey, _hExpKey, PUBLICKEYBLOB, 0, (BYTE*)_pOutput, &_cbOutput))
+                    {
+                        return BCryptAlgorithm::CryptoErrorToNTStatus(GetLastError());
+                    }
+                    *_pcbResult = _cbOutput;
+                    return STATUS_SUCCESS;
+                }
+                else
+                {
+                    return STATUS_NOT_SUPPORTED;
+                }
+            }
+        };
+
+        struct BCryptRSAAlgorithm : public BCryptKeyAlgorithm<BCryptRSAAlgorithm, BCryptKeyPair, 0, 0>
+        {
+            NTSTATUS WINAPI GenerateSymmetricKey(
+                _Out_                               BCryptKey** _ppKey,
+                _Out_writes_bytes_all_opt_(_cbKeyObject)  PUCHAR   _pbKeyObject,
+                _In_                                ULONG   _cbKeyObject,
+                _In_reads_bytes_(_cbSecret)               PUCHAR   _pbSecret,
+                _In_                                ULONG   _cbSecret,
+                _In_                                ULONG   _fFlags) override
+            {
+                return STATUS_NOT_SUPPORTED;
+            }
+
+            NTSTATUS WINAPI GenerateKeyPair(
+                _Out_   BCryptKey** _ppKey,
+                _In_    ULONG _uBitLength,
+                _In_    ULONG _fFlags
+                ) override
+            {
+                *_ppKey = nullptr;
+                auto _pCryptPairKey = (BCryptKeyPair*)internal::Alloc(sizeof(BCryptKeyPair));
+                if (!_pCryptPairKey)
+                {
+                    return STATUS_NO_MEMORY;
+                }
+                new(_pCryptPairKey) BCryptKeyPair(this);
+
+                LONG _Status = _pCryptPairKey->New(_uBitLength, _fFlags);
+                if (_Status < 0)
+                {
+                    _pCryptPairKey->Release();
+                    return _Status;
+                }
+                *_ppKey = _pCryptPairKey;
+                return STATUS_SUCCESS;
+            }
         };
 
         template<typename TargrtObject>
@@ -1658,8 +2152,8 @@ namespace YY::Thunks
 
         static const BCryptMapItem g_Map[] =
         {
-            // { BCRYPT_RSA_ALGORITHM, nullptr, PROV_RSA_AES, CALG_RC4, &BCryptRSAAlgorithm::Create },
-            // BCRYPT_RSA_SIGN_ALGORITHM
+            { BCRYPT_RSA_ALGORITHM, nullptr, PROV_RSA_FULL, CALG_RSA_KEYX, &BCryptRSAAlgorithm::Create },
+            // { BCRYPT_RSA_SIGN_ALGORITHM, nullptr, PROV_RSA_FULL, CALG_RSA_SIGN, &BCryptRC4Algorithm::Create },
             // BCRYPT_DH_ALGORITHM
             // BCRYPT_DSA_ALGORITHM
             { BCRYPT_RC2_ALGORITHM, nullptr, PROV_RSA_AES, CALG_RC2, &BCryptRC2Algorithm::Create },
@@ -2479,6 +2973,60 @@ namespace YY::Thunks
             _pInput,
             _cbInput,
             _fFlags);
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+	__DEFINE_THUNK(
+	bcrypt,
+	16,
+	NTSTATUS,
+    WINAPI,
+    BCryptGenerateKeyPair,
+        _Inout_ BCRYPT_ALG_HANDLE _hAlgorithm,
+        _Out_   BCRYPT_KEY_HANDLE * _phKey,
+        _In_    ULONG _uBitLength,
+        _In_    ULONG _fFlags
+        )
+	{
+		if (const auto _pfnBCryptGenerateKeyPair = try_get_BCryptGenerateKeyPair())
+		{
+			return _pfnBCryptGenerateKeyPair(_hAlgorithm, _phKey, _uBitLength, _fFlags);
+		}
+
+        if (!Is<BCryptAlgorithm>(_hAlgorithm))
+            return STATUS_INVALID_HANDLE;
+
+        return reinterpret_cast<BCryptAlgorithm*>(_hAlgorithm)->GenerateKeyPair(reinterpret_cast<BCryptKey**>(_phKey), _uBitLength, _fFlags);
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+	__DEFINE_THUNK(
+	bcrypt,
+	8,
+	NTSTATUS,
+    WINAPI,
+    BCryptFinalizeKeyPair,
+        _Inout_ BCRYPT_KEY_HANDLE _hKey,
+        _In_    ULONG _fFlags
+        )
+	{
+		if (const auto _pfnBCryptFinalizeKeyPair = try_get_BCryptFinalizeKeyPair())
+		{
+			return _pfnBCryptFinalizeKeyPair(_hKey, _fFlags);
+		}
+        
+        __WarningMessage__("尚未完成！");
+        return S_OK;
     }
 #endif
 }
