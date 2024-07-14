@@ -3029,4 +3029,34 @@ namespace YY::Thunks
         return S_OK;
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+	__DEFINE_THUNK(
+	bcrypt,
+	8,
+	NTSTATUS,
+    WINAPI,
+    BCryptImportKeyPair,
+        _In_                            BCRYPT_ALG_HANDLE _hAlgorithm,
+        _In_opt_                        BCRYPT_KEY_HANDLE _hImportKey,
+        _In_z_                          LPCWSTR _szBlobType,
+        _Out_                           BCRYPT_KEY_HANDLE* _phKey,
+        _In_reads_bytes_(_cbInput)      PUCHAR  _pInput,
+        _In_                            ULONG   _cbInput,
+        _In_                            ULONG   _fFlags
+        )
+	{
+		if (const auto _pfnBCryptImportKeyPair = try_get_BCryptImportKeyPair())
+		{
+			return _pfnBCryptImportKeyPair(_hAlgorithm, _hImportKey, _szBlobType, _phKey, _pInput, _cbInput, _fFlags);
+		}
+        
+        __WarningMessage__("尚未完成！");
+        return S_OK;
+    }
+#endif
 }
