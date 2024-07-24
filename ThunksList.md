@@ -178,6 +178,7 @@
 | ----                                       | -----------
 | CryptProtectMemory                         | 不存在时，返回TRUE。
 | CryptUnprotectMemory                       | 不存在时，返回TRUE。
+| CryptBinaryToStringW(A)                    | 为Windows XP模拟 CRYPT_STRING_NOCRLF。
 
 ## d3d9.dll
 | 函数                                       | Fallback

@@ -27,12 +27,14 @@
 
 #include <SharedDefs.h>
 
+EXTERN_C DWORD g_uSystemVersion;
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 #define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)     \
     extern bool _CRT_CONCATENATE(aways_null_try_get_, _FUNCTION);                  \
-	EXTERN_C _RETURN_ _CONVENTION_ _FUNCTION(__VA_ARGS__);                         \
-	__if_not_exists(_FUNCTION)
+    EXTERN_C _RETURN_ _CONVENTION_ _FUNCTION(__VA_ARGS__);                         \
+    __if_not_exists(_FUNCTION)
 
 //#undef TEST_METHOD
 //
@@ -108,6 +110,13 @@ inline std::string ToHexString(const BYTE (&_Data)[kDataLength])
 {
     return ToHexString(_Data, kDataLength);
 }
+
+inline constexpr DWORD __fastcall MakeVersion(_In_ DWORD _uMajorVersion, _In_ DWORD _uMinorVersion)
+{
+    return (_uMajorVersion << 16) | _uMinorVersion;
+}
+
+std::string ReadFileData(LPCWSTR _szFilePath);
 
 namespace Microsoft::VisualStudio::CppUnitTestFramework
 {

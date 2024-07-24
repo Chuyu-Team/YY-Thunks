@@ -297,8 +297,16 @@ namespace YY::Thunks::internal
             return (_uMajorVersion << 16) | _uMinorVersion;
         }
 
+#ifdef __YY_Thunks_Unit_Test     
+        EXTERN_C DWORD g_uSystemVersion = 0;
+#endif
+
         __forceinline DWORD __fastcall GetSystemVersion()
         {
+#ifdef __YY_Thunks_Unit_Test
+            if (g_uSystemVersion)
+                return g_uSystemVersion;
+#endif
             const auto _pPeb = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock;
             return internal::MakeVersion(_pPeb->OSMajorVersion, _pPeb->OSMinorVersion);
         }
