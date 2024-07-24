@@ -56,7 +56,7 @@ namespace YY::Thunks
             Key,
         };
 
-        class BCryptObject
+        class BCryptObject : public internal::CppAlloc
         {
             static constexpr auto kBCryptObjectMagic = 0x998u;
 

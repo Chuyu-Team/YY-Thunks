@@ -9,7 +9,7 @@ namespace YY::Thunks::Fallback
     namespace
     {
 #if (YY_Thunks_Target < __WindowsNT10_10240)
-        class DWriteRenderingParams : public IDWriteRenderingParams3
+        class DWriteRenderingParams : public IDWriteRenderingParams3, public internal::CppAlloc
         {
         private:
             ULONG uRef = 1;
@@ -166,7 +166,7 @@ namespace YY::Thunks::Fallback
             }
         };
 
-        class DWriteFontCollection : public IDWriteFontCollection1
+        class DWriteFontCollection : public IDWriteFontCollection1, public internal::CppAlloc
         {
         private:
             ULONG uRef = 1;
@@ -340,7 +340,7 @@ namespace YY::Thunks::Fallback
             using IDWriteFontCollection::GetFontFamily;
         };
 
-        class DWriteFontFallback : public IDWriteFontFallback
+        class DWriteFontFallback : public IDWriteFontFallback, public internal::CppAlloc
         {
         private:
             ULONG uRef = 1;
@@ -446,7 +446,7 @@ namespace YY::Thunks::Fallback
             }
         };
 
-        class DWriteFactory : public IDWriteFactory3
+        class DWriteFactory : public IDWriteFactory3, public internal::CppAlloc
         {
         private:
             ULONG uRef = 1;
