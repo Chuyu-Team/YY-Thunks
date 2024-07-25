@@ -344,7 +344,7 @@ namespace YY::Thunks::Fallback
             static_assert(sizeof(TaskRunnerFlags) == sizeof(uint64_t));
 
         public:
-            TP_Pool(bool _bDefault = false)
+            constexpr TP_Pool(bool _bDefault = false)
                 : uRef(_bDefault ? UINT32_MAX : 1)
             {
             }

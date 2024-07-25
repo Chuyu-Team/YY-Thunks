@@ -437,7 +437,7 @@ namespace YY::Thunks::internal
             void* __CRTDECL operator new(
                 size_t _Size,
                 void* _Block
-                )
+                ) noexcept
             {
                 return _Block;
             }
@@ -486,6 +486,13 @@ namespace YY::Thunks::internal
                 ) noexcept
             {
                 Free(_Block);
+            }
+
+            void __CRTDECL operator delete(
+                void* _Block,
+                void*
+                ) noexcept
+            {
             }
         };
 
