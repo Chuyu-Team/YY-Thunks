@@ -77,7 +77,45 @@ ULONGLONG WINAPI GetTickCount64(VOID)
 > 温馨提示：如果需要兼容 Vista，【所需的最低版本】无需修改，但是【附加依赖项】请选择 
   `objs\$(PlatformShortName)\YY_Thunks_for_Vista.obj`。
 
+6. 如果您使用的是 **CMake**+MSVC 构建方式，需要添加以下代码，并分别设置 `YY_THUNKS_DIR` `YY_THUNKS_WIN_VERSION` `YY_THUNKS_WIN_VER_STR` 三个变量, 以指定路径和目标系统版本，请酌情修改：
+
+    ```cmake
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE) 	   # /MTd in Debug, /MT in Release
+    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:DebugDLL>" CACHE STRING "" FORCE) # /MDd in Debug, /MT in Release
+    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "" FORCE) # /MDd in Debug, /MD in Release (默认)
+    
+    
+    
+    #* yy-thunks (MSVC only)
+    set(YY_THUNKS_DIR "D:/3rdlibs/YY-Thunks")	#* yy-thunks (obj) 包 根目录
+    set(YY_THUNKS_WIN_VERSION "WinXP")	#* 用于匹配文件名, 可用值: `WinXP` `Vista` `Win7` `Win8` `Win10.0.10240` `Win10.0.19041`
+    set(YY_THUNKS_WIN_VER_STR "5.1")	#* Windows 子系统版本, 5.1:XP, 5.2:2003, 6.0:Vista, 6.1:Win7, 6.2:Win8, 6.3:Win8.1, 10.0:Win10/11, 留空则默认
+    set(YY_THUNKS_ARCH	"x64")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4) # 32 位
+    	set(YY_THUNKS_ARCH "x86")
+    endif()
+    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC") #* MSVC, 抢在系统库 lib 前挂入 yy-thunks 的 obj 文件
+    	set(YY_THUNKS_OBJ_NAME "${YY_THUNKS_DIR}/objs/${YY_THUNKS_ARCH}/YY_Thunks_for_${YY_THUNKS_WIN_VERSION}.obj") # 查找 obj 文件
+    	set(CMAKE_CXX_STANDARD_LIBRARIES "\"${YY_THUNKS_OBJ_NAME}\" ${CMAKE_CXX_STANDARD_LIBRARIES}")
+    	set(CMAKE_C_STANDARD_LIBRARIES   "\"${YY_THUNKS_OBJ_NAME}\" ${CMAKE_C_STANDARD_LIBRARIES}")
+    	if(YY_THUNKS_WIN_VER_STR)
+    		add_link_options("-SUBSYSTEM:$<IF:$<BOOL:${CMAKE_WIN32_EXECUTABLE}>,WINDOWS,CONSOLE>,${YY_THUNKS_WIN_VER_STR}")
+    	endif()
+    else()
+    	message(WARNING "yy-thunks obj files only support MSVC linker, this operation will be ignored...")
+    endif()
+    ```
+
+    **如需运行在 Windows XP 中, 需要在每个 DLL 项目中额外增加:** (将 `{PROJECT_NAME}` 更改为自己的 DLL target 名称)
+
+    ```cmake
+    target_link_options(${PROJECT_NAME} PRIVATE "/ENTRY:DllMainCRTStartupForYY_Thunks")
+    ```
+
+    
+
 #### 2.2.2. lib方式（适合LLD-Link链接器）
+
 > LLD-Link链接器无法使用obj方式，因为遇到重复符号会报告错误。
 
 1. 下载 [YY-Thunks-Lib](https://github.com/Chuyu-Team/YY-Thunks/releases)，

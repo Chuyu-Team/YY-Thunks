@@ -79,7 +79,45 @@ as NuGet is designed to be foolproof and easier to use.
 > Note: If your app needs to be compatible with Vista or later, please set `Additional Dependencies` to 
   `objs\$(PlatformShortName)\YY_Thunks_for_Vista.obj`。
 
+6. If you are using **CMake**+MSVC for building, following codes are needed. These 3 variables `YY_THUNKS_DIR` `YY_THUNKS_WIN_VERSION` `YY_THUNKS_WIN_VER_STR`  are needed for setting manually, to specify the path of yy-thunks and target OS version:
+
+    ```cmake
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE) 	   # /MTd in Debug, /MT in Release
+    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:DebugDLL>" CACHE STRING "" FORCE) # /MDd in Debug, /MT in Release
+    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "" FORCE) # /MDd in Debug, /MD in Release (默认)
+    
+    
+    
+    #* yy-thunks (MSVC only)
+    set(YY_THUNKS_DIR "D:/3rdlibs/YY-Thunks")	#* root path of yy-thunks (obj) released package
+    set(YY_THUNKS_WIN_VERSION "WinXP")	#* for matching filename, avaliable values: `WinXP` `Vista` `Win7` `Win8` `Win10.0.10240` `Win10.0.19041`
+    set(YY_THUNKS_WIN_VER_STR "5.1")	#* Windows subsystem version, 5.1:XP, 5.2:2003, 6.0:Vista, 6.1:Win7, 6.2:Win8, 6.3:Win8.1, 10.0:Win10/11, empty string for default
+    set(YY_THUNKS_ARCH	"x64")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4) # 32 bit
+    	set(YY_THUNKS_ARCH "x86")
+    endif()
+    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC") #* MSVC, link yy-thunks obj file before windows api linking (like kernbel32.lib)
+    	set(YY_THUNKS_OBJ_NAME "${YY_THUNKS_DIR}/objs/${YY_THUNKS_ARCH}/YY_Thunks_for_${YY_THUNKS_WIN_VERSION}.obj") # 查找 obj 文件
+    	set(CMAKE_CXX_STANDARD_LIBRARIES "\"${YY_THUNKS_OBJ_NAME}\" ${CMAKE_CXX_STANDARD_LIBRARIES}")
+    	set(CMAKE_C_STANDARD_LIBRARIES   "\"${YY_THUNKS_OBJ_NAME}\" ${CMAKE_C_STANDARD_LIBRARIES}")
+    	if(YY_THUNKS_WIN_VER_STR)
+    		add_link_options("-SUBSYSTEM:$<IF:$<BOOL:${CMAKE_WIN32_EXECUTABLE}>,WINDOWS,CONSOLE>,${YY_THUNKS_WIN_VER_STR}")
+    	endif()
+    else()
+    	message(WARNING "yy-thunks obj files only support MSVC linker, this operation will be ignored...")
+    endif()
+    ```
+
+    If you want to run the program in Windows XP, addition code is needed for each DLL shared lib targets. `{PROJECT_NAME}` should to be replaced to the name of your DLL target.
+
+    ```cmake
+    target_link_options(${PROJECT_NAME} PRIVATE "/ENTRY:DllMainCRTStartupForYY_Thunks")
+    ```
+
+    
+
 #### 2.2.2. using lib files (LLD-Link)
+
 > LLD-Link linkers using obj files will encounter duplicate symbol errors.
 
 1. Download and unzip [YY-Thunks-Lib](https://github.com/Chuyu-Team/YY-Thunks/releases) to project directory.
