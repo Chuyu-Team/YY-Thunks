@@ -10,6 +10,12 @@
     <PropertyGroup Condition="'$(RuntimeIdentifier)'=='win-x64' or '$(RuntimeIdentifier)'=='win-x86'">
       <YY_Thunks_File Condition="'$(YY_Thunks_File)' == '' and $([MSBuild]::VersionGreaterThanOrEquals($(TargetPlatformMinVersion), 10.0.19041.0))">YY_Thunks_for_Win10.0.19041.obj</YY_Thunks_File>
       <YY_Thunks_File Condition="'$(YY_Thunks_File)' == '' and $([MSBuild]::VersionGreaterThanOrEquals($(TargetPlatformMinVersion), 10.0))">YY_Thunks_for_Win10.0.10240.obj</YY_Thunks_File>
+      
+      <!--特意兼容下早期的Windows SDK版本规范-->
+      <YY_Thunks_File Condition="'$(YY_Thunks_File)' == '' and $([MSBuild]::VersionGreaterThanOrEquals($(TargetPlatformMinVersion), 8.0))">YY_Thunks_for_Win8.obj</YY_Thunks_File>
+      <YY_Thunks_File Condition="'$(YY_Thunks_File)' == '' and $([MSBuild]::VersionGreaterThanOrEquals($(TargetPlatformMinVersion), 7.0))">YY_Thunks_for_Win7.obj</YY_Thunks_File>
+      
+      <!--继续按系统版本划分-->
       <YY_Thunks_File Condition="'$(YY_Thunks_File)' == '' and $([MSBuild]::VersionGreaterThanOrEquals($(TargetPlatformMinVersion), 6.2))">YY_Thunks_for_Win8.obj</YY_Thunks_File>
       <YY_Thunks_File Condition="'$(YY_Thunks_File)' == '' and $([MSBuild]::VersionGreaterThanOrEquals($(TargetPlatformMinVersion), 6.1))">YY_Thunks_for_Win7.obj</YY_Thunks_File>
       <YY_Thunks_File Condition="'$(YY_Thunks_File)' == '' and $([MSBuild]::VersionGreaterThanOrEquals($(TargetPlatformMinVersion), 6.0))">YY_Thunks_for_Vista.obj</YY_Thunks_File>

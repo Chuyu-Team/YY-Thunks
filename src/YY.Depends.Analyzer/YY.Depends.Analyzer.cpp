@@ -1274,7 +1274,7 @@ bool IsInYY_Thunks(WORD _Machine, const AnalyzerProc& _ProcInfo)
                 }
 
                 // 过滤掉纯声明
-                if (Symbol.Type == IMAGE_SYM_TYPE_NULL && Symbol.SectionNumber == 0 && Symbol.StorageClass == IMAGE_SYM_CLASS_EXTERNAL)
+                if (Symbol.SectionNumber == 0 && Symbol.StorageClass == IMAGE_SYM_CLASS_EXTERNAL)
                     continue;
 
                 if (_szName.IsEmpty())

@@ -1,38 +1,38 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+﻿#if (YY_Thunks_Target < __WindowsNT6)
 #include <winevt.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_wevtapi)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_wevtapi)
 #define __Comment_Lib_wevtapi
 #pragma comment(lib, "wevtapi.lib")
 #endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps only]
     // Minimum supported server	Windows Server 2008[desktop apps only]
-	__DEFINE_THUNK(
+    __DEFINE_THUNK(
     wevtapi,
-	4,
+    4,
     BOOL,
     WINAPI,
     EvtClose,
         _In_ _Post_invalid_ EVT_HANDLE Object
-	    )
-	{
-		if (auto const _pfnEvtClose = try_get_EvtClose())
-		{
-			return _pfnEvtClose(Object);
-		}
+        )
+    {
+        if (auto const _pfnEvtClose = try_get_EvtClose())
+        {
+            return _pfnEvtClose(Object);
+        }
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps only]
     // Minimum supported server	Windows Server 2008[desktop apps only]
@@ -58,7 +58,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps only]
     // Minimum supported server	Windows Server 2008[desktop apps only]
@@ -87,7 +87,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps only]
     // Minimum supported server	Windows Server 2008[desktop apps only]
@@ -113,7 +113,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista [desktop apps only]
     // Minimum supported server	Windows Server 2008[desktop apps only]

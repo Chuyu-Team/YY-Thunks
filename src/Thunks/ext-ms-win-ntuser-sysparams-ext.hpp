@@ -1,8 +1,10 @@
-﻿#include <winuser.h>
+﻿#if (YY_Thunks_Target < __WindowsNT6)
+#include <winuser.h>
+#endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	在 Windows Vista 和更高版本的 Windows 操作系统中可用。
     __DEFINE_THUNK(
@@ -24,7 +26,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	在 Windows Vista 和更高版本的 Windows 操作系统中可用。
     __DEFINE_THUNK(
@@ -48,7 +50,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	在 Windows Vista 和更高版本的 Windows 操作系统中可用。
     __DEFINE_THUNK(

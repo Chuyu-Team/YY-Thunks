@@ -1,26 +1,28 @@
-﻿#include <shellapi.h>
+﻿#if (YY_Thunks_Target < __WindowsNT6)
+#include <shellapi.h>
+#endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
-	// 最低受支持的客户端	Windows Vista [仅限桌面应用]
+    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2008 [仅限桌面应用]
-	__DEFINE_THUNK(
-	shell32,
-	12,
-	HRESULT,
-	STDAPICALLTYPE,
-	SHGetStockIconInfo,
+    __DEFINE_THUNK(
+    shell32,
+    12,
+    HRESULT,
+    STDAPICALLTYPE,
+    SHGetStockIconInfo,
         SHSTOCKICONID _eSiid,
         UINT _fFlags,
         _Inout_ SHSTOCKICONINFO* _pSii
         )
-	{
-		if (const auto _pfnSHGetStockIconInfo = try_get_SHGetStockIconInfo())
-		{
-			return _pfnSHGetStockIconInfo(_eSiid, _fFlags, _pSii);
-		}
+    {
+        if (const auto _pfnSHGetStockIconInfo = try_get_SHGetStockIconInfo())
+        {
+            return _pfnSHGetStockIconInfo(_eSiid, _fFlags, _pSii);
+        }
         
         if (_pSii == nullptr || _pSii->cbSize != sizeof(SHSTOCKICONINFO))
         {
@@ -255,6 +257,6 @@ namespace YY::Thunks
         }
 
         return S_OK;
-	}
+    }
 #endif
 }

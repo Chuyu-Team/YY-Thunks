@@ -1,10 +1,10 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+﻿#if (YY_Thunks_Target < __WindowsNT6_2)
 #include <bluetoothleapis.h>
 #endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
     __DEFINE_THUNK(
@@ -37,7 +37,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
     __DEFINE_THUNK(
@@ -67,7 +67,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
     __DEFINE_THUNK(
@@ -97,7 +97,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
     __DEFINE_THUNK(
@@ -126,7 +126,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
     __DEFINE_THUNK(
@@ -154,7 +154,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
     __DEFINE_THUNK(
@@ -180,7 +180,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
     __DEFINE_THUNK(
@@ -205,7 +205,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     // 最低受支持的客户端    Windows 8及更高版本的 Windows 中受支持。
     __DEFINE_THUNK(

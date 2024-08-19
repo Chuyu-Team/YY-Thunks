@@ -28,7 +28,7 @@ namespace YY
 		}
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
 		//Minimum supported client	Windows 7 [desktop apps only]
 		//Minimum supported server	Windows Server 2008 R2 [desktop apps only]
@@ -51,7 +51,7 @@ namespace YY
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
 		//Minimum supported client	Windows 7 [desktop apps only]
 		//Minimum supported server	Windows Server 2008 R2 [desktop apps only]
@@ -74,7 +74,7 @@ namespace YY
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
 		//Minimum supported client	Windows 7 [desktop apps only]
 		//Minimum supported server	Windows Server 2008 R2 [desktop apps only]
@@ -98,7 +98,7 @@ namespace YY
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
 		//Minimum supported client	Windows 7 [desktop apps only]
 		//Minimum supported server	Windows Server 2008 R2 [desktop apps only]

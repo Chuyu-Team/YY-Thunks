@@ -1,10 +1,10 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+﻿#if (YY_Thunks_Target < __WindowsNT6_1)
 #include <d3d11.h>
 #endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
     // Windows 7自带，Vista需要安装KB971644
     __DEFINE_THUNK(

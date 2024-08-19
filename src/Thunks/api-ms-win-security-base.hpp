@@ -1,26 +1,26 @@
 ﻿namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
     // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	advapi32,
-	20,
-	BOOL,
-	WINAPI,
-	AddMandatoryAce,
+    __DEFINE_THUNK(
+    advapi32,
+    20,
+    BOOL,
+    WINAPI,
+    AddMandatoryAce,
         _Inout_ PACL _pAcl,
         _In_ DWORD _uAceRevision,
         _In_ DWORD _fAceFlags,
         _In_ DWORD _uMandatoryPolicy,
         _In_ SID* _pLabelSid
         )
-	{
-		if (const auto _pfnAddMandatoryAce = try_get_AddMandatoryAce())
-		{
-			return _pfnAddMandatoryAce(_pAcl, _uAceRevision, _fAceFlags, _uMandatoryPolicy, _pLabelSid);
-		}
+    {
+        if (const auto _pfnAddMandatoryAce = try_get_AddMandatoryAce())
+        {
+            return _pfnAddMandatoryAce(_pAcl, _uAceRevision, _fAceFlags, _uMandatoryPolicy, _pLabelSid);
+        }
         
         // 参考 ntdll.RtlAddMandatoryAce 实现
 
@@ -31,17 +31,19 @@
             return FALSE;
         }
 
-        const auto _pfnRtlValidSid = try_get_RtlValidSid();
-        const auto _pfnRtlValidAcl = try_get_RtlValidAcl();
-        const auto _pfnRtlFirstFreeAce = try_get_RtlFirstFreeAce();
-        const auto _pfnRtlCopySid = try_get_RtlCopySid();
-        if (_pfnRtlValidSid == nullptr || _pfnRtlValidAcl == nullptr || _pfnRtlFirstFreeAce == nullptr || _pfnRtlCopySid == nullptr)
+#if !defined(__USING_NTDLL_LIB)
+        const auto RtlValidSid = try_get_RtlValidSid();
+        const auto RtlValidAcl = try_get_RtlValidAcl();
+        const auto RtlFirstFreeAce = try_get_RtlFirstFreeAce();
+        const auto RtlCopySid = try_get_RtlCopySid();
+        if (RtlValidSid == nullptr || RtlValidAcl == nullptr || RtlFirstFreeAce == nullptr || RtlCopySid == nullptr)
         {
             SetLastError(ERROR_FUNCTION_FAILED);
             return FALSE;
         }
+#endif
 
-        if (!_pfnRtlValidSid(_pLabelSid))
+        if (!RtlValidSid(_pLabelSid))
         {
             // internal::BaseSetLastNTError(0xC0000078);
             SetLastError(ERROR_INVALID_SID);
@@ -75,7 +77,7 @@
         }
 
         _SYSTEM_MANDATORY_LABEL_ACE* _pFirstFree = nullptr;
-        if (_pfnRtlValidAcl(_pAcl) == FALSE || _pfnRtlFirstFreeAce(_pAcl,(PVOID*)& _pFirstFree) == FALSE)
+        if (RtlValidAcl(_pAcl) == FALSE || RtlFirstFreeAce(_pAcl,(PVOID*)& _pFirstFree) == FALSE)
         {
             // internal::BaseSetLastNTError(0xC0000077);
             SetLastError(ERROR_INVALID_ACL);
@@ -94,11 +96,11 @@
         _pFirstFree->Header.AceFlags = (BYTE)_fAceFlags;
         _pFirstFree->Header.AceSize = _cbData;
         _pFirstFree->Mask = _uMandatoryPolicy;
-        _pfnRtlCopySid(sizeof(DWORD) * _pLabelSid->SubAuthorityCount + 8, &_pFirstFree->SidStart, _pLabelSid);
+        RtlCopySid(sizeof(DWORD) * _pLabelSid->SubAuthorityCount + 8, &_pFirstFree->SidStart, _pLabelSid);
         _pAcl->AceCount++;
         _pAcl->AclRevision = (BYTE)_uAceRevision;
 
         return TRUE;
-	}
+    }
 #endif
 } // namespace YY::Thunks

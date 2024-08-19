@@ -178,6 +178,7 @@
 | ----                                       | -----------
 | CryptProtectMemory                         | 不存在时，返回TRUE。
 | CryptUnprotectMemory                       | 不存在时，返回TRUE。
+| CryptBinaryToStringW(A)                    | 为Windows XP模拟 CRYPT_STRING_NOCRLF。
 
 ## d3d9.dll
 | 函数                                       | Fallback
@@ -221,7 +222,7 @@
 ## dwrite.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
-| DWriteCreateFactory                        | 不存在时，返回 `E_NOINTERFACE`。
+| DWriteCreateFactory                        | 不存在时，返回 `E_NOINTERFACE`。</br>此外NT6或者更高版本提供IDWriteFactory3模拟。
 
 ## dxgi.dll
 | 函数                                       | Fallback
@@ -610,9 +611,12 @@
 | 函数                                       | Fallback
 | ----                                       | -----------
 | PowerDeterminePlatformRole                 | 不存在时，返回PlatformRoleDesktop。
-| PowerDeterminePlatformRoleEx               | 不存在时，调用PlatformRoleDesktop。
+| PowerDeterminePlatformRoleEx               | 不存在时，调用PowerDeterminePlatformRole。
 | PowerRegisterSuspendResumeNotification     | 不存在时，使用窗口模拟。
 | PowerUnregisterSuspendResumeNotification   | 内部实现。
+| PowerGetActiveScheme                       | 不存在时，始终认为是平衡模式。
+| PowerReadACValue                           | 不存在时，读取注册表。（目前仅支持ConsoleLock）
+| PowerReadDCValue                           | 不存在时，读取注册表。（目前仅支持ConsoleLock）
 
 ## PropSys.dll
 | 函数                                       | Fallback
@@ -693,6 +697,7 @@
 | GetDpiForWindow                            | 不存在时，调用GetDpiForMonitor。
 | GetSystemMetricsForDpi                     | 不存在时，调用GetSystemMetrics。
 | AdjustWindowRectExForDpi                   | 不存在时，调用AdjustWindowRectEx。
+| SystemParametersInfoW(A)                   | SPI_GETNONCLIENTMETRICS修正。
 | SystemParametersInfoForDpi                 | 不存在时，调用SystemParametersInfoW。
 | RegisterSuspendResumeNotification          | 不存在时，使用窗口模拟。
 | UnregisterSuspendResumeNotification        | 不存在时，内部实现。

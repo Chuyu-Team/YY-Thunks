@@ -1,8 +1,10 @@
-﻿#include <dxgi.h>
+﻿#if (YY_Thunks_Target < __WindowsNT6_SP2)
+#include <dxgi.h>
+#endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6SP2)
+#if (YY_Thunks_Target < __WindowsNT6_SP2)
 
     __DEFINE_THUNK(
     dxgi,
@@ -26,7 +28,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Minimum supported client	Windows Vista
     // Minimum supported server	Windows Server 2008

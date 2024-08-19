@@ -1,22 +1,22 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+﻿#if (YY_Thunks_Target < __WindowsNT6)
 #include <setupapi.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6) && !defined(__Comment_Lib_setupapi)
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_setupapi)
 #define __Comment_Lib_setupapi
 #pragma comment(lib, "Setupapi.lib")
 #endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     //Available in Windows Vista and later versions of Windows.
     __DEFINE_THUNK(
     setupapi,
     32,
     _Success_(return)
-	BOOL,
+    BOOL,
     WINAPI,
     SetupDiGetDevicePropertyW,
         _In_         HDEVINFO         DeviceInfoSet,
@@ -83,10 +83,10 @@ namespace YY::Thunks
 
         return _bRet;
     }
-#endif //!YY_Thunks_Support_Version < NTDDI_WIN6
+#endif //!YY_Thunks_Target < __WindowsNT6
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Available in Windows Vista and later versions of Windows.
     __DEFINE_THUNK(
@@ -158,7 +158,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // Available in Windows Vista and later versions of Windows.
     __DEFINE_THUNK(
@@ -222,7 +222,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     //Available in Windows Vista and later versions of Windows.
     __DEFINE_THUNK(
@@ -287,7 +287,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     //Available in Windows Vista and later versions of Windows.
     __DEFINE_THUNK(
@@ -346,7 +346,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     //Available in Windows Vista and later versions of Windows.
     __DEFINE_THUNK(

@@ -90,6 +90,12 @@
     <ClCompile Include="api-ms-win-core-winrt-string.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
+    <ClCompile Include="User32.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
+    <ClCompile Include="Crypt32.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

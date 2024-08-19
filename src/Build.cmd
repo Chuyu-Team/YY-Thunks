@@ -26,7 +26,7 @@ goto:eof
 :BuildObj
 echo BuildObj %1 %2 %3
 
-cl /O1 /Os /Oi /GS- /std:c++17 /execution-charset:utf-8 /arch:IA32 /Z7 /MT /Fo"objs\\%Platform%\\%1" /Zl /c /D "NDEBUG" /D "YY_Thunks_Support_Version=%2" "%~dp0Thunks\YY_Thunks.cpp"
+cl /O1 /Os /Oi /GS- /std:c++17 /execution-charset:utf-8 /Zc:sizedDealloc- /Zc:tlsGuards- /Zc:alignedNew- /arch:IA32 /Z7 /MT /Fo"objs\\%Platform%\\%1" /Zl /c /D "NDEBUG" /D "YY_Thunks_Target=%2" "%~dp0Thunks\YY_Thunks.cpp"
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
 ::生成weak符号，一些非必须符号安排为weak可以避免链接失败
@@ -52,7 +52,7 @@ echo BuildLib %1 %2 %3
 
 md "Lib\\%1\\%Platform%"
 
-cl /O1 /Os /Oi /GS- /std:c++17 /execution-charset:utf-8 /arch:IA32 /Z7 /MT /Fo"Lib\\%1\\%Platform%\\YY_Thunks_for_%1.obj" /Zl /c /D "__APPLY_CHROMIUM_WORKAROUNDS" /D "__USING_NTDLL_LIB" /D "NDEBUG" /D "YY_Thunks_Support_Version=%2" /D "__FALLBACK_PREFIX=YY_Thunks_" "%~dp0Thunks\YY_Thunks.cpp"
+cl /O1 /Os /Oi /GS- /std:c++17 /execution-charset:utf-8 /Zc:sizedDealloc- /Zc:tlsGuards- /Zc:alignedNew- /arch:IA32 /Z7 /MT /Fo"Lib\\%1\\%Platform%\\YY_Thunks_for_%1.obj" /Zl /c /D "__APPLY_CHROMIUM_WORKAROUNDS" /D "__USING_NTDLL_LIB" /D "NDEBUG" /D "YY_Thunks_Target=%2" /D "__FALLBACK_PREFIX=YY_Thunks_" "%~dp0Thunks\YY_Thunks.cpp"
 
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
@@ -95,25 +95,25 @@ goto:eof
 
 :Buildx86
 set PointType=4
-call:BuildX 5.0.2195.0 YY_Thunks_for_Win2K.obj NTDDI_WIN2K PSAPI2Kernel32.def+esent.def
+call:BuildX 5.0.2195.0 YY_Thunks_for_Win2K.obj __WindowsNT5 PSAPI2Kernel32.def+esent.def
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 5.1.2600.0 YY_Thunks_for_WinXP.obj NTDDI_WINXP PSAPI2Kernel32.def+esent.def
+call:BuildX 5.1.2600.0 YY_Thunks_for_WinXP.obj __WindowsNT5_1 PSAPI2Kernel32.def+esent.def
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 6.0.6000.0 YY_Thunks_for_Vista.obj NTDDI_WIN6 PSAPI2Kernel32.def
+call:BuildX 6.0.6000.0 YY_Thunks_for_Vista.obj __WindowsNT6 PSAPI2Kernel32.def
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 6.1.7600.0 YY_Thunks_for_Win7.obj NTDDI_WIN7
+call:BuildX 6.1.7600.0 YY_Thunks_for_Win7.obj __WindowsNT6_1
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 6.2.9200.0 YY_Thunks_for_Win8.obj NTDDI_WIN8
+call:BuildX 6.2.9200.0 YY_Thunks_for_Win8.obj __WindowsNT6_2
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 10.0.10240.0 YY_Thunks_for_Win10.0.10240.obj NTDDI_WIN10
+call:BuildX 10.0.10240.0 YY_Thunks_for_Win10.0.10240.obj __WindowsNT10_10240
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 10.0.19041.0 YY_Thunks_for_Win10.0.19041.obj NTDDI_WIN10_VB
+call:BuildX 10.0.19041.0 YY_Thunks_for_Win10.0.19041.obj __WindowsNT10_19041
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
 goto:eof
@@ -121,46 +121,45 @@ goto:eof
 
 :Buildx64
 set PointType=8
-call:BuildX 5.2.3790.1180 YY_Thunks_for_WinXP.obj NTDDI_WS03SP1 PSAPI2Kernel32.def+esent.def
+call:BuildX 5.2.3790.1830 YY_Thunks_for_WinXP.obj __WindowsNT5_2_SP1 PSAPI2Kernel32.def+esent.def
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 6.0.6000.0 YY_Thunks_for_Vista.obj NTDDI_WIN6 PSAPI2Kernel32.def
+call:BuildX 6.0.6000.0 YY_Thunks_for_Vista.obj __WindowsNT6 PSAPI2Kernel32.def
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 6.1.7600.0 YY_Thunks_for_Win7.obj NTDDI_WIN7
+call:BuildX 6.1.7600.0 YY_Thunks_for_Win7.obj __WindowsNT6_1
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 6.2.9200.0 YY_Thunks_for_Win8.obj NTDDI_WIN8
+call:BuildX 6.2.9200.0 YY_Thunks_for_Win8.obj __WindowsNT6_2
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 10.0.10240.0 YY_Thunks_for_Win10.0.10240.obj NTDDI_WIN10
+call:BuildX 10.0.10240.0 YY_Thunks_for_Win10.0.10240.obj __WindowsNT10_10240
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 10.0.19041.0 YY_Thunks_for_Win10.0.19041.obj NTDDI_WIN10_VB
+call:BuildX 10.0.19041.0 YY_Thunks_for_Win10.0.19041.obj __WindowsNT10_19041
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
 goto:eof
 
 :Buildarm
 set PointType=4
-call:BuildX 6.2.9200.0 YY_Thunks_for_Win8.obj NTDDI_WIN8
+call:BuildX 6.2.9200.0 YY_Thunks_for_Win8.obj __WindowsNT6_2
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 10.0.10240.0 YY_Thunks_for_Win10.0.10240.obj NTDDI_WIN10
+call:BuildX 10.0.10240.0 YY_Thunks_for_Win10.0.10240.obj __WindowsNT10_10240
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 10.0.19041.0 YY_Thunks_for_Win10.0.19041.obj NTDDI_WIN10_VB
+call:BuildX 10.0.19041.0 YY_Thunks_for_Win10.0.19041.obj __WindowsNT10_19041
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
 goto:eof
 
 :Buildarm64
 set PointType=8
-; NTDDI_WIN10_RS3 = 16299
-call:BuildX 10.0.10240.0 YY_Thunks_for_Win10.0.10240.obj NTDDI_WIN10_RS3
+call:BuildX 10.0.10240.0 YY_Thunks_for_Win10.0.10240.obj __WindowsNT10_16299
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
-call:BuildX 10.0.19041.0 YY_Thunks_for_Win10.0.19041.obj NTDDI_WIN10_VB
+call:BuildX 10.0.19041.0 YY_Thunks_for_Win10.0.19041.obj __WindowsNT10_19041
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
 goto:eof

@@ -1,10 +1,10 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+﻿#if (YY_Thunks_Target < __WindowsNT10_10240)
 #include <lmjoin.h>
 #endif
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+#if (YY_Thunks_Target < __WindowsNT10_10240)
 
     // 最低受支持的客户端    Windows 10 [仅限桌面应用]
     // 最低受支持的服务器    Windows Server 2016[仅限桌面应用]
@@ -32,7 +32,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN10)
+#if (YY_Thunks_Target < __WindowsNT10_10240)
 
     // 最低受支持的客户端    Windows 10 [仅限桌面应用]
     // 最低受支持的服务器    Windows Server 2016[仅限桌面应用]

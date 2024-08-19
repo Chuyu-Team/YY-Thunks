@@ -9,7 +9,7 @@ namespace YY::Thunks
 {
     namespace
     {
-#if defined(YY_Thunks_Implemented) && YY_Thunks_Support_Version < NTDDI_WIN8
+#if defined(YY_Thunks_Implemented) && YY_Thunks_Target < __WindowsNT6_2
         struct GetAddrInfoExParameter
         {
             // Parameter 的引用计数，如果引用归 0 则释放内存。
@@ -392,7 +392,7 @@ namespace YY::Thunks
             return WSA_NOT_ENOUGH_MEMORY;
         }
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
         static INT WSAAPI GetAddrInfoExWDownlevel(
             _In_opt_    PCWSTR          _szName,
             _In_opt_    PCWSTR          _szServiceName,
@@ -431,7 +431,7 @@ namespace YY::Thunks
 
             PADDRINFOEXW _pResultEx = nullptr;
 
-#if (YY_Thunks_Support_Version < NTDDI_WINXPSP2)
+#if (YY_Thunks_Target < __WindowsNT5_1_SP2)
             auto const GetAddrInfoW = try_get_GetAddrInfoW();
             if (!GetAddrInfoW)
             {
@@ -456,7 +456,7 @@ namespace YY::Thunks
                 ::freeaddrinfo(_pResultA);
                 return _lStatus;
             }
-#endif // ! (YY_Thunks_Support_Version < NTDDI_WINXPSP2)
+#endif // ! (YY_Thunks_Target < __WindowsNT5_1_SP2)
 
             PADDRINFOW _pResult = nullptr;
             auto _lStatus = GetAddrInfoW(_szName, _szServiceName, _pHintsEx ? &_Hints : nullptr, &_pResult);
@@ -467,10 +467,10 @@ namespace YY::Thunks
             ::FreeAddrInfoW(_pResult);
             return _lStatus;
         }
-#endif // ! (YY_Thunks_Support_Version < NTDDI_WIN6)
+#endif // ! (YY_Thunks_Target < __WindowsNT6)
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
         static INT WSAAPI GetAddrInfoExADownlevel(
             _In_opt_    PCSTR           _szName,
             _In_opt_    PCSTR           _szServiceName,
@@ -520,963 +520,967 @@ namespace YY::Thunks
             ::freeaddrinfo(_pResultA);
             return _lStatus;
         }
-#endif // ! (YY_Thunks_Support_Version < NTDDI_WIN6)
+#endif // ! (YY_Thunks_Target < __WindowsNT6)
 
 
-#endif // ! defined(YY_Thunks_Implemented) && YY_Thunks_Support_Version < NTDDI_WIN8
+#endif // ! defined(YY_Thunks_Implemented) && YY_Thunks_Target < __WindowsNT6_2
     }
-
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
-
-	//Windows 8.1, Windows Vista [desktop apps | UWP apps]
-	//Windows Server 2008 [desktop apps | UWP apps]
-	__DEFINE_THUNK(
-	ws2_32,
-	12,
-	INT,
-	WINAPI,
-	inet_pton,
-		_In_                                      INT             Family,
-		_In_                                      PCSTR           pszAddrString,
-		_When_(Family == AF_INET, _Out_writes_bytes_(sizeof(IN_ADDR)))
-		_When_(Family == AF_INET6, _Out_writes_bytes_(sizeof(IN6_ADDR)))
-													PVOID           pAddrBuf
-		)
-	{
-		if (auto pinet_pton = try_get_inet_pton())
-		{
-			return pinet_pton(Family, pszAddrString, pAddrBuf);
-		}
-
-		typedef char Char;
-
-		if (nullptr == pszAddrString || nullptr == pAddrBuf)
-		{
-			WSASetLastError(WSAEFAULT);
-			return -1;
-		}
-
-		if (AF_INET == Family)
-		{
-			//IPv4
-			UCHAR IPAddress[4] = {};
-
-			unsigned i = 0;
-			for (; i != _countof(IPAddress); )
-			{
-				auto& IPNum = IPAddress[i++];
-
-				auto Start = pszAddrString;
-				for (; *Start && *Start != Char('.'); ++Start)
-				{
-					auto& Ch = *Start;
-
-					//必须是0~9数字
-					if (Ch >= Char('0') && Ch <= Char('9'))
-					{
-						auto NewNum = IPNum * 10ul + (Ch & 0x0Ful);
-						if (NewNum > 0xFF)
-						{
-							//不能大于255
-							return 0;
-						}
-
-						IPNum = (UCHAR)NewNum;
-					}
-					else
-					{
-						return 0;
-					}
-				}
-
-				//
-				if (Start == pszAddrString)
-					return 0;
-
-				pszAddrString = Start;
-
-				if (*pszAddrString == Char('\0'))
-					break;
-				else
-					++pszAddrString;
-			}
-
-			//未正常截断
-			if (i != _countof(IPAddress) || *pszAddrString != Char('\0'))
-				return 0;
+}
 
 
-			((IN_ADDR *)pAddrBuf)->S_un.S_addr = *(ULONG*)IPAddress;
+namespace YY::Thunks
+{
+#if (YY_Thunks_Target < __WindowsNT6)
 
-			return 1;
-		}
-		else if (AF_INET6 == Family)
-		{
-			//IPv6
+    //Windows 8.1, Windows Vista [desktop apps | UWP apps]
+    //Windows Server 2008 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    ws2_32,
+    12,
+    INT,
+    WINAPI,
+    inet_pton,
+        _In_                                      INT             Family,
+        _In_                                      PCSTR           pszAddrString,
+        _When_(Family == AF_INET, _Out_writes_bytes_(sizeof(IN_ADDR)))
+        _When_(Family == AF_INET6, _Out_writes_bytes_(sizeof(IN6_ADDR)))
+                                                    PVOID           pAddrBuf
+        )
+    {
+        if (auto pinet_pton = try_get_inet_pton())
+        {
+            return pinet_pton(Family, pszAddrString, pAddrBuf);
+        }
 
-			IN6_ADDR IPAddress;
+        typedef char Char;
 
-			int i = 0;
-			int InsertIndex = -1;
+        if (nullptr == pszAddrString || nullptr == pAddrBuf)
+        {
+            WSASetLastError(WSAEFAULT);
+            return -1;
+        }
 
-			for (; i != _countof(IPAddress.u.Word) && *pszAddrString; )
-			{
-				if (pszAddrString[0] == Char(':') && pszAddrString[1] == Char(':'))
-				{
-					//缩进只能有一次
-					if (InsertIndex != -1)
-						return 0;
+        if (AF_INET == Family)
+        {
+            //IPv4
+            UCHAR IPAddress[4] = {};
 
+            unsigned i = 0;
+            for (; i != _countof(IPAddress); )
+            {
+                auto& IPNum = IPAddress[i++];
 
-					InsertIndex = i;
+                auto Start = pszAddrString;
+                for (; *Start && *Start != Char('.'); ++Start)
+                {
+                    auto& Ch = *Start;
 
-					pszAddrString += 2;
-					continue;
-				}
+                    //必须是0~9数字
+                    if (Ch >= Char('0') && Ch <= Char('9'))
+                    {
+                        auto NewNum = IPNum * 10ul + (Ch & 0x0Ful);
+                        if (NewNum > 0xFF)
+                        {
+                            //不能大于255
+                            return 0;
+                        }
 
-				auto& IPNum = IPAddress.u.Word[i++];
-				IPNum = 0;
+                        IPNum = (UCHAR)NewNum;
+                    }
+                    else
+                    {
+                        return 0;
+                    }
+                }
 
-				auto Start = pszAddrString;
-				for (; *Start && *Start != Char(':'); ++Start)
-				{
-					auto& Ch = *Start;
+                //
+                if (Start == pszAddrString)
+                    return 0;
 
+                pszAddrString = Start;
 
-					unsigned int NewNum;
+                if (*pszAddrString == Char('\0'))
+                    break;
+                else
+                    ++pszAddrString;
+            }
 
-					//0~9数字
-					if (Ch >= Char('0') && Ch <= Char('9'))
-					{
-						NewNum = Ch & 0x0Ful;
-					}
-					else if (Ch >= Char('a') && Ch <= Char('f'))
-					{
-						NewNum = Ch - Char('a') + 10;
-					}
-					else if (Ch >= Char('A') && Ch <= Char('F'))
-					{
-						NewNum = Ch - Char('A') + 10;
-					}
-					else
-					{
-						//无法识别
-						return 0;
-					}
-
-					NewNum = ((unsigned int)IPNum << 4) | NewNum;
-
-					if (NewNum > 0xFFFF)
-					{
-						//不能大于255
-						return 0;
-					}
-
-					IPNum = NewNum;
-				}
-
-
-				//截断错误
-				if (Start == pszAddrString)
-				{
-					return 0;
-				}
-
-
-				IPNum = _byteswap_ushort(IPNum);
-
-				pszAddrString = Start;
-
-				if (*pszAddrString == Char('\0'))
-				{
-					break;
-				}
-				else if (pszAddrString[1] == Char(':'))
-				{
-				}
-				else
-				{
-					++pszAddrString;
-				}
-			}
+            //未正常截断
+            if (i != _countof(IPAddress) || *pszAddrString != Char('\0'))
+                return 0;
 
 
-			//未正常截断
-			if (*pszAddrString != Char('\0'))
-			{
-				return 0;
-			}
-			else if (i != _countof(IPAddress.u.Word) && InsertIndex == -1)
-			{
-				return 0;
-			}
-			else
-			{
-				if (InsertIndex == -1)
-				{
-					*(IN6_ADDR*)pAddrBuf = IPAddress;
-				}
-				else
-				{
-					//先复制头
+            ((IN_ADDR *)pAddrBuf)->S_un.S_addr = *(ULONG*)IPAddress;
 
-					auto j = 0u;
-					for (; j != InsertIndex; ++j)
-					{
-						((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[j];
-					}
+            return 1;
+        }
+        else if (AF_INET6 == Family)
+        {
+            //IPv6
 
-					//补充中间 0
-					for (const auto Count = _countof(IPAddress.u.Word) - i + j; j != Count; ++j)
-					{
-						((IN6_ADDR*)pAddrBuf)->u.Word[j] = 0;
-					}
+            IN6_ADDR IPAddress;
 
-					//复制小尾巴
-					for (; j != _countof(IPAddress.u.Word); ++j, ++InsertIndex)
-					{
-						((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[InsertIndex];
-					}
-				}
-				return 1;
-			}
-		}
-		else
-		{
-			WSASetLastError(WSAEAFNOSUPPORT);
-			return -1;
-		}
-	}
+            int i = 0;
+            int InsertIndex = -1;
+
+            for (; i != _countof(IPAddress.u.Word) && *pszAddrString; )
+            {
+                if (pszAddrString[0] == Char(':') && pszAddrString[1] == Char(':'))
+                {
+                    //缩进只能有一次
+                    if (InsertIndex != -1)
+                        return 0;
+
+
+                    InsertIndex = i;
+
+                    pszAddrString += 2;
+                    continue;
+                }
+
+                auto& IPNum = IPAddress.u.Word[i++];
+                IPNum = 0;
+
+                auto Start = pszAddrString;
+                for (; *Start && *Start != Char(':'); ++Start)
+                {
+                    auto& Ch = *Start;
+
+
+                    unsigned int NewNum;
+
+                    //0~9数字
+                    if (Ch >= Char('0') && Ch <= Char('9'))
+                    {
+                        NewNum = Ch & 0x0Ful;
+                    }
+                    else if (Ch >= Char('a') && Ch <= Char('f'))
+                    {
+                        NewNum = Ch - Char('a') + 10;
+                    }
+                    else if (Ch >= Char('A') && Ch <= Char('F'))
+                    {
+                        NewNum = Ch - Char('A') + 10;
+                    }
+                    else
+                    {
+                        //无法识别
+                        return 0;
+                    }
+
+                    NewNum = ((unsigned int)IPNum << 4) | NewNum;
+
+                    if (NewNum > 0xFFFF)
+                    {
+                        //不能大于255
+                        return 0;
+                    }
+
+                    IPNum = NewNum;
+                }
+
+
+                //截断错误
+                if (Start == pszAddrString)
+                {
+                    return 0;
+                }
+
+
+                IPNum = _byteswap_ushort(IPNum);
+
+                pszAddrString = Start;
+
+                if (*pszAddrString == Char('\0'))
+                {
+                    break;
+                }
+                else if (pszAddrString[1] == Char(':'))
+                {
+                }
+                else
+                {
+                    ++pszAddrString;
+                }
+            }
+
+
+            //未正常截断
+            if (*pszAddrString != Char('\0'))
+            {
+                return 0;
+            }
+            else if (i != _countof(IPAddress.u.Word) && InsertIndex == -1)
+            {
+                return 0;
+            }
+            else
+            {
+                if (InsertIndex == -1)
+                {
+                    *(IN6_ADDR*)pAddrBuf = IPAddress;
+                }
+                else
+                {
+                    //先复制头
+
+                    auto j = 0u;
+                    for (; j != InsertIndex; ++j)
+                    {
+                        ((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[j];
+                    }
+
+                    //补充中间 0
+                    for (const auto Count = _countof(IPAddress.u.Word) - i + j; j != Count; ++j)
+                    {
+                        ((IN6_ADDR*)pAddrBuf)->u.Word[j] = 0;
+                    }
+
+                    //复制小尾巴
+                    for (; j != _countof(IPAddress.u.Word); ++j, ++InsertIndex)
+                    {
+                        ((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[InsertIndex];
+                    }
+                }
+                return 1;
+            }
+        }
+        else
+        {
+            WSASetLastError(WSAEAFNOSUPPORT);
+            return -1;
+        }
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
-	//Windows 8.1, Windows Vista [desktop apps | UWP apps]
-	//Windows Server 2008 [desktop apps | UWP apps]
-	__DEFINE_THUNK(
-	ws2_32,
-	12,
-	INT,
-	WINAPI,
-	InetPtonW,
-		_In_                                      INT             Family,
-		_In_                                      PCWSTR          pszAddrString,
-		_When_(Family == AF_INET, _Out_writes_bytes_(sizeof(IN_ADDR)))
-		_When_(Family == AF_INET6, _Out_writes_bytes_(sizeof(IN6_ADDR)))
-													PVOID           pAddrBuf
-		)
-	{
-		if (auto pInetPtonW = try_get_InetPtonW())
-		{
-			return pInetPtonW(Family, pszAddrString, pAddrBuf);
-		}
+    //Windows 8.1, Windows Vista [desktop apps | UWP apps]
+    //Windows Server 2008 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    ws2_32,
+    12,
+    INT,
+    WINAPI,
+    InetPtonW,
+        _In_                                      INT             Family,
+        _In_                                      PCWSTR          pszAddrString,
+        _When_(Family == AF_INET, _Out_writes_bytes_(sizeof(IN_ADDR)))
+        _When_(Family == AF_INET6, _Out_writes_bytes_(sizeof(IN6_ADDR)))
+                                                    PVOID           pAddrBuf
+        )
+    {
+        if (auto pInetPtonW = try_get_InetPtonW())
+        {
+            return pInetPtonW(Family, pszAddrString, pAddrBuf);
+        }
 
-		typedef wchar_t Char;
+        typedef wchar_t Char;
 
-		if (nullptr == pszAddrString || nullptr == pAddrBuf)
-		{
-			WSASetLastError(WSAEFAULT);
-			return -1;
-		}
+        if (nullptr == pszAddrString || nullptr == pAddrBuf)
+        {
+            WSASetLastError(WSAEFAULT);
+            return -1;
+        }
 
-		if (AF_INET == Family)
-		{
-			//IPv4
-			UCHAR IPAddress[4] = {};
+        if (AF_INET == Family)
+        {
+            //IPv4
+            UCHAR IPAddress[4] = {};
 
-			unsigned i = 0;
-			for (; i != _countof(IPAddress); )
-			{
-				auto& IPNum = IPAddress[i++];
+            unsigned i = 0;
+            for (; i != _countof(IPAddress); )
+            {
+                auto& IPNum = IPAddress[i++];
 
-				auto Start = pszAddrString;
-				for (; *Start && *Start != Char('.'); ++Start)
-				{
-					auto& Ch = *Start;
+                auto Start = pszAddrString;
+                for (; *Start && *Start != Char('.'); ++Start)
+                {
+                    auto& Ch = *Start;
 
-					//必须是0~9数字
-					if (Ch >= Char('0') && Ch <= Char('9'))
-					{
-						auto NewNum = IPNum * 10ul + (Ch & 0x0Ful);
-						if (NewNum > 0xFF)
-						{
-							//不能大于255
-							return 0;
-						}
+                    //必须是0~9数字
+                    if (Ch >= Char('0') && Ch <= Char('9'))
+                    {
+                        auto NewNum = IPNum * 10ul + (Ch & 0x0Ful);
+                        if (NewNum > 0xFF)
+                        {
+                            //不能大于255
+                            return 0;
+                        }
 
-						IPNum = (UCHAR)NewNum;
-					}
-					else
-					{
-						return 0;
-					}
-				}
+                        IPNum = (UCHAR)NewNum;
+                    }
+                    else
+                    {
+                        return 0;
+                    }
+                }
 
-				//
-				if (Start == pszAddrString)
-					return 0;
+                //
+                if (Start == pszAddrString)
+                    return 0;
 
-				pszAddrString = Start;
+                pszAddrString = Start;
 
-				if (*pszAddrString == Char('\0'))
-					break;
-				else
-					++pszAddrString;
-			}
+                if (*pszAddrString == Char('\0'))
+                    break;
+                else
+                    ++pszAddrString;
+            }
 
-			//未正常截断
-			if (i != _countof(IPAddress) || *pszAddrString != Char('\0'))
-				return 0;
-
-
-			((IN_ADDR *)pAddrBuf)->S_un.S_addr = *(ULONG*)IPAddress;
-
-			return 1;
-		}
-		else if (AF_INET6 == Family)
-		{
-			//IPv6
-
-			IN6_ADDR IPAddress;
-
-			int i = 0;
-			int InsertIndex = -1;
-
-			for (; i != _countof(IPAddress.u.Word) && *pszAddrString; )
-			{
-				if (pszAddrString[0] == Char(':') && pszAddrString[1] == Char(':'))
-				{
-					//缩进只能有一次
-					if (InsertIndex != -1)
-						return 0;
+            //未正常截断
+            if (i != _countof(IPAddress) || *pszAddrString != Char('\0'))
+                return 0;
 
 
-					InsertIndex = i;
+            ((IN_ADDR *)pAddrBuf)->S_un.S_addr = *(ULONG*)IPAddress;
 
-					pszAddrString += 2;
-					continue;
-				}
+            return 1;
+        }
+        else if (AF_INET6 == Family)
+        {
+            //IPv6
 
-				auto& IPNum = IPAddress.u.Word[i++];
-				IPNum = 0;
+            IN6_ADDR IPAddress;
 
-				auto Start = pszAddrString;
-				for (; *Start && *Start != Char(':'); ++Start)
-				{
-					auto& Ch = *Start;
+            int i = 0;
+            int InsertIndex = -1;
 
-
-					unsigned int NewNum;
-
-					//0~9数字
-					if (Ch >= Char('0') && Ch <= Char('9'))
-					{
-						NewNum = Ch & 0x0Ful;
-					}
-					else if (Ch >= Char('a') && Ch <= Char('f'))
-					{
-						NewNum = Ch - Char('a') + 10;
-					}
-					else if (Ch >= Char('A') && Ch <= Char('F'))
-					{
-						NewNum = Ch - Char('A') + 10;
-					}
-					else
-					{
-						//无法识别
-						return 0;
-					}
-
-					NewNum = ((unsigned int)IPNum << 4) | NewNum;
-
-					if (NewNum > 0xFFFF)
-					{
-						//不能大于255
-						return 0;
-					}
-
-					IPNum = NewNum;
-				}
+            for (; i != _countof(IPAddress.u.Word) && *pszAddrString; )
+            {
+                if (pszAddrString[0] == Char(':') && pszAddrString[1] == Char(':'))
+                {
+                    //缩进只能有一次
+                    if (InsertIndex != -1)
+                        return 0;
 
 
-				//截断错误
-				if (Start == pszAddrString)
-				{
-					return 0;
-				}
+                    InsertIndex = i;
+
+                    pszAddrString += 2;
+                    continue;
+                }
+
+                auto& IPNum = IPAddress.u.Word[i++];
+                IPNum = 0;
+
+                auto Start = pszAddrString;
+                for (; *Start && *Start != Char(':'); ++Start)
+                {
+                    auto& Ch = *Start;
 
 
-				IPNum = _byteswap_ushort(IPNum);
+                    unsigned int NewNum;
 
-				pszAddrString = Start;
+                    //0~9数字
+                    if (Ch >= Char('0') && Ch <= Char('9'))
+                    {
+                        NewNum = Ch & 0x0Ful;
+                    }
+                    else if (Ch >= Char('a') && Ch <= Char('f'))
+                    {
+                        NewNum = Ch - Char('a') + 10;
+                    }
+                    else if (Ch >= Char('A') && Ch <= Char('F'))
+                    {
+                        NewNum = Ch - Char('A') + 10;
+                    }
+                    else
+                    {
+                        //无法识别
+                        return 0;
+                    }
 
-				if (*pszAddrString == Char('\0'))
-				{
-					break;
-				}
-				else if (pszAddrString[1] == Char(':'))
-				{
-				}
-				else
-				{
-					++pszAddrString;
-				}
-			}
+                    NewNum = ((unsigned int)IPNum << 4) | NewNum;
+
+                    if (NewNum > 0xFFFF)
+                    {
+                        //不能大于255
+                        return 0;
+                    }
+
+                    IPNum = NewNum;
+                }
 
 
-			//未正常截断
-			if (*pszAddrString != Char('\0'))
-			{
-				return 0;
-			}
-			else if (i != _countof(IPAddress.u.Word) && InsertIndex == -1)
-			{
-				return 0;
-			}
-			else
-			{
-				if (InsertIndex == -1)
-				{
-					*(IN6_ADDR*)pAddrBuf = IPAddress;
-				}
-				else
-				{
-					//先复制头
+                //截断错误
+                if (Start == pszAddrString)
+                {
+                    return 0;
+                }
 
-					auto j = 0u;
-					for (; j != InsertIndex; ++j)
-					{
-						((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[j];
-					}
 
-					//补充中间 0
-					for (const auto Count = _countof(IPAddress.u.Word) - i + j; j != Count; ++j)
-					{
-						((IN6_ADDR*)pAddrBuf)->u.Word[j] = 0;
-					}
+                IPNum = _byteswap_ushort(IPNum);
 
-					//复制小尾巴
-					for (; j != _countof(IPAddress.u.Word); ++j, ++InsertIndex)
-					{
-						((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[InsertIndex];
-					}
-				}
-				return 1;
-			}
-		}
-		else
-		{
-			WSASetLastError(WSAEAFNOSUPPORT);
-			return -1;
-		}
-	}
+                pszAddrString = Start;
+
+                if (*pszAddrString == Char('\0'))
+                {
+                    break;
+                }
+                else if (pszAddrString[1] == Char(':'))
+                {
+                }
+                else
+                {
+                    ++pszAddrString;
+                }
+            }
+
+
+            //未正常截断
+            if (*pszAddrString != Char('\0'))
+            {
+                return 0;
+            }
+            else if (i != _countof(IPAddress.u.Word) && InsertIndex == -1)
+            {
+                return 0;
+            }
+            else
+            {
+                if (InsertIndex == -1)
+                {
+                    *(IN6_ADDR*)pAddrBuf = IPAddress;
+                }
+                else
+                {
+                    //先复制头
+
+                    auto j = 0u;
+                    for (; j != InsertIndex; ++j)
+                    {
+                        ((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[j];
+                    }
+
+                    //补充中间 0
+                    for (const auto Count = _countof(IPAddress.u.Word) - i + j; j != Count; ++j)
+                    {
+                        ((IN6_ADDR*)pAddrBuf)->u.Word[j] = 0;
+                    }
+
+                    //复制小尾巴
+                    for (; j != _countof(IPAddress.u.Word); ++j, ++InsertIndex)
+                    {
+                        ((IN6_ADDR*)pAddrBuf)->u.Word[j] = IPAddress.u.Word[InsertIndex];
+                    }
+                }
+                return 1;
+            }
+        }
+        else
+        {
+            WSASetLastError(WSAEAFNOSUPPORT);
+            return -1;
+        }
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
-	//Windows 8.1, Windows Vista [desktop apps | UWP apps]
-	//Windows Server 2008 [desktop apps | UWP apps]
-	__DEFINE_THUNK(
-	ws2_32,
-	16,
-	PCSTR,
-	WINAPI,
-	inet_ntop,
-		_In_                                INT             Family,
-		_In_                                const VOID *    pAddr,
-		_Out_writes_(StringBufSize)         PSTR            pStringBuf,
-		_In_                                size_t          StringBufSize
-		)
-	{
-		if (auto pinet_ntop = try_get_inet_ntop())
-		{
-			return pinet_ntop(Family, pAddr, pStringBuf, StringBufSize);
-		}
+    //Windows 8.1, Windows Vista [desktop apps | UWP apps]
+    //Windows Server 2008 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    ws2_32,
+    16,
+    PCSTR,
+    WINAPI,
+    inet_ntop,
+        _In_                                INT             Family,
+        _In_                                const VOID *    pAddr,
+        _Out_writes_(StringBufSize)         PSTR            pStringBuf,
+        _In_                                size_t          StringBufSize
+        )
+    {
+        if (auto pinet_ntop = try_get_inet_ntop())
+        {
+            return pinet_ntop(Family, pAddr, pStringBuf, StringBufSize);
+        }
 
-		NTSTATUS WSAError = ERROR_SUCCESS;
+        NTSTATUS WSAError = ERROR_SUCCESS;
 
-		if (pAddr == nullptr || pStringBuf == nullptr)
-		{
-			WSAError = ERROR_INVALID_PARAMETER;
-		}
-		else
-		{
-			char BufferTemp[64];
-			auto szString = pStringBuf;
-			size_t cchString = 0;
+        if (pAddr == nullptr || pStringBuf == nullptr)
+        {
+            WSAError = ERROR_INVALID_PARAMETER;
+        }
+        else
+        {
+            char BufferTemp[64];
+            auto szString = pStringBuf;
+            size_t cchString = 0;
 
-			constexpr const char Hex[] = "0123456789abcdef";
-
-
-			if (AF_INET == Family)
-			{
-				//IPv4
-				if (StringBufSize < 16)
-				{
-					szString = BufferTemp;
-				}
-
-				auto& IPv4 = *((unsigned char(*)[4])pAddr);
-
-				for (int i = 0; i != _countof(IPv4); ++i)
-				{
-					auto Num = IPv4[i];
-					if (Num < 10)
-					{
-						//1 位
-						szString[cchString++] = Hex[Num];
-					}
-					else if (Num < 100)
-					{
-						//2 位
-						szString[cchString++] = Hex[Num / 10];
-						szString[cchString++] = Hex[Num % 10];
-					}
-					else
-					{
-						//3 位
-						szString[cchString++] = Hex[Num / 100];
-						szString[cchString++] = Hex[(Num / 10) % 10];
-						szString[cchString++] = Hex[Num % 10];
-					}
-
-					szString[cchString++] = '.';
-				}
-
-				--cchString;
-			}
-			else if (AF_INET6 == Family)
-			{
-				//IPv6
-				if (StringBufSize < 46)
-				{
-					szString = BufferTemp;
-				}
-
-				auto& IPv6 = ((const IN6_ADDR*)pAddr)->u.Word;
-
-				int ZeroIndex = -1;
-				int ZeroCount = 1;
-
-				//统计 连续 0个数最多的情况
-				for (int i = 0; i != _countof(IPv6);)
-				{
-					auto j = i;
-
-					for (; j != _countof(IPv6) && IPv6[j] == 0; ++j);
-
-					auto Count = j - i;
-
-					if (Count)
-					{
-						if (Count > ZeroCount)
-						{
-							ZeroCount = Count;
-							ZeroIndex = i;
-						}
-
-						i = j;
-					}
-					else
-					{
-						++i;
-					}
-				}
+            constexpr const char Hex[] = "0123456789abcdef";
 
 
-				for (int i = 0; i != _countof(IPv6);)
-				{
-					if (ZeroIndex == i)
-					{
-						if (i == 0)
-						{
-							szString[cchString++] = ':';
-						}
+            if (AF_INET == Family)
+            {
+                //IPv4
+                if (StringBufSize < 16)
+                {
+                    szString = BufferTemp;
+                }
 
-						szString[cchString++] = ':';
-						i += ZeroCount;
-					}
-					else
-					{
-						auto Num = _byteswap_ushort(IPv6[i++]);
+                auto& IPv4 = *((unsigned char(*)[4])pAddr);
 
-						if (Num <= 0xF)
-						{
-							//1 位
-							szString[cchString++] = Hex[Num];
-						}
-						else if (Num <= 0xFF)
-						{
-							//2 位
-							szString[cchString++] = Hex[Num >> 4];
-							szString[cchString++] = Hex[Num & 0x0F];
-						}
-						else if (Num <= 0xFFF)
-						{
-							//3 位
-							szString[cchString++] = Hex[(Num >> 8)];
+                for (int i = 0; i != _countof(IPv4); ++i)
+                {
+                    auto Num = IPv4[i];
+                    if (Num < 10)
+                    {
+                        //1 位
+                        szString[cchString++] = Hex[Num];
+                    }
+                    else if (Num < 100)
+                    {
+                        //2 位
+                        szString[cchString++] = Hex[Num / 10];
+                        szString[cchString++] = Hex[Num % 10];
+                    }
+                    else
+                    {
+                        //3 位
+                        szString[cchString++] = Hex[Num / 100];
+                        szString[cchString++] = Hex[(Num / 10) % 10];
+                        szString[cchString++] = Hex[Num % 10];
+                    }
 
-							szString[cchString++] = Hex[(Num >> 4) & 0x0F];
-							szString[cchString++] = Hex[(Num >> 0) & 0x0F];
-						}
-						else
-						{
-							//4位
-							szString[cchString++] = Hex[(Num >> 12)];
-							szString[cchString++] = Hex[(Num >> 8) & 0x0F];
+                    szString[cchString++] = '.';
+                }
 
-							szString[cchString++] = Hex[(Num >> 4) & 0x0F];
-							szString[cchString++] = Hex[(Num >> 0) & 0x0F];
-						}
+                --cchString;
+            }
+            else if (AF_INET6 == Family)
+            {
+                //IPv6
+                if (StringBufSize < 46)
+                {
+                    szString = BufferTemp;
+                }
 
-						if (i != _countof(IPv6))
-							szString[cchString++] = ':';
-					}
-				}
-			}
-			else
-			{
-				WSAError = WSAEAFNOSUPPORT;
-			}
+                auto& IPv6 = ((const IN6_ADDR*)pAddr)->u.Word;
 
-			if (WSAError == ERROR_SUCCESS)
-			{
-				if (cchString >= StringBufSize)
-				{
-					WSAError = ERROR_INVALID_PARAMETER;
-				}
-				else
-				{
-					if (szString != BufferTemp)
-					{
-						//缓冲区不足
+                int ZeroIndex = -1;
+                int ZeroCount = 1;
 
-						memcpy(pStringBuf, szString, sizeof(szString[0]) * cchString);
-					}
+                //统计 连续 0个数最多的情况
+                for (int i = 0; i != _countof(IPv6);)
+                {
+                    auto j = i;
 
-					pStringBuf[cchString] = '\0';
+                    for (; j != _countof(IPv6) && IPv6[j] == 0; ++j);
 
-					return pStringBuf;
-				}
-			}
-		}
+                    auto Count = j - i;
+
+                    if (Count)
+                    {
+                        if (Count > ZeroCount)
+                        {
+                            ZeroCount = Count;
+                            ZeroIndex = i;
+                        }
+
+                        i = j;
+                    }
+                    else
+                    {
+                        ++i;
+                    }
+                }
 
 
-		WSASetLastError(WSAError);
-		return nullptr;
-	}
+                for (int i = 0; i != _countof(IPv6);)
+                {
+                    if (ZeroIndex == i)
+                    {
+                        if (i == 0)
+                        {
+                            szString[cchString++] = ':';
+                        }
+
+                        szString[cchString++] = ':';
+                        i += ZeroCount;
+                    }
+                    else
+                    {
+                        auto Num = _byteswap_ushort(IPv6[i++]);
+
+                        if (Num <= 0xF)
+                        {
+                            //1 位
+                            szString[cchString++] = Hex[Num];
+                        }
+                        else if (Num <= 0xFF)
+                        {
+                            //2 位
+                            szString[cchString++] = Hex[Num >> 4];
+                            szString[cchString++] = Hex[Num & 0x0F];
+                        }
+                        else if (Num <= 0xFFF)
+                        {
+                            //3 位
+                            szString[cchString++] = Hex[(Num >> 8)];
+
+                            szString[cchString++] = Hex[(Num >> 4) & 0x0F];
+                            szString[cchString++] = Hex[(Num >> 0) & 0x0F];
+                        }
+                        else
+                        {
+                            //4位
+                            szString[cchString++] = Hex[(Num >> 12)];
+                            szString[cchString++] = Hex[(Num >> 8) & 0x0F];
+
+                            szString[cchString++] = Hex[(Num >> 4) & 0x0F];
+                            szString[cchString++] = Hex[(Num >> 0) & 0x0F];
+                        }
+
+                        if (i != _countof(IPv6))
+                            szString[cchString++] = ':';
+                    }
+                }
+            }
+            else
+            {
+                WSAError = WSAEAFNOSUPPORT;
+            }
+
+            if (WSAError == ERROR_SUCCESS)
+            {
+                if (cchString >= StringBufSize)
+                {
+                    WSAError = ERROR_INVALID_PARAMETER;
+                }
+                else
+                {
+                    if (szString != BufferTemp)
+                    {
+                        //缓冲区不足
+
+                        memcpy(pStringBuf, szString, sizeof(szString[0]) * cchString);
+                    }
+
+                    pStringBuf[cchString] = '\0';
+
+                    return pStringBuf;
+                }
+            }
+        }
+
+
+        WSASetLastError(WSAError);
+        return nullptr;
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
-	//Windows 8.1, Windows Vista [desktop apps | UWP apps]
-	//Windows Server 2008 [desktop apps | UWP apps]
-	__DEFINE_THUNK(
-	ws2_32,
-	16,
-	PCWSTR,
-	WINAPI,
-	InetNtopW,
-		_In_                                INT             Family,
-		_In_                                const VOID *    pAddr,
-		_Out_writes_(StringBufSize)         PWSTR           pStringBuf,
-		_In_                                size_t          StringBufSize
-		)
-	{
-		if (auto pInetNtopW = try_get_InetNtopW())
-		{
-			return pInetNtopW(Family, pAddr, pStringBuf, StringBufSize);
-		}
+    //Windows 8.1, Windows Vista [desktop apps | UWP apps]
+    //Windows Server 2008 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    ws2_32,
+    16,
+    PCWSTR,
+    WINAPI,
+    InetNtopW,
+        _In_                                INT             Family,
+        _In_                                const VOID *    pAddr,
+        _Out_writes_(StringBufSize)         PWSTR           pStringBuf,
+        _In_                                size_t          StringBufSize
+        )
+    {
+        if (auto pInetNtopW = try_get_InetNtopW())
+        {
+            return pInetNtopW(Family, pAddr, pStringBuf, StringBufSize);
+        }
 
-		NTSTATUS WSAError = ERROR_SUCCESS;
+        NTSTATUS WSAError = ERROR_SUCCESS;
 
-		if (pAddr == nullptr || pStringBuf == nullptr)
-		{
-			WSAError = ERROR_INVALID_PARAMETER;
-		}
-		else
-		{
-			wchar_t BufferTemp[64];
-			auto szString = pStringBuf;
-			size_t cchString = 0;
+        if (pAddr == nullptr || pStringBuf == nullptr)
+        {
+            WSAError = ERROR_INVALID_PARAMETER;
+        }
+        else
+        {
+            wchar_t BufferTemp[64];
+            auto szString = pStringBuf;
+            size_t cchString = 0;
 
-			constexpr const char Hex[] = "0123456789abcdef";
-
-
-			if (AF_INET == Family)
-			{
-				//IPv4
-				if (StringBufSize < 16)
-				{
-					szString = BufferTemp;
-				}
-
-				auto& IPv4 = *((unsigned char(*)[4])pAddr);
-
-				for (int i = 0; i != _countof(IPv4); ++i)
-				{
-					auto Num = IPv4[i];
-					if (Num < 10)
-					{
-						//1 位
-						szString[cchString++] = Hex[Num];
-					}
-					else if (Num < 100)
-					{
-						//2 位
-						szString[cchString++] = Hex[Num / 10];
-						szString[cchString++] = Hex[Num % 10];
-					}
-					else
-					{
-						//3 位
-						szString[cchString++] = Hex[Num / 100];
-						szString[cchString++] = Hex[(Num / 10) % 10];
-						szString[cchString++] = Hex[Num % 10];
-					}
-
-					szString[cchString++] = '.';
-				}
-
-				--cchString;
-			}
-			else if (AF_INET6 == Family)
-			{
-				//IPv6
-				if (StringBufSize < 46)
-				{
-					szString = BufferTemp;
-				}
-
-				auto& IPv6 = ((const IN6_ADDR*)pAddr)->u.Word;
-
-				int ZeroIndex = -1;
-				int ZeroCount = 1;
-
-				//统计 连续 0个数最多的情况
-				for (int i = 0; i != _countof(IPv6);)
-				{
-					auto j = i;
-
-					for (; j != _countof(IPv6) && IPv6[j] == 0; ++j);
-
-					auto Count = j - i;
-
-					if (Count)
-					{
-						if (Count > ZeroCount)
-						{
-							ZeroCount = Count;
-							ZeroIndex = i;
-						}
-
-						i = j;
-					}
-					else
-					{
-						++i;
-					}
-				}
+            constexpr const char Hex[] = "0123456789abcdef";
 
 
-				for (int i = 0; i != _countof(IPv6);)
-				{
-					if (ZeroIndex == i)
-					{
-						if (i == 0)
-						{
-							szString[cchString++] = ':';
-						}
+            if (AF_INET == Family)
+            {
+                //IPv4
+                if (StringBufSize < 16)
+                {
+                    szString = BufferTemp;
+                }
 
-						szString[cchString++] = ':';
-						i += ZeroCount;
-					}
-					else
-					{
-						auto Num = _byteswap_ushort(IPv6[i++]);
+                auto& IPv4 = *((unsigned char(*)[4])pAddr);
 
-						if (Num <= 0xF)
-						{
-							//1 位
-							szString[cchString++] = Hex[Num];
-						}
-						else if (Num <= 0xFF)
-						{
-							//2 位
-							szString[cchString++] = Hex[Num >> 4];
-							szString[cchString++] = Hex[Num & 0x0F];
-						}
-						else if (Num <= 0xFFF)
-						{
-							//3 位
-							szString[cchString++] = Hex[(Num >> 8)];
+                for (int i = 0; i != _countof(IPv4); ++i)
+                {
+                    auto Num = IPv4[i];
+                    if (Num < 10)
+                    {
+                        //1 位
+                        szString[cchString++] = Hex[Num];
+                    }
+                    else if (Num < 100)
+                    {
+                        //2 位
+                        szString[cchString++] = Hex[Num / 10];
+                        szString[cchString++] = Hex[Num % 10];
+                    }
+                    else
+                    {
+                        //3 位
+                        szString[cchString++] = Hex[Num / 100];
+                        szString[cchString++] = Hex[(Num / 10) % 10];
+                        szString[cchString++] = Hex[Num % 10];
+                    }
 
-							szString[cchString++] = Hex[(Num >> 4) & 0x0F];
-							szString[cchString++] = Hex[(Num >> 0) & 0x0F];
-						}
-						else
-						{
-							//4位
-							szString[cchString++] = Hex[(Num >> 12)];
-							szString[cchString++] = Hex[(Num >> 8) & 0x0F];
+                    szString[cchString++] = '.';
+                }
 
-							szString[cchString++] = Hex[(Num >> 4) & 0x0F];
-							szString[cchString++] = Hex[(Num >> 0) & 0x0F];
-						}
+                --cchString;
+            }
+            else if (AF_INET6 == Family)
+            {
+                //IPv6
+                if (StringBufSize < 46)
+                {
+                    szString = BufferTemp;
+                }
 
-						if (i != _countof(IPv6))
-							szString[cchString++] = ':';
-					}
-				}
-			}
-			else
-			{
-				WSAError = WSAEAFNOSUPPORT;
-			}
+                auto& IPv6 = ((const IN6_ADDR*)pAddr)->u.Word;
 
-			if (WSAError == ERROR_SUCCESS)
-			{
-				if (cchString >= StringBufSize)
-				{
-					WSAError = ERROR_INVALID_PARAMETER;
-				}
-				else
-				{
-					if (szString != BufferTemp)
-					{
-						//缓冲区不足
+                int ZeroIndex = -1;
+                int ZeroCount = 1;
 
-						memcpy(pStringBuf, szString, sizeof(szString[0]) * cchString);
-					}
+                //统计 连续 0个数最多的情况
+                for (int i = 0; i != _countof(IPv6);)
+                {
+                    auto j = i;
 
-					pStringBuf[cchString] = '\0';
+                    for (; j != _countof(IPv6) && IPv6[j] == 0; ++j);
 
-					return pStringBuf;
-				}
-			}
-		}
+                    auto Count = j - i;
+
+                    if (Count)
+                    {
+                        if (Count > ZeroCount)
+                        {
+                            ZeroCount = Count;
+                            ZeroIndex = i;
+                        }
+
+                        i = j;
+                    }
+                    else
+                    {
+                        ++i;
+                    }
+                }
 
 
-		WSASetLastError(WSAError);
-		return nullptr;
-	}
+                for (int i = 0; i != _countof(IPv6);)
+                {
+                    if (ZeroIndex == i)
+                    {
+                        if (i == 0)
+                        {
+                            szString[cchString++] = ':';
+                        }
+
+                        szString[cchString++] = ':';
+                        i += ZeroCount;
+                    }
+                    else
+                    {
+                        auto Num = _byteswap_ushort(IPv6[i++]);
+
+                        if (Num <= 0xF)
+                        {
+                            //1 位
+                            szString[cchString++] = Hex[Num];
+                        }
+                        else if (Num <= 0xFF)
+                        {
+                            //2 位
+                            szString[cchString++] = Hex[Num >> 4];
+                            szString[cchString++] = Hex[Num & 0x0F];
+                        }
+                        else if (Num <= 0xFFF)
+                        {
+                            //3 位
+                            szString[cchString++] = Hex[(Num >> 8)];
+
+                            szString[cchString++] = Hex[(Num >> 4) & 0x0F];
+                            szString[cchString++] = Hex[(Num >> 0) & 0x0F];
+                        }
+                        else
+                        {
+                            //4位
+                            szString[cchString++] = Hex[(Num >> 12)];
+                            szString[cchString++] = Hex[(Num >> 8) & 0x0F];
+
+                            szString[cchString++] = Hex[(Num >> 4) & 0x0F];
+                            szString[cchString++] = Hex[(Num >> 0) & 0x0F];
+                        }
+
+                        if (i != _countof(IPv6))
+                            szString[cchString++] = ':';
+                    }
+                }
+            }
+            else
+            {
+                WSAError = WSAEAFNOSUPPORT;
+            }
+
+            if (WSAError == ERROR_SUCCESS)
+            {
+                if (cchString >= StringBufSize)
+                {
+                    WSAError = ERROR_INVALID_PARAMETER;
+                }
+                else
+                {
+                    if (szString != BufferTemp)
+                    {
+                        //缓冲区不足
+
+                        memcpy(pStringBuf, szString, sizeof(szString[0]) * cchString);
+                    }
+
+                    pStringBuf[cchString] = '\0';
+
+                    return pStringBuf;
+                }
+            }
+        }
+
+
+        WSASetLastError(WSAError);
+        return nullptr;
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
-	//Windows 8.1, Windows Vista [desktop apps | UWP apps]
-	//Windows Server 2008 [desktop apps | UWP apps]
-	//参考 https://blog.csdn.net/liangzhao_jay/article/details/53261684 实现
-	__DEFINE_THUNK(
-	ws2_32,
-	12,
-	int,
-	WSAAPI,
-	WSAPoll,
-		_Inout_ LPWSAPOLLFD fdArray,
-		_In_ ULONG fds,
-		_In_ INT timeout
-		)
-	{
-		if (auto const pWSAPoll = try_get_WSAPoll())
-		{
-			return pWSAPoll(fdArray, fds, timeout);
-		}
+    //Windows 8.1, Windows Vista [desktop apps | UWP apps]
+    //Windows Server 2008 [desktop apps | UWP apps]
+    //参考 https://blog.csdn.net/liangzhao_jay/article/details/53261684 实现
+    __DEFINE_THUNK(
+    ws2_32,
+    12,
+    int,
+    WSAAPI,
+    WSAPoll,
+        _Inout_ LPWSAPOLLFD fdArray,
+        _In_ ULONG fds,
+        _In_ INT timeout
+        )
+    {
+        if (auto const pWSAPoll = try_get_WSAPoll())
+        {
+            return pWSAPoll(fdArray, fds, timeout);
+        }
 
-		fd_set        readfds;
-		fd_set        writefds;
-		fd_set        exceptfds;
+        fd_set        readfds;
+        fd_set        writefds;
+        fd_set        exceptfds;
 
-		FD_ZERO(&readfds);
-		FD_ZERO(&writefds);
-		FD_ZERO(&exceptfds);
+        FD_ZERO(&readfds);
+        FD_ZERO(&writefds);
+        FD_ZERO(&exceptfds);
 
-		for (ULONG i = 0; i < fds; i++)
-		{
-			auto& fd = fdArray[i];
+        for (ULONG i = 0; i < fds; i++)
+        {
+            auto& fd = fdArray[i];
 
-			//Read (in) socket
-			if (fd.events & (POLLRDNORM | POLLRDBAND | POLLPRI))
-			{
-				FD_SET(fd.fd, &readfds);
-			}
+            //Read (in) socket
+            if (fd.events & (POLLRDNORM | POLLRDBAND | POLLPRI))
+            {
+                FD_SET(fd.fd, &readfds);
+            }
 
-			//Write (out) socket
-			if (fd.events & (POLLWRNORM | POLLWRBAND))
-			{
-				FD_SET(fd.fd, &writefds);
-			}
+            //Write (out) socket
+            if (fd.events & (POLLWRNORM | POLLWRBAND))
+            {
+                FD_SET(fd.fd, &writefds);
+            }
 
-			//异常
-			if (fd.events & (POLLERR | POLLHUP | POLLNVAL))
-			{
-				FD_SET(fd.fd, &exceptfds);
-			}
-		}
+            //异常
+            if (fd.events & (POLLERR | POLLHUP | POLLNVAL))
+            {
+                FD_SET(fd.fd, &exceptfds);
+            }
+        }
 
 
-		/*
-		timeout  < 0 ，无限等待
-		timeout == 0 ，马上回来
-		timeout  >0  ，最长等这个时间
-		*/
-		timeval* __ptimeout = nullptr;
+        /*
+        timeout  < 0 ，无限等待
+        timeout == 0 ，马上回来
+        timeout  >0  ，最长等这个时间
+        */
+        timeval* __ptimeout = nullptr;
 
-		timeval time_out;
+        timeval time_out;
 
-		if (timeout >= 0)
-		{
-			time_out.tv_sec = timeout / 1000;
-			time_out.tv_usec = (timeout % 1000) * 1000;
-			__ptimeout = &time_out;
-		}
+        if (timeout >= 0)
+        {
+            time_out.tv_sec = timeout / 1000;
+            time_out.tv_usec = (timeout % 1000) * 1000;
+            __ptimeout = &time_out;
+        }
 
-		const auto result = select(1, &readfds, &writefds, &exceptfds, __ptimeout);
+        const auto result = select(1, &readfds, &writefds, &exceptfds, __ptimeout);
 
-		if (result > 0)
-		{
-			for (ULONG i = 0; i < fds; i++)
-			{
-				auto& fd = fdArray[i];
+        if (result > 0)
+        {
+            for (ULONG i = 0; i < fds; i++)
+            {
+                auto& fd = fdArray[i];
 
-				fd.revents = 0;
-				if (FD_ISSET(fd.fd, &readfds))
-					fd.revents |= fd.events & (POLLRDNORM | POLLRDBAND | POLLPRI);
+                fd.revents = 0;
+                if (FD_ISSET(fd.fd, &readfds))
+                    fd.revents |= fd.events & (POLLRDNORM | POLLRDBAND | POLLPRI);
 
-				if (FD_ISSET(fd.fd, &writefds))
-					fd.revents |= fd.events & (POLLWRNORM | POLLWRBAND);
+                if (FD_ISSET(fd.fd, &writefds))
+                    fd.revents |= fd.events & (POLLWRNORM | POLLWRBAND);
 
-				if (FD_ISSET(fd.fd, &exceptfds))
-					fd.revents |= fd.events & (POLLERR | POLLHUP | POLLNVAL);
-			}
-		}
-	
-		return result;
-	}
+                if (FD_ISSET(fd.fd, &exceptfds))
+                    fd.revents |= fd.events & (POLLERR | POLLHUP | POLLNVAL);
+            }
+        }
+    
+        return result;
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
-	// 最低受支持的客户端	Windows 8.1、Windows 8 [桌面应用 |UWP 应用]
+    // 最低受支持的客户端	Windows 8.1、Windows 8 [桌面应用 |UWP 应用]
     // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	ws2_32,
-	4,
-	INT,
+    __DEFINE_THUNK(
+    ws2_32,
+    4,
+    INT,
     WSAAPI,
     GetAddrInfoExCancel,
         _In_ LPHANDLE _phHandle
         )
-	{
-		if (auto const _pfnGetAddrInfoExCancel = try_get_GetAddrInfoExCancel())
-		{
-			return _pfnGetAddrInfoExCancel(_phHandle);
-		}
+    {
+        if (auto const _pfnGetAddrInfoExCancel = try_get_GetAddrInfoExCancel())
+        {
+            return _pfnGetAddrInfoExCancel(_phHandle);
+        }
 
         if (!_phHandle)
             return WSA_INVALID_HANDLE;
@@ -1500,20 +1504,20 @@ namespace YY::Thunks
             _pParameter->Release();
             return ERROR_SUCCESS;
         }
-	}
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
     // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
     // Vista虽然有这个函数，但是不支持异步，所以也要修正。
 
-	__DEFINE_THUNK(
-	ws2_32,
-	40,
-	INT,
+    __DEFINE_THUNK(
+    ws2_32,
+    40,
+    INT,
     WSAAPI,
     GetAddrInfoExW,
         _In_opt_    PCWSTR          _szName,
@@ -1527,20 +1531,20 @@ namespace YY::Thunks
         _In_opt_    LPLOOKUPSERVICE_COMPLETION_ROUTINE  _pfnCompletionRoutine,
         _Out_opt_   LPHANDLE        _pHandle
         )
-	{
+    {
         auto _pfnGetAddrInfoExW = try_get_GetAddrInfoExW();
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
         // 正常情况下，Vista必定存在这个函数
         if (!_pfnGetAddrInfoExW)
             _pfnGetAddrInfoExW = &GetAddrInfoExWDownlevel;
-#endif // ! (YY_Thunks_Support_Version < NTDDI_WIN6)
+#endif // ! (YY_Thunks_Target < __WindowsNT6)
         const bool _bAsync = _pTimeout || _pOverlapped || _pfnCompletionRoutine || _pHandle;
-		if (_pfnGetAddrInfoExW && (_bAsync == false || try_get_GetAddrInfoExCancel()))
-		{
+        if (_pfnGetAddrInfoExW && (_bAsync == false || try_get_GetAddrInfoExCancel()))
+        {
             // 如果GetAddrInfoExCancel函数存在说明是Windows 8以上操作系统，这时已经原生支持异步。
             // 直接调用即可。
             return _pfnGetAddrInfoExW(_szName, _szServiceName, _uNameSpace, _pNspId, _pHints, _ppResult, _pTimeout, _pOverlapped, _pfnCompletionRoutine, _pHandle);
-		}
+        }
 
         if (_pHandle)
             *_pHandle = nullptr;
@@ -1622,7 +1626,7 @@ namespace YY::Thunks
                 do
                 {
                     auto _pfnGetAddrInfoExW = try_get_GetAddrInfoExW();
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
                     if (!_pfnGetAddrInfoExW)
                     {
                         _pfnGetAddrInfoExW = &GetAddrInfoExWDownlevel;
@@ -1659,19 +1663,19 @@ namespace YY::Thunks
             *_pHandle = _pParameter;
 
         return WSA_IO_PENDING;
-	}
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
-	// 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
     // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
     // Vista虽然有这个函数，但是不支持异步，所以也要修正。
-	__DEFINE_THUNK(
-	ws2_32,
-	40,
-	INT,
+    __DEFINE_THUNK(
+    ws2_32,
+    40,
+    INT,
     WSAAPI,
     GetAddrInfoExA,
         _In_opt_    PCSTR           _szName,
@@ -1685,21 +1689,21 @@ namespace YY::Thunks
         _In_opt_    LPLOOKUPSERVICE_COMPLETION_ROUTINE  _pfnCompletionRoutine,
         _Out_opt_   LPHANDLE        _pHandle
         )
-	{
+    {
         auto _pfnGetAddrInfoExA = try_get_GetAddrInfoExA();
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
         if (!_pfnGetAddrInfoExA)
             _pfnGetAddrInfoExA = &GetAddrInfoExADownlevel;
-#endif // ! (YY_Thunks_Support_Version < NTDDI_WIN6)
+#endif // ! (YY_Thunks_Target < __WindowsNT6)
 
         const bool _bAsync = _pTimeout || _pOverlapped || _pfnCompletionRoutine || _pHandle;
-		if (_pfnGetAddrInfoExA && (_bAsync == false || try_get_GetAddrInfoExCancel()))
-		{
+        if (_pfnGetAddrInfoExA && (_bAsync == false || try_get_GetAddrInfoExCancel()))
+        {
             // 如果GetAddrInfoExCancel函数存在说明是Windows 8以上操作系统，这时已经原生支持异步。
             // 直接调用即可。
             return _pfnGetAddrInfoExA(_szName, _szServiceName, _uNameSpace, _pNspId, _pHints, _ppResult, _pTimeout, _pOverlapped, _pfnCompletionRoutine, _pHandle);
-		}
+        }
 
         if (_pHandle)
             *_pHandle = nullptr;
@@ -1784,7 +1788,7 @@ namespace YY::Thunks
                 do
                 {
                     auto _pfnGetAddrInfoExA = try_get_GetAddrInfoExA();
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
                     if (!_pfnGetAddrInfoExA)
                     {
                         _pfnGetAddrInfoExA = &GetAddrInfoExADownlevel;
@@ -1821,49 +1825,49 @@ namespace YY::Thunks
             *_pHandle = _pParameter;
 
         return WSA_IO_PENDING;
-	}
+    }
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
-	// 最低受支持的客户端	Windows 8.1、Windows 8 [桌面应用 |UWP 应用]
+    // 最低受支持的客户端	Windows 8.1、Windows 8 [桌面应用 |UWP 应用]
     // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	ws2_32,
-	4,
-	INT,
+    __DEFINE_THUNK(
+    ws2_32,
+    4,
+    INT,
     WSAAPI,
     GetAddrInfoExOverlappedResult,
         _In_ LPOVERLAPPED _pOverlapped
         )
-	{
-		if (auto const _pfnGetAddrInfoExOverlappedResult = try_get_GetAddrInfoExOverlappedResult())
-		{
-			return _pfnGetAddrInfoExOverlappedResult(_pOverlapped);
-		}
+    {
+        if (auto const _pfnGetAddrInfoExOverlappedResult = try_get_GetAddrInfoExOverlappedResult())
+        {
+            return _pfnGetAddrInfoExOverlappedResult(_pOverlapped);
+        }
 
         return _pOverlapped ? static_cast<INT>(_pOverlapped->Internal) : WSAEINVAL;
-	}
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
-	// 最低受支持的客户端	Windows 8.1，Windows Vista [桌面应用 |UWP 应用]
+    // 最低受支持的客户端	Windows 8.1，Windows Vista [桌面应用 |UWP 应用]
     // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	ws2_32,
-	4,
-	void,
+    __DEFINE_THUNK(
+    ws2_32,
+    4,
+    void,
     WSAAPI,
     FreeAddrInfoExW,
         _In_opt_ PADDRINFOEXW _pAddrInfoEx
         )
-	{
-		if (auto const _pfnFreeAddrInfoExW = try_get_FreeAddrInfoExW())
-		{
-			return _pfnFreeAddrInfoExW(_pAddrInfoEx);
-		}
+    {
+        if (auto const _pfnFreeAddrInfoExW = try_get_FreeAddrInfoExW())
+        {
+            return _pfnFreeAddrInfoExW(_pAddrInfoEx);
+        }
             
         // 跟微软实现存在略微差异，微软的实现每一个成员都需要申请内存。
         // 而YY-Thunks为了优化性能，一块 _pAddrInfoEx的内存是一次内存申请。
@@ -1873,27 +1877,27 @@ namespace YY::Thunks
             internal::Free(_pAddrInfoEx);
             _pAddrInfoEx = _pNext;
         }
-	}
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
-	// 最低受支持的客户端	Windows 8.1，Windows Vista [桌面应用 |UWP 应用]
+    // 最低受支持的客户端	Windows 8.1，Windows Vista [桌面应用 |UWP 应用]
     // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	ws2_32,
-	4,
-	void,
+    __DEFINE_THUNK(
+    ws2_32,
+    4,
+    void,
     WSAAPI,
     FreeAddrInfoEx,
         _In_opt_ PADDRINFOEXA _pAddrInfoEx
         )
-	{
-		if (auto const _pfnFreeAddrInfoEx = try_get_FreeAddrInfoEx())
-		{
-			return _pfnFreeAddrInfoEx(_pAddrInfoEx);
-		}
+    {
+        if (auto const _pfnFreeAddrInfoEx = try_get_FreeAddrInfoEx())
+        {
+            return _pfnFreeAddrInfoEx(_pAddrInfoEx);
+        }
 
         // 跟微软实现存在略微差异，微软的实现每一个成员都需要申请内存。
         // 而YY-Thunks为了优化性能，一块 _pAddrInfoEx的内存是一次内存申请。
@@ -1903,18 +1907,18 @@ namespace YY::Thunks
             internal::Free(_pAddrInfoEx);
             _pAddrInfoEx = _pNext;
         }
-	}
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WINXPSP2)
+#if (YY_Thunks_Target < __WindowsNT5_1_SP2)
 
-	// 最低受支持的客户端	Windows XP SP2 [桌面应用 |UWP 应用]
+    // 最低受支持的客户端	Windows XP SP2 [桌面应用 |UWP 应用]
     // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	ws2_32,
-	16,
-	INT,
+    __DEFINE_THUNK(
+    ws2_32,
+    16,
+    INT,
     WSAAPI,
     GetAddrInfoW,
         _In_opt_ PCWSTR _szNodeName,
@@ -1922,11 +1926,11 @@ namespace YY::Thunks
         _In_opt_ const ADDRINFOW * _pHints,
         _Outptr_ PADDRINFOW * _ppResult
         )
-	{
-		if (auto const _pfnGetAddrInfoW = try_get_GetAddrInfoW())
-		{
-			return _pfnGetAddrInfoW(_szNodeName, _szServiceName, _pHints, _ppResult);
-		}
+    {
+        if (auto const _pfnGetAddrInfoW = try_get_GetAddrInfoW())
+        {
+            return _pfnGetAddrInfoW(_szNodeName, _szServiceName, _pHints, _ppResult);
+        }
             
         *_ppResult = nullptr;
         if (_pHints && (_pHints->ai_addrlen || _pHints->ai_canonname || _pHints->ai_addr || _pHints->ai_next))
@@ -1953,27 +1957,27 @@ namespace YY::Thunks
         _lStatus = Convert(_pResultA, _ppResult);
         freeaddrinfo(_pResultA);
         return _lStatus;
-	}
+    }
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WINXPSP2)
+#if (YY_Thunks_Target < __WindowsNT5_1_SP2)
 
     // 最低受支持的客户端	Windows XP SP2 [桌面应用 |UWP 应用]
     // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
-	__DEFINE_THUNK(
-	ws2_32,
-	4,
-	void,
+    __DEFINE_THUNK(
+    ws2_32,
+    4,
+    void,
     WSAAPI,
     FreeAddrInfoW,
         _In_opt_ PADDRINFOW _pAddrInfo
         )
-	{
-		if (auto const _pfnFreeAddrInfoW = try_get_FreeAddrInfoW())
-		{
-			return _pfnFreeAddrInfoW(_pAddrInfo);
-		}
+    {
+        if (auto const _pfnFreeAddrInfoW = try_get_FreeAddrInfoW())
+        {
+            return _pfnFreeAddrInfoW(_pAddrInfo);
+        }
             
         // 跟微软实现存在略微差异，微软的实现每一个成员都需要申请内存。
         // 而YY-Thunks为了优化性能，一块 _pAddrInfoEx的内存是一次内存申请。
@@ -1983,6 +1987,6 @@ namespace YY::Thunks
             internal::Free(_pAddrInfo);
             _pAddrInfo = _pNext;
         }
-	}
+    }
 #endif
 } //namespace YY

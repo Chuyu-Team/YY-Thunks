@@ -21,7 +21,7 @@ jobs:
           Invoke-WebRequest -Uri https://github.com/mingkuang-Chuyu/Visual_Studio_Platform_Toolset/releases/download/v1.0.2/Visual.Studio.2008.Platform.Toolset.v1.0.2.7z  -OutFile Bin\Visual.Studio.2008.Platform.Toolset.v1.0.2.7z
           &7z x Bin\Visual.Studio.2008.Platform.Toolset.v1.0.2.7z "-o$Env:GITHUB_WORKSPACE\Bin"
 
-          Invoke-WebRequest -Uri https://github.com/Chuyu-Team/LibMaker/releases/download/v1.0.3/LibMaker.exe -OutFile Bin\LibMaker.exe
+          Invoke-WebRequest -Uri https://github.com/Chuyu-Team/LibMaker/releases/download/v1.0.4/LibMaker.exe -OutFile Bin\LibMaker.exe
           Invoke-WebRequest -Uri https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.2.8/MinimumRequiredVersionHelper.exe -OutFile Bin\MinimumRequiredVersionHelper.exe
           
           $ProgramFiles = ${env:ProgramFiles(x86)}

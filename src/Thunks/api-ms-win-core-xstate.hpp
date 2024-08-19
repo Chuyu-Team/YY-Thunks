@@ -1,6 +1,6 @@
 ﻿namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
+#if (YY_Thunks_Target < __WindowsNT6_1_SP1)
 
     // 最低受支持的客户端	Windows 7 SP1[桌面应用 | UWP 应用]
     // 最低受支持的服务器	Windows Server 2008 R2 SP1[桌面应用 | UWP 应用]
@@ -36,7 +36,7 @@
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
+#if (YY_Thunks_Target < __WindowsNT6_1_SP1)
 
     // 最低受支持的客户端	Windows 7 SP1 [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2008 R2 SP1[仅限桌面应用]
@@ -69,7 +69,7 @@
 #endif
 
         
-#if (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
+#if (YY_Thunks_Target < __WindowsNT6_1_SP1)
 
     // 最低受支持的客户端	Windows 7 SP1 [桌面应用 |UWP 应用]
     // 最低受支持的服务器	Windows Server 2008 R2 SP1[桌面应用 | UWP 应用]
@@ -128,7 +128,7 @@
     }
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
+#if (YY_Thunks_Target < __WindowsNT6_1_SP1)
 
     // 最低受支持的客户端	Windows 7 SP1 [桌面应用 |UWP 应用]
     // 最低受支持的服务器	Windows Server 2008 R2 SP1[桌面应用 | UWP 应用]
@@ -173,7 +173,7 @@
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN10_FE)
+#if (YY_Thunks_Target < __WindowsNT10_20348)
 
     // 最低受支持的客户端	Windows 10内部版本 20348
     // 最低受支持的服务器	Windows 10内部版本 20348
@@ -200,7 +200,7 @@
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN6SP1)
+#if (YY_Thunks_Target < __WindowsNT6_1_SP1)
 
     // 最低受支持的客户端	Windows 7 SP1 [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2008 R2 SP1[仅限桌面应用]

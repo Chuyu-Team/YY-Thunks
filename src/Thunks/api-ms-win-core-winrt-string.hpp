@@ -1,19 +1,19 @@
-﻿#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+﻿#if (YY_Thunks_Target < __WindowsNT6_2)
 #include <winstring.h>
 
 #include <HStringPrivate.h>
 #endif
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8) && __YY_Thunks_libs && !defined(__Comment_Lib_runtimeobject)
+#if (YY_Thunks_Target < __WindowsNT6_2) && __YY_Thunks_libs && !defined(__Comment_Lib_runtimeobject)
 #define __Comment_Lib_runtimeobject
-// 193行 WindowsCreateString
+// WindowsCreateString
 #pragma comment(lib, "runtimeobject.lib")
 #endif
 
 namespace YY::Thunks
 {
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     //Windows 8 [desktop apps | UWP apps]
     //Windows Server 2012 [desktop apps | UWP apps]
@@ -50,7 +50,7 @@ namespace YY::Thunks
             return MEM_E_INVALID_SIZE;
         }
 
-        auto _pStringInternal = reinterpret_cast<internal::PSTRING_OPAQUE>(internal::Alloc(_cbRequiredSize, HEAP_ZERO_MEMORY));
+        auto _pStringInternal = reinterpret_cast<internal::PSTRING_OPAQUE>(internal::Alloc((size_t)_cbRequiredSize, HEAP_ZERO_MEMORY));
         if (!_pStringInternal)
         {
             return E_OUTOFMEMORY;
@@ -69,7 +69,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     //Windows 8 [desktop apps | UWP apps]
     //Windows Server 2012 [desktop apps | UWP apps]
@@ -121,7 +121,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     //Windows 8 [desktop apps | UWP apps]
     //Windows Server 2012 [desktop apps | UWP apps]
@@ -156,7 +156,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     //Windows 8 [desktop apps | UWP apps]
     //Windows Server 2012 [desktop apps | UWP apps]
@@ -197,7 +197,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     //Windows 8 [desktop apps | UWP apps]
     //Windows Server 2012 [desktop apps | UWP apps]
@@ -224,7 +224,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     //Windows 8 [desktop apps | UWP apps]
     //Windows Server 2012 [desktop apps | UWP apps]
@@ -264,7 +264,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     //Windows 8 [desktop apps | UWP apps]
     //Windows Server 2012 [desktop apps | UWP apps]
@@ -288,7 +288,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     //Windows 8 [desktop apps | UWP apps]
     //Windows Server 2012 [desktop apps | UWP apps]
@@ -343,7 +343,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN8)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     //Windows 8 [desktop apps | UWP apps]
     //Windows Server 2012 [desktop apps | UWP apps]

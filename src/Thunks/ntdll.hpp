@@ -1,6 +1,6 @@
 ﻿namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN6)
+#if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
     // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
@@ -34,19 +34,19 @@
 #endif
 
 
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
     // 最低受支持的客户端	在 Windows 7 和更高版本的 Windows 中可用。
     __DEFINE_THUNK(
     ntdll,
     16,
     NTSTATUS,
-	NTAPI,
-	NtOpenKeyEx,
-		__out PHANDLE _phKeyHandle,
-		__in ACCESS_MASK _fDesiredAccess,
-		__in POBJECT_ATTRIBUTES _pObjectAttributes,
-		__in ULONG _fOpenOptions
+    NTAPI,
+    NtOpenKeyEx,
+        __out PHANDLE _phKeyHandle,
+        __in ACCESS_MASK _fDesiredAccess,
+        __in POBJECT_ATTRIBUTES _pObjectAttributes,
+        __in ULONG _fOpenOptions
         )
     {
         if (const auto _pfnNtOpenKeyEx = try_get_NtOpenKeyEx())

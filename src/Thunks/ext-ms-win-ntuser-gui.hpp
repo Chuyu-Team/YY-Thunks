@@ -1,6 +1,6 @@
 ﻿namespace YY::Thunks
 {
-#if (YY_Thunks_Support_Version < NTDDI_WIN7)
+#if (YY_Thunks_Target < __WindowsNT6_1)
 
     // 最低受支持的客户端	Windows 7 [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
