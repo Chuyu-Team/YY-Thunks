@@ -502,4 +502,32 @@ namespace YY::Thunks
         return DEP_SYSTEM_POLICY_TYPE::DEPPolicyAlwaysOff;
     }
 #endif // (YY_Thunks_Target < __WindowsNT6_SP1)
+
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+    // https://learn.microsoft.com/en-us/windows/win32/api/appmodel/nf-appmodel-getcurrentpackagefullname
+    // 最低受支持的客户端	Windows 8  [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    kernel32,
+    8,
+    LONG,
+    WINAPI,
+    GetCurrentPackageFullName,
+        _Inout_ UINT32* packageFullNameLength,
+        _Out_writes_opt_(*packageFullNameLength) PWSTR packageFullName
+        )
+    {
+        if (const auto _pfnGetCurrentPackageFullName = try_get_GetCurrentPackageFullName())
+        {
+            return _pfnGetCurrentPackageFullName(packageFullNameLength, packageFullName);
+        }
+
+        return APPMODEL_ERROR_NO_PACKAGE;
+    }
+#endif // (YY_Thunks_Target < __WindowsNT6_SP1)
+
+
+
 }
