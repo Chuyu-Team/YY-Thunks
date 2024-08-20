@@ -248,6 +248,79 @@ namespace YY::Thunks
     }
 #endif
 
+#if (YY_Thunks_Target < __WindowsNT10_14393)
+    // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getawarenessfromdpiawarenesscontext
+    // Windows 10, version 1607 [desktop apps only]
+    __DEFINE_THUNK(
+    user32,
+    4,
+    DPI_AWARENESS,
+    WINAPI,
+    GetAwarenessFromDpiAwarenessContext,
+        _In_ DPI_AWARENESS_CONTEXT value
+        )
+    {
+        if (auto const pGetAwarenessFromDpiAwarenessContext = try_get_GetAwarenessFromDpiAwarenessContext())
+        {
+            return pGetAwarenessFromDpiAwarenessContext(value);
+        }
+        // from VxKex
+        if(value == DPI_AWARENESS_CONTEXT_UNAWARE || value == DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED){
+            return DPI_AWARENESS_UNAWARE;
+        }else if(value == DPI_AWARENESS_CONTEXT_SYSTEM_AWARE){
+            return DPI_AWARENESS_SYSTEM_AWARE;
+        }else if(value == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE || value == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2){
+            return DPI_AWARENESS_PER_MONITOR_AWARE;
+        }else{
+            return DPI_AWARENESS_INVALID;
+        }
+    }
+#endif
+
+#if (YY_Thunks_Target < __WindowsNT10_14393)
+    // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-aredpiawarenesscontextsequal
+    // Windows 10, version 1607 [desktop apps only]
+    __DEFINE_THUNK(
+    user32,
+    8,
+    BOOL,
+    WINAPI,
+    AreDpiAwarenessContextsEqual,
+        _In_	DPI_AWARENESS_CONTEXT	dpiContextA,
+	    _In_	DPI_AWARENESS_CONTEXT	dpiContextB
+        )
+    {
+        if (auto const pAreDpiAwarenessContextsEqual = try_get_AreDpiAwarenessContextsEqual())
+        {
+            return pAreDpiAwarenessContextsEqual(dpiContextA, dpiContextB);
+        }
+        
+        // from VxKex
+        return (dpiContextA == dpiContextB);
+    }
+#endif
+
+#if (YY_Thunks_Target < __WindowsNT10_14393)
+    // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enablenonclientdpiscaling
+    // Windows 10, version 1607 [desktop apps only]
+    __DEFINE_THUNK(
+    user32,
+    4,
+    BOOL,
+    WINAPI,
+    EnableNonClientDpiScaling,
+        _In_ HWND	hwnd
+        )
+    {
+        if (auto const pEnableNonClientDpiScaling = try_get_EnableNonClientDpiScaling())
+        {
+            return pEnableNonClientDpiScaling(hwnd);
+        }
+        
+        // from VxKex
+        return TRUE;
+    }
+#endif
 
 #if (YY_Thunks_Target < __WindowsNT10_14393)
 
@@ -805,7 +878,7 @@ namespace YY::Thunks
         {
             SetLastError(ERROR_FUNCTION_FAILED);
             return FALSE;
-        } 
+        }
 
         if (_pParam && internal::GetSystemVersion() < internal::MakeVersion(6, 0))
         {
@@ -854,7 +927,7 @@ namespace YY::Thunks
         {
             SetLastError(ERROR_FUNCTION_FAILED);
             return FALSE;
-        } 
+        }
 
 #if (YY_Thunks_Target < __WindowsNT6)
         if (_pParam && internal::GetSystemVersion() < internal::MakeVersion(6, 0))
@@ -875,7 +948,7 @@ namespace YY::Thunks
                 }
             }
         }
-#endif        
+#endif
         return _pfnSystemParametersInfoA(_uAction, _uParam, _pParam, _fWinIni);
     }
 #endif

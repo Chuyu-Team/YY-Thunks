@@ -1,4 +1,4 @@
-﻿#if (YY_Thunks_Target < __WindowsNT6_SP2)
+﻿#if (YY_Thunks_Target < __WindowsNT6_3)
 #include <dxgi.h>
 #endif
 
@@ -59,21 +59,25 @@ namespace YY::Thunks
     // Minimum supported server	Windows Server 2012 R2
     __DEFINE_THUNK(
     dxgi,
-    8,
+    12,
     HRESULT,
     STDAPICALLTYPE,
     CreateDXGIFactory2,
+        UINT   Flags,
         REFIID riid,
         _COM_Outptr_ void** _ppFactory
         )
     {
         if (auto const _pfnCreateDXGIFactory2 = try_get_CreateDXGIFactory2())
         {
-            return _pfnCreateDXGIFactory2(riid, _ppFactory);
+            return _pfnCreateDXGIFactory2(Flags, riid, _ppFactory);
         }
         
-        // 根据 VxKex 的实现，会映射到 CreateDXGIFactory1 （Win7）
-        
+        // 根据 VxKex 的实现，会回落到 CreateDXGIFactory1 （Win7）
+// #if (YY_Thunks_Target >= __WindowsNT6_SP2) // Windows Vista SP2, Windows 7, Windows 8
+        return CreateDXGIFactory1(riid, _ppFactory);
+// #endif
+
         if (_ppFactory)
             *_ppFactory = nullptr;
         return DXGI_ERROR_UNSUPPORTED;
