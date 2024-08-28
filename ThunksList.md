@@ -227,8 +227,9 @@
 ## dxgi.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
-| CreateDXGIFactory1                         | 不存在时，返回 `DXGI_ERROR_UNSUPPORTED`。
-| CreateDXGIFactory                          | 不存在时，返回 `DXGI_ERROR_UNSUPPORTED`。
+| CreateDXGIFactory                          | 返回 `DXGI_ERROR_UNSUPPORTED`。
+| CreateDXGIFactory1                         | 调用 CreateDXGIFactory。
+| CreateDXGIFactory2                         | 调用 CreateDXGIFactory1。
 
 ## dxva2.dll
 | 函数                                       | Fallback
@@ -540,6 +541,7 @@
 | WerUnregisterRuntimeExceptionModule        | 不存在时，返回S_OK。
 | Wow64GetThreadContext                      | 不存在时，调用GetThreadContext或者返回ERROR_INVALID_PARAMETER。
 | SetDefaultDllDirectories                   | 不存在时，手工控制LoadLibrary加载顺序。
+| GetCurrentPackageFullName                  | 返回 APPMODEL_ERROR_NO_PACKAGE。
 
 ## mfplat.dll
 | 函数                                       | Fallback
@@ -647,6 +649,7 @@
 | 函数                                       | Fallback
 | ----                                       | -----------
 | GetDpiForMonitor                           | 不存在时，调用GetDeviceCaps。
+| GetProcessDpiAwareness                     | 调用 IsProcessDPIAware。
 | SetProcessDpiAwareness                     | 不存在时，调用SetProcessDPIAware。
 | SetProcessDPIAware                         | 不存在时，直接返回 TRUE。
 
@@ -725,6 +728,11 @@
 | GetPointerDevice                           | 不存在时，假装没有触摸设备。
 | GetPointerPenInfo                          | 不存在时，假装没有触摸设备。
 | GetPointerType                             | 不存在时，假装没有触摸设备。
+| InitializeTouchInjection                   | 报告错误 ERROR_INVALID_PARAMETER。
+| InjectTouchInput                           | 报告错误 ERROR_INVALID_PARAMETER。
+| GetAwarenessFromDpiAwarenessContext        | 内部实现。
+| AreDpiAwarenessContextsEqual               | 内部实现。
+| EnableNonClientDpiScaling                  | 假装成功。
 
 ## userenv.dll
 | 函数                                       | Fallback

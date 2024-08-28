@@ -122,4 +122,54 @@
         return FALSE;
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    8,
+    BOOL,
+    WINAPI,
+    InitializeTouchInjection,
+        _In_ UINT32 _uMaxCount,
+        _In_ DWORD  _udwMode
+        )
+    {
+        if (const auto _pfnInitializeTouchInjection = try_get_InitializeTouchInjection())
+        {
+            return _pfnInitializeTouchInjection(_uMaxCount, _udwMode);
+        }
+
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    8,
+    BOOL,
+    WINAPI,
+    InjectTouchInput,
+        _In_ UINT32 _cCount,
+        _In_ const POINTER_TOUCH_INFO* _pContacts
+        )
+    {
+        if (const auto _pfnInjectTouchInput = try_get_InjectTouchInput())
+        {
+            return _pfnInjectTouchInput(_cCount, _pContacts);
+        }
+
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+#endif
 }
