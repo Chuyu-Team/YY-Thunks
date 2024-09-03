@@ -733,6 +733,15 @@
 | GetAwarenessFromDpiAwarenessContext        | 内部实现。
 | AreDpiAwarenessContextsEqual               | 内部实现。
 | EnableNonClientDpiScaling                  | 假装成功。
+| GetPointerFrameTouchInfo                   | 报告错误 ERROR_INVALID_PARAMETER。
+| GetPointerFrameTouchInfoHistory            | 报告错误 ERROR_INVALID_PARAMETER。
+| GetPointerInfo                             | 报告错误 ERROR_INVALID_PARAMETER。
+| GetPointerPenInfoHistory                   | 报告错误 ERROR_INVALID_PARAMETER。
+| SkipPointerFrameMessages                   | 假装成功。
+| GetThreadDpiAwarenessContext               | 调用 GetProcessDpiAwareness。
+| GetWindowDpiAwarenessContext               | 调用 GetProcessDpiAwareness。
+| GetDisplayAutoRotationPreferences          | 返回 ORIENTATION_PREFERENCE_NONE。
+| SetDisplayAutoRotationPreferences          | 假装成功。
 
 ## userenv.dll
 | 函数                                       | Fallback

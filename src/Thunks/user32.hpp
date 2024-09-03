@@ -964,4 +964,148 @@ namespace YY::Thunks
         return TRUE;
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT10_14393)
+
+    // 最低受支持的客户端	Windows 10版本 1607 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2016[仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    0,
+    DPI_AWARENESS_CONTEXT,
+    WINAPI,
+    GetThreadDpiAwarenessContext
+        )
+    {
+        if (auto const _pfnGetThreadDpiAwarenessContext = try_get_GetThreadDpiAwarenessContext())
+        {
+            return _pfnGetThreadDpiAwarenessContext();
+        }
+        
+        PROCESS_DPI_AWARENESS _eValue = PROCESS_DPI_AWARENESS::PROCESS_DPI_UNAWARE;
+        auto _hr = GetProcessDpiAwareness(NULL, &_eValue);
+        if (SUCCEEDED(_hr))
+        {
+            switch (_eValue)
+            {
+            case PROCESS_DPI_UNAWARE:
+                return DPI_AWARENESS_CONTEXT_UNAWARE;
+            case PROCESS_SYSTEM_DPI_AWARE:
+                return DPI_AWARENESS_CONTEXT_SYSTEM_AWARE;
+            case PROCESS_PER_MONITOR_DPI_AWARE:
+                return DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE;
+            default:
+                break;
+            }
+        }
+
+        return DPI_AWARENESS_CONTEXT_UNAWARE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT10_14393)
+
+    // 最低受支持的客户端	Windows 10版本 1607 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2016[仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    4,
+    DPI_AWARENESS_CONTEXT,
+    WINAPI,
+    GetWindowDpiAwarenessContext,
+        _In_ HWND _hWnd
+        )
+    {
+        if (auto const _pfnGetWindowDpiAwarenessContext = try_get_GetWindowDpiAwarenessContext())
+        {
+            return _pfnGetWindowDpiAwarenessContext(_hWnd);
+        }
+        
+        DWORD _uProcessId = 0;
+        GetWindowThreadProcessId(_hWnd, &_uProcessId);
+        if (_uProcessId == 0)
+        {
+            return NULL;
+        }
+
+        HANDLE _hProcess = NULL;
+        if (_uProcessId != GetCurrentProcessId() && internal::GetSystemVersion() >= internal::MakeVersion(6, 3))
+        {
+            _hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, _uProcessId);
+        }
+
+        PROCESS_DPI_AWARENESS _eValue = PROCESS_DPI_AWARENESS::PROCESS_DPI_UNAWARE;
+        auto _hr = GetProcessDpiAwareness(_hProcess, &_eValue);
+        if (_hProcess)
+        {
+            CloseHandle(_hProcess);
+        }
+
+        if (SUCCEEDED(_hr))
+        {
+            switch (_eValue)
+            {
+            case PROCESS_DPI_UNAWARE:
+                return DPI_AWARENESS_CONTEXT_UNAWARE;
+            case PROCESS_SYSTEM_DPI_AWARE:
+                return DPI_AWARENESS_CONTEXT_SYSTEM_AWARE;
+            case PROCESS_PER_MONITOR_DPI_AWARE:
+                return DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE;
+            default:
+                break;
+            }
+        }
+
+        return DPI_AWARENESS_CONTEXT_UNAWARE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    user32,
+    4,
+    BOOL,
+    WINAPI,
+    SetDisplayAutoRotationPreferences,
+        _In_ ORIENTATION_PREFERENCE _eOrientation
+        )
+    {
+        if (auto const _pfnSetDisplayAutoRotationPreferences = try_get_SetDisplayAutoRotationPreferences())
+        {
+            return _pfnSetDisplayAutoRotationPreferences(_eOrientation);
+        }
+
+        return TRUE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    user32,
+    4,
+    BOOL,
+    WINAPI,
+    GetDisplayAutoRotationPreferences,
+        _Out_ ORIENTATION_PREFERENCE* _peOrientation
+        )
+    {
+        if (auto const _pfnGetDisplayAutoRotationPreferences = try_get_GetDisplayAutoRotationPreferences())
+        {
+            return _pfnGetDisplayAutoRotationPreferences(_peOrientation);
+        }
+
+        *_peOrientation = ORIENTATION_PREFERENCE::ORIENTATION_PREFERENCE_NONE;
+        return TRUE;
+    }
+#endif
 } //namespace YY::Thunks

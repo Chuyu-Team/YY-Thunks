@@ -172,4 +172,131 @@
         return FALSE;
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    12,
+    BOOL,
+    WINAPI,
+    GetPointerFrameTouchInfo,
+        _In_ UINT32 _uPointerId,
+        _Inout_ UINT32* _pcPointerCount,
+        _Out_writes_opt_(*_pcPointerCount) POINTER_TOUCH_INFO* _pTouchInfo
+        )
+    {
+        if (const auto _pfnGetPointerFrameTouchInfo = try_get_GetPointerFrameTouchInfo())
+        {
+            return _pfnGetPointerFrameTouchInfo(_uPointerId, _pcPointerCount, _pTouchInfo);
+        }
+
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    16,
+    BOOL,
+    WINAPI,
+    GetPointerFrameTouchInfoHistory,
+        _In_ UINT32 _uPointerId,
+        _Inout_ UINT32* _pcEntriesCount,
+        _Inout_ UINT32* _pcPointerCount,
+        _Out_writes_opt_(*_pcEntriesCount * *_pcPointerCount) POINTER_TOUCH_INFO* _pTouchInfo
+        )
+    {
+        if (const auto _pfnGetPointerFrameTouchInfoHistory = try_get_GetPointerFrameTouchInfoHistory())
+        {
+            return _pfnGetPointerFrameTouchInfoHistory(_uPointerId, _pcEntriesCount, _pcPointerCount, _pTouchInfo);
+        }
+
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    8,
+    BOOL,
+    WINAPI,
+    GetPointerInfo,
+        _In_ UINT32 _uPointerId,
+        _Out_writes_(1) POINTER_INFO* _pPointerInfo
+        )
+    {
+        if (const auto _pfnGetPointerInfo = try_get_GetPointerInfo())
+        {
+            return _pfnGetPointerInfo(_uPointerId, _pPointerInfo);
+        }
+
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    12,
+    BOOL,
+    WINAPI,
+    GetPointerPenInfoHistory,
+        _In_ UINT32 _uPointerId,
+        _Inout_ UINT32* _pcEntriesCount,
+        _Out_writes_opt_(*_pcEntriesCount) POINTER_PEN_INFO* _pPenInfo
+        )
+    {
+        if (const auto _pfnGetPointerPenInfoHistory = try_get_GetPointerPenInfoHistory())
+        {
+            return _pfnGetPointerPenInfoHistory(_uPointerId, _pcEntriesCount, _pPenInfo);
+        }
+
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    4,
+    BOOL,
+    WINAPI,
+    SkipPointerFrameMessages,
+        _In_ UINT32 _uPointerId
+        )
+    {
+        if (const auto _pfnSkipPointerFrameMessages = try_get_SkipPointerFrameMessages())
+        {
+            return _pfnSkipPointerFrameMessages(_uPointerId);
+        }
+
+        return TRUE;
+    }
+#endif
 }
