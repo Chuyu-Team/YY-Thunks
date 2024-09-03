@@ -2537,4 +2537,145 @@
             
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    kernel32,
+    40,
+    int,
+    WINAPI,
+    FindNLSStringEx,
+        _In_opt_ LPCWSTR _szLocaleName,
+        _In_ DWORD _fFindNLSStringFlags,
+        _In_reads_(_cchSource) LPCWSTR _szStringSource,
+        _In_ int _cchSource,
+        _In_reads_(_cchValue) LPCWSTR _szStringValue,
+        _In_ int _cchValue,
+        _Out_opt_ LPINT _pcchFound,
+        _In_opt_ LPNLSVERSIONINFO _pVersionInformation,
+        _In_opt_ LPVOID _pReserved,
+        _In_opt_ LPARAM _hSortHandle
+        )
+    {
+        if (auto const _pfnFindNLSStringEx = try_get_FindNLSStringEx())
+        {
+            return _pfnFindNLSStringEx(_szLocaleName, _fFindNLSStringFlags, _szStringSource, _cchSource, _szStringValue, _cchValue, _pcchFound, _pVersionInformation, _pReserved, _hSortHandle);
+        }
+
+        __WarningMessage__("FindNLSStringEx 暂时只支持搜索 _cchValue 的子字符串。");
+
+        const DWORD _fFindFlags = _fFindNLSStringFlags & (FIND_STARTSWITH | FIND_ENDSWITH | FIND_FROMSTART | FIND_FROMEND);
+        if (_fFindFlags & (_fFindFlags - 1))
+        {
+            SetLastError(ERROR_INVALID_FLAGS);
+            return -1;
+        }
+
+        if (_pVersionInformation || _pReserved|| _hSortHandle
+            || _szStringSource == nullptr || _cchSource == 0 || _cchSource < -1
+            || _szStringValue == nullptr || _cchValue == 0 || _cchValue < -1)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return -1;
+        }
+
+        const auto _Locale = LocaleNameToLCID(_szLocaleName, 0);
+        if (_Locale == 0)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return -1;
+        }
+
+        if (_cchSource == -1)
+        {
+            _cchSource = wcslen(_szStringSource);
+        }
+
+        if (_cchValue == -1)
+        {
+            _cchValue = wcslen(_szStringValue);
+        }
+
+        if (_cchSource < _cchValue)
+            return -1;
+
+        const DWORD _fCmpFlags = _fFindNLSStringFlags & ~(FIND_STARTSWITH | FIND_ENDSWITH | FIND_FROMSTART | FIND_FROMEND);
+        if ((_fFindNLSStringFlags & (FIND_ENDSWITH | FIND_FROMEND)) == 0)
+        {
+            // 从头开始搜索
+            if (_fFindNLSStringFlags & FIND_STARTSWITH)
+            {
+                const auto _nResult = CompareStringW(_Locale, _fCmpFlags, _szStringSource, _cchValue, _szStringValue, _cchValue);
+                if (_nResult == CSTR_EQUAL)
+                {
+                    if (_pcchFound)
+                        *_pcchFound = _cchValue;
+
+                    return 0;
+                }
+            }
+            else
+            {
+                auto _szStr = _szStringSource;
+                auto _szStrEnd = _szStringSource + _cchSource - _cchValue + 1;
+                for (; _szStr != _szStrEnd;++_szStr)
+                {
+                    const auto _nResult = CompareStringW(_Locale, _fCmpFlags, _szStr, _cchValue, _szStringValue, _cchValue);
+                    if (_nResult == 0)
+                        return -1;
+
+                    if (_nResult == CSTR_EQUAL)
+                    {
+                        if (_pcchFound)
+                            *_pcchFound = _cchValue;
+
+                        return _szStr - _szStringSource;
+                    }
+                }
+            }
+        }
+        else
+        {
+            // 反向搜索
+            auto _szStr = _szStringSource + _cchSource - _cchValue;
+            if (_fFindNLSStringFlags & FIND_ENDSWITH)
+            {
+                const auto _nResult = CompareStringW(_Locale, _fCmpFlags, _szStr, _cchValue, _szStringValue, _cchValue);
+                if (_nResult == CSTR_EQUAL)
+                {
+                    if (_pcchFound)
+                        *_pcchFound = _cchValue;
+
+                    return _szStr - _szStringSource;
+                }
+            }
+            else
+            {
+                for(;; --_szStr)
+                {
+                    const auto _nResult = CompareStringW(_Locale, _fCmpFlags, _szStr, _cchValue, _szStringValue, _cchValue);
+                    if (_nResult == 0)
+                        return -1;
+
+                    if (_nResult == CSTR_EQUAL)
+                    {
+                        if (_pcchFound)
+                            *_pcchFound = _cchValue;
+
+                        return _szStr - _szStringSource;
+                    }
+                    
+                    if (_szStr == _szStringSource)
+                        break;
+                } 
+            }
+        }
+
+        return -1;
+    }
+#endif
 } //namespace YY

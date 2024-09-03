@@ -530,6 +530,7 @@
 | GetCalendarInfoEx                          | 不存在时，调用GetCalendarInfoW。
 | GetNLSVersionEx                            | 不存在时，返回一个假版本。
 | IsNLSDefinedString                         | 不存在时，调用GetStringTypeW。
+| FindNLSStringEx                            | 调用 CompareStringW。
 | SetProcessWorkingSetSizeEx                 | 不存在时，调用SetProcessWorkingSetSize。
 | GetProcessWorkingSetSizeEx                 | 不存在时，调用GetProcessWorkingSetSize。
 | GetTimeZoneInformationForYear              | 不存在时，直接读取`Time Zones`注册表。
