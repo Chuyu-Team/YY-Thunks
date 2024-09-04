@@ -104,9 +104,13 @@ namespace YY::Thunks::Fallback
 
                             __try
                             {
-                                if (_pfnCallback && _FlsData.lpFlsData)
+                                if (_pfnCallback)
                                 {
-                                    _pfnCallback(_FlsData.lpFlsData);
+                                    auto _pFlsData = (void*)InterlockedExchange(reinterpret_cast<size_t*>(&_FlsData.lpFlsData), 0);
+                                    if (_pFlsData)
+                                    {
+                                        _pfnCallback(_pFlsData);
+                                    }
                                 }
                             }
                             __except (EXCEPTION_EXECUTE_HANDLER)
@@ -121,6 +125,7 @@ namespace YY::Thunks::Fallback
                 }
 
                 s_pFlsDataBlock->Release();
+                s_pFlsDataBlock = nullptr;
             }
         }
 
