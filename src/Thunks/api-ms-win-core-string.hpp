@@ -265,25 +265,11 @@ namespace YY::Thunks
 #endif
 
 
-#if defined(YY_Thunks_Implemented) && (YY_Thunks_Target < __WindowsNT5_1)
-    static bool IsSupportLOCALE_INVARIANT()
-    {
-        // 特意不考虑多线程支持，因为这里产生写入竞争并没有关系。
-        static int s_iStat = 0;
-        if (s_iStat == 0)
-        {
-            s_iStat = internal::GetSystemVersion() >= internal::MakeVersion(5, 1) ? 1 : -1;
-        }
-        return s_iStat == 1;
-    }
-#endif
+#if (YY_Thunks_Target < __WindowsNT6)
 
-
-#if (YY_Thunks_Target < __WindowsNT5_1)
-
-    // Windows 2000 不支持 LOCALE_INVARIANT 参数特殊处理一下。
     // Minimum supported client	Windows 2000 Professional [desktop apps only]
     // Minimum supported server	Windows 2000 Server [desktop apps only]
+    // 虽然Windows 2000已经支持，但是几个新标记老系统不支持，特殊处理一下。
     __DEFINE_THUNK(
     kernel32,
     24,
@@ -305,21 +291,33 @@ namespace YY::Thunks
             return 0;
         }
 
-        if (Locale == LOCALE_INVARIANT && IsSupportLOCALE_INVARIANT() == false)
+#if (YY_Thunks_Target < __WindowsNT5_1)
+        // Windows 2000 不支持 LOCALE_INVARIANT 参数特殊处理一下。
+        // 网友 海好蓝 提供
+        if (Locale == LOCALE_INVARIANT && internal::GetSystemVersion() < internal::MakeVersion(5, 1))
         {
             Locale = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
         }
+#endif
 
+#if (YY_Thunks_Target < __WindowsNT6)
+        // Windows XP不支持 NORM_LINGUISTIC_CASING
+        // 网友 海好蓝 反馈
+        if (internal::GetSystemVersion() < internal::MakeVersion(6, 0))
+        {
+            dwCmpFlags &= ~NORM_LINGUISTIC_CASING;
+        }
+#endif
         return _pfnCompareStringA(Locale, dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2);
     }
 #endif
 
 
-#if (YY_Thunks_Target < __WindowsNT5_1)
+#if (YY_Thunks_Target < __WindowsNT6)
 
-    // Windows 2000 不支持 LOCALE_INVARIANT 参数特殊处理一下。
     // Minimum supported client	Windows 2000 Professional [desktop apps only]
     // Minimum supported server	Windows 2000 Server [desktop apps only]
+    // 虽然Windows 2000已经支持，但是几个新标记老系统不支持，特殊处理一下。
     __DEFINE_THUNK(
     kernel32,
     24,
@@ -334,7 +332,6 @@ namespace YY::Thunks
         _In_ int cchCount2
         )
     {
-        // 网友 海好蓝 提供
         const auto _pfnCompareStringW = try_get_CompareStringW();
         if (!_pfnCompareStringW)
         {
@@ -342,10 +339,23 @@ namespace YY::Thunks
             return 0;
         }
 
-        if (Locale == LOCALE_INVARIANT && IsSupportLOCALE_INVARIANT() == false)
+#if (YY_Thunks_Target < __WindowsNT5_1)
+        // Windows 2000 不支持 LOCALE_INVARIANT 参数特殊处理一下。
+        // 网友 海好蓝 提供
+        if (Locale == LOCALE_INVARIANT && internal::GetSystemVersion() < internal::MakeVersion(5, 1))
         {
             Locale = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
         }
+#endif
+
+#if (YY_Thunks_Target < __WindowsNT6)
+        // Windows XP不支持 NORM_LINGUISTIC_CASING
+        // 网友 海好蓝 反馈
+        if (internal::GetSystemVersion() < internal::MakeVersion(6, 0))
+        {
+            dwCmpFlags &= ~NORM_LINGUISTIC_CASING;
+        }
+#endif
 
         return _pfnCompareStringW(Locale, dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2);
     }
