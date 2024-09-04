@@ -2568,6 +2568,13 @@
 
         __WarningMessage__("FindNLSStringEx 暂时只支持搜索 _cchValue 的子字符串。");
 
+        const DWORD _fFindFlags = _fFindNLSStringFlags & (FIND_STARTSWITH | FIND_ENDSWITH | FIND_FROMSTART | FIND_FROMEND);
+        if (_fFindFlags & (_fFindFlags - 1))
+        {
+            SetLastError(ERROR_INVALID_FLAGS);
+            return -1;
+        }
+
         if (_pVersionInformation || _pReserved|| _hSortHandle
             || _szStringSource == nullptr || _cchSource == 0 || _cchSource < -1
             || _szStringValue == nullptr || _cchValue == 0 || _cchValue < -1)
@@ -2597,7 +2604,7 @@
             return -1;
 
         const DWORD _fCmpFlags = _fFindNLSStringFlags & ~(FIND_STARTSWITH | FIND_ENDSWITH | FIND_FROMSTART | FIND_FROMEND);
-        if (_fFindNLSStringFlags & (FIND_FROMSTART | FIND_STARTSWITH))
+        if ((_fFindNLSStringFlags & (FIND_ENDSWITH | FIND_FROMEND)) == 0)
         {
             // 从头开始搜索
             if (_fFindNLSStringFlags & FIND_STARTSWITH)

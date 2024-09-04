@@ -808,23 +808,28 @@ namespace api_ms_win_core_localization
             INT _nFound;
             int _nIndex;
 
-            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMSTART, L"0123456789", -1, L"0123", -1, &_nFound, nullptr, nullptr, 0);
+            // 默认值
+            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, 0, L"01234567890123", -1, L"0123", -1, &_nFound, nullptr, nullptr, 0);
             Assert::AreEqual(_nIndex, 0);
             Assert::AreEqual(_nFound, 4);
 
-            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMSTART, L"0123450123", -1, L"0123", -1, &_nFound, nullptr, nullptr, 0);
+            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMSTART, L"01234567890123", -1, L"0123", -1, &_nFound, nullptr, nullptr, 0);
             Assert::AreEqual(_nIndex, 0);
             Assert::AreEqual(_nFound, 4);
 
-            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMSTART, L"0123456789", -1, L"1234", -1, &_nFound, nullptr, nullptr, 0);
+            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMSTART, L"01234501230123", -1, L"0123", -1, &_nFound, nullptr, nullptr, 0);
+            Assert::AreEqual(_nIndex, 0);
+            Assert::AreEqual(_nFound, 4);
+
+            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMSTART, L"01234567890123", -1, L"1234", -1, &_nFound, nullptr, nullptr, 0);
             Assert::AreEqual(_nIndex, 1);
             Assert::AreEqual(_nFound, 4);
 
-            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMSTART, L"0123456789", -1, L"6789", -1, &_nFound, nullptr, nullptr, 0);
+            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMSTART, L"01234567890123", -1, L"6789", -1, &_nFound, nullptr, nullptr, 0);
             Assert::AreEqual(_nIndex, 6);
             Assert::AreEqual(_nFound, 4);
 
-            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMSTART, L"0123456789", -1, L"3210", -1, &_nFound, nullptr, nullptr, 0);
+            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMSTART, L"01234567890123", -1, L"3210", -1, &_nFound, nullptr, nullptr, 0);
             Assert::AreEqual(_nIndex, -1);
         }
 
@@ -846,8 +851,8 @@ namespace api_ms_win_core_localization
             INT _nFound;
             int _nIndex;
 
-            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMEND, L"0123456789", -1, L"0123", -1, &_nFound, nullptr, nullptr, 0);
-            Assert::AreEqual(_nIndex, 0);
+            _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMEND, L"01234567890123", -1, L"0123", -1, &_nFound, nullptr, nullptr, 0);
+            Assert::AreEqual(_nIndex, 10);
             Assert::AreEqual(_nFound, 4);
 
             _nIndex = ::FindNLSStringEx(LOCALE_NAME_SYSTEM_DEFAULT, FIND_FROMEND, L"0123456789", -1, L"6789", -1, &_nFound, nullptr, nullptr, 0);
