@@ -299,4 +299,133 @@
         return TRUE;
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    12,
+    BOOL,
+    WINAPI,
+    GetPointerInfoHistory,
+        _In_ UINT32 _uPointerId,
+        _Inout_ UINT32* _pcEntriesCount,
+        _Out_writes_opt_(*_pcEntriesCount) POINTER_INFO* _pPointerInfo
+        )
+    {
+        if (const auto _pfnGetPointerInfoHistory = try_get_GetPointerInfoHistory())
+        {
+            return _pfnGetPointerInfoHistory(_uPointerId, _pcEntriesCount, _pPointerInfo);
+        }
+
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    8,
+    BOOL,
+    WINAPI,
+    GetPointerTouchInfo,
+        _In_ UINT32 _uPointerId,
+        _Out_writes_(1) POINTER_TOUCH_INFO* _pTouchInfo
+        )
+    {
+        if (const auto _pfnGetPointerTouchInfo = try_get_GetPointerTouchInfo())
+        {
+            return _pfnGetPointerTouchInfo(_uPointerId, _pTouchInfo);
+        }
+
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    12,
+    BOOL,
+    WINAPI,
+    GetPointerTouchInfoHistory,
+        _In_ UINT32 _uPointerId,
+        _Inout_ UINT32* _pcEntriesCount,
+        _Out_writes_opt_(*_pcEntriesCount) POINTER_TOUCH_INFO* _pTouchInfo
+        )
+    {
+        if (const auto _pfnGetPointerTouchInfoHistory = try_get_GetPointerTouchInfoHistory())
+        {
+            return _pfnGetPointerTouchInfoHistory(_uPointerId, _pcEntriesCount, _pTouchInfo);
+        }
+
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    0,
+    BOOL,
+    WINAPI,
+    IsMouseInPointerEnabled
+        )
+    {
+        if (const auto _pfnIsMouseInPointerEnabled = try_get_IsMouseInPointerEnabled())
+        {
+            return _pfnIsMouseInPointerEnabled();
+        }
+
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    4,
+    BOOL,
+    WINAPI,
+    EnableMouseInPointer,
+        _In_ BOOL _bEnable
+        )
+    {
+        if (const auto _pfnEnableMouseInPointer = try_get_EnableMouseInPointer())
+        {
+            return _pfnEnableMouseInPointer(_bEnable);
+        }
+
+        if (_bEnable == FALSE)
+        {
+            return TRUE;
+        }
+
+        SetLastError(ERROR_ACCESS_DENIED);
+        return FALSE;
+    }
+#endif
 }

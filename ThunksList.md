@@ -743,6 +743,11 @@
 | GetWindowDpiAwarenessContext               | 调用 GetProcessDpiAwareness。
 | GetDisplayAutoRotationPreferences          | 返回 ORIENTATION_PREFERENCE_NONE。
 | SetDisplayAutoRotationPreferences          | 假装成功。
+| GetPointerInfoHistory                      | 报告错误 ERROR_INVALID_PARAMETER。
+| GetPointerTouchInfo                        | 报告错误 ERROR_INVALID_PARAMETER。
+| GetPointerTouchInfoHistory                 | 报告错误 ERROR_INVALID_PARAMETER。
+| IsMouseInPointerEnabled                    | 返回关闭。
+| EnableMouseInPointer                       | 假装处于关闭状态。
 
 ## userenv.dll
 | 函数                                       | Fallback
