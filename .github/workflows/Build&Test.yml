@@ -1,6 +1,6 @@
 ﻿name: Build&Test
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   Build:
@@ -8,18 +8,21 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+  
+    - name: 恢复编译产物
+      id: BinCache
+      uses: actions/cache@v2
+      with:
+        path: |
+            objs/**/*.obj
+            Lib/**/*.*
+            YY.Depends.Analyzer.exe
+        key: BinCache_${{github.sha}}
 
     - name: 初始化
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
           mkdir -p Bin
-
-          # Procdump工具，用于单元测试崩溃诊断
-          Invoke-WebRequest -Uri https://download.sysinternals.com/files/Procdump.zip  -OutFile Bin\Procdump.zip
-          &7z e Bin\Procdump.zip "-o$Env:GITHUB_WORKSPACE\Bin"
-          
-          Invoke-WebRequest -Uri https://github.com/mingkuang-Chuyu/Visual_Studio_Platform_Toolset/releases/download/v1.0.2/Visual.Studio.2008.Platform.Toolset.v1.0.2.7z  -OutFile Bin\Visual.Studio.2008.Platform.Toolset.v1.0.2.7z
-          &7z x Bin\Visual.Studio.2008.Platform.Toolset.v1.0.2.7z "-o$Env:GITHUB_WORKSPACE\Bin"
 
           Invoke-WebRequest -Uri https://github.com/Chuyu-Team/LibMaker/releases/download/v1.0.4/LibMaker.exe -OutFile Bin\LibMaker.exe
           Invoke-WebRequest -Uri https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.2.8/MinimumRequiredVersionHelper.exe -OutFile Bin\MinimumRequiredVersionHelper.exe
@@ -93,6 +96,7 @@ jobs:
           }
 
     - name: 执行编译
+      if: steps.BinCache.outputs.cache-hit != 'true'
       working-directory: ${{env.GITHUB_WORKSPACE}}
       shell: cmd
       run: |
@@ -114,9 +118,17 @@ jobs:
           msbuild src\YY.Depends.Analyzer\YY.Depends.Analyzer.vcxproj "-p:Configuration=Release;Platform=Win32;OutDir=%GITHUB_WORKSPACE%\;SolutionDir=%GITHUB_WORKSPACE%\src\\"
           if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
     - name: 执行单元测试
+      if: steps.BinCache.outputs.cache-hit != 'true'
       working-directory: ${{env.GITHUB_WORKSPACE}}
       shell: pwsh
       run: |
+          # Procdump工具，用于单元测试崩溃诊断
+          Invoke-WebRequest -Uri https://download.sysinternals.com/files/Procdump.zip  -OutFile Bin\Procdump.zip
+          &7z e Bin\Procdump.zip "-o$Env:GITHUB_WORKSPACE\Bin"
+          
+          Invoke-WebRequest -Uri https://github.com/mingkuang-Chuyu/Visual_Studio_Platform_Toolset/releases/download/v1.0.2/Visual.Studio.2008.Platform.Toolset.v1.0.2.7z  -OutFile Bin\Visual.Studio.2008.Platform.Toolset.v1.0.2.7z
+          &7z x Bin\Visual.Studio.2008.Platform.Toolset.v1.0.2.7z "-o$Env:GITHUB_WORKSPACE\Bin"
+
           # MSBuild、PROCDUMP_PATH目录更新到 Path
           $Env:Path="$Env:GITHUB_WORKSPACE\Bin;${{env.MSBuildBinPath}};${{env.LatestVisualStudioRoot}}\Common7\IDE\CommonExtensions\Microsoft\TestWindow;" + $Env:Path
           
@@ -154,7 +166,7 @@ jobs:
               throw "YY-Thunks.UnitTest单元测试失败！"
           }
     - uses: dorny/test-reporter@v1
-      if: success() || failure()
+      if: steps.BinCache.outputs.cache-hit != 'true' && (success() || failure())
       with:
         name: 单元测试报告
         path: TestResults/*.trx
