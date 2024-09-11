@@ -720,7 +720,7 @@ namespace YY::Thunks::internal
             }
         }
 
-        static LSTATUS __fastcall RtlRunOnceComplete(
+        static NTSTATUS __fastcall RtlRunOnceComplete(
             _Inout_ LPINIT_ONCE lpInitOnce,
             _In_ DWORD dwFlags,
             _In_opt_ LPVOID lpContext
@@ -2635,7 +2635,7 @@ namespace YY::Thunks
         if (dwRtlBarrierFlags & 0x10000)
             InterlockedIncrement(&pYYBarrier->lTotalThreads);
 
-        return TRUE;
+        return FALSE;
     }
 #endif
 
