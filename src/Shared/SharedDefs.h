@@ -112,3 +112,8 @@
 #undef YY_Thunks_Target
 #define YY_Thunks_Target __WindowsMinTarget
 #endif
+
+#if defined(_M_IX86)
+// __ftoul2_legacy v143新增
+#pragma comment(linker, "/alternatename:__ftoul2_legacy=__ftol2")
+#endif
