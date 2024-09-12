@@ -7,11 +7,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
   
     - name: 恢复编译产物
       id: BinCache
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |
             objs/**/*.obj
@@ -192,14 +192,14 @@ jobs:
               nuget pack YY-Thunks-New.nuspec -Properties version=${{env.BuildVersion}};commit=%GITHUB_SHA%
           )
                     
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         path: |
             *.nupkg
             *.zip
 
     # 失败时我们收集一些信息，用于诊断
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: ErrorLog
