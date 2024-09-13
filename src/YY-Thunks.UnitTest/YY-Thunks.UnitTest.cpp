@@ -427,7 +427,14 @@ __declspec(selectany) __declspec(allocate("TMP$__a")) LPCSTR FirstFunctionName[1
 __declspec(selectany) __declspec(allocate("TMP$__z")) LPCSTR LastFunctionName[1] = {};
 
 
-#define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)     \
+#if defined(_X86_)
+#define __DETECT_IAT_SYMBOL(_FUNCTION, _SIZE) __pragma(comment(linker, "/export:_"#_FUNCTION"@"#_SIZE))
+#else
+#define __DETECT_IAT_SYMBOL(_FUNCTION, _SIZE)
+#endif
+
+#define __DEFINE_THUNK(_MODULE, _SIZE, _RETURN_, _CONVENTION_, _FUNCTION, ...)                                                                                       \
+    __DETECT_IAT_SYMBOL(_FUNCTION, _SIZE)                                                                                                                            \
 __if_exists(YY::Thunks::TopFix::_FUNCTION) {decltype(YY::Thunks::TopFix::_FUNCTION)* _CRT_CONCATENATE(FunctionInclude, _FUNCTION) = &YY::Thunks::TopFix::_FUNCTION;} \
 __if_not_exists(YY::Thunks::TopFix::_FUNCTION){decltype(::_FUNCTION)* _CRT_CONCATENATE(FunctionInclude, _FUNCTION) = &::_FUNCTION;}                                  \
 __declspec(allocate("TMP$__a")) LPCSTR _CRT_CONCATENATE(FunctionName, _FUNCTION) = #_FUNCTION; \
