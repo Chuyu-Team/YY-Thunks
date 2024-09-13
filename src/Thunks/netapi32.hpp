@@ -38,7 +38,7 @@ namespace YY::Thunks
     // 最低受支持的服务器    Windows Server 2016[仅限桌面应用]
     __DEFINE_THUNK(
     netapi32,
-    8,
+    4,
     VOID,
     NET_API_FUNCTION,
     NetFreeAadJoinInformation,

@@ -2139,7 +2139,7 @@ namespace YY::Thunks
     // 最低受支持的服务器	Windows Server 2008 R2[桌面应用 | UWP 应用]
     __DEFINE_THUNK(
     bcrypt,
-    40,
+    20,
     NTSTATUS,
     WINAPI,
     BCryptDeriveKeyCapi,
