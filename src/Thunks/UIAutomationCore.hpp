@@ -83,7 +83,7 @@ namespace YY::Thunks
     // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
     __DEFINE_THUNK(
     uiautomationcore,
-    16,
+    40,
     HRESULT,
     WINAPI,
     UiaRaiseAutomationPropertyChangedEvent,

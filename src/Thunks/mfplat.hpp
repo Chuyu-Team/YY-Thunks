@@ -384,7 +384,7 @@ namespace YY::Thunks
     // Windows XP SP2需要安装补丁
     __DEFINE_THUNK(
     mfplat,
-    12,
+    4,
     HRESULT,
     STDAPICALLTYPE,
     MFCreateSample,
@@ -602,7 +602,7 @@ namespace YY::Thunks
     // Minimum supported server	Windows Server 2008 R2[desktop apps | UWP apps]
     __DEFINE_THUNK(
     mfplat,
-    24,
+    36,
     HRESULT,
     STDAPICALLTYPE,
     MFTEnumEx,
