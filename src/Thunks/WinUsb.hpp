@@ -163,7 +163,7 @@ namespace YY::Thunks
     // 最低受支持XP，但是XP需要打补丁，Vista开始直接内置
     __DEFINE_THUNK(
     winusb,
-    24,
+    8,
     BOOL,
     __stdcall,
     WinUsb_ResetPipe,
@@ -211,7 +211,7 @@ namespace YY::Thunks
     // 最低受支持XP，但是XP需要打补丁，Vista开始直接内置
     __DEFINE_THUNK(
     winusb,
-    8,
+    24,
     BOOL,
     __stdcall,
     WinUsb_WritePipe,
