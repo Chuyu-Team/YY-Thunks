@@ -639,7 +639,7 @@ namespace YY ::Thunks
 #endif
 
 
-#if (YY_Thunks_Target < __WindowsNT5_2)
+#if (YY_Thunks_Target < __WindowsNT5_2_SP1)
 
     //Windows Vista, Windows XP Professional x64 Edition [desktop apps only]
     //Windows Server 2008, Windows Server 2003 with SP1 [desktop apps only]

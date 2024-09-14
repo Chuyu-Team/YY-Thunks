@@ -410,10 +410,10 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Target < __WindowsNT6)
+#if (YY_Thunks_Target < __WindowsNT5_2)
 
     //Minimum supported client	Windows Vista [desktop apps | UWP apps]
-    //Minimum supported server	Windows Server 2008 [desktop apps | UWP apps]
+    //Minimum supported server	Windows Server 2003 [desktop apps | UWP apps]
     __DEFINE_THUNK(
     kernel32,
     8,
