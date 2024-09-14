@@ -78,9 +78,9 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Target < __WindowsNT5_2_SP1)
+#if (YY_Thunks_Target < __WindowsNT5_1)
 
-    //Windows XP with SP2, Windows Server 2003 with SP1
+    //Windows XP, Windows Server 2003
     __DEFINE_THUNK(
     kernel32,
     8,
