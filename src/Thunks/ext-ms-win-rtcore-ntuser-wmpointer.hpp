@@ -428,4 +428,30 @@
         return FALSE;
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    12,
+    BOOL,
+    WINAPI,
+    GetPointerDeviceRects,
+        _In_ HANDLE _hDevice,
+        _Out_writes_(1) RECT* _pPointerDeviceRect,
+        _Out_writes_(1) RECT* _pDisplayRect
+        )
+    {
+        if (const auto _pfnGetPointerDeviceRects = try_get_GetPointerDeviceRects())
+        {
+            return _pfnGetPointerDeviceRects(_hDevice, _pPointerDeviceRect, _pDisplayRect);
+        }
+
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+#endif
 }
