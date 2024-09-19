@@ -104,6 +104,17 @@ else
 */
 EXTERN_C const UINT64 __YY_Thunks_Installed = YY_Thunks_Target;
 
+/*
+导出一个外部弱符号，指示当前是否关闭DLL预载（默认开启DLL预载）。
+警告：关闭DLL预载虽然可以提升初始化速度，但是这可能带来死锁问题。目前已知的有：
+  1. locale锁/LoadDll锁交叉持锁产生死锁（https://github.com/Chuyu-Team/YY-Thunks/issues/7）
+  2. thread safe init锁/LoadDll锁交叉持锁产生死锁
+
+// 如果需要关闭DLL预载，那么再任意位置定义如下变量即可：
+EXTERN_C const BOOL __YY_Thunks_Disable_Rreload_Dlls = TRUE;
+*/
+EXTERN_C extern BOOL __YY_Thunks_Disable_Rreload_Dlls /* = FALSE*/;
+
 // 从DllMain缓存RtlDllShutdownInProgress状态，规避退出时调用RtlDllShutdownInProgress。
 // 0：缓存无效
 // 1：模块正常卸载
@@ -642,14 +653,17 @@ static ThunksInitStatus __cdecl _YY_initialize_winapi_thunks(ThunksInitStatus _s
         // 后续过程已经可以线程安全执行了，所以我们立即解锁，避免其他线程过于长时间的等待
         InterlockedExchange((volatile LONG*)&s_eThunksStatus, LONG(_sInitStatus));
 
-        /*
-         * https://github.com/Chuyu-Team/YY-Thunks/issues/7
-         * 为了避免 try_get 系列函数竞争 DLL load锁，因此我们将所有被Thunk的API都预先加载完毕。
-         */
-        for (auto p = (InitFunType*)__YY_THUNKS_INIT_FUN_START; p != (InitFunType*)__YY_THUNKS_INIT_FUN_END; ++p)
+        if (!__YY_Thunks_Disable_Rreload_Dlls)
         {
-            if (auto pInitFun = *p)
-                pInitFun();
+            /*
+             * https://github.com/Chuyu-Team/YY-Thunks/issues/7
+             * 为了避免 try_get 系列函数竞争 DLL load锁，因此我们将所有被Thunk的API都预先加载完毕。
+             */
+            for (auto p = (InitFunType*)__YY_THUNKS_INIT_FUN_START; p != (InitFunType*)__YY_THUNKS_INIT_FUN_END; ++p)
+            {
+                if (auto pInitFun = *p)
+                    pInitFun();
+            }
         }
 
         return _sInitStatus;
