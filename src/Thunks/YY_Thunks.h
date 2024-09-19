@@ -104,33 +104,19 @@ else
 */
 EXTERN_C const UINT64 __YY_Thunks_Installed = YY_Thunks_Target;
 
-/*
-导出一个外部弱符号，指示当前是否处于强行卸载模式。
-
-EXTERN_C BOOL __YY_Thunks_Process_Terminating;
-
-BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
-{
-    switch(dwReason)
-    {
-        case DLL_PROCESS_DETACH:
-        //我们可以通过 lpReserved != NULL 判断，当前是否处于强行卸载模式。
-        __YY_Thunks_Process_Terminating = lpReserved != NULL;
-
-        ……
-        break;
-    ……
-*/
-#if (YY_Thunks_Target < __WindowsNT5_1)
-//Windows 2000不支持RtlDllShutdownInProgress，因此依然引入__YY_Thunks_Process_Terminating
-EXTERN_C extern BOOL __YY_Thunks_Process_Terminating;
-#endif
+// 从DllMain缓存RtlDllShutdownInProgress状态，规避退出时调用RtlDllShutdownInProgress。
+// 0：缓存无效
+// 1：模块正常卸载
+// -1：开始进程准备终止
+static int __YY_Thunks_Process_Terminating;
 
 #if (YY_Thunks_Target < __WindowsNT6)
 static HANDLE _GlobalKeyedEventHandle;
 #endif
 
 static uintptr_t __security_cookie_yy_thunks;
+
+extern "C" IMAGE_DOS_HEADER __ImageBase;
 
 #define _APPLY(_SYMBOL, _NAME, ...) \
     constexpr const wchar_t* _CRT_CONCATENATE(module_name_, _SYMBOL) = _CRT_WIDE(_NAME);
@@ -561,6 +547,25 @@ static UINT_PTR GetSecurityNewCookie()
 
 static volatile ThunksInitStatus s_eThunksStatus /*= ThunksInitStatus::None*/;
 
+static bool __YY_DllShutdownInProgress()
+{
+    __if_exists(__YY_Thunks_Process_Terminating)
+    {
+        if (__YY_Thunks_Process_Terminating != 0)
+            return __YY_Thunks_Process_Terminating == -1;
+    }
+
+#if (YY_Thunks_Target < __WindowsNT5_1) || !defined(__USING_NTDLL_LIB)
+    if (const auto RtlDllShutdownInProgress = (decltype(::RtlDllShutdownInProgress)*)GetProcAddress(try_get_module_ntdll(), "RtlDllShutdownInProgress"))
+#endif
+    {
+        return RtlDllShutdownInProgress();
+    }
+
+    // 按理说不太可能走到这里，难道是老系统时没有被DllMain接管？
+    return false;
+}
+
 static void __cdecl __YY_uninitialize_winapi_thunks()
 {
     // 只反初始化一次
@@ -573,18 +578,8 @@ static void __cdecl __YY_uninitialize_winapi_thunks()
         return;
 
     //当DLL被强行卸载时，我们什么都不做，因为依赖的函数指针可能是无效的。
-    __if_exists(__YY_Thunks_Process_Terminating)
-    {
-        if (__YY_Thunks_Process_Terminating)
-            return;
-    }
-#if (YY_Thunks_Target < __WindowsNT5_1) || !defined(__USING_NTDLL_LIB)
-    if (const auto RtlDllShutdownInProgress = (decltype(::RtlDllShutdownInProgress)*)GetProcAddress(try_get_module_ntdll(), "RtlDllShutdownInProgress"))
-#endif
-    {
-        if (RtlDllShutdownInProgress())
-            return;
-    }
+    if(__YY_DllShutdownInProgress())
+        return;
 
     auto pModule = (HMODULE*)__YY_THUNKS_MODULE_START;
     auto pModuleEnd = (HMODULE*)__YY_THUNKS_FUN_START;
@@ -684,6 +679,11 @@ static int __cdecl __YY_initialize_winapi_thunks()
         // 不接管由DllMain触发的初始化，因为它可以自行反初始化。
         return 0;
     }
+
+    // 当前模块是exe不注册反初始化，如果模块就是exe自己，那么反初始化必然代表进程退出
+    // 当进程退出时，关闭句柄或者卸载DLL这些都不是必须进行的，以提高性能。
+    if (PVOID(&__ImageBase) == ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ImageBaseAddress)
+        return 0;
 
     // 如果 == null，那么有2种情况：
     //   1. 非UCRT，比如2008，VC6，这时，调用 atexit是安全的，因为atexit在 XIA初始化完成了。
