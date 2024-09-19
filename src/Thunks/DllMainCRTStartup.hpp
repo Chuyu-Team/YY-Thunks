@@ -535,9 +535,10 @@ namespace YY::Thunks::internal
             break;
 #endif
         case DLL_PROCESS_DETACH:
-#if (YY_Thunks_Target < __WindowsNT5_1)
-            __YY_Thunks_Process_Terminating = _pReserved != nullptr;
-#endif
+            __if_exists(__YY_Thunks_Process_Terminating)
+            {
+                __YY_Thunks_Process_Terminating = _pReserved != nullptr ? -1 : 1;
+            }
 
 #if YY_Thunks_Target < __WindowsNT6
             if (internal::GetSystemVersion() < internal::MakeVersion(6, 0) && _tls_index_old == 0 && g_TlsMode == TlsMode::ByDllMainCRTStartupForYY_Thunks)
@@ -548,18 +549,15 @@ namespace YY::Thunks::internal
                 if (_pReserved == nullptr)
                 {
                     FreeTlsIndex();
-                    __YY_uninitialize_winapi_thunks();
                 }
+                __YY_uninitialize_winapi_thunks();
                 return _bRet;
             }
             else
 #endif
             {
                 auto _bRet = _pfnDllMainCRTStartup(_hInstance, _uReason, _pReserved);
-                if (_pReserved == nullptr)
-                {
-                    __YY_uninitialize_winapi_thunks();
-                }
+                __YY_uninitialize_winapi_thunks();
                 return _bRet;
             }
             break;
