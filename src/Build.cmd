@@ -30,19 +30,7 @@ cl /O1 /Os /Oi /GS- /std:c++17 /execution-charset:utf-8 /Zc:sizedDealloc- /Zc:tl
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
 ::生成weak符号，一些非必须符号安排为weak可以避免链接失败
-LibMaker.exe FixObj "%~dp0..\\objs\\%Platform%\\%1" /WeakExternFix:__security_cookie=%PointType% /WeakExternFix:__YY_Thunks_Process_Terminating=4 /WeakExternFix:__acrt_atexit_table=%PointType% /WeakExternFix:__pfnDllMainCRTStartupForYY_Thunks=%PointType%
-if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
-if "%3"=="" goto:eof
-set DEF_FILES=%3
-:AppendWeak
-for /f "tokens=1* delims=+" %%a in ("%DEF_FILES%") do (
-    echo "AppendWeak %~dp0def\\%Platform%\\%%a"
-    LibMaker.exe AppendWeak /MACHINE:%Platform% /DEF:"%~dp0def\\%Platform%\\%%a" /OUT:"%~dp0..\\objs\\%Platform%\\%1"
-    if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
-    set DEF_FILES=%%b
-)
-
-if defined DEF_FILES goto :AppendWeak
+call:FixObj "%~dp0..\\objs\\%Platform%\\%1" %3
 
 goto:eof
 
@@ -57,21 +45,7 @@ cl /O1 /Os /Oi /GS- /std:c++17 /execution-charset:utf-8 /Zc:sizedDealloc- /Zc:tl
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
 ::生成weak符号，一些非必须符号安排为weak可以避免链接失败
-LibMaker.exe FixObj "%~dp0..\\Lib\\%1\\%Platform%\\YY_Thunks_for_%1.obj" /WeakExternFix:__security_cookie=%PointType% /WeakExternFix:__YY_Thunks_Process_Terminating=4 /WeakExternFix:__acrt_atexit_table=%PointType% /WeakExternFix:__pfnDllMainCRTStartupForYY_Thunks=%PointType%
-if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
-
-if "%3"=="" goto:BuildWeak
-set DEF_FILES=%3
-:AppendWeakByLib
-for /f "tokens=1* delims=+" %%a in ("%DEF_FILES%") do (
-    echo "AppendWeak %~dp0def\\%Platform%\\%%a"
-    LibMaker.exe /PREFIX:YY_Thunks_ AppendWeak /MACHINE:%Platform% /DEF:"%~dp0def\\%Platform%\\%%a" /OUT:"%~dp0..\\Lib\\%1\\%Platform%\\YY_Thunks_for_%1.obj"
-    if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
-    set DEF_FILES=%%b
-)
-
-if defined DEF_FILES goto:AppendWeakByLib
-:BuildWeak
+call:FixObj "%~dp0..\\Lib\\%1\\%Platform%\\YY_Thunks_for_%1.obj" %3
 
 set "SupportApiSet=/SupportApiSet"
 set "WinVersion=%1"
@@ -162,4 +136,21 @@ if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 call:BuildX 10.0.19041.0 YY_Thunks_for_Win10.0.19041.obj __WindowsNT10_19041
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
+goto:eof
+
+:: FixObj "XXX\YY_Thunks_for_Vista.obj" 1.def+2.def
+:FixObj
+LibMaker.exe FixObj %1 /WeakExternFix:__security_cookie=%PointType% /WeakExternFix:__acrt_atexit_table=%PointType% /WeakExternFix:__pfnDllMainCRTStartupForYY_Thunks=%PointType%
+if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
+if "%2"=="" goto:eof
+set DEF_FILES=%2
+:AppendWeak
+for /f "tokens=1* delims=+" %%a in ("%DEF_FILES%") do (
+    echo "AppendWeak %~dp0def\\%Platform%\\%%a"
+    LibMaker.exe AppendWeak /MACHINE:%Platform% /DEF:"%~dp0def\\%Platform%\\%%a" /OUT:%1
+    if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
+    set DEF_FILES=%%b
+)
+
+if defined DEF_FILES goto :AppendWeak
 goto:eof
