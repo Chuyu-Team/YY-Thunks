@@ -1463,6 +1463,44 @@ namespace YY::Thunks
     }
 #endif
 
+#if (YY_Thunks_Target < __WindowsNT6_1_SP1)
+#ifndef WSA_FLAG_NO_HANDLE_INHERIT
+#define WSA_FLAG_NO_HANDLE_INHERIT    0x80
+#endif
+
+    __DEFINE_THUNK(
+    ws2_32,
+    24,
+    SOCKET,
+    WSAAPI,
+    WSASocketW,
+        _In_ int af,
+        _In_ int type,
+        _In_ int protocol,
+        _In_opt_ LPWSAPROTOCOL_INFOW lpProtocolInfo,
+        _In_ GROUP g,
+        _In_ DWORD dwFlags
+        )
+    {
+        if (auto const pWSASocketW = try_get_WSASocketW())
+        {
+            // This include Windows 7 non-SP1
+            if (internal::GetSystemVersion() <= internal::MakeVersion(6, 1)) 
+            {
+                const auto _pPeb = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock;
+                // This indicates a build version of 7601 on the lower 16-bit
+                if ((_pPeb->OSBuildNumber & 0xFFFF) != 7601)
+                {
+                    // This flag is supported on Windows 7 with SP1, Windows Server 2008 R2 with SP1, and later
+                    // So we strip it to prevent error on prior OS, because process handle inheritance doesn't really matter at that point
+                    dwFlags &= ~WSA_FLAG_NO_HANDLE_INHERIT;
+                }
+            }
+            return pWSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
+        }
+        return INVALID_SOCKET;
+    }
+#endif
 
 #if (YY_Thunks_Target < __WindowsNT6_2)
 
