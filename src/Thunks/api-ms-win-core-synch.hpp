@@ -52,6 +52,13 @@ typedef struct __declspec(align(16)) _YY_SRWLOCK_WAIT_BLOCK
     _YY_SRWLOCK_WAIT_BLOCK* next;
     volatile size_t         shareCount;
     volatile size_t         flag;
+
+    // 以下成员YY-Thunks特有
+
+    // 故意填充的成员，便于于YY_CV_WAIT_BLOCK ABI兼容
+    void* pReserved;
+    // 唤醒此任务的线程Id
+    volatile uint32_t uWakeupThreadId;
 } YY_SRWLOCK_WAIT_BLOCK;
 
 
@@ -70,6 +77,11 @@ typedef struct __declspec(align(16)) _YY_CV_WAIT_BLOCK
     volatile size_t    shareCount;
     volatile size_t    flag;
     volatile PSRWLOCK  SRWLock;
+
+    // 以下成员YY-Thunks特有
+
+    // 唤醒此任务的线程Id
+    volatile uint32_t uWakeupThreadId;
 } YY_CV_WAIT_BLOCK;
 
 
@@ -91,6 +103,10 @@ typedef struct __declspec(align(8)) _YY_ADDRESS_WAIT_BLOCK
     // 似乎指向Root，但是Root时才指向自己，其余情况为 nullptr，这是一种安全性？
     _YY_ADDRESS_WAIT_BLOCK* next;
     volatile size_t         flag;
+    // 以下成员YY-Thunks特有
+
+    // 唤醒此任务的线程Id
+    volatile uint32_t uWakeupThreadId;
 
 } YY_ADDRESS_WAIT_BLOCK;
 
@@ -114,6 +130,66 @@ namespace YY::Thunks::internal
 {
     namespace
     {
+        // Windows XP SecondWaitWorkaround有关问题可以参考：
+        // https://github.com/Chuyu-Team/YY-Thunks/issues/122
+        // 第二次调用NtWaitForKeyedEvent时可能卡死
+        template<typename KeyType>
+        static NTSTATUS NTAPI SecondWaitWorkaroundNtWaitForKeyedEvent(
+            IN HANDLE               KeyedEventHandle,
+            IN KeyType*              Key,
+            IN BOOLEAN              Alertable,
+            IN PLARGE_INTEGER       Timeout OPTIONAL
+            )
+        {
+#if !defined(__USING_NTDLL_LIB)
+            const auto NtWaitForKeyedEvent = try_get_NtWaitForKeyedEvent();
+            if (!NtWaitForKeyedEvent)
+            {
+                internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+            }
+#endif
+
+#if (YY_Thunks_Target < __WindowsNT6)
+            // 目前只有Windows XP收到报告说会卡死，所以我们这里判断一下
+            if (Timeout == nullptr && NtCurrentTeb()->ProcessEnvironmentBlock->OSMajorVersion < 6)
+            {
+                LARGE_INTEGER _nTimeOut;
+                internal::BaseFormatTimeOut(&_nTimeOut, 0);
+                for (; Key->uWakeupThreadId == 0;)
+                {
+                    auto _Status = NtWaitForKeyedEvent(KeyedEventHandle, (PVOID)Key, Alertable, &_nTimeOut);
+                    if (_Status != STATUS_TIMEOUT)
+                        return STATUS_TIMEOUT;
+                }
+
+                // 等5毫秒应该足够唤醒线程调用Release了
+                // 这里只是经验假设，可能不能彻底规避问题。但是正常情况下应该足以缓解死等问题。
+                NtWaitForKeyedEvent(KeyedEventHandle, Key, Alertable, internal::BaseFormatTimeOut(&_nTimeOut, 5));
+                return STATUS_SUCCESS;
+            }
+#endif
+            return NtWaitForKeyedEvent(KeyedEventHandle, Key, Alertable, Timeout);
+        }
+
+        template<typename KeyType>
+        static NTSTATUS NTAPI SecondWaitWorkaroundNtReleaseKeyedEvent(
+	        IN HANDLE               KeyedEventHandle,
+	        IN KeyType*             Key,
+	        IN BOOLEAN              Alertable,
+	        IN PLARGE_INTEGER       Timeout OPTIONAL
+	        )
+        {
+#if !defined(__USING_NTDLL_LIB)
+            const auto NtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
+            if (!NtReleaseKeyedEvent)
+            {
+                RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+            }
+#endif
+            InterlockedExchange(&Key->uWakeupThreadId, GetCurrentThreadId());
+            return NtReleaseKeyedEvent(KeyedEventHandle, Key, Alertable, Timeout);
+        }
+
         static HANDLE __fastcall GetGlobalKeyedEventHandle()
         {
 #if (YY_Thunks_Target < __WindowsNT6)
@@ -157,14 +233,6 @@ namespace YY::Thunks::internal
         static void __fastcall RtlpWakeSRWLock(SRWLOCK* SRWLock, size_t Status)
         {
             auto GlobalKeyedEventHandle = GetGlobalKeyedEventHandle();
-#if !defined(__USING_NTDLL_LIB)
-            const auto NtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
-            if (!NtReleaseKeyedEvent)
-            {
-                RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
-            }
-#endif
-
             for (;;)
             {
                 if ((Status & YY_SRWLOCK_Locked) == 0)
@@ -203,7 +271,7 @@ namespace YY::Thunks::internal
 
                             //if(!RtlpWaitCouldDeadlock())
                                 
-                            NtReleaseKeyedEvent(GlobalKeyedEventHandle, notify, 0, nullptr);
+                            internal::SecondWaitWorkaroundNtReleaseKeyedEvent(GlobalKeyedEventHandle, notify, 0, nullptr);
                         }
 
                         return;
@@ -227,7 +295,7 @@ namespace YY::Thunks::internal
 
                                     //if(!RtlpWaitCouldDeadlock())
 
-                                    NtReleaseKeyedEvent(GlobalKeyedEventHandle, notify, 0, nullptr);
+                                    internal::SecondWaitWorkaroundNtReleaseKeyedEvent(GlobalKeyedEventHandle, notify, 0, nullptr);
                                 }
 
                                 notify = next;
@@ -346,14 +414,6 @@ namespace YY::Thunks::internal
         static void __fastcall RtlpWakeConditionVariable(PCONDITION_VARIABLE ConditionVariable, size_t ConditionVariableStatus, size_t WakeCount)
         {
             auto GlobalKeyedEventHandle = GetGlobalKeyedEventHandle();
-#if !defined(__USING_NTDLL_LIB)
-            const auto NtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
-            if (!NtReleaseKeyedEvent)
-            {
-                RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
-            }
-#endif
-
             //v16
             YY_CV_WAIT_BLOCK* notify = nullptr;
 
@@ -455,7 +515,7 @@ namespace YY::Thunks::internal
                 {
                     if (pWake->SRWLock == nullptr || RtlpQueueWaitBlockToSRWLock(pWake, pWake->SRWLock, (pWake->flag >> 2) & 0x1) == FALSE)
                     {
-                        NtReleaseKeyedEvent(GlobalKeyedEventHandle, pWake, 0, nullptr);
+                        internal::SecondWaitWorkaroundNtReleaseKeyedEvent(GlobalKeyedEventHandle, pWake, 0, nullptr);
                     }
                 }
 
@@ -800,19 +860,13 @@ namespace YY::Thunks::internal
         static void __fastcall RtlpWaitOnAddressWakeEntireList(YY_ADDRESS_WAIT_BLOCK* pBlock)
         {
             auto GlobalKeyedEventHandle = GetGlobalKeyedEventHandle();
-#if !defined(__USING_NTDLL_LIB)
-            const auto NtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
-            if (!NtReleaseKeyedEvent)
-                internal::RaiseStatus(STATUS_NOT_FOUND);
-#endif
-
             for (; pBlock;)
             {
                 auto Tmp = pBlock->back;
 
                 if (InterlockedExchange(&pBlock->flag, 2) == 0)
                 {
-                    NtReleaseKeyedEvent(GlobalKeyedEventHandle, pBlock, 0, nullptr);
+                    internal::SecondWaitWorkaroundNtReleaseKeyedEvent(GlobalKeyedEventHandle, pBlock, 0, nullptr);
                 }
 
 
@@ -1072,7 +1126,7 @@ namespace YY::Thunks::internal
             {
                 if (InterlockedExchange(&pWaitBlock->flag, 4) == 2)
                 {
-                    Status = NtWaitForKeyedEvent(GlobalKeyedEventHandle, pWaitBlock, 0, nullptr);
+                    Status = internal::SecondWaitWorkaroundNtWaitForKeyedEvent(GlobalKeyedEventHandle, pWaitBlock, 0, nullptr);
                 }
                 else
                 {
@@ -1650,6 +1704,7 @@ namespace YY::Thunks
             //成功锁定
             return;
         }
+        StackWaitBlock.uWakeupThreadId = 0;
 
         for (;;)
         {
@@ -1846,7 +1901,7 @@ namespace YY::Thunks
             return;
         }
 
-
+        StackWaitBlock.uWakeupThreadId = 0;
         size_t NewSRWLock;
 
         for (;; OldSRWLock = *(volatile size_t *)SRWLock)
@@ -2141,6 +2196,7 @@ namespace YY::Thunks
         StackWaitBlock.next = nullptr;
         StackWaitBlock.flag = 2;
         StackWaitBlock.SRWLock = nullptr;
+        StackWaitBlock.uWakeupThreadId = 0;
 
         auto OldConditionVariable = *(size_t*)ConditionVariable;
 
@@ -2206,7 +2262,7 @@ namespace YY::Thunks
 
             if (Status == STATUS_TIMEOUT && internal::RtlpWakeSingle(ConditionVariable, &StackWaitBlock) == FALSE)
             {
-                NtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
+                internal::SecondWaitWorkaroundNtWaitForKeyedEvent(GlobalKeyedEventHandle, &StackWaitBlock, 0, nullptr);
                 Status = 0;
             }
         }
@@ -2256,6 +2312,7 @@ namespace YY::Thunks
             StackWaitBlock.next = nullptr;
             StackWaitBlock.flag = 2;
             StackWaitBlock.SRWLock = nullptr;
+            StackWaitBlock.uWakeupThreadId = 0;
 
             if (Flags& CONDITION_VARIABLE_LOCKMODE_SHARED)
             {
@@ -2328,7 +2385,7 @@ namespace YY::Thunks
 
                 if (Status == STATUS_TIMEOUT && internal::RtlpWakeSingle(ConditionVariable, &StackWaitBlock) == FALSE)
                 {
-                    NtWaitForKeyedEvent(GlobalKeyedEventHandle, (PVOID)&StackWaitBlock, 0, nullptr);
+                    internal::SecondWaitWorkaroundNtWaitForKeyedEvent(GlobalKeyedEventHandle, &StackWaitBlock, 0, nullptr);
                     Status = 0;
                 }
             }
@@ -2432,21 +2489,13 @@ namespace YY::Thunks
                 if (Last == Current)
                 {
                     auto GlobalKeyedEventHandle = internal::GetGlobalKeyedEventHandle();
-#if !defined(__USING_NTDLL_LIB)
-                    const auto NtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
-                    if (!NtReleaseKeyedEvent)
-                    {
-                        internal::RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
-                    }
-#endif
-
                     for (auto pBlock = YY_CV_GET_BLOCK(Current); pBlock;)
                     {
                         auto Tmp = pBlock->back;
 
                         if (!InterlockedBitTestAndReset((volatile LONG*)&pBlock->flag, 1))
                         {
-                            NtReleaseKeyedEvent(GlobalKeyedEventHandle, pBlock, FALSE, nullptr);
+                            internal::SecondWaitWorkaroundNtReleaseKeyedEvent(GlobalKeyedEventHandle, pBlock, FALSE, nullptr);
                         }
 
                         pBlock = Tmp;
@@ -2715,6 +2764,7 @@ namespace YY::Thunks
         WaitBlock.notify = nullptr;
         WaitBlock.next = nullptr;
         WaitBlock.flag = 1;
+        WaitBlock.uWakeupThreadId = 0;
 
         internal::RtlpAddWaitBlockToWaitList(&WaitBlock);
 
