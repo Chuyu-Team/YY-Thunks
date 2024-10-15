@@ -27,7 +27,7 @@
 
 #include <SharedDefs.h>
 
-EXTERN_C DWORD g_uSystemVersion;
+EXTERN_C uint64_t g_uSystemVersion;
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -111,9 +111,13 @@ inline std::string ToHexString(const BYTE (&_Data)[kDataLength])
     return ToHexString(_Data, kDataLength);
 }
 
-inline constexpr DWORD __fastcall MakeVersion(_In_ DWORD _uMajorVersion, _In_ DWORD _uMinorVersion)
+__forceinline constexpr uint64_t __fastcall MakeVersion(_In_ uint16_t _uMajor, _In_ uint16_t _uMinor, uint16_t _uBuild = 0, UINT16 _uRevision = 0)
 {
-    return (_uMajorVersion << 16) | _uMinorVersion;
+    uint64_t _uVersion = uint64_t(_uMajor) << 48;
+    _uVersion |= uint64_t(_uMinor) << 32;
+    _uVersion |= uint64_t(_uBuild) << 16;
+    _uVersion |= _uRevision;
+    return _uVersion;
 }
 
 std::string ReadFileData(LPCWSTR _szFilePath);

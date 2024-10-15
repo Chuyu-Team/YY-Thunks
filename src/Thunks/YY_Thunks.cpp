@@ -292,23 +292,27 @@ namespace YY::Thunks::internal
 #endif
         }
 
-        __forceinline constexpr DWORD __fastcall MakeVersion(_In_ DWORD _uMajorVersion, _In_ DWORD _uMinorVersion)
+        __forceinline constexpr uint64_t __fastcall MakeVersion(_In_ uint16_t _uMajor, _In_ uint16_t _uMinor, uint16_t _uBuild = 0, UINT16 _uRevision = 0)
         {
-            return (_uMajorVersion << 16) | _uMinorVersion;
+            uint64_t _uVersion = uint64_t(_uMajor) << 48;
+            _uVersion |= uint64_t(_uMinor) << 32;
+            _uVersion |= uint64_t(_uBuild) << 16;
+            _uVersion |= _uRevision;
+            return _uVersion;
         }
 
 #ifdef __YY_Thunks_Unit_Test     
-        EXTERN_C DWORD g_uSystemVersion = 0;
+        EXTERN_C uint64_t g_uSystemVersion = 0;
 #endif
 
-        __forceinline DWORD __fastcall GetSystemVersion()
+        __forceinline uint64_t __fastcall GetSystemVersion()
         {
 #ifdef __YY_Thunks_Unit_Test
             if (g_uSystemVersion)
                 return g_uSystemVersion;
 #endif
             const auto _pPeb = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock;
-            return internal::MakeVersion(_pPeb->OSMajorVersion, _pPeb->OSMinorVersion);
+            return internal::MakeVersion(_pPeb->OSMajorVersion, _pPeb->OSMinorVersion, _pPeb->OSBuildNumber);
         }
 
         const SYSTEM_INFO& GetNativeSystemInfo()

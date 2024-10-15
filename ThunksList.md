@@ -813,3 +813,4 @@
 | FreeAddrInfoEx(W)                          | 不存在时，内部实现。
 | GetAddrInfoW                               | 不存在时，调用getaddrinfo。
 | FreeAddrInfoW                              | 不存在时，内部实现。
+| WSASocketW(A)                              | 低于6.1.7601时自动去除 `WSA_FLAG_NO_HANDLE_INHERIT`
