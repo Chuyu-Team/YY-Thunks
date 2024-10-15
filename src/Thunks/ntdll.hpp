@@ -20,14 +20,17 @@ namespace YY::Thunks
         {
             return _pfnNtCancelIoFileEx(handle, io, io_status);
         }
-
-
+        
+        auto currentTid = GetCurrentThreadId();
         HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
         if (h != INVALID_HANDLE_VALUE) {
             THREADENTRY32 te;
             te.dwSize = sizeof(te);
             if (Thread32First(h, &te)) {
                 do {
+                    if (te.th32ThreadID == currentTid) {
+                        continue;
+                    }
                     HANDLE threadHandle = OpenThread(THREAD_SET_CONTEXT, FALSE, te.th32ThreadID);
                     if (threadHandle != INVALID_HANDLE_VALUE) {
                         struct CancelIoData {
