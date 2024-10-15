@@ -1464,6 +1464,10 @@ namespace YY::Thunks
 #endif
 
 #if (YY_Thunks_Target < __WindowsNT6_1_SP1)
+#ifndef WSA_FLAG_NO_HANDLE_INHERIT
+#define WSA_FLAG_NO_HANDLE_INHERIT    0x80
+#endif
+
     __DEFINE_THUNK(
     ws2_32,
     24,
