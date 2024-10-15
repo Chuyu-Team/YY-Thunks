@@ -1197,8 +1197,13 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
                 }
                 else
                 {
-                    auto _sModuleName = YY::Thunks::internal::MakeNtString(module_name);
-                    LdrLoadDll(szFilePathBuffer, nullptr, &_sModuleName, &new_handle);
+                    wchar_t szStringBuffer[MAX_PATH];
+                    YY::Thunks::internal::StringBuffer<wchar_t> _StringBuffer(szStringBuffer, _countof(szStringBuffer));
+                    _StringBuffer.AppendString(szFilePathBuffer);
+                    _StringBuffer.AppendChar(L'\\');
+                    _StringBuffer.AppendString(module_name);
+                    auto _sModuleName = YY::Thunks::internal::MakeNtString(szStringBuffer);
+                    LdrLoadDll(nullptr, nullptr, &_sModuleName, &new_handle);
                 }
             }
             else
