@@ -21,7 +21,29 @@ namespace YY::Thunks
             return pCancelIoEx(hFile, lpOverlapped);
         }
 
-        //downlevel逻辑会把该文件所有IO动作给取消掉！凑合用吧。
+        auto currentTid = GetCurrentThreadId();
+        HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
+        if (h != INVALID_HANDLE_VALUE) {
+            THREADENTRY32 te;
+            te.dwSize = sizeof(te);
+            if (Thread32First(h, &te)) {
+                do {
+                    if (te.th32ThreadID == currentTid) {
+                        continue;
+                    }
+                    HANDLE threadHandle = OpenThread(THREAD_SET_CONTEXT, FALSE, te.th32ThreadID);
+                    if (threadHandle != INVALID_HANDLE_VALUE) {
+                        QueueUserAPC([](ULONG_PTR param) {
+                            CancelIo((HANDLE)param);
+                        }, threadHandle, (ULONG_PTR) hFile);
+                        CloseHandle(threadHandle);
+                    }
+                } while (Thread32Next(h, &te));
+            }
+            CloseHandle(h);
+        }
+
+        // We also need to call CancelIo on the current processing thread
         return CancelIo(hFile);
     }
 #endif
