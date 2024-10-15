@@ -1463,6 +1463,50 @@ namespace YY::Thunks
     }
 #endif
 
+#if (YY_Thunks_Target < __WindowsNT6)
+
+#ifndef SIO_BASE_HANDLE
+#define SIO_BASE_HANDLE 0x48000022
+#endif
+
+    __DEFINE_THUNK(
+        ws2_32,
+        36,
+        int,
+        WSAAPI,
+        WSAIoctl,
+        __in SOCKET s,
+        __in DWORD dwIoControlCode,
+        __in LPVOID lpvInBuffer,
+        __in DWORD cbInBuffer,
+        __out LPVOID lpvOutBuffer,
+        __in DWORD cbOutBuffer,
+        __out LPDWORD lpcbBytesReturned,
+        __in LPWSAOVERLAPPED lpOverlapped,
+        __in LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine
+    )
+    {
+        if (auto const pWSAIoctl = try_get_WSAIoctl())
+        {
+            const auto result = pWSAIoctl(s, dwIoControlCode, lpvInBuffer, cbInBuffer, lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpOverlapped, lpCompletionRoutine);
+            // SIO_BASE_HANDLE is defined in the Mswsock.h header file and supported on Windows Vista and later.
+            // So while we do have layered service providers in Windows XP or earlier, this specific io control is not supported. 
+            // Worse, LSP is actually deprecated since Windows Server 2012, meaning this io control should likely return the socket input on later OS as well (effectively bypassed the LSPs)
+            // So almost nobody except mio's library uses this io control...god help... 
+            if (result == SOCKET_ERROR && dwIoControlCode == SIO_BASE_HANDLE)
+            {
+                *(SOCKET *)lpvOutBuffer = s;
+                *lpcbBytesReturned = sizeof(SOCKET);
+                return 0;
+            }
+            return result;
+        }
+
+        // Upon successful completion, the WSAIoctl returns zero. Otherwise, a value of SOCKET_ERROR is returned, and a specific error code can be retrieved by calling WSAGetLastError.
+
+        return SOCKET_ERROR;
+    }
+#endif
 
 #if (YY_Thunks_Target < __WindowsNT6_2)
 
