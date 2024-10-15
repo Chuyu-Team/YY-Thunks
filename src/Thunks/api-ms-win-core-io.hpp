@@ -20,31 +20,11 @@ namespace YY::Thunks
         {
             return pCancelIoEx(hFile, lpOverlapped);
         }
-
-        auto currentTid = GetCurrentThreadId();
-        HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
-        if (h != INVALID_HANDLE_VALUE) {
-            THREADENTRY32 te;
-            te.dwSize = sizeof(te);
-            if (Thread32First(h, &te)) {
-                do {
-                    if (te.th32ThreadID == currentTid) {
-                        continue;
-                    }
-                    HANDLE threadHandle = OpenThread(THREAD_SET_CONTEXT, FALSE, te.th32ThreadID);
-                    if (threadHandle != INVALID_HANDLE_VALUE) {
-                        QueueUserAPC([](ULONG_PTR param) {
-                            CancelIo((HANDLE)param);
-                        }, threadHandle, (ULONG_PTR) hFile);
-                        CloseHandle(threadHandle);
-                    }
-                } while (Thread32Next(h, &te));
-            }
-            CloseHandle(h);
-        }
-
-        // We also need to call CancelIo on the current processing thread
-        return CancelIo(hFile);
+        // https://github.com/wine-mirror/wine/blob/100645ac4de77879f6a36181234f76794bcbecb2/dlls/kernelbase/file.c#L3005
+        IO_STATUS_BLOCK io;
+        auto status = NtCancelIoFileEx(hFile, (PIO_STATUS_BLOCK)lpOverlapped, &io);
+        if (status) SetLastError(RtlNtStatusToDosError(status));
+        return !status;
     }
 #endif
         
