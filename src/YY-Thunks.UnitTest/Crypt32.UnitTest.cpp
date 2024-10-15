@@ -14,7 +14,7 @@ namespace Crypt32
     public:
         CryptBinaryToStringW()
         {
-            g_uSystemVersion = MakeVersion(5, 1);
+            g_uSystemVersion = MakeVersion(5, 1, 2600);
         }
 
         ~CryptBinaryToStringW()

@@ -1,9 +1,16 @@
-﻿#include <winsock2.h>
+﻿#if (YY_Thunks_Target < __WindowsNT6_2)
+#include <winsock2.h>
 #include <ws2tcpip.h>
 
 #ifdef FreeAddrInfoEx
 #undef FreeAddrInfoEx
 #endif // ! FreeAddrInfoEx
+#endif
+
+#if (YY_Thunks_Target < __WindowsNT6_1_SP1) && !defined(__Comment_Lib_ws2_32)
+#define __Comment_Lib_ws2_32
+#pragma comment(lib, "Ws2_32.lib")
+#endif
 
 namespace YY::Thunks
 {
@@ -1460,6 +1467,82 @@ namespace YY::Thunks
         }
     
         return result;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_1_SP1)
+
+    // Windows XP
+    // 虽然Windows XP支持这个API，但是Windows 7 SP1开始才支持 WSA_FLAG_NO_HANDLE_INHERIT 标记
+    __DEFINE_THUNK(
+    ws2_32,
+    24,
+    SOCKET,
+    WSAAPI,
+    WSASocketW,
+        _In_ int af,
+        _In_ int type,
+        _In_ int protocol,
+        _In_opt_ LPWSAPROTOCOL_INFOW lpProtocolInfo,
+        _In_ GROUP g,
+        _In_ DWORD dwFlags
+        )
+    {
+        auto const _pfnWSASocketW = try_get_WSASocketW();
+        if (!_pfnWSASocketW)
+        {
+            WSASetLastError(WSAVERNOTSUPPORTED);
+            return INVALID_SOCKET;
+        }
+
+        // This include Windows 7 non-SP1
+        if (internal::GetSystemVersion() < __WindowsNT6_1_SP1)
+        {
+            // This flag is supported on Windows 7 with SP1, Windows Server 2008 R2 with SP1, and later
+            // So we strip it to prevent error on prior OS, because process handle inheritance doesn't really matter at that point
+            dwFlags &= ~WSA_FLAG_NO_HANDLE_INHERIT;
+        }
+
+        return _pfnWSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_1_SP1)
+
+    // 最低 Windows XP
+    // 虽然Windows XP支持这个API，但是Windows 7 SP1开始才支持 WSA_FLAG_NO_HANDLE_INHERIT 标记
+    __DEFINE_THUNK(
+    ws2_32,
+    24,
+    SOCKET,
+    WSAAPI,
+    WSASocketA,
+        _In_ int af,
+        _In_ int type,
+        _In_ int protocol,
+        _In_opt_ LPWSAPROTOCOL_INFOA lpProtocolInfo,
+        _In_ GROUP g,
+        _In_ DWORD dwFlags
+        )
+    {
+        auto const _pfnWSASocketA = try_get_WSASocketA();
+        if (!_pfnWSASocketA)
+        {
+            WSASetLastError(WSAVERNOTSUPPORTED);
+            return INVALID_SOCKET;
+        }
+
+        // This include Windows 7 non-SP1
+        if (internal::GetSystemVersion() < __WindowsNT6_1_SP1)
+        {
+            // This flag is supported on Windows 7 with SP1, Windows Server 2008 R2 with SP1, and later
+            // So we strip it to prevent error on prior OS, because process handle inheritance doesn't really matter at that point
+            dwFlags &= ~WSA_FLAG_NO_HANDLE_INHERIT;
+        }
+
+        return _pfnWSASocketA(af, type, protocol, lpProtocolInfo, g, dwFlags);
     }
 #endif
 
