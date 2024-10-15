@@ -1463,6 +1463,30 @@ namespace YY::Thunks
     }
 #endif
 
+#if (YY_Thunks_Target < __WindowsNT6_1_SP1)
+    __DEFINE_THUNK(
+    ws2_32,
+    24,
+    SOCKET,
+    WSAAPI,
+    WSASocketW,
+        _In_ int af,
+        _In_ int type,
+        _In_ int protocol,
+        _In_opt_ LPWSAPROTOCOL_INFOW lpProtocolInfo,
+        _In_ GROUP g,
+        _In_ DWORD dwFlags
+        )
+    {
+        if (auto const pWSASocketW = try_get_WSASocketW())
+        {
+            // This flag is supported on Windows 7 with SP1, Windows Server 2008 R2 with SP1, and later
+            dwFlags &= ~WSA_FLAG_NO_HANDLE_INHERIT;
+            return pWSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
+        }
+        return INVALID_SOCKET;
+    }
+#endif
 
 #if (YY_Thunks_Target < __WindowsNT6_2)
 
