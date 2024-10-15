@@ -1,4 +1,72 @@
-﻿namespace YY::Thunks
+﻿
+
+#if defined(YY_Thunks_Implemented) && (YY_Thunks_Target < __WindowsNT6)
+namespace YY::Thunks::Fallback
+{
+    static NTSTATUS NTAPI NtCancelIoFileEx(
+        HANDLE _hHandle,
+        IO_STATUS_BLOCK* _pIo,
+        IO_STATUS_BLOCK* _pIoStatus
+        )
+    {
+        // NtCancelIoFile无法模拟特定的IO取消工作，因此需要取消特定IO时立即失败处理
+        if (_pIo != nullptr)
+        {
+            // Not supported
+            return STATUS_NOT_FOUND;
+        }
+
+    #ifndef __USING_NTDLL_LIB
+        const auto NtCancelIoFile = try_get_NtCancelIoFile();
+        if (!NtCancelIoFile)
+        {
+            // 正常来说不应该走到这里
+            return STATUS_NOT_SUPPORTED;
+        }
+    #endif
+
+        auto _Status = NtCancelIoFile(_hHandle, _pIoStatus);
+        if (_Status < 0)
+            return _Status;
+
+        internal::StringBuffer<char> _Buffer;
+        auto _pProcessInfo = internal::GetCurrentProcessInfo(_Buffer);
+        if (!_pProcessInfo)
+            return _Status;
+
+        const auto _uCurrentThreadId = GetCurrentThreadId();
+        for (ULONG i = 0; i != _pProcessInfo->ThreadCount; ++i)
+        {
+            auto& _Thread = _pProcessInfo->Threads[i];
+
+            if (_uCurrentThreadId == static_cast<DWORD>(reinterpret_cast<UINT_PTR>(_Thread.ClientId.UniqueThread)))
+                continue;
+
+            auto _hThread = OpenThread(THREAD_SET_CONTEXT, FALSE, static_cast<DWORD>(reinterpret_cast<UINT_PTR>(_Thread.ClientId.UniqueThread)));
+            if (!_hThread)
+                continue;
+
+            QueueUserAPC(
+                [](ULONG_PTR _hHandle)
+                {
+    #ifndef __USING_NTDLL_LIB
+                    const auto NtCancelIoFile = try_get_NtCancelIoFile();
+    #endif
+                    IO_STATUS_BLOCK _IoStatus;
+                    // 故意不判断空指针，NtCancelIoFileEx开头已经判断过了。
+                    // 如果真的崩溃，那么说明内存被改坏了。
+                    NtCancelIoFile(reinterpret_cast<HANDLE>(_hHandle), &_IoStatus);
+                }, _hThread, (ULONG_PTR)_hHandle);
+            CloseHandle(_hThread);
+        }
+
+        return _Status;
+    }
+}
+#endif
+
+
+namespace YY::Thunks
 {
 #if (YY_Thunks_Target < __WindowsNT6)
 
@@ -10,26 +78,17 @@
     NTSTATUS,
     NTAPI,
     NtCancelIoFileEx,
-        HANDLE handle,
-        IO_STATUS_BLOCK* io,
-        IO_STATUS_BLOCK* io_status
+        HANDLE _hHandle,
+        IO_STATUS_BLOCK* _pIo,
+        IO_STATUS_BLOCK* _pIoStatus
         )
     {
         if (const auto _pfnNtCancelIoFileEx = try_get_NtCancelIoFileEx())
         {
-            return _pfnNtCancelIoFileEx(handle, io, io_status);
+            return _pfnNtCancelIoFileEx(_hHandle, _pIo, _pIoStatus);
         }
 
-#ifndef __USING_NTDLL_LIB
-        const auto NtCancelIoFile = try_get_NtCancelIoFile();
-        if(!NtCancelIoFile)
-        {
-            // 正常来说不应该走到这里
-            return STATUS_NOT_SUPPORTED;
-        }
-#endif
-        // 最坏打算，清除所有的调用
-        return NtCancelIoFile(handle, io_status);    
+        return Fallback::NtCancelIoFileEx(_hHandle, _pIo, _pIoStatus);
     }
 #endif
 

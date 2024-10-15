@@ -21,8 +21,15 @@ namespace YY::Thunks
             return pCancelIoEx(hFile, lpOverlapped);
         }
 
-        //downlevel逻辑会把该文件所有IO动作给取消掉！凑合用吧。
-        return CancelIo(hFile);
+        IO_STATUS_BLOCK _IoStatusBlock;
+        // 没有CancelIoEx那么也必然没有NtCancelIoFileEx，所以直接调用 Fallback系列即可。
+        auto _Status = Fallback::NtCancelIoFileEx(hFile, reinterpret_cast<IO_STATUS_BLOCK*>(lpOverlapped), &_IoStatusBlock);
+        if (_Status < 0)
+        {
+            SetLastError(internal::NtStatusToDosError(_Status));
+            return FALSE;
+        }
+        return TRUE;
     }
 #endif
         
