@@ -1,4 +1,4 @@
-﻿#include <tlhelp32.h>
+#include <tlhelp32.h>
 namespace YY::Thunks
 {
 #if (YY_Thunks_Target < __WindowsNT6)
@@ -23,44 +23,29 @@ namespace YY::Thunks
         
         auto currentTid = GetCurrentThreadId();
         HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
-        if (h != INVALID_HANDLE_VALUE) {
+        if (h != INVALID_HANDLE_VALUE)
+        {
             THREADENTRY32 te;
             te.dwSize = sizeof(te);
-            if (Thread32First(h, &te)) {
-                do {
-                    if (te.th32ThreadID == currentTid) {
+            if (Thread32First(h, &te))
+            {
+                do
+                {
+                    if (te.th32ThreadID == currentTid)
+                    {
                         continue;
                     }
                     HANDLE threadHandle = OpenThread(THREAD_SET_CONTEXT, FALSE, te.th32ThreadID);
-                    if (threadHandle != INVALID_HANDLE_VALUE) {
-                        struct CancelIoData {
-                            HANDLE handle;
-                            IO_STATUS_BLOCK* io_status;
-                        };
-
-
-                        QueueUserAPC([](ULONG_PTR param) {
-                            auto data = (CancelIoData*)param;
-#ifndef __USING_NTDLL_LIB
-                            const auto NtCancelIoFile = try_get_NtCancelIoFile();
-                            if (!NtCancelIoFile)
-                            {
-                                // 正常来说不应该走到这里
-                                delete data;
-                                return;
-                            }
-#endif
-
-                            NtCancelIoFile(data->handle, data->io_status);
-                            delete data;
-                        }, threadHandle, (ULONG_PTR) new CancelIoData {handle, io_status});
+                    if (threadHandle != INVALID_HANDLE_VALUE)
+                    {
+                        QueueUserAPC([](ULONG_PTR param)
+                                     { CancelIo((HANDLE)param); }, threadHandle, (ULONG_PTR)HANDLE);
                         CloseHandle(threadHandle);
                     }
                 } while (Thread32Next(h, &te));
             }
             CloseHandle(h);
         }
-
 
 #ifndef __USING_NTDLL_LIB
         const auto NtCancelIoFile = try_get_NtCancelIoFile();
@@ -74,7 +59,6 @@ namespace YY::Thunks
         return NtCancelIoFile(handle, io_status);
     }
 #endif
-
 
 #if (YY_Thunks_Target < __WindowsNT6_1)
 
