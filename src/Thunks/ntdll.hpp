@@ -1,53 +1,83 @@
-﻿namespace YY::Thunks
+﻿#include <tlhelp32.h>
+namespace YY::Thunks
 {
 #if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端    Windows Vista [桌面应用|UWP 应用]
     // 最低受支持的服务器    Windows Server 2008[桌面应用 | UWP 应用]
     __DEFINE_THUNK(
-    ntdll,
-    12,
-    NTSTATUS,
-    NTAPI,
-    NtCancelIoFileEx,
+        ntdll,
+        12,
+        NTSTATUS,
+        NTAPI,
+        NtCancelIoFileEx,
         HANDLE handle,
         IO_STATUS_BLOCK* io,
         IO_STATUS_BLOCK* io_status
-        )
+    )
     {
         if (const auto _pfnNtCancelIoFileEx = try_get_NtCancelIoFileEx())
         {
             return _pfnNtCancelIoFileEx(handle, io, io_status);
         }
 
+        if (io != nullptr) 
+        {
+            // Not supported
+            return STATUS_NOT_FOUND;
+        }
+
+        internal::StringBuffer<char> _Buffer;
+        auto _pProcessInfo = internal::GetCurrentProcessInfo(_Buffer);
+        if (_pProcessInfo)
+        {
+            const auto _uCurrentThreadId = GetCurrentThreadId();
+
+            for (ULONG i = 0; i != _pProcessInfo->ThreadCount; ++i)
+            {
+                auto& _Thread = _pProcessInfo->Threads[i];
+
+                if (_uCurrentThreadId == static_cast<DWORD>(reinterpret_cast<UINT_PTR>(_Thread.ClientId.UniqueThread)))
+                    continue;
+
+                auto _hThread = OpenThread(THREAD_SET_CONTEXT, FALSE, static_cast<DWORD>(reinterpret_cast<UINT_PTR>(_Thread.ClientId.UniqueThread)));
+                if (!_hThread)
+                {
+                    continue;
+                }
+
+                QueueUserAPC((PAPCFUNC)CancelIo, _hThread, (ULONG_PTR)handle);
+                CloseHandle(_hThread);
+            }
+        }
+        
 #ifndef __USING_NTDLL_LIB
         const auto NtCancelIoFile = try_get_NtCancelIoFile();
-        if(!NtCancelIoFile)
+        if (!NtCancelIoFile)
         {
             // 正常来说不应该走到这里
             return STATUS_NOT_SUPPORTED;
         }
 #endif
         // 最坏打算，清除所有的调用
-        return NtCancelIoFile(handle, io_status);    
+        return NtCancelIoFile(handle, io_status);
     }
 #endif
-
 
 #if (YY_Thunks_Target < __WindowsNT6_1)
 
     // 最低受支持的客户端	在 Windows 7 和更高版本的 Windows 中可用。
     __DEFINE_THUNK(
-    ntdll,
-    16,
-    NTSTATUS,
-    NTAPI,
-    NtOpenKeyEx,
+        ntdll,
+        16,
+        NTSTATUS,
+        NTAPI,
+        NtOpenKeyEx,
         __out PHANDLE _phKeyHandle,
         __in ACCESS_MASK _fDesiredAccess,
         __in POBJECT_ATTRIBUTES _pObjectAttributes,
         __in ULONG _fOpenOptions
-        )
+    )
     {
         if (const auto _pfnNtOpenKeyEx = try_get_NtOpenKeyEx())
         {
@@ -118,7 +148,7 @@
             }
         } while (false);
 
-        if(_hKey)
+        if (_hKey)
             NtClose(_hKey);
 
         return _Status;
