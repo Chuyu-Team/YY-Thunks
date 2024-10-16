@@ -22,6 +22,7 @@ namespace YY::Thunks
         }
         
         auto currentTid = GetCurrentThreadId();
+        auto currentPid = GetCurrentProcessId();
         HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
         if (h != INVALID_HANDLE_VALUE)
         {
@@ -31,7 +32,7 @@ namespace YY::Thunks
             {
                 do
                 {
-                    if (te.th32ThreadID == currentTid)
+                    if (te.th32ThreadID == currentTid || te.th32OwnerProcessID != currentPid)
                     {
                         continue;
                     }
