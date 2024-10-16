@@ -1,4 +1,4 @@
-#include <tlhelp32.h>
+﻿#include <tlhelp32.h>
 namespace YY::Thunks
 {
 #if (YY_Thunks_Target < __WindowsNT6)
@@ -39,7 +39,7 @@ namespace YY::Thunks
                     if (threadHandle != INVALID_HANDLE_VALUE)
                     {
                         QueueUserAPC([](ULONG_PTR param)
-                                     { CancelIo((HANDLE)param); }, threadHandle, (ULONG_PTR)HANDLE);
+                                     { CancelIo((HANDLE)param); }, threadHandle, (ULONG_PTR)handle);
                         CloseHandle(threadHandle);
                     }
                 } while (Thread32Next(h, &te));
