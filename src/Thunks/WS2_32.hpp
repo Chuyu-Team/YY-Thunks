@@ -1,5 +1,6 @@
 ﻿#include <winsock2.h>
 #include <ws2tcpip.h>
+#include <VersionHelpers.h>
 
 #ifdef FreeAddrInfoEx
 #undef FreeAddrInfoEx
@@ -1489,15 +1490,19 @@ namespace YY::Thunks
         if (auto const pWSAIoctl = try_get_WSAIoctl())
         {
             const auto result = pWSAIoctl(s, dwIoControlCode, lpvInBuffer, cbInBuffer, lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpOverlapped, lpCompletionRoutine);
-            // SIO_BASE_HANDLE is defined in the Mswsock.h header file and supported on Windows Vista and later.
-            // So while we do have layered service providers in Windows XP or earlier, this specific io control is not supported. 
-            // Worse, LSP is actually deprecated since Windows Server 2012, meaning this io control should likely return the socket input on later OS as well (effectively bypassed the LSPs)
-            // So almost nobody except mio's library uses this io control...god help... 
-            if (result == SOCKET_ERROR && dwIoControlCode == SIO_BASE_HANDLE)
+
+            if (!IsWindowsVistaOrGreater()) 
             {
-                *(SOCKET *)lpvOutBuffer = s;
-                *lpcbBytesReturned = sizeof(SOCKET);
-                return 0;
+                // SIO_BASE_HANDLE is defined in the Mswsock.h header file and supported on Windows Vista and later.
+                // So while we do have layered service providers in Windows XP or earlier, this specific io control is not supported. 
+                // Worse, LSP is actually deprecated since Windows Server 2012, meaning this io control should likely return the socket input on later OS as well (effectively bypassed the LSPs)
+                // So almost nobody except mio's library uses this io control...god help... 
+                if (result == SOCKET_ERROR && dwIoControlCode == SIO_BASE_HANDLE)
+                {
+                    *(SOCKET *)lpvOutBuffer = s;
+                    *lpcbBytesReturned = sizeof(SOCKET);
+                    return 0;
+                }
             }
             return result;
         }
