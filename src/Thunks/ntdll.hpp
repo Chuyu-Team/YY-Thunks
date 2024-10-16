@@ -24,7 +24,7 @@ namespace YY::Thunks
         if (io != nullptr) 
         {
             // Not supported
-            return STATUS_NOT_SUPPORTED;
+            return STATUS_NOT_FOUND;
         }
 
         internal::StringBuffer<char> _Buffer;
