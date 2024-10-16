@@ -1,5 +1,6 @@
 ﻿#include <winsock2.h>
 #include <ws2tcpip.h>
+#include <VersionHelpers.h>
 
 #ifdef FreeAddrInfoEx
 #undef FreeAddrInfoEx
@@ -1484,8 +1485,12 @@ namespace YY::Thunks
     {
         if (auto const pWSASocketW = try_get_WSASocketW())
         {
-            // This flag is supported on Windows 7 with SP1, Windows Server 2008 R2 with SP1, and later
-            dwFlags &= ~WSA_FLAG_NO_HANDLE_INHERIT;
+            if (!IsWindows7SP1OrGreater()) 
+            {
+                // This flag is supported on Windows 7 with SP1, Windows Server 2008 R2 with SP1, and later
+                // So we strip it to prevent error
+                dwFlags &= ~WSA_FLAG_NO_HANDLE_INHERIT;
+            }
             return pWSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
         }
         return INVALID_SOCKET;
