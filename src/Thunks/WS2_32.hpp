@@ -1485,11 +1485,17 @@ namespace YY::Thunks
     {
         if (auto const pWSASocketW = try_get_WSASocketW())
         {
-            if (!IsWindows7SP1OrGreater()) 
+            // This include Windows 7 non-SP1
+            if (internal::GetSystemVersion() <= internal::MakeVersion(6, 1)) 
             {
-                // This flag is supported on Windows 7 with SP1, Windows Server 2008 R2 with SP1, and later
-                // So we strip it to prevent error
-                dwFlags &= ~WSA_FLAG_NO_HANDLE_INHERIT;
+                const auto _pPeb = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock;
+                // This indicates a build version of 7601 on the lower 16-bit
+                if ((_pPeb->OSBuildNumber & 0xFFFF) != 7601)
+                {
+                    // This flag is supported on Windows 7 with SP1, Windows Server 2008 R2 with SP1, and later
+                    // So we strip it to prevent error on prior OS, because process handle inheritance doesn't really matter at that point
+                    dwFlags &= ~WSA_FLAG_NO_HANDLE_INHERIT;
+                }
             }
             return pWSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
         }
