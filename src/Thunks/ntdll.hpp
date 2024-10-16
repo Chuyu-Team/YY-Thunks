@@ -20,44 +20,37 @@ namespace YY::Thunks
         {
             return _pfnNtCancelIoFileEx(handle, io, io_status);
         }
-        
-        auto currentTid = GetCurrentThreadId();
-        auto currentPid = GetCurrentProcessId();
-        HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
-        if (h != INVALID_HANDLE_VALUE)
+
+        if (io != nullptr) 
         {
-            THREADENTRY32 te;
-            te.dwSize = sizeof(te);
-            if (Thread32First(h, &te))
-            {
-                do
-                {
-                    if (te.th32ThreadID == currentTid || te.th32OwnerProcessID != currentPid)
-                    {
-                        continue;
-                    }
-                    HANDLE threadHandle = OpenThread(THREAD_SET_CONTEXT, FALSE, te.th32ThreadID);
-                    if (threadHandle != INVALID_HANDLE_VALUE)
-                    {
-                        QueueUserAPC([](ULONG_PTR param) { 
-#ifndef __USING_NTDLL_LIB
-                            const auto NtCancelIoFile = try_get_NtCancelIoFile();
-                            if (!NtCancelIoFile)
-                            {
-                                // 正常来说不应该走到这里
-                                return;
-                            }
-#endif
-                            IO_STATUS_BLOCK dummy;
-                            NtCancelIoFile((HANDLE)param, &dummy); 
-                        }, threadHandle, (ULONG_PTR)handle);
-                        CloseHandle(threadHandle);
-                    }
-                } while (Thread32Next(h, &te));
-            }
-            CloseHandle(h);
+            // Not supported
+            return STATUS_NOT_SUPPORTED;
         }
 
+        internal::StringBuffer<char> _Buffer;
+        auto _pProcessInfo = internal::GetCurrentProcessInfo(_Buffer);
+        if (_pProcessInfo)
+        {
+            const auto _uCurrentThreadId = GetCurrentThreadId();
+
+            for (ULONG i = 0; i != _pProcessInfo->ThreadCount; ++i)
+            {
+                auto& _Thread = _pProcessInfo->Threads[i];
+
+                if (_uCurrentThreadId == static_cast<DWORD>(reinterpret_cast<UINT_PTR>(_Thread.ClientId.UniqueThread)))
+                    continue;
+
+                auto _hThread = OpenThread(THREAD_SET_CONTEXT, FALSE, static_cast<DWORD>(reinterpret_cast<UINT_PTR>(_Thread.ClientId.UniqueThread)));
+                if (!_hThread)
+                {
+                    continue;
+                }
+
+                QueueUserAPC((PAPCFUNC)CancelIo, _hThread, (ULONG_PTR)handle);
+                CloseHandle(_hThread);
+            }
+        }
+        
 #ifndef __USING_NTDLL_LIB
         const auto NtCancelIoFile = try_get_NtCancelIoFile();
         if (!NtCancelIoFile)
