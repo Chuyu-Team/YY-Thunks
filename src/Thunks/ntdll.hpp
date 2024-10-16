@@ -39,8 +39,18 @@ namespace YY::Thunks
                     HANDLE threadHandle = OpenThread(THREAD_SET_CONTEXT, FALSE, te.th32ThreadID);
                     if (threadHandle != INVALID_HANDLE_VALUE)
                     {
-                        QueueUserAPC([](ULONG_PTR param)
-                                     { CancelIo((HANDLE)param); }, threadHandle, (ULONG_PTR)handle);
+                        QueueUserAPC([](ULONG_PTR param) { 
+#ifndef __USING_NTDLL_LIB
+                            const auto NtCancelIoFile = try_get_NtCancelIoFile();
+                            if (!NtCancelIoFile)
+                            {
+                                // 正常来说不应该走到这里
+                                return;
+                            }
+#endif
+                            IO_STATUS_BLOCK dummy;
+                            NtCancelIoFile((HANDLE)param, &dummy); 
+                        }, threadHandle, (ULONG_PTR)handle);
                         CloseHandle(threadHandle);
                     }
                 } while (Thread32Next(h, &te));
