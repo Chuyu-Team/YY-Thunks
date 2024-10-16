@@ -1486,24 +1486,23 @@ namespace YY::Thunks
         __in LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine
     )
     {
-        if (auto const pWSAIoctl = try_get_WSAIoctl())
+        if (internal::GetSystemVersion() < internal::MakeVersion(6, 0)) 
         {
-            const auto result = pWSAIoctl(s, dwIoControlCode, lpvInBuffer, cbInBuffer, lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpOverlapped, lpCompletionRoutine);
-
-            if (internal::GetSystemVersion() < internal::MakeVersion(6, 0)) 
+            // SIO_BASE_HANDLE is defined in the Mswsock.h header file and supported on Windows Vista and later.
+            // So while we do have layered service providers in Windows XP or earlier, this specific io control is not supported. 
+            // Worse, LSP is actually deprecated since Windows Server 2012, meaning this io control should likely return the socket input on later OS as well (effectively bypassed the LSPs)
+            // So almost nobody except mio's library uses this io control...god help... 
+            if (dwIoControlCode == SIO_BASE_HANDLE)
             {
-                // SIO_BASE_HANDLE is defined in the Mswsock.h header file and supported on Windows Vista and later.
-                // So while we do have layered service providers in Windows XP or earlier, this specific io control is not supported. 
-                // Worse, LSP is actually deprecated since Windows Server 2012, meaning this io control should likely return the socket input on later OS as well (effectively bypassed the LSPs)
-                // So almost nobody except mio's library uses this io control...god help... 
-                if (result == SOCKET_ERROR && dwIoControlCode == SIO_BASE_HANDLE)
-                {
-                    *(SOCKET *)lpvOutBuffer = s;
-                    *lpcbBytesReturned = sizeof(SOCKET);
-                    return 0;
-                }
+                *(SOCKET *)lpvOutBuffer = s;
+                *lpcbBytesReturned = sizeof(SOCKET);
+                return 0;
             }
-            return result;
+        }
+
+        if (auto const pWSAIoctl = try_get_WSAIoctl())
+        {            
+            return pWSAIoctl(s, dwIoControlCode, lpvInBuffer, cbInBuffer, lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpOverlapped, lpCompletionRoutine);
         }
 
         // Upon successful completion, the WSAIoctl returns zero. Otherwise, a value of SOCKET_ERROR is returned, and a specific error code can be retrieved by calling WSAGetLastError.
