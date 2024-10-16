@@ -1,6 +1,5 @@
 ﻿#include <winsock2.h>
 #include <ws2tcpip.h>
-#include <VersionHelpers.h>
 
 #ifdef FreeAddrInfoEx
 #undef FreeAddrInfoEx
@@ -1491,7 +1490,7 @@ namespace YY::Thunks
         {
             const auto result = pWSAIoctl(s, dwIoControlCode, lpvInBuffer, cbInBuffer, lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpOverlapped, lpCompletionRoutine);
 
-            if (!IsWindowsVistaOrGreater()) 
+            if (internal::GetSystemVersion() < internal::MakeVersion(6, 0)) 
             {
                 // SIO_BASE_HANDLE is defined in the Mswsock.h header file and supported on Windows Vista and later.
                 // So while we do have layered service providers in Windows XP or earlier, this specific io control is not supported. 
