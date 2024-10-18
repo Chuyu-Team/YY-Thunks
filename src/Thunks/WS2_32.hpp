@@ -1463,11 +1463,11 @@ namespace YY::Thunks
     }
 #endif
 
-#if (YY_Thunks_Target < __WindowsNT6_1_SP1)
-#ifndef WSA_FLAG_NO_HANDLE_INHERIT
-#define WSA_FLAG_NO_HANDLE_INHERIT    0x80
-#endif
 
+#if (YY_Thunks_Target < __WindowsNT6_1_SP1)
+
+    // Windows XP
+    // 虽然Windows XP支持这个API，但是Windows 7 SP1开始才支持 WSA_FLAG_NO_HANDLE_INHERIT 标记
     __DEFINE_THUNK(
     ws2_32,
     24,
