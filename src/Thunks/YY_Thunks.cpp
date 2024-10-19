@@ -1159,7 +1159,19 @@ static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_
     // this fails, cache the sentinel handle value INVALID_HANDLE_VALUE so that
     // we don't attempt to load the module again:
     HMODULE new_handle = NULL;
-    if (Flags & USING_GET_MODULE_HANDLE)
+
+    if (__pfnYY_Thunks_CustomLoadLibrary)
+    {
+        new_handle = __pfnYY_Thunks_CustomLoadLibrary(module_name, Flags);
+    }
+
+    if (new_handle)
+    {
+        // 使用 CustomLoadLibrary的结果
+        if (new_handle == INVALID_HANDLE_VALUE)
+            new_handle = nullptr;
+    }
+    else if (Flags & USING_GET_MODULE_HANDLE)
     {
         new_handle = GetModuleHandleW(module_name);
     }
