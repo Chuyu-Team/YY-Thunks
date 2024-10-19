@@ -1210,4 +1210,94 @@ namespace YY ::Thunks
         return CreateRemoteThread(_hProcess, _pThreadAttributes, _uStackSize, _pStartAddress, _pParameter, _fCreationFlags, _pThreadId);
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端	Windows XP [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+    // Windows XP无法支持 PROCESS_QUERY_LIMITED_INFORMATION等权限。
+    __DEFINE_THUNK(
+    kernel32,
+    12,
+    HANDLE,
+    WINAPI,
+    OpenProcess,
+        _In_ DWORD _fDesiredAccess,
+        _In_ BOOL _bInheritHandle,
+        _In_ DWORD _uProcessId
+        )
+    {
+        const auto _pfnOpenProcess = try_get_OpenProcess();
+        if (!_pfnOpenProcess)
+        {
+            SetLastError(ERROR_FUNCTION_FAILED);
+            return nullptr;
+        }
+
+        if (internal::GetSystemVersion() < internal::MakeVersion(6, 0))
+        {
+            if (PROCESS_QUERY_LIMITED_INFORMATION & _fDesiredAccess)
+            {
+                _fDesiredAccess |= PROCESS_QUERY_INFORMATION;
+            }
+
+            if (PROCESS_SET_LIMITED_INFORMATION & _fDesiredAccess)
+            {
+                _fDesiredAccess |= PROCESS_SET_INFORMATION;
+            }
+
+            // Vista以上最高为    0xFFFF
+            // Windows XP最高只有 0x0FFF
+            _fDesiredAccess &= ~(0xFFFFu ^ 0x0FFF);
+        }
+
+        return _pfnOpenProcess(_fDesiredAccess, _bInheritHandle, _uProcessId);
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端	Windows XP [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+    // Windows XP无法支持 PROCESS_QUERY_LIMITED_INFORMATION等权限。
+    __DEFINE_THUNK(
+    kernel32,
+    12,
+    HANDLE,
+    WINAPI,
+    OpenThread,
+        _In_ DWORD _fDesiredAccess,
+        _In_ BOOL _bInheritHandle,
+        _In_ DWORD _uThreadId
+        )
+    {
+        const auto _pfnOpenThread = try_get_OpenThread();
+        if (!_pfnOpenThread)
+        {
+            SetLastError(ERROR_FUNCTION_FAILED);
+            return nullptr;
+        }
+
+        if (internal::GetSystemVersion() < internal::MakeVersion(6, 0))
+        {
+            if (THREAD_QUERY_LIMITED_INFORMATION & _fDesiredAccess)
+            {
+                _fDesiredAccess |= THREAD_QUERY_INFORMATION;
+            }
+
+            if (THREAD_SET_LIMITED_INFORMATION & _fDesiredAccess)
+            {
+                _fDesiredAccess |= THREAD_SET_INFORMATION;
+            }
+
+            // Vista以上最高为    0xFFFF
+            // Windows XP最高只有 0x03FF
+            _fDesiredAccess &= ~(0xFFFFu ^ 0x03FFu);
+        }
+
+        return _pfnOpenThread(_fDesiredAccess, _bInheritHandle, _uThreadId);
+    }
+#endif
 } //namespace YY::Thunks
