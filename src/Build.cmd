@@ -140,7 +140,7 @@ goto:eof
 
 :: FixObj "XXX\YY_Thunks_for_Vista.obj" 1.def+2.def
 :FixObj
-LibMaker.exe FixObj %1 /WeakExternFix:__security_cookie=%PointType% /WeakExternFix:__acrt_atexit_table=%PointType% /WeakExternFix:__pfnDllMainCRTStartupForYY_Thunks=%PointType% /WeakExternFix:__YY_Thunks_Disable_Rreload_Dlls=4
+LibMaker.exe FixObj %1 /WeakExternFix:__security_cookie=%PointType% /WeakExternFix:__acrt_atexit_table=%PointType% /WeakExternFix:__pfnDllMainCRTStartupForYY_Thunks=%PointType% /WeakExternFix:__YY_Thunks_Disable_Rreload_Dlls=4 /WeakExternFix:__pfnYY_Thunks_CustomLoadLibrary=%PointType%
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 if "%2"=="" goto:eof
 set DEF_FILES=%2
