@@ -115,6 +115,25 @@ EXTERN_C const BOOL __YY_Thunks_Disable_Rreload_Dlls = TRUE;
 */
 EXTERN_C extern BOOL __YY_Thunks_Disable_Rreload_Dlls /* = FALSE*/;
 
+
+// 直接通过GetModuleHandleW获取，改选项非常危险，如果dll尚未加载会将不会加载！！！
+#define USING_GET_MODULE_HANDLE 0x00000001
+// 以 LOAD_LIBRARY_AS_DATAFILE 标记作为资源加载。
+#define LOAD_AS_DATA_FILE 0x00000002
+// 直接使用LoadLibrary，该加载模式存在劫持风险，使用前请确认该DLL处于KnownDll。
+#define USING_UNSAFE_LOAD 0x00000004
+/// <summary>
+/// 如果对YY-Thunks的内置的LoadLibrary加载方式不满意，则通过设置__pfnYY_Thunks_CustomLoadLibrary以实现自定义DLL加载。
+/// </summary>
+/// <param name="_szModuleName">需要加载的模块名称，比如`ntdll.dll`。</param>
+/// <param name="_fFlags">请参考 USING_GET_MODULE_HANDLE 等宏。</param>
+/// <returns>
+/// 返回 nullptr：继续执行YY_Thunk默认DLL加载流程。
+/// 返回 -1 ：加载失败，并阻止执行YY_Thunks默认加载流程。
+/// 其他：CustomLoadLibrary加载成功，必须返回有效的 HMODULE。
+/// </returns>
+EXTERN_C extern HMODULE (__fastcall * const __pfnYY_Thunks_CustomLoadLibrary)(const wchar_t* _szModuleName, DWORD _fFlags);
+
 // 从DllMain缓存RtlDllShutdownInProgress状态，规避退出时调用RtlDllShutdownInProgress。
 // 0：缓存无效
 // 1：模块正常卸载
@@ -314,12 +333,6 @@ static __forceinline T* __fastcall __crt_interlocked_read_pointer(T* const volat
 {
     return __crt_interlocked_compare_exchange_pointer(target, nullptr, nullptr);
 }
-
-// 改选项非常危险，只调用GetModuleHandleW！！!
-#define USING_GET_MODULE_HANDLE 0x00000001
-#define LOAD_AS_DATA_FILE 0x00000002
-// 该加载模式存在劫持风险，使用前请确认。
-#define USING_UNSAFE_LOAD 0x00000004
 
 static HMODULE __fastcall try_get_module(volatile HMODULE* pModule, const wchar_t* module_name, int Flags) noexcept;
 
