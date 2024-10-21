@@ -20,9 +20,11 @@ namespace YY::Thunks
         {
             return pCancelIoEx(hFile, lpOverlapped);
         }
-
-        //downlevel逻辑会把该文件所有IO动作给取消掉！凑合用吧。
-        return CancelIo(hFile);
+        // https://github.com/wine-mirror/wine/blob/100645ac4de77879f6a36181234f76794bcbecb2/dlls/kernelbase/file.c#L3005
+        IO_STATUS_BLOCK io;
+        auto status = NtCancelIoFileEx(hFile, (PIO_STATUS_BLOCK)lpOverlapped, &io);
+        if (status) SetLastError(RtlNtStatusToDosError(status));
+        return !status;
     }
 #endif
         
