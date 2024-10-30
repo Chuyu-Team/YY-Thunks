@@ -1,4 +1,4 @@
-﻿#if (YY_Thunks_Target < __WindowsNT6_2)
+﻿#if (YY_Thunks_Target < __WindowsNT10_15063)
 #include <processthreadsapi.h>
 #endif
 
@@ -1298,6 +1298,65 @@ namespace YY ::Thunks
         }
 
         return _pfnOpenThread(_fDesiredAccess, _bInheritHandle, _uThreadId);
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT10_15063)
+
+    // 最低受支持的客户端	Windows 10版本 1607 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2016[桌面应用 | UWP 应用]
+    // 虽然14393就有这个接口，但是14393必须从 kernelbase加载，因此也需要修正。
+    __DEFINE_THUNK(
+    kernelbase,
+    8,
+    HRESULT,
+    WINAPI,
+    GetThreadDescription,
+        _In_ HANDLE _hThread,
+        _Outptr_result_z_ PWSTR* _pszThreadDescription
+        )
+    {
+        if (const auto _pfnGetThreadDescription = try_get_GetThreadDescription())
+        {
+            return _pfnGetThreadDescription(_hThread, _pszThreadDescription);
+        }
+
+        // 假装自己是一个空的 ThreadDescription
+
+        *_pszThreadDescription = nullptr;
+        auto _szThreadDescription = (wchar_t*)LocalAlloc(LMEM_FIXED, sizeof(wchar_t));
+        if (!_szThreadDescription)
+            return E_OUTOFMEMORY;
+
+        *_szThreadDescription = L'\0';
+        *_pszThreadDescription = _szThreadDescription;
+        return 0x10000000;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT10_15063)
+
+    // 最低受支持的客户端	Windows 10版本 1607 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2016[桌面应用 | UWP 应用]
+    // 虽然14393就有这个接口，但是14393必须从 kernelbase加载，因此也需要修正。
+    __DEFINE_THUNK(
+    kernelbase,
+    8,
+    HRESULT,
+    WINAPI,
+    SetThreadDescription,
+        _In_ HANDLE _hThread,
+        _In_ PCWSTR _szThreadDescription
+        )
+    {
+        if (const auto _pfnSetThreadDescription = try_get_SetThreadDescription())
+        {
+            return _pfnSetThreadDescription(_hThread, _szThreadDescription);
+        }
+
+        return E_NOTIMPL;
     }
 #endif
 } //namespace YY::Thunks

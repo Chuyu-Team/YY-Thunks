@@ -27,6 +27,7 @@ YY-Thunks支持的控制宏：
 #define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                                     \
     _APPLY(ntdll,                                        "ntdll"                              , USING_GET_MODULE_HANDLE ) \
     _APPLY(kernel32,                                     "kernel32"                           , USING_GET_MODULE_HANDLE ) \
+    _APPLY(kernelbase,                                   "kernelbase"                         , USING_GET_MODULE_HANDLE ) \
     _APPLY(cfgmgr32,                                     "cfgmgr32"                           , 0                 ) \
     _APPLY(crypt32,                                      "crypt32"                            , 0                 ) \
     _APPLY(dwmapi,                                       "dwmapi"                             , 0                 ) \

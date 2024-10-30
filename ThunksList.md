@@ -545,6 +545,8 @@
 | SetDefaultDllDirectories                   | 不存在时，手工控制LoadLibrary加载顺序。
 | GetCurrentPackageFullName                  | 返回 APPMODEL_ERROR_NO_PACKAGE。
 | OpenProcess                                | 额外处理 PROCESS_QUERY_LIMITED_INFORMATION、PROCESS_SET_LIMITED_INFORMATION。
+| GetThreadDescription                       | 返回空字符串。
+| SetThreadDescription                       | 返回 `E_NOTIMPL`。
 
 ## mfplat.dll
 | 函数                                       | Fallback
