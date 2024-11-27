@@ -408,21 +408,22 @@ namespace YY::Thunks
     BOOL,
     WINAPI,
     SetFileCompletionNotificationModes,
-        _In_ HANDLE FileHandle,
-        _In_ UCHAR Flags
+        _In_ HANDLE _hFileHandle,
+        _In_ UCHAR _uFlags
         )
     {
         if (const auto _pfnSetFileCompletionNotificationModes = try_get_SetFileCompletionNotificationModes())
         {
 #if (YY_Thunks_Target >= __WindowsNT6_1)
-            return _pfnSetFileCompletionNotificationModes(FileHandle, Flags);
+            return _pfnSetFileCompletionNotificationModes(_hFileHandle, _uFlags);
 #else // (YY_Thunks_Target < __WindowsNT6_1)
-            if (_pfnSetFileCompletionNotificationModes(FileHandle, Flags))
+            if (_pfnSetFileCompletionNotificationModes(_hFileHandle, _uFlags))
             {
                 return TRUE;
             }
 
-            if (GetLastError() == ERROR_ACCESS_DENIED && internal::GetSystemVersion() <= internal::MakeVersion(6, 0))
+            if ((_uFlags & ~FILE_SKIP_SET_EVENT_ON_HANDLE) == 0
+                && GetLastError() == ERROR_ACCESS_DENIED && internal::GetSystemVersion() <= internal::MakeVersion(6, 0))
             {
                 // https://github.com/Chuyu-Team/YY-Thunks/issues/70
                 // 特殊行为定制：Vista系统可能返回拒绝访问，为了不影响一些库的逻辑，直接返回TRUE。
@@ -433,10 +434,16 @@ namespace YY::Thunks
 #endif // (YY_Thunks_Target < __WindowsNT6_1)
         }
 
-        // 初步看起来没有什么的，只是会降低完成端口的效率。
-        // 至少需要 Vista才支持 FileIoCompletionNotificationInformation
-        // 只能假定先返回成功。
-        return TRUE;
+        // 目前来说似乎只有 FILE_SKIP_SET_EVENT_ON_HANDLE 可以安全忽略。
+        // FILE_SKIP_COMPLETION_PORT_ON_SUCCESS 如果没有成功会发送到完成端口，假装成功时调用者可能提前释放OVERLAPPED，从而产生野指针访问。
+        // https://github.com/Chuyu-Team/YY-Thunks/issues/130
+        if ((_uFlags & ~FILE_SKIP_SET_EVENT_ON_HANDLE) == 0)
+        {
+            return TRUE;
+        }
+
+        SetLastError(ERROR_FUNCTION_FAILED);
+        return FALSE;
     }
 #endif
 } //namespace YY::Thunks
