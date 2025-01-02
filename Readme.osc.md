@@ -120,6 +120,10 @@ ULONGLONG WINAPI GetTickCount64(VOID)
 
 请参阅 [ThunksList.md](ThunksList.md)
 
-## 4. 更新日志
-
+## 4. 其他
+### 4.1 更新日志
 请参阅 [releases 更新日志](https://github.com/Chuyu-Team/YY-Thunks/releases)
+
+### 4.2. 第三方依赖
+* [WinDepends](https://github.com/hfiref0x/WinDepends)
+   - YY.Depends.Analyzer中使用上述部分代码扫描Windows API Set。

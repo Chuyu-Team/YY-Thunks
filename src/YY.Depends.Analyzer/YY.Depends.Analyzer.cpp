@@ -9,6 +9,8 @@
 
 #include <atlstr.h>
 
+#include "WinDepends.Core/apisetx.h"
+
 #pragma comment(lib, "ntdll.lib")
 
 CStringW g_szRoot;
@@ -32,6 +34,7 @@ CStringA ReadFileData(LPCWSTR szFile)
 
     DWORD cbData = GetFileSize(_hFile, nullptr);
     ReadFile(_hFile, _Result.GetBufferSetLength(cbData), cbData, &cbData, nullptr);
+    CloseHandle(_hFile);
     return _Result;
 }
 
@@ -600,12 +603,27 @@ struct ExportCache
     //     API导出名称  模块的名称
     std::map<CStringA, CStringA> ProcNameToModuleNameMap;
 
+    std::map<CStringA, CStringA> APISetMap;
+
     WORD _Machine = IMAGE_FILE_MACHINE_UNKNOWN;
 
     ExportModuleInfo* GetExportModuleInfo(CStringA _szDllName)
     {
         _szDllName.MakeLower();
+        auto _pInfo = GetExportModuleInfoBase(_szDllName);
+        if (_pInfo)
+            return _pInfo;
 
+        auto _iter = APISetMap.find(_szDllName);
+        if (_iter == APISetMap.end())
+            return nullptr;
+
+        return GetExportModuleInfoBase(_iter->second);
+    }
+
+private:
+    ExportModuleInfo* GetExportModuleInfoBase(CStringA _szDllName)
+    {
         // 优先查找App目录的文件，虽然这个不是很正确，未考虑加载顺序，但是一般来说这样没有问题。
         auto _iterAppFiles = g_AppFiles.find(_Machine);
         if (_iterAppFiles != g_AppFiles.end())
@@ -648,6 +666,7 @@ ExportCache* GetExportModule(CStringW _szDefFilePath, WORD _Machine)
 
     ExportModuleInfo* _pTmp = nullptr;
     CStringA szModuleName;
+    bool _bApiSet = false;
 
     char line[2048] = {};
     while (fgets(line, 2048, file))
@@ -673,11 +692,30 @@ ExportCache* GetExportModule(CStringW _szDefFilePath, WORD _Machine)
         if (line[0] == '[' && line[Count - 1] == ']')
         {
             szModuleName = CStringA(line + 1, Count - 2).MakeLower();
-            _pTmp = &_Cache.ModuleToExportModuleInfoMap[szModuleName];
+            if (stricmp(szModuleName, "ApiSet") == 0)
+            {
+                _bApiSet = true;
+                continue;
+            }
+            else
+            {
+                _bApiSet = false;
+                _pTmp = &_Cache.ModuleToExportModuleInfoMap[szModuleName];
+            }
         }
 
         if (!_pTmp)
             continue;
+
+        if (_bApiSet)
+        {
+            if (auto _szValue = strchr(line, '='))
+            {
+                _Cache.APISetMap[CStringA(line, _szValue - line).MakeLower()] = CStringA(_szValue + 1).MakeLower();
+            }
+            continue;
+        }
+
 
         auto _szName = line;
         auto _Ordinal = strtoul(line, (char**)&_szName, 10);
@@ -886,6 +924,8 @@ int __cdecl wmain(int argc, wchar_t* argv[])
         Wow64DisableWow64FsRedirection(&OldValue);
 
         std::map<CStringA, std::map<DWORD, CStringA>> _Out;
+        std::vector<ApisetNameSet> _oApiSetInfo;
+
         if (PathIsDirectoryW(_szInputPath))
         {
             if (_szInputPath[_szInputPath.GetLength() - 1] != L'\\')
@@ -946,6 +986,11 @@ int __cdecl wmain(int argc, wchar_t* argv[])
                             FindClose(_hFind);
                         }
                     }
+
+                    if (auto _pApisetNamespace = LoadApisetNamespace(_szInputPath + LR"(System32\apisetschema.dll)"))
+                    {
+                        _oApiSetInfo = GetAllApisetNames(_pApisetNamespace);
+                    }
                 }
             }
             else
@@ -984,6 +1029,33 @@ int __cdecl wmain(int argc, wchar_t* argv[])
                 _szData += '\n';
             }
             _szData += '\n';
+        }
+
+        if (_oApiSetInfo.size())
+        {
+            _szData += "[ApiSet]\n";
+            for (auto& Item : _oApiSetInfo)
+            {
+                CStringA _szApisetName = Item.ApisetName;
+                CStringA _szResolveName(Item.ResolveName.Buffer, Item.ResolveName.Length / 2);
+
+                const auto _szApisetExtension = PathFindExtensionA(_szApisetName);
+                auto _szResolveExtension = PathFindExtensionA(_szResolveName);
+
+                if (_szApisetExtension == nullptr || *_szApisetExtension == '\0')
+                {
+                    _szApisetName += _szResolveExtension ? _szResolveExtension : ".dll";
+                }
+
+                if (_szResolveExtension == nullptr || *_szResolveExtension == '\0')
+                {
+                    _szResolveName += ".dll";
+                }
+                _szData.Append(_szApisetName);
+                _szData += '=';
+                _szData.Append(_szResolveName);
+                _szData += '\n';
+            }
         }
 
         WriteFileData(_szOutPath, _szData.GetString(), _szData.GetLength());

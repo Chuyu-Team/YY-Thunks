@@ -132,6 +132,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="WinDepends.Core\apiset.cpp" />
     <ClCompile Include="YY.Depends.Analyzer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -152,6 +153,9 @@
     <Text Include="Config\x86\6.2.9200.txt" />
     <Text Include="Config\x86\6.3.9600.txt" />
     <Text Include="Config\x86\OrdinalMap.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="WinDepends.Core\apisetx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

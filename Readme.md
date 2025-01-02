@@ -120,6 +120,10 @@ The different SDK version don't affect your app compatibility with the old syste
 
 See the [ThunksList.md](ThunksList.md)
 
-## 4. Changelog
-
+## 4. Others
+### 4.1. Changelog
 See the [releases Changelog](https://github.com/Chuyu-Team/YY-Thunks/releases)
+
+### 4.2. Third Party
+* [WinDepends](https://github.com/hfiref0x/WinDepends)
+   - YY. Depends.Analyzer provides support for Windows API Sets based on this open source project.

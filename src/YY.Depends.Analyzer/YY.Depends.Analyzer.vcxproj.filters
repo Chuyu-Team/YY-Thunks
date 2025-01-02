@@ -22,10 +22,16 @@
     <Filter Include="资源文件\Config\x86">
       <UniqueIdentifier>{367324e4-0b88-4554-b1e1-cb4204867029}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\WinDepends.Core">
+      <UniqueIdentifier>{78ecf8b4-b05b-4c32-9e69-ffa7d56eae5b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="YY.Depends.Analyzer.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WinDepends.Core\apiset.cpp">
+      <Filter>源文件\WinDepends.Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -65,5 +71,10 @@
     <Text Include="Config\x86\OrdinalMap.txt">
       <Filter>资源文件\Config\x86</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="WinDepends.Core\apisetx.h">
+      <Filter>源文件\WinDepends.Core</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

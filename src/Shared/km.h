@@ -5237,6 +5237,20 @@ EXTERN_C NTSYSAPI NTSTATUS NTAPI RtlCopySid(
     IN PSID SourceSid
     );
 
+EXTERN_C NTSYSAPI LONG  NTAPI RtlCompareUnicodeStrings(
+    _In_reads_(String1Length) PWCHAR String1,
+    _In_ SIZE_T String1Length,
+    _In_reads_(String2Length) PWCHAR String2,
+    _In_ SIZE_T String2Length,
+    _In_ BOOLEAN CaseInSensitive
+    );
+
+EXTERN_C NTSYSAPI LONG NTAPI RtlCompareUnicodeString(
+    _In_ PCUNICODE_STRING String1,
+    _In_ PCUNICODE_STRING String2,
+    _In_ BOOLEAN CaseInSensitive
+    );
+
 #pragma warning(pop)
 #if defined __cplusplus && !defined _Disallow_YY_KM_Namespace
 } //namespace YY
