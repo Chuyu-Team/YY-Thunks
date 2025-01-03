@@ -334,6 +334,8 @@
 | if_indextoname                             | 不存在时，调用ConvertInterfaceIndexToLuid、ConvertInterfaceLuidToNameA。
 | ConvertInterfaceLuidToGuid                 | 不存在时，调用GetIfEntry。
 | ConvertInterfaceLuidToIndex                | 不存在时，内部实现。
+| * NotifyIpInterfaceChange                  | 什么也不做，假装成功。
+| CancelMibChangeNotify2                     | 什么也不做，假装成功。
 
 ## kernel32.dll
 | 函数                                       | Fallback

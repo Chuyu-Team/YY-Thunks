@@ -739,4 +739,74 @@ namespace YY::Thunks
         return ERROR_SUCCESS;
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    iphlpapi,
+    20,
+    NETIO_STATUS,
+    NETIOAPI_API_,
+    NotifyIpInterfaceChange,
+        _In_ ADDRESS_FAMILY _uFamily,
+        _In_ PIPINTERFACE_CHANGE_CALLBACK _pfnCallback,
+        _In_opt_ PVOID _pCallerContext,
+        _In_ BOOLEAN _bInitialNotification,
+        _Inout_ HANDLE* _phNotificationHandle
+        )
+    {
+        if (const auto _pfnNotifyIpInterfaceChange = try_get_NotifyIpInterfaceChange())
+        {
+            return _pfnNotifyIpInterfaceChange(_uFamily, _pfnCallback, _pCallerContext, _bInitialNotification, _phNotificationHandle);
+        }
+
+        if (!_phNotificationHandle)
+        {
+            return ERROR_INVALID_PARAMETER;
+        }
+
+        *_phNotificationHandle = nullptr;
+        if (_pfnCallback == nullptr
+            || (_uFamily != AF_INET && _uFamily != AF_INET6 && _uFamily != AF_UNSPEC))
+        {
+            return ERROR_INVALID_PARAMETER;
+        }
+
+        // TODO: 或许可以启动一个线程定时轮询。
+        *_phNotificationHandle = reinterpret_cast<HANDLE>(2);
+        return NO_ERROR;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    iphlpapi,
+    4,
+    NETIO_STATUS,
+    NETIOAPI_API_,
+    CancelMibChangeNotify2,
+        _In_ HANDLE _hNotificationHandle
+        )
+    {
+        if (const auto _pfnCancelMibChangeNotify2 = try_get_CancelMibChangeNotify2())
+        {
+            return _pfnCancelMibChangeNotify2(_hNotificationHandle);
+        }
+
+        // NotifyIpInterfaceChange返回的句柄始终等于 2
+        if (_hNotificationHandle != reinterpret_cast<HANDLE>(2))
+        {
+            return ERROR_INVALID_PARAMETER;
+        }
+
+        return NO_ERROR;
+    }
+#endif
 }
