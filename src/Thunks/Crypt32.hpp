@@ -19,9 +19,9 @@ namespace YY::Thunks
         _In_            DWORD           dwFlags
         )
     {
-        if (const auto _pfnProcessPrng = try_get_CryptProtectMemory())
+        if (const auto _pfnCryptProtectMemory = try_get_CryptProtectMemory())
         {
-            return _pfnProcessPrng(pDataIn, cbDataIn, dwFlags);
+            return _pfnCryptProtectMemory(pDataIn, cbDataIn, dwFlags);
         }
 
         return TRUE;
@@ -44,9 +44,9 @@ namespace YY::Thunks
         _In_            DWORD           dwFlags
         )
     {
-        if (const auto _pfnProcessPrng = try_get_CryptUnprotectMemory())
+        if (const auto _pfnCryptUnprotectMemory = try_get_CryptUnprotectMemory())
         {
-            return _pfnProcessPrng(pDataIn, cbDataIn, dwFlags);
+            return _pfnCryptUnprotectMemory(pDataIn, cbDataIn, dwFlags);
         }
             
         return TRUE;
