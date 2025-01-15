@@ -1229,10 +1229,9 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Target < __WindowsNT5_1)
+#if (YY_Thunks_Target < __WindowsNT5)
 
-    //Windows XP [desktop apps | UWP apps]
-    //Windows Server 2003 [desktop apps | UWP apps]
+    // 虽然MSDN文档说此API XP才又，但是实际上Windows 2000 RTM就有了。
     __DEFINE_THUNK(
     kernel32,
     20,
