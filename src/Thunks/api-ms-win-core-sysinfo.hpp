@@ -1,4 +1,6 @@
-﻿
+﻿#if (YY_Thunks_Target < __WindowsNT6_SP1)
+#include <Shared/SmBios.h>
+#endif
 
 namespace YY::Thunks
 {
@@ -298,8 +300,8 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6)
 
-    //Windows XP [desktop apps | UWP apps]
-    //Windows Server 2003 [desktop apps | UWP apps]
+    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
     __DEFINE_THUNK(
     kernel32,
     20,
@@ -395,6 +397,396 @@ namespace YY::Thunks
         *pdwReturnedProductType = dwReturnedProductType;
 
         return dwReturnedProductType != PRODUCT_UNDEFINED;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT5_2_SP1)
+
+    // 最低受支持的客户端	Windows Vista、Windows XP Professional x64 版本 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008、Windows Server 2003 SP1[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    kernel32,
+    16,
+    UINT,
+    WINAPI,
+    GetSystemFirmwareTable,
+        _In_ DWORD _uFirmwareTableProviderSignature,
+        _In_ DWORD _uFirmwareTableID,
+        _Out_writes_bytes_to_opt_(_cbBufferSize,return) PVOID _pFirmwareTableBuffer,
+        _In_ DWORD _cbBufferSize
+        )
+    {
+        if (const auto _pfnGetSystemFirmwareTable = try_get_GetSystemFirmwareTable())
+        {
+            return _pfnGetSystemFirmwareTable(_uFirmwareTableProviderSignature, _uFirmwareTableID, _pFirmwareTableBuffer, _cbBufferSize);
+        }
+
+        UINT _cbBufferNeed = 0;
+        LSTATUS _lStatus = ERROR_INVALID_FUNCTION;
+
+        if (_uFirmwareTableProviderSignature == 'RSMB')
+        {
+#if !defined(__USING_NTDLL_LIB)
+            const auto NtOpenSection = try_get_NtOpenSection();
+            if (!NtOpenSection)
+            {
+                SetLastError(ERROR_INVALID_FUNCTION);
+                return 0ul;
+            }
+#endif
+
+            HANDLE _hMap = nullptr;
+            UNICODE_STRING _szPhysicalMemory = internal::MakeStaticUnicodeString(L"\\Device\\PhysicalMemory");
+            OBJECT_ATTRIBUTES _ObjectAttributes = { sizeof(_ObjectAttributes), nullptr, &_szPhysicalMemory ,OBJ_CASE_INSENSITIVE };
+            LONG _Status = NtOpenSection(&_hMap, SECTION_MAP_READ, &_ObjectAttributes);
+            if (_Status < 0)
+            {
+                internal::BaseSetLastNTError(_Status);
+                return 0ul;
+            }
+
+            constexpr auto kMaxSize = 64ul * 1024;
+            LPBYTE _pData = (LPBYTE)MapViewOfFile(_hMap, FILE_MAP_READ, 0, 0xF0000, kMaxSize);
+            CloseHandle(_hMap);
+
+            do
+            {
+                if (!_pData)
+                {
+                    break;
+                }
+
+                const auto _pRawSMBIOSDataEnd = _pData + kMaxSize;
+                for (auto _pStart = _pData; _pStart + sizeof(SMBEntryPoint32) < _pRawSMBIOSDataEnd; _pStart += 16)
+                {
+                    if (*(uint32_t*)_pStart == kSMBIOS32)
+                    {
+                        auto _pSMBEntryPoint32 = (SMBEntryPoint32*)_pStart;
+                        const auto _cbData = _pSMBEntryPoint32->entryPointLength;
+                        if (_pStart + _cbData > _pRawSMBIOSDataEnd)
+                            continue;
+
+                        uint8_t _uChecksum = 0;
+                        for (size_t i = 0; i != _cbData; ++i)
+                        {
+                            _uChecksum += _pStart[i];
+                        }
+
+                        if (_uChecksum != 0)
+                            continue;
+
+                        if (LPBYTE(_pSMBEntryPoint32->dmi.tableAddress + _pSMBEntryPoint32->dmi.tableLength) > _pRawSMBIOSDataEnd)
+                            continue;
+
+                        _cbBufferNeed = sizeof(RawSMBIOSData) + _pSMBEntryPoint32->dmi.tableLength;
+                        if (_cbBufferNeed <= _cbBufferSize)
+                        {
+                            if (_pFirmwareTableBuffer)
+                            {
+                                auto _pRawSMBIOSData = (RawSMBIOSData*)_pFirmwareTableBuffer;
+                                _pRawSMBIOSData->Used20CallingMethod = 0;
+                                _pRawSMBIOSData->SMBIOSMajorVersion = _pSMBEntryPoint32->majorVersion;
+                                _pRawSMBIOSData->SMBIOSMinorVersion = _pSMBEntryPoint32->minorVersion;
+                                _pRawSMBIOSData->DmiRevision = _pSMBEntryPoint32->entryPointRevision;
+                                _pRawSMBIOSData->Length = _pSMBEntryPoint32->dmi.tableLength;
+                                memcpy(_pRawSMBIOSData->SMBIOSTableData, LPBYTE(_pSMBEntryPoint32->dmi.tableAddress), _pSMBEntryPoint32->dmi.tableLength);
+                            }
+
+                            _lStatus = ERROR_SUCCESS;
+                        }
+                        else
+                        {
+                            _lStatus = ERROR_INSUFFICIENT_BUFFER;
+                        }
+                        break;
+                    }
+                }
+            } while (false);
+
+            if (_pData)
+            {
+                UnmapViewOfFile(_pData);
+            }
+        }
+        else if (_uFirmwareTableProviderSignature == 'ACPI')
+        {
+            if (!_uFirmwareTableID)
+                _uFirmwareTableID = 'PCAF';
+
+            HKEY _hKey = nullptr;
+            BYTE _StaticBuffer[2048];
+            auto _pData = _StaticBuffer;
+
+            do
+            {
+                // Windows XP SP2
+                if (RegOpenKeyW(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Services\\mssmbios\\Data", &_hKey) == ERROR_SUCCESS)
+                {
+                    DWORD _cbData = sizeof(_StaticBuffer);
+                    _lStatus = RegQueryValueExW(_hKey, L"AcpiData", nullptr, nullptr, _pData, &_cbData);
+                    if (_lStatus == ERROR_MORE_DATA)
+                    {
+                        _pData = (BYTE*)internal::Alloc(_cbData);
+                        if (!_pData)
+                        {
+                            _lStatus = ERROR_OUTOFMEMORY;
+                            break;
+                        }
+                        _lStatus = RegQueryValueExW(_hKey, L"AcpiData", nullptr, nullptr, _pData, &_cbData);
+                    }
+
+                    if (_lStatus != ERROR_SUCCESS)
+                    {
+                        break;
+                    }
+
+#pragma pack(push, 1)
+                    struct ACPI_DESCRIPTION_HEADER
+                    {
+                        UINT32  Signature;
+                        UINT32  Length;
+                        //UINT8   Revision;
+                        //UINT8   Checksum;
+                        //UINT8   OemId[6];
+                        //UINT64  OemTableId;
+                        //UINT32  OemRevision;
+                        //UINT32  CreatorId;
+                        //UINT32  CreatorRevision;
+                    };
+#pragma pack(pop)
+                    const auto _pDataEnd = _pData + _cbData;
+                    for (auto _pItem = _pData; _pItem + sizeof(ACPI_DESCRIPTION_HEADER) < _pDataEnd;)
+                    {
+                        auto _pHeader = (ACPI_DESCRIPTION_HEADER*)_pItem;
+                        if (_pHeader->Length < sizeof(ACPI_DESCRIPTION_HEADER))
+                            break;
+
+                        _pItem += _pHeader->Length;
+                        if (_pItem > _pDataEnd)
+                            break;
+
+                        if (_pHeader->Signature == _uFirmwareTableID)
+                        {
+                            _cbBufferNeed = _pHeader->Length;
+                            if (_cbBufferNeed <= _cbBufferSize)
+                            {
+                                if (_pFirmwareTableBuffer)
+                                {
+                                    memcpy(_pFirmwareTableBuffer, _pHeader, _cbBufferNeed);
+                                }
+
+                                _lStatus = ERROR_SUCCESS;
+                            }
+                            else
+                            {
+                                _lStatus = ERROR_INSUFFICIENT_BUFFER;
+                            }
+                            break;
+                        }
+                    }
+                }
+            } while (false);
+
+            if (_pData && _pData != _StaticBuffer)
+            {
+                internal::Free(_pData);
+            }
+
+            if (_hKey)
+            {
+                ::RegCloseKey(_hKey);
+            }
+        }
+
+        if (_lStatus)
+        {
+            SetLastError(_lStatus);
+        }
+
+        return _cbBufferNeed;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_SP1)
+
+    // 最低受支持的客户端	Windows Vista SP1 [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+    __DEFINE_THUNK(
+    kernel32,
+    4,
+    BOOL,
+    WINAPI,
+    GetPhysicallyInstalledSystemMemory,
+        _Out_ PULONGLONG _puTotalMemoryInKilobytes
+        )
+    {
+        if (const auto _pfnGetPhysicallyInstalledSystemMemory = try_get_GetPhysicallyInstalledSystemMemory())
+        {
+            return _pfnGetPhysicallyInstalledSystemMemory(_puTotalMemoryInKilobytes);
+        }
+
+        if (!_puTotalMemoryInKilobytes)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        auto _cbRawSMBIOSData = GetSystemFirmwareTable('RSMB', 0, 0, 0);
+        if (_cbRawSMBIOSData == 0)
+        {
+            return FALSE;
+        }
+
+        internal::StringBuffer<BYTE> _oSMBIOSDataBuffer;
+        auto _pRawSMBIOSData = (RawSMBIOSData*)_oSMBIOSDataBuffer.GetBuffer(_cbRawSMBIOSData);
+        if (!_pRawSMBIOSData)
+        {
+            SetLastError(ERROR_OUTOFMEMORY);
+            return FALSE;
+        }
+
+        _cbRawSMBIOSData = GetSystemFirmwareTable('RSMB', 0, _pRawSMBIOSData, _cbRawSMBIOSData);
+        if (_cbRawSMBIOSData == 0)
+        {
+            return FALSE;
+        }
+
+        if (_cbRawSMBIOSData < sizeof(RawSMBIOSData) || sizeof(RawSMBIOSData) + _pRawSMBIOSData->Length > _cbRawSMBIOSData)
+        {
+            SetLastError(ERROR_INVALID_DATA);
+            return FALSE;
+        }
+
+        // 对于早期系统，应该不太可能同时插上256条内存
+        // 简化内存申请，先将内存条上限设置在256
+        struct PhysicalMemoryInfo
+        {
+            uint64_t uTotalSize = 0;
+            WORD Handle = 0;
+            bool bUsed = false;
+        };
+
+        PhysicalMemoryInfo _arrPhysicalMemoryInfo[256];
+        uint32_t _cPhysicalMemoryInfo = 0;
+
+        const auto _pSMBIOSTableDataEnd = _pRawSMBIOSData->SMBIOSTableData + _pRawSMBIOSData->Length;
+        for (auto _pSMBIOSTableData = _pRawSMBIOSData->SMBIOSTableData; _pSMBIOSTableData + sizeof(SMBIOSHEADER) < _pSMBIOSTableDataEnd;)
+        {
+            auto _pSMBIOSHeader = (SMBIOSHEADER*)_pSMBIOSTableData;
+            if (_pSMBIOSHeader->Type == 127 && _pSMBIOSHeader->Length == sizeof(SMBIOSHEADER))
+                break;
+
+            auto _pNextSMBIOSTableData = _pSMBIOSTableData + _pSMBIOSHeader->Length;
+            if (_pNextSMBIOSTableData > _pSMBIOSTableDataEnd)
+                break;
+
+            if (_pSMBIOSHeader->Type == 16)
+            {
+                if (_pSMBIOSHeader->Length >= RTL_SIZEOF_THROUGH_FIELD(PhysicalMemoryArray, NumberOfMemoryDevices))
+                {
+                    auto _pPhysicalMemoryArray = (PhysicalMemoryArray*)_pSMBIOSHeader;
+                    if (_pPhysicalMemoryArray->Location == 3)
+                    {
+                        uint32_t i = 0;
+                        for (; i != _cPhysicalMemoryInfo && _arrPhysicalMemoryInfo[i].Handle == _pPhysicalMemoryArray->Handle; ++i);
+
+                        if (i == _cPhysicalMemoryInfo)
+                        {
+                            if (_cPhysicalMemoryInfo >= _countof(_arrPhysicalMemoryInfo))
+                                break;
+
+                            ++_cPhysicalMemoryInfo;
+                            _arrPhysicalMemoryInfo[i].Handle = _pPhysicalMemoryArray->Handle;
+                        }
+
+                        _arrPhysicalMemoryInfo[i].bUsed = true;
+                    }
+                }
+            }
+            else if (_pSMBIOSHeader->Type == 17)
+            {
+                if (_pSMBIOSHeader->Length >= RTL_SIZEOF_THROUGH_FIELD(MemoryDevice, PartNumber))
+                {
+                    auto _pMemoryDevice = (MemoryDevice*)_pSMBIOSHeader;
+                    if (_pMemoryDevice->Size == UINT16_MAX)
+                    {
+                        SetLastError(ERROR_INVALID_DATA);
+                        return FALSE;
+                    }
+
+                    uint32_t i = 0;
+                    for (; i != _cPhysicalMemoryInfo && _arrPhysicalMemoryInfo[i].Handle == _pMemoryDevice->MemoryArrayHandle; ++i);
+
+                    if (i == _cPhysicalMemoryInfo)
+                    {
+                        if (_cPhysicalMemoryInfo >= _countof(_arrPhysicalMemoryInfo))
+                            break;
+
+                        ++_cPhysicalMemoryInfo;
+                        _arrPhysicalMemoryInfo[i].Handle = _pMemoryDevice->MemoryArrayHandle;
+                    }
+
+                    // Windows 7的代码也没考虑 ExtendedSize，所以我们就不考虑32GB大内存的情况了。
+                    if (_pMemoryDevice->Size & 0x8000ul)
+                    {
+                        // KB
+                        _arrPhysicalMemoryInfo[i].uTotalSize += _pMemoryDevice->Size & 0x7FFFul;
+                    }
+                    else
+                    {
+                        // MB
+                        _arrPhysicalMemoryInfo[i].uTotalSize += uint64_t(_pMemoryDevice->Size) * 1024ul;
+                    }
+                }
+            }
+
+            for (; _pNextSMBIOSTableData < _pSMBIOSTableDataEnd; ++_pNextSMBIOSTableData)
+            {
+                if (!*(WORD*)_pNextSMBIOSTableData)
+                    break;
+            }
+            _pNextSMBIOSTableData += 2;
+            _pSMBIOSTableData = _pNextSMBIOSTableData;
+        }
+
+        if (_cPhysicalMemoryInfo == 0)
+        {
+            SetLastError(ERROR_INVALID_DATA);
+            return FALSE;
+        }
+
+        // 单位KB
+        uint64_t _uSize = 0;
+        for (uint32_t i = 0; i != _cPhysicalMemoryInfo; ++i)
+        {
+            if (_arrPhysicalMemoryInfo[i].bUsed)
+            {
+                _uSize += _arrPhysicalMemoryInfo[i].uTotalSize;
+            }
+        }
+
+        if (_uSize == 0ull)
+        {
+            SetLastError(ERROR_INVALID_DATA);
+            return FALSE;
+        }
+
+        MEMORYSTATUSEX _oMemoryStatus = { sizeof(_oMemoryStatus) };
+        if (!GlobalMemoryStatusEx(&_oMemoryStatus))
+        {
+            return FALSE;
+        }
+
+        if (_oMemoryStatus.ullTotalPhys / 1024ul > _uSize)
+        {
+            SetLastError(ERROR_INVALID_DATA);
+            return FALSE;
+        }
+
+        *_puTotalMemoryInKilobytes = _uSize;
+        return TRUE;
     }
 #endif
 } //namespace YY::Thunks

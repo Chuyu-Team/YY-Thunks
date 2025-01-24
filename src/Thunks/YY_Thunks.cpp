@@ -79,6 +79,7 @@ YY-Thunks支持的控制宏：
 
 //全局可能使用到的函数
 #define _YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)                                                        \
+    _APPLY(NtOpenSection,                                ntdll                                         ) \
     _APPLY(NtCreateFile,                                 ntdll                                         ) \
     _APPLY(NtClose,                                      ntdll                                         ) \
     _APPLY(NtQueryDirectoryFile,                         ntdll                                         ) \

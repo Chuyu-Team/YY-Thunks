@@ -371,6 +371,9 @@
     <ClInclude Include="..\Shared\SharedDefs.h">
       <Filter>Shared</Filter>
     </ClInclude>
+    <ClInclude Include="..\Shared\SmBios.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\def\x86\PSAPI2Kernel32.def">

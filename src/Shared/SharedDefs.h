@@ -57,9 +57,10 @@
 // Windows XP RTM x64，Windows 2003 SP1
 #define __WindowsNT5_2_SP1 __Version(5, 2, 3790, 1830)
 
-// Windows Vista RTM, Windows Server 2008 RTM
+// Windows Vista RTM
 #define __WindowsNT6 __Version(6, 0, 6000, 0)
 
+// Windows Vista SP1、Windows Server 2008 RTM
 #define __WindowsNT6_SP1 __Version(6, 0, 6001, 0)
 
 #define __WindowsNT6_SP2 __Version(6, 0, 6002, 0)

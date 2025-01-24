@@ -549,6 +549,8 @@
 | OpenProcess                                | 额外处理 PROCESS_QUERY_LIMITED_INFORMATION、PROCESS_SET_LIMITED_INFORMATION。
 | GetThreadDescription                       | 返回空字符串。
 | SetThreadDescription                       | 返回 `E_NOTIMPL`。
+| GetSystemFirmwareTable                     | 读取PhysicalMemory或者注册表。注意：目前仅支持'RSMB'、'ACPI'。
+| GetPhysicallyInstalledSystemMemory         | 调用GetSystemFirmwareTable。
 
 ## mfplat.dll
 | 函数                                       | Fallback
