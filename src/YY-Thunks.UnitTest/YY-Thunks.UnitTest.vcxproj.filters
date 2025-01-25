@@ -96,6 +96,9 @@
     <ClCompile Include="Crypt32.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
+    <ClCompile Include="api-ms-win-core-libraryloader.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -372,6 +375,9 @@
       <Filter>Shared</Filter>
     </ClInclude>
     <ClInclude Include="..\Shared\SmBios.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\List.h">
       <Filter>Shared</Filter>
     </ClInclude>
   </ItemGroup>

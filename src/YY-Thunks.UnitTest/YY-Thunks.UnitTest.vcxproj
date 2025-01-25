@@ -185,6 +185,7 @@
   <ItemGroup>
     <ClCompile Include="api-ms-win-core-handle.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-kernel32-legacy.UnitTest.cpp" />
+    <ClCompile Include="api-ms-win-core-libraryloader.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-winrt-string.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-power-base.UnitTest.cpp" />
     <ClCompile Include="bcrypt.UnitTest.cpp" />
@@ -225,6 +226,7 @@
     <ClInclude Include="..\Shared\HStringPrivate.h" />
     <ClInclude Include="..\Shared\InterlockedQueue.h" />
     <ClInclude Include="..\Shared\km.h" />
+    <ClInclude Include="..\Shared\List.h" />
     <ClInclude Include="..\Shared\SharedDefs.h" />
     <ClInclude Include="..\Shared\SmBios.h" />
     <ClInclude Include="..\Thunks\api-ms-win-core-com.hpp" />
