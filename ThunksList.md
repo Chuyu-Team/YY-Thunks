@@ -545,6 +545,9 @@
 | WerUnregisterRuntimeExceptionModule        | 不存在时，返回S_OK。
 | Wow64GetThreadContext                      | 不存在时，调用GetThreadContext或者返回ERROR_INVALID_PARAMETER。
 | SetDefaultDllDirectories                   | 不存在时，手工控制LoadLibrary加载顺序。
+| SetDllDirectoryW                           | 自行保存路径，并且控制LoadLibrary加载顺序。
+| GetDllDirectoryW                           | 获取自行保存的路径。
+| AddDllDirectory                            | 自行保存路径，并且控制LoadLibrary加载顺序。
 | GetCurrentPackageFullName                  | 返回 APPMODEL_ERROR_NO_PACKAGE。
 | OpenProcess                                | 额外处理 PROCESS_QUERY_LIMITED_INFORMATION、PROCESS_SET_LIMITED_INFORMATION。
 | GetThreadDescription                       | 返回空字符串。

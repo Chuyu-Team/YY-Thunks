@@ -4,8 +4,25 @@ namespace YY::Thunks::Fallback
 {
     namespace
     {
+#if (YY_Thunks_Target < __WindowsNT5_1_SP1)
+        static SRWLOCK s_DllDirectoryLock;
+        static UNICODE_STRING s_sDllDirectory;
+
+        static void __cdecl FreeDllDirectory() noexcept
+        {
+            internal::UnicodeStringFree(s_sDllDirectory);
+        }
+#endif // (YY_Thunks_Target < __WindowsNT5_1_SP1)
+
 #if YY_Thunks_Target < __WindowsNT6_2
         static DWORD s_DirectoryFlags/* = 0*/;
+        static SRWLOCK s_DllDirectoryListLock;
+        static UNICODE_STRING s_szDllDirectoryList;
+
+        static void __cdecl FreeDllDirectoryList() noexcept
+        {
+            internal::UnicodeStringFree(s_szDllDirectoryList);
+        }
 #endif
 
         /*LSTATUS __fastcall BasepGetModuleHandleExParameterValidation(
@@ -352,24 +369,30 @@ namespace YY::Thunks
         _In_ DWORD dwFlags
         )
     {
-        const auto pLoadLibraryExW = try_get_LoadLibraryExW();
-
-        if (!pLoadLibraryExW)
+        const auto _pfnLoadLibraryExW = try_get_LoadLibraryExW();
+        if (!_pfnLoadLibraryExW)
         {
             SetLastError(ERROR_FUNCTION_FAILED);
             return nullptr;
         }
 
-
-        if (dwFlags == 0 || try_get_AddDllDirectory() != nullptr)
+        if (try_get_AddDllDirectory())
         {
-            //存在AddDllDirectory说明支持 LOAD_LIBRARY_SEARCH_SYSTEM32 等功能，直接调用pLoadLibraryExW即可。
-
-            auto _hModule = pLoadLibraryExW(lpLibFileName, hFile, dwFlags);
+            //存在AddDllDirectory说明支持 LOAD_LIBRARY_SEARCH_SYSTEM32 等功能，直接调用_pfnLoadLibraryExW即可。
+            auto _hModule = _pfnLoadLibraryExW(lpLibFileName, hFile, dwFlags);
             if (_hModule)
                 return _hModule;
 
             return Fallback::ForwardDll(lpLibFileName);
+        }
+
+        if (((LOAD_WITH_ALTERED_SEARCH_PATH | 0xFFFFE000 | 0x00000004) & dwFlags) || lpLibFileName == nullptr || hFile)
+        {
+            //LOAD_WITH_ALTERED_SEARCH_PATH 标记不允许跟其他标记组合使用
+            //0xFFFFE000 为 其他不支持的数值
+            //LOAD_PACKAGED_LIBRARY: 0x00000004 Windows 8以上平台才支持
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return nullptr;
         }
 
 #if (YY_Thunks_Target < __WindowsNT6)
@@ -385,42 +408,66 @@ namespace YY::Thunks
             }
         }
 #endif
-        wchar_t szFilePathBuffer[1024];
 
+        // 检测是否包含 LOAD_LIBRARY_SEARCH_* | LOAD_WITH_ALTERED_SEARCH_PATH
+        //  * 已包含 LOAD_LIBRARY_SEARCH_* 说明用户自行指定了这个参数，因此无需附加 s_DirectoryFlags
+        //  * LOAD_WITH_ALTERED_SEARCH_PATH与所有 LOAD_LIBRARY_SEARCH_* 互斥，因此无需附加 s_DirectoryFlags
+        if ((dwFlags & (0xFFFFFF00ul | LOAD_WITH_ALTERED_SEARCH_PATH)) == 0)
+        {
+            dwFlags |= Fallback::s_DirectoryFlags;
+        }
 
+#if defined(_M_IX86) && YY_Thunks_Target < __WindowsNT6_1_SP1
+        //我们先关闭重定向，再加载DLL，Windows 7 SP1以前的系统不会关闭重定向，而导致某些线程关闭重定向后DLL加载问题。
+        class LoadDllEnalbeFsRedirection
+        {
+            PVOID OldFsRedirectionLevel = nullptr;
+            decltype(RtlWow64EnableFsRedirectionEx)* pfnRtlWow64EnableFsRedirectionEx = nullptr;
+            LONG Status = STATUS_NOINTERFACE;
+
+        public:
+            LoadDllEnalbeFsRedirection()
+            {
+                pfnRtlWow64EnableFsRedirectionEx = try_get_RtlWow64EnableFsRedirectionEx();
+                if (pfnRtlWow64EnableFsRedirectionEx)
+                {
+                    Status = pfnRtlWow64EnableFsRedirectionEx(nullptr, &OldFsRedirectionLevel);
+                }
+            }
+
+            ~LoadDllEnalbeFsRedirection()
+            {
+                if (Status >= 0 && pfnRtlWow64EnableFsRedirectionEx)
+                {
+                    pfnRtlWow64EnableFsRedirectionEx(OldFsRedirectionLevel, &OldFsRedirectionLevel);
+                }
+            }
+        };
+
+        LoadDllEnalbeFsRedirection _AutoEnalbeFsRedirection;
+#endif
+
+        internal::UnicodeStringBuffer<1024> szFilePathBuffer;
 
         do
         {
-            auto dwLoadLibrarySearchFlags = dwFlags & 0xFFFFFF00;
-
-            if (dwLoadLibrarySearchFlags == 0)
-            {
-                break;
-            }
-
-            if (((LOAD_WITH_ALTERED_SEARCH_PATH | 0xFFFFE000 | 0x00000004) & dwFlags) || lpLibFileName == nullptr || hFile)
-            {
-                //LOAD_WITH_ALTERED_SEARCH_PATH 标记不允许跟其他标记组合使用
-                //0xFFFFE000 为 其他不支持的数值
-                //LOAD_PACKAGED_LIBRARY: 0x00000004 Windows 8以上平台才支持
-                SetLastError(ERROR_INVALID_PARAMETER);
-                return nullptr;
-            }
-
+            const auto dwLoadLibrarySearchFlags = dwFlags;
             dwFlags &= 0xFF;
 
-            //LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32 等价于 LOAD_LIBRARY_SEARCH_DEFAULT_DIRS标记
-            if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)
-                dwLoadLibrarySearchFlags = (dwLoadLibrarySearchFlags & ~LOAD_LIBRARY_SEARCH_DEFAULT_DIRS) | (LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32);
-
-
-
-            if (dwLoadLibrarySearchFlags == (LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32))
+            // 未使用任何扩展能力，这时可直接回退到系统 LoadLibraryExW
+            if (dwLoadLibrarySearchFlags == 0)
             {
-                //如果确定是调用默认体系，则直接调用原始 LoadLibraryExW
-
-                break;
+#if (YY_Thunks_Target < __WindowsNT5_1_SP1)
+                // 不支持 GetDllDirectoryW时后续任然需要模拟
+                // 这是因为GetDllDirectoryW的路径在默认搜索列表中。
+                // https://learn.microsoft.com/zh-cn/windows/win32/dlls/dynamic-link-library-search-order
+                if (try_get_GetDllDirectoryW() || Fallback::s_sDllDirectory.Length == 0)
+#endif
+                {
+                    break;
+                }
             }
+
 #if defined(__USING_NTDLL_LIB)
             const auto PathType = RtlDetermineDosPathNameType_U(lpLibFileName);
 #else
@@ -428,7 +475,7 @@ namespace YY::Thunks
             const auto PathType = RtlDetermineDosPathNameType_U ? RtlDetermineDosPathNameType_U(lpLibFileName) : RtlPathTypeUnknown;
 #endif
 
-            if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR)
+            if (dwLoadLibrarySearchFlags & (LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_WITH_ALTERED_SEARCH_PATH))
             {
                 //必须是一个完整路径！
                 if (PathType == RtlPathTypeUnknown || PathType == RtlPathTypeDriveRelative || PathType == RtlPathTypeRelative)
@@ -436,132 +483,146 @@ namespace YY::Thunks
                     SetLastError(ERROR_INVALID_PARAMETER);
                     return nullptr;
                 }
-
-                if (dwLoadLibrarySearchFlags == (LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32))
-                {
-                    //LOAD_WITH_ALTERED_SEARCH_PATH参数能模拟 LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32 组合效果。
-                    dwFlags |= LOAD_WITH_ALTERED_SEARCH_PATH;
-                    break;
-                }
-            }		
-
-
-            if (LOAD_LIBRARY_SEARCH_USER_DIRS & dwLoadLibrarySearchFlags)
-            {
-                //LOAD_LIBRARY_SEARCH_USER_DIRS 无法顺利实现，索性无效参数处理
-                SetLastError(ERROR_INVALID_PARAMETER);
-                return nullptr;
             }
 
-
-
-
-            if (dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE))
+            if (dwLoadLibrarySearchFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE))
             {
                 //以资源方式加载
 
                 //判断路径是一个绝对路径还是一个相对路径，如果是绝对路径，那么可以直接无视 LOAD_LIBRARY_SEARCH_ 系列参数。
                 if ((PathType == RtlPathTypeUnknown || PathType == RtlPathTypeDriveRelative || PathType == RtlPathTypeRelative) == false)
                 {
-                    //是一个绝对路径，我们直接传递给 pLoadLibraryExW 即可
-
+                    // 是一个绝对路径，我们直接传递给 _pfnLoadLibraryExW 即可
                     break;
                 }
 
-                if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_APPLICATION_DIR)
+                if (dwLoadLibrarySearchFlags & (LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS))
                 {
-                    auto nSize = GetModuleFileNameW(NULL, szFilePathBuffer, _countof(szFilePathBuffer));
+                    const auto _cchBuffer = szFilePathBuffer.MaximumLength / 2;
+                    auto nSize = GetModuleFileNameW(NULL, szFilePathBuffer.Buffer, _cchBuffer);
 
-                    if (nSize == 0 || nSize >= _countof(szFilePathBuffer))
+                    if (nSize == 0 || nSize >= _cchBuffer)
                     {
                         SetLastError(ERROR_FUNCTION_FAILED);
                         return nullptr;
                     }
 
-                    for (;;)
+                    const auto _sAppDir = internal::UnicodeStringGetDir(szFilePathBuffer.Buffer, nSize);
+                    if(_sAppDir.Length == 0)
                     {
-                        if (szFilePathBuffer[nSize] == L'\\' || szFilePathBuffer[nSize] == L'/')
-                        {
-                            ++nSize;
-                            break;
-                        }
-
-                        if (nSize == 0)
-                        {
-                            SetLastError(ERROR_FUNCTION_FAILED);
-                            return nullptr;
-                        }
-
-                        --nSize;
+                        SetLastError(ERROR_FUNCTION_FAILED);
+                        return nullptr;
                     }
 
-
-                    for (auto Str = lpLibFileName; *Str; ++Str, ++nSize)
+                    szFilePathBuffer.SetByteLength(_sAppDir.Length);
+                    if (szFilePathBuffer.AppendPath(lpLibFileName))
                     {
-                        if (nSize >= _countof(szFilePathBuffer))
-                        {
-                            SetLastError(ERROR_FUNCTION_FAILED);
-                            return nullptr;
-                        }
-
-                        szFilePathBuffer[nSize] = *Str;
+                        SetLastError(ERROR_FUNCTION_FAILED);
+                        return nullptr;
                     }
 
-                    szFilePathBuffer[nSize] = L'\0';
-
-
-                    if (GetFileAttributesW(szFilePathBuffer) != -1)
+                    auto _hModule = _pfnLoadLibraryExW(szFilePathBuffer.Buffer, hFile, dwFlags);
+                    if (_hModule || GetLastError() != ERROR_FILE_NOT_FOUND)
                     {
-                        lpLibFileName = szFilePathBuffer;
-                        break;
+                        return _hModule;
                     }
                 }
 
-                if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_SYSTEM32)
+                if (dwLoadLibrarySearchFlags & (LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS))
                 {
-                    auto nSize = GetSystemDirectoryW(szFilePathBuffer, _countof(szFilePathBuffer));
+                    LSTATUS _lStatus = ERROR_SUCCESS;
+                    HMODULE _hModule = nullptr;
 
-                    if (nSize == 0 || nSize >= _countof(szFilePathBuffer))
+                    ::AcquireSRWLockShared(&Fallback::s_DllDirectoryListLock);
+                    auto _szPathList = Fallback::s_szDllDirectoryList.Buffer;
+                    const auto _szPathListEnd = LPWSTR(LPBYTE(Fallback::s_szDllDirectoryList.Buffer) + Fallback::s_szDllDirectoryList.Length);
+                    for (;;)
+                    {
+                        auto _sItem = internal::UnicodeStringGetItem(_szPathList, _szPathListEnd);
+                        if (_sItem.MaximumLength == 0)
+                            break;
+
+                        (LPBYTE&)_szPathList += _sItem.MaximumLength;
+                        if (_sItem.Length == 0)
+                            continue;
+
+                        szFilePathBuffer.Empty();
+                        if (szFilePathBuffer.Append(_sItem))
+                        {
+                            _lStatus = ERROR_NOT_ENOUGH_MEMORY;
+                            break;
+                        }
+                        if (szFilePathBuffer.AppendPath(lpLibFileName))
+                        {
+                            _lStatus = ERROR_NOT_ENOUGH_MEMORY;
+                            break;
+                        }
+
+                        _hModule = _pfnLoadLibraryExW(szFilePathBuffer.Buffer, hFile, dwFlags);
+                        _lStatus = GetLastError();
+                        if (_hModule || _lStatus != ERROR_FILE_NOT_FOUND)
+                        {
+                            break;
+                        }
+                    }
+                    ::ReleaseSRWLockShared(&Fallback::s_DllDirectoryListLock);
+
+                    if (_hModule)
+                    {
+                        return _hModule;
+                    }
+                    else if(_lStatus != ERROR_FILE_NOT_FOUND)
+                    {
+                        SetLastError(_lStatus);
+                        return nullptr;
+                    }
+
+                    const auto _cchMaxBuffer = szFilePathBuffer.MaximumLength / sizeof(wchar_t);
+                    const auto _cchBuffer = GetDllDirectoryW(_cchMaxBuffer, szFilePathBuffer.Buffer);
+                    if (_cchBuffer && _cchBuffer < _cchMaxBuffer)
+                    {
+                        szFilePathBuffer.SetLength(_cchBuffer);
+                        if (szFilePathBuffer.Append(lpLibFileName))
+                        {
+                            SetLastError(ERROR_OUTOFMEMORY);
+                            return nullptr;
+                        }
+
+                        _hModule = _pfnLoadLibraryExW(szFilePathBuffer.Buffer, hFile, dwFlags);
+                        if (_hModule || GetLastError() != ERROR_FILE_NOT_FOUND)
+                        {
+                            return _hModule;
+                        }
+                    }
+                }
+
+                if (dwLoadLibrarySearchFlags & (LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS))
+                {
+                    const auto _cchBuffer = szFilePathBuffer.MaximumLength / 2;
+                    auto nSize = GetSystemDirectoryW(szFilePathBuffer.Buffer, _cchBuffer);
+
+                    if (nSize == 0 || nSize >= _cchBuffer)
+                    {
+                        SetLastError(ERROR_FUNCTION_FAILED);
+                        return nullptr;
+                    }
+                    szFilePathBuffer.SetLength(nSize);
+                    if (szFilePathBuffer.AppendPath(lpLibFileName))
                     {
                         SetLastError(ERROR_FUNCTION_FAILED);
                         return nullptr;
                     }
 
-                    if (szFilePathBuffer[nSize] != L'\\')
+                    auto _hModule = _pfnLoadLibraryExW(szFilePathBuffer.Buffer, hFile, dwFlags);
+                    if (_hModule || GetLastError() != ERROR_FILE_NOT_FOUND)
                     {
-                        if (nSize >= _countof(szFilePathBuffer))
-                        {
-                            SetLastError(ERROR_FUNCTION_FAILED);
-                            return nullptr;
-                        }
-
-                        szFilePathBuffer[++nSize] = L'\\';
-                    }
-
-                    for (auto Str = lpLibFileName; *Str; ++Str, ++nSize)
-                    {
-                        if (nSize >= _countof(szFilePathBuffer))
-                        {
-                            SetLastError(ERROR_FUNCTION_FAILED);
-                            return nullptr;
-                        }
-
-                        szFilePathBuffer[nSize] = *Str;
-                    }
-
-                    szFilePathBuffer[nSize] = L'\0';
-
-                    if (GetFileAttributesW(szFilePathBuffer) != -1)
-                    {
-                        lpLibFileName = szFilePathBuffer;
-                        break;
+                        return _hModule;
                     }
                 }
 
                 SetLastError(ERROR_MOD_NOT_FOUND);
                 return nullptr;
             }
-
 
             //以模块方式加载
 #if !defined(__USING_NTDLL_LIB)
@@ -572,117 +633,239 @@ namespace YY::Thunks
                 return nullptr;
             }
 #endif
-
-            DWORD nSize = 0;
-
-            if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR)
+            // DLL所在目录
+            if (dwLoadLibrarySearchFlags & (LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_WITH_ALTERED_SEARCH_PATH))
             {
-                for (auto Str = lpLibFileName; *Str; ++Str, ++nSize)
-                {
-                    if (nSize >= _countof(szFilePathBuffer))
-                    {
-                        SetLastError(ERROR_FUNCTION_FAILED);
-                        return nullptr;
-                    }
-
-                    szFilePathBuffer[nSize] = *Str;
-                }
-
-                if (nSize == 0)
+                const auto _sDllDir = internal::UnicodeStringGetDir(lpLibFileName, internal::StringLength(lpLibFileName));
+                if (_sDllDir.Length == 0)
                 {
                     SetLastError(ERROR_FUNCTION_FAILED);
                     return nullptr;
                 }
 
-                --nSize;
-                //反向剔除文件名
-                for (;;)
+                if (szFilePathBuffer.Append(_sDllDir))
                 {
-                    if (szFilePathBuffer[nSize] == L'\\' || szFilePathBuffer[nSize] == L'/')
-                    {
-                        break;
-                    }
-
-                    if (nSize == 0)
-                    {
-                        SetLastError(ERROR_FUNCTION_FAILED);
-                        return nullptr;
-                    }
-
-                    --nSize;
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    return nullptr;
                 }
-
-                ++nSize;
-                szFilePathBuffer[nSize] = L';';
-                ++nSize;
+                if (szFilePathBuffer.Append(L';'))
+                {
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    return nullptr;
+                }
             }
 
-            if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_APPLICATION_DIR)
+            // 应用程序根目录
+            if ((dwLoadLibrarySearchFlags & (LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS))
+                || (dwLoadLibrarySearchFlags & 0xFFFFFF00ul) == 0)
             {
-                const DWORD nBufferMax = _countof(szFilePathBuffer) - nSize;
+                auto _pBuffer = szFilePathBuffer.GetAppendBuffer(MAX_PATH);
+                if (!_pBuffer)
+                {
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    return nullptr;
+                }
+                auto nBuffer = GetModuleFileNameW(NULL, _pBuffer, MAX_PATH);
 
-                auto nBuffer = GetModuleFileNameW(NULL, szFilePathBuffer + nSize, nBufferMax);
-
-                if (nBuffer == 0 || nBuffer >= nBufferMax)
+                if (nBuffer == 0 || nBuffer >= MAX_PATH)
                 {
                     SetLastError(ERROR_FUNCTION_FAILED);
                     return nullptr;
                 }
 
-                nSize += nBuffer - 1;
-
-                for (;;)
-                {
-                    if (szFilePathBuffer[nSize] == L'\\' || szFilePathBuffer[nSize] == L'/')
-                    {
-                        break;
-                    }
-
-                    if (nSize == 0)
-                    {
-                        SetLastError(ERROR_FUNCTION_FAILED);
-                        return nullptr;
-                    }
-
-                    --nSize;
-                }
-
-                ++nSize;
-                szFilePathBuffer[nSize] = L';';
-                ++nSize;
-            }
-
-            if (dwLoadLibrarySearchFlags & LOAD_LIBRARY_SEARCH_SYSTEM32)
-            {
-                const DWORD nBufferMax = _countof(szFilePathBuffer) - nSize;
-
-                auto nBuffer = GetSystemDirectoryW(szFilePathBuffer + nSize, nBufferMax);
-
-                if (nBuffer == 0 || nBuffer >= nBufferMax)
+                const auto _sAppDir = internal::UnicodeStringGetDir(_pBuffer, nBuffer);
+                if (_sAppDir.Length == 0)
                 {
                     SetLastError(ERROR_FUNCTION_FAILED);
                     return nullptr;
                 }
 
-                nSize += nBuffer;
+                szFilePathBuffer.SetAppendByteLength(_sAppDir.Length);
+                if (szFilePathBuffer.Append(L';'))
+                {
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    return nullptr;
+                }
             }
 
-            szFilePathBuffer[nSize] = L'\0';
-
-            UNICODE_STRING ModuleFileName;
-            ModuleFileName.Buffer = (PWSTR)lpLibFileName;
-
-            for (; *lpLibFileName; ++lpLibFileName);
-            const auto _uNewLength = (lpLibFileName - ModuleFileName.Buffer) * sizeof(lpLibFileName[0]);
-            if (_uNewLength + sizeof(lpLibFileName[0]) > MAXUINT16)
+            // AddDllDirectory
+            if (dwLoadLibrarySearchFlags & (LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS))
             {
-                SetLastError(ERROR_INVALID_PARAMETER);
-                return nullptr;
+                ::AcquireSRWLockShared(&Fallback::s_DllDirectoryListLock);
+                auto _lStatus = szFilePathBuffer.Append(Fallback::s_szDllDirectoryList);
+                ::ReleaseSRWLockShared(&Fallback::s_DllDirectoryListLock);
+                if(_lStatus)
+                {
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    return nullptr;
+                }
             }
 
-            ModuleFileName.Length = static_cast<USHORT>(_uNewLength);
-            ModuleFileName.MaximumLength = ModuleFileName.Length + sizeof(lpLibFileName[0]);
+            // SetDllDirectoryW
+            bool _bHasSetDllDirectory = false;
+            if ((dwLoadLibrarySearchFlags & (LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS))
+                || (dwLoadLibrarySearchFlags & 0xFFFFFF00ul) == 0)
+            {
+                auto _pBuffer = szFilePathBuffer.GetAppendBuffer(MAX_PATH);
+                if (!_pBuffer)
+                {
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    return nullptr;
+                }
 
+                auto _cchBuffer = GetDllDirectoryW(MAX_PATH, _pBuffer);
+                if (_cchBuffer && _cchBuffer < MAX_PATH)
+                {
+                    _bHasSetDllDirectory = true;
+                    szFilePathBuffer.SetAppendLength(_cchBuffer);
+                    if (szFilePathBuffer.Append(L';'))
+                    {
+                        SetLastError(ERROR_OUTOFMEMORY);
+                        return nullptr;
+                    }
+                }
+            }
+
+            // System32
+            if ((dwLoadLibrarySearchFlags & (LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS))
+                || (dwLoadLibrarySearchFlags & 0xFFFFFF00ul) == 0)
+            {
+                auto _pBuffer = szFilePathBuffer.GetAppendBuffer(MAX_PATH);
+                if (!_pBuffer)
+                {
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    return nullptr;
+                }
+                auto nBuffer = GetSystemDirectoryW(_pBuffer, MAX_PATH);
+
+                if (nBuffer == 0 || nBuffer >= MAX_PATH)
+                {
+                    SetLastError(ERROR_FUNCTION_FAILED);
+                    return nullptr;
+                }
+                szFilePathBuffer.SetAppendLength(nBuffer);
+                if (szFilePathBuffer.Append(L';'))
+                {
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    return nullptr;
+                }
+            }
+
+#if (YY_Thunks_Target < __WindowsNT5_1_SP1)
+            if ((dwLoadLibrarySearchFlags & 0xFFFFFF00ul) == 0)
+            {
+                // 为了偷懒同时照顾到安全性，模拟时我们始终采用安全搜索。
+                // 搜索顺序参考：https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order
+                // 16位系统文件夹 C:\\Windows\\System
+                {
+                    auto _pBuffer = szFilePathBuffer.GetAppendBuffer(MAX_PATH);
+                    if (!_pBuffer)
+                    {
+                        SetLastError(ERROR_OUTOFMEMORY);
+                        return nullptr;
+                    }
+
+                    auto nBuffer = GetWindowsDirectoryW(_pBuffer, MAX_PATH);
+                    if (nBuffer == 0 || nBuffer >= MAX_PATH)
+                    {
+                        SetLastError(ERROR_FUNCTION_FAILED);
+                        return nullptr;
+                    }
+                    szFilePathBuffer.SetAppendLength(nBuffer);
+                    if (szFilePathBuffer.AppendPath(L"System"))
+                    {
+                        SetLastError(ERROR_OUTOFMEMORY);
+                        return nullptr;
+                    }
+                    if (szFilePathBuffer.Append(L';'))
+                    {
+                        SetLastError(ERROR_OUTOFMEMORY);
+                        return nullptr;
+                    }
+                }
+
+                // Windows文件夹 C:\\Windows
+                {
+                    auto _pBuffer = szFilePathBuffer.GetAppendBuffer(MAX_PATH);
+                    if (!_pBuffer)
+                    {
+                        SetLastError(ERROR_OUTOFMEMORY);
+                        return nullptr;
+                    }
+
+                    auto nBuffer = GetWindowsDirectoryW(_pBuffer, MAX_PATH);
+                    if (nBuffer == 0 || nBuffer >= MAX_PATH)
+                    {
+                        SetLastError(ERROR_FUNCTION_FAILED);
+                        return nullptr;
+                    }
+                    szFilePathBuffer.SetAppendLength(nBuffer);
+                    if (szFilePathBuffer.Append(L';'))
+                    {
+                        SetLastError(ERROR_OUTOFMEMORY);
+                        return nullptr;
+                    }
+                }
+
+                // 当前目录，注意设置 SetDllDirectory后，当前目录不生效。
+                if (!_bHasSetDllDirectory)
+                {
+                    auto _pBuffer = szFilePathBuffer.GetAppendBuffer(MAX_PATH);
+                    if (!_pBuffer)
+                    {
+                        SetLastError(ERROR_OUTOFMEMORY);
+                        return nullptr;
+                    }
+
+                    auto nBuffer = GetCurrentDirectoryW(MAX_PATH, _pBuffer);
+                    if (nBuffer == 0 || nBuffer >= MAX_PATH)
+                    {
+                        SetLastError(ERROR_FUNCTION_FAILED);
+                        return nullptr;
+                    }
+                    szFilePathBuffer.SetAppendLength(nBuffer);
+                    if (szFilePathBuffer.Append(L';'))
+                    {
+                        SetLastError(ERROR_OUTOFMEMORY);
+                        return nullptr;
+                    }
+                }
+
+                // %PATH%
+                {
+                    
+                    auto _cchBuffer = ExpandEnvironmentStringsW(L"%PATH%", nullptr, 0);
+                    for (; _cchBuffer;)
+                    {
+                        auto _pBuffer = szFilePathBuffer.GetAppendBuffer(_cchBuffer);
+                        if (!_pBuffer)
+                        {
+                            SetLastError(ERROR_OUTOFMEMORY);
+                            return nullptr;
+                        }
+
+                        const auto _cchResult = ExpandEnvironmentStringsW(L"%PATH%", _pBuffer, _cchBuffer);
+                        if (_cchResult == 0)
+                            break;
+
+                        if (_cchResult <= _cchBuffer)
+                        {
+                            szFilePathBuffer.SetAppendLength(_cchResult);
+                            if (szFilePathBuffer.Append(L';'))
+                            {
+                                SetLastError(ERROR_OUTOFMEMORY);
+                                return nullptr;
+                            }
+                            break;
+                        }
+
+                        _cchBuffer = _cchResult;
+                    }
+                }
+            }
+#endif
+
+            UNICODE_STRING ModuleFileName = internal::MakeNtString(lpLibFileName);
             HMODULE hModule = NULL;
 
             ULONG dwLdrLoadDllFlags = 0;
@@ -702,20 +885,7 @@ namespace YY::Thunks
                 dwLdrLoadDllFlags |= 0x800000;
             }
 
-#if defined(_M_IX86) && YY_Thunks_Target < __WindowsNT6_1_SP1
-            //我们先关闭重定向，再加载DLL，Windows 7 SP1以前的系统不会关闭重定向，而导致某些线程关闭重定向后DLL加载问题。
-            PVOID OldFsRedirectionLevel;
-
-            auto pRtlWow64EnableFsRedirectionEx = try_get_RtlWow64EnableFsRedirectionEx();
-            auto StatusFsRedir = pRtlWow64EnableFsRedirectionEx ? pRtlWow64EnableFsRedirectionEx(nullptr, &OldFsRedirectionLevel) : 0;
-#endif
-
-            LONG Status = LdrLoadDll(szFilePathBuffer, &dwLdrLoadDllFlags, &ModuleFileName, &hModule);
-
-#if defined(_M_IX86) && YY_Thunks_Target < __WindowsNT6_1_SP1
-            if (StatusFsRedir >= 0 && pRtlWow64EnableFsRedirectionEx)
-                pRtlWow64EnableFsRedirectionEx(OldFsRedirectionLevel, &OldFsRedirectionLevel);
-#endif
+            LONG Status = LdrLoadDll(szFilePathBuffer.Buffer, &dwLdrLoadDllFlags, &ModuleFileName, &hModule);
             if (Status < 0)
             {
                 YY::Thunks::internal::BaseSetLastNTError(Status);
@@ -727,24 +897,7 @@ namespace YY::Thunks
             return Fallback::ForwardDll(lpLibFileName);
         } while (false);
 
-#if defined(_M_IX86) && YY_Thunks_Target < __WindowsNT6_1_SP1
-        //我们先关闭重定向，再加载DLL，Windows 7 SP1以前的系统不会关闭重定向，而导致某些线程关闭重定向后DLL加载问题。
-        PVOID OldFsRedirectionLevel;
-
-        auto pRtlWow64EnableFsRedirectionEx = try_get_RtlWow64EnableFsRedirectionEx();
-        auto StatusFsRedir = pRtlWow64EnableFsRedirectionEx ? pRtlWow64EnableFsRedirectionEx(nullptr, &OldFsRedirectionLevel) : 0;
-#endif
-
-        auto hModule = pLoadLibraryExW(lpLibFileName, hFile, dwFlags);
-
-#if defined(_M_IX86) && YY_Thunks_Target < __WindowsNT6_1_SP1
-        if (StatusFsRedir >= 0 && pRtlWow64EnableFsRedirectionEx)
-        {
-            LSTATUS lStatus = GetLastError();
-            pRtlWow64EnableFsRedirectionEx(OldFsRedirectionLevel, &OldFsRedirectionLevel);
-            SetLastError(lStatus);
-        }
-#endif
+        auto hModule = _pfnLoadLibraryExW(lpLibFileName, hFile, dwFlags);
         if(hModule)
             return hModule;
 
@@ -776,8 +929,7 @@ namespace YY::Thunks
             return nullptr;
         }
 
-
-        if (dwFlags == 0 || try_get_AddDllDirectory() != nullptr)
+        if (try_get_AddDllDirectory())
         {
             //存在AddDllDirectory说明支持 LOAD_LIBRARY_SEARCH_SYSTEM32 等功能，直接调用pLoadLibraryExW即可。
 
@@ -1041,7 +1193,7 @@ namespace YY::Thunks
         _In_ LPCWSTR _szLibFileName
         )
     {
-        if (Fallback::s_DirectoryFlags == 0 || try_get_AddDllDirectory())
+        if (try_get_AddDllDirectory())
         {
             const auto _pfnLoadLibraryW = try_get_LoadLibraryW();
             if (!_pfnLoadLibraryW)
@@ -1058,7 +1210,7 @@ namespace YY::Thunks
         }
         else
         {
-            return LoadLibraryExW(_szLibFileName, NULL, Fallback::s_DirectoryFlags);
+            return LoadLibraryExW(_szLibFileName, NULL, 0);
         }
     }
 #endif
@@ -1076,7 +1228,7 @@ namespace YY::Thunks
         _In_ LPCSTR _szLibFileName
         )
     {
-        if (Fallback::s_DirectoryFlags == 0 || try_get_AddDllDirectory())
+        if (try_get_AddDllDirectory())
         {
             const auto _pfnLoadLibraryA = try_get_LoadLibraryA();
             if (!_pfnLoadLibraryA)
@@ -1093,7 +1245,18 @@ namespace YY::Thunks
         }
         else
         {
-            return LoadLibraryExA(_szLibFileName, NULL, Fallback::s_DirectoryFlags);
+            wchar_t szLibFileNameUnicode[512];
+
+            UNICODE_STRING usLibFileName = { 0, sizeof(szLibFileNameUnicode), szLibFileNameUnicode };
+
+            auto lStatus = internal::Basep8BitStringToStaticUnicodeString(&usLibFileName, _szLibFileName);
+            if (lStatus != ERROR_SUCCESS)
+            {
+                SetLastError(lStatus);
+                return nullptr;
+            }
+
+            return LoadLibraryExW(szLibFileNameUnicode, NULL, 0);
         }
     }
 #endif
@@ -1117,13 +1280,7 @@ namespace YY::Thunks
             return _pfnSetDefaultDllDirectories(_fDirectoryFlags);
         }
 
-        if (_fDirectoryFlags & LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)
-        {
-            _fDirectoryFlags &= ~LOAD_LIBRARY_SEARCH_DEFAULT_DIRS;
-            _fDirectoryFlags |= LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_LIBRARY_SEARCH_USER_DIRS;       
-        }
-
-        if (_fDirectoryFlags & ~(LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_LIBRARY_SEARCH_USER_DIRS))
+        if (_fDirectoryFlags & ~(LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS))
         {
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
@@ -1134,4 +1291,158 @@ namespace YY::Thunks
     }
 #endif
 
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [仅限桌面应用]，在 Windows 7、Windows Server 2008 R2、Windows Vista 和 Windows Server 2008 上KB2533623
+    // 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
+    __DEFINE_THUNK(
+    kernel32,
+    4,
+    DLL_DIRECTORY_COOKIE,
+    WINAPI,
+    AddDllDirectory,
+        _In_ PCWSTR _szNewDirectory
+        )
+    {
+        if (const auto _pfnAddDllDirectory = try_get_AddDllDirectory())
+        {
+            return _pfnAddDllDirectory(_szNewDirectory);
+        }
+
+        __declspec(allocate(".YYThr$AAB")) static void* s_FreeDllDirectoryListData = reinterpret_cast<void*>(&Fallback::FreeDllDirectoryList);
+
+        LSTATUS _lStatus = ERROR_SUCCESS;
+        do
+        {
+#if !defined(__USING_NTDLL_LIB)
+            const auto RtlDetermineDosPathNameType_U = try_get_RtlDetermineDosPathNameType_U();
+            if (!RtlDetermineDosPathNameType_U)
+            {
+                _lStatus = ERROR_FUNCTION_FAILED;
+                break;
+            }
+#endif
+            const auto _ePathType = RtlDetermineDosPathNameType_U(_szNewDirectory);
+            if (_ePathType == RtlPathTypeUnknown || _ePathType == RtlPathTypeDriveRelative || _ePathType == RtlPathTypeRelative)
+            {
+                _lStatus = ERROR_INVALID_PARAMETER;
+                break;
+            }
+
+            ::AcquireSRWLockExclusive(&Fallback::s_DllDirectoryListLock);
+            const auto _cbLengthBackup = Fallback::s_szDllDirectoryList.Length;
+            _lStatus = internal::UnicodeStringAppend(Fallback::s_szDllDirectoryList, _szNewDirectory, internal::StringLength(_szNewDirectory));
+            if (_lStatus == ERROR_SUCCESS)
+            {
+                _lStatus = internal::UnicodeStringAppend(Fallback::s_szDllDirectoryList, L';');
+            }
+
+            if (_lStatus)
+            {
+                Fallback::s_szDllDirectoryList.Length = _cbLengthBackup;
+            }
+            ::ReleaseSRWLockExclusive(&Fallback::s_DllDirectoryListLock);
+        } while (false);
+
+        if (_lStatus == ERROR_SUCCESS)
+        {
+            return (DLL_DIRECTORY_COOKIE)1;
+        }
+        else
+        {
+            SetLastError(_lStatus);
+            return nullptr;
+        }
+    }
+#endif
+
+#if (YY_Thunks_Target < __WindowsNT5_1_SP1)
+
+    // Minimum supported client	Windows Vista, Windows XP with SP1 [desktop apps only]
+    // Minimum supported server	Windows Server 2003[desktop apps only]
+    __DEFINE_THUNK(
+    kernel32,
+    8,
+    DWORD,
+    WINAPI,
+    GetDllDirectoryW,
+        _In_ DWORD _cchBufferLength,
+        _Out_writes_to_opt_(_cchBufferLength, return + 1) LPWSTR _szBuffer
+        )
+    {
+        if (const auto _pfnGetDllDirectoryW = try_get_GetDllDirectoryW())
+        {
+            return _pfnGetDllDirectoryW(_cchBufferLength, _szBuffer);
+        }
+
+        if (_szBuffer && _cchBufferLength)
+        {
+            _szBuffer[0] = L'\0';
+        }
+
+        LSTATUS _lStatus = ERROR_SUCCESS;
+        DWORD _uResult = 0;
+
+        const auto _cbBufferLength = _cchBufferLength * sizeof(wchar_t);
+        ::AcquireSRWLockShared(&Fallback::s_DllDirectoryLock);
+        const auto _cbResult = Fallback::s_sDllDirectory.Length + sizeof(wchar_t);
+        if (_szBuffer && _cbResult < _cbBufferLength)
+        {
+            memcpy(_szBuffer, Fallback::s_sDllDirectory.Buffer, Fallback::s_sDllDirectory.Length);
+            _uResult = Fallback::s_sDllDirectory.Length / sizeof(wchar_t);
+            _szBuffer[_uResult] = L'\0';
+        }
+        else
+        {
+            _uResult = _cbResult / sizeof(wchar_t);
+        }
+        ::ReleaseSRWLockShared(&Fallback::s_DllDirectoryLock);
+
+        SetLastError(_lStatus);
+        return _uResult;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT5_1_SP1)
+
+    // Minimum supported client	Windows Vista, Windows XP with SP1 [desktop apps only]
+    // Minimum supported server	Windows Server 2003[desktop apps only]
+    __DEFINE_THUNK(
+    kernel32,
+    4,
+    BOOL,
+    WINAPI,
+    SetDllDirectoryW,
+        _In_opt_ LPCWSTR _szPathName
+        )
+    {
+        if (const auto _pfnSetDllDirectoryW = try_get_SetDllDirectoryW())
+        {
+            return _pfnSetDllDirectoryW(_szPathName);
+        }
+
+        __declspec(allocate(".YYThr$AAB")) static void* s_FreeDllDirectoryData = reinterpret_cast<void*>(&Fallback::FreeDllDirectory);
+
+        const auto _cchPathName =  internal::StringLength(_szPathName);
+
+        LSTATUS _lStatus = ERROR_SUCCESS;
+        ::AcquireSRWLockExclusive(&Fallback::s_DllDirectoryLock);
+        Fallback::s_sDllDirectory.Length = 0;
+        if (_cchPathName)
+        {
+            _lStatus = internal::UnicodeStringAppend(Fallback::s_sDllDirectory, _cchPathName);
+        }
+        ::ReleaseSRWLockExclusive(&Fallback::s_DllDirectoryLock);
+
+        if (_lStatus)
+        {
+            SetLastError(_lStatus);
+            return FALSE;
+        }
+
+        return TRUE;
+    }
+#endif
 }

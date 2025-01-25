@@ -346,17 +346,17 @@ namespace YY::Thunks::internal
         }
 
         _Check_return_
-        _Ret_maybenull_
-        _Post_writable_byte_size_(_cbBytes)
-        static void* __fastcall Alloc(_In_ size_t _cbBytes, DWORD _fFlags = 0)
+            _Ret_maybenull_
+            _Post_writable_byte_size_(_cbBytes)
+            static void* __fastcall Alloc(_In_ size_t _cbBytes, DWORD _fFlags = 0)
         {
             return HeapAlloc(((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap, _fFlags, _cbBytes);
         }
 
         _Check_return_
-        _Ret_maybenull_
-        _Post_writable_byte_size_(_cbBytes)
-        static void* __fastcall ReAlloc(_Pre_maybenull_ _Post_invalid_ void* _pAddress, _In_ size_t _cbBytes)
+            _Ret_maybenull_
+            _Post_writable_byte_size_(_cbBytes)
+            static void* __fastcall ReAlloc(_Pre_maybenull_ _Post_invalid_ void* _pAddress, _In_ size_t _cbBytes)
         {
             auto _hProcessHeap = ((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap;
             if (_pAddress)
@@ -374,11 +374,11 @@ namespace YY::Thunks::internal
             if(_pAddress)
                 HeapFree(((TEB*)NtCurrentTeb())->ProcessEnvironmentBlock->ProcessHeap, 0, _pAddress);
         }
-        
+
         template<typename Type, typename... Args>
         _Success_(return != NULL) _Check_return_ _Ret_maybenull_
-        _CRTALLOCATOR
-        inline Type* __fastcall New(Args&&... args)
+            _CRTALLOCATOR
+            inline Type* __fastcall New(Args&&... args)
         {
             Type* _pType = (Type*)Alloc(sizeof(Type));
             if (_pType)
@@ -401,35 +401,35 @@ namespace YY::Thunks::internal
         {
         public:
             _NODISCARD _Ret_notnull_ _Post_writable_byte_size_(_Size) _VCRT_ALLOCATOR
-            void* __CRTDECL operator new(
-                size_t _Size
-                )
+                void* __CRTDECL operator new(
+                    size_t _Size
+                    )
             {
                 return Alloc(_Size);
             }
 
             _NODISCARD _Ret_maybenull_ _Success_(return != NULL) _Post_writable_byte_size_(_Size) _VCRT_ALLOCATOR
-            void* __CRTDECL operator new(
-                size_t _Size,
-                ::std::nothrow_t const&
-                ) noexcept
+                void* __CRTDECL operator new(
+                    size_t _Size,
+                    ::std::nothrow_t const&
+                    ) noexcept
             {
                 return Alloc(_Size);
             }
 
             _NODISCARD _Ret_notnull_ _Post_writable_byte_size_(_Size) _VCRT_ALLOCATOR
-            void* __CRTDECL operator new[](
-                size_t _Size
-                )
+                void* __CRTDECL operator new[](
+                    size_t _Size
+                    )
             {
                 return Alloc(_Size);
             }
 
             _NODISCARD _Ret_maybenull_ _Success_(return != NULL) _Post_writable_byte_size_(_Size) _VCRT_ALLOCATOR
-            void* __CRTDECL operator new[](
-                size_t _Size,
-                ::std::nothrow_t const&
-                ) noexcept
+                void* __CRTDECL operator new[](
+                    size_t _Size,
+                    ::std::nothrow_t const&
+                    ) noexcept
             {
                 return Alloc(_Size);
             }
@@ -512,7 +512,7 @@ namespace YY::Thunks::internal
 
         static DWORD __fastcall NtStatusToDosError(
             _In_ NTSTATUS Status
-            )
+        )
         {
             if (STATUS_TIMEOUT == Status)
             {
@@ -523,7 +523,7 @@ namespace YY::Thunks::internal
                 */
                 return ERROR_TIMEOUT;
             }
-            
+
 #if !defined(__USING_NTDLL_LIB)
             const auto RtlNtStatusToDosError = try_get_RtlNtStatusToDosError();
             if (!RtlNtStatusToDosError)
@@ -537,7 +537,7 @@ namespace YY::Thunks::internal
 
         static DWORD __fastcall BaseSetLastNTError(
             _In_ NTSTATUS Status
-            )
+        )
         {
             auto lStatus = NtStatusToDosError(Status);
             SetLastError(lStatus);
@@ -584,7 +584,7 @@ namespace YY::Thunks::internal
 
             //一个设备名称 512 长度够多了吧？
             wchar_t szVolumeMountPoint[512];
-                
+
             //检查缓冲区是否充足
             auto cbBufferNeed = sizeof(__szVolumeMountPointPrefix__) + NtName->Length;
 
@@ -593,7 +593,7 @@ namespace YY::Thunks::internal
                 SetLastError(ERROR_NOT_ENOUGH_MEMORY);
                 return FALSE;
             }
-                
+
             memcpy(szVolumeMountPoint, __szVolumeMountPointPrefix__, sizeof(__szVolumeMountPointPrefix__) - sizeof(__szVolumeMountPointPrefix__[0]));
             memcpy((char*)szVolumeMountPoint + sizeof(__szVolumeMountPointPrefix__) - sizeof(__szVolumeMountPointPrefix__[0]), NtName->Buffer, NtName->Length);
 
@@ -684,7 +684,7 @@ namespace YY::Thunks::internal
             _pId->Data2 = (CharToHex(_szInput[9]) << 12) | (CharToHex(_szInput[10]) << 8) | (CharToHex(_szInput[11]) << 4) | (CharToHex(_szInput[12]) << 0);
 
             _pId->Data3 = (CharToHex(_szInput[14]) << 12) | (CharToHex(_szInput[15]) << 8) | (CharToHex(_szInput[16]) << 4) | (CharToHex(_szInput[17]) << 0);
-                
+
             _pId->Data4[0] = (CharToHex(_szInput[19]) << 4) | (CharToHex(_szInput[20]) << 0);
             _pId->Data4[1] = (CharToHex(_szInput[21]) << 4) | (CharToHex(_szInput[22]) << 0);
             _pId->Data4[2] = (CharToHex(_szInput[24]) << 4) | (CharToHex(_szInput[25]) << 0);
@@ -737,7 +737,7 @@ namespace YY::Thunks::internal
                 *_pszEnd = _szEnd;
 
             *_puResult = 0;
-  
+
             DWORD64 _uResult64 = 0;
             for (;;++_szEnd)
             {
@@ -1100,6 +1100,250 @@ namespace YY::Thunks::internal
             UNICODE_STRING _Result = { (kLength - 1)* sizeof(_Right[0]), kLength * sizeof(_Right[0]), const_cast<PWSTR>(_Right) };
             return _Result;
         }
+
+        static constexpr bool __fastcall UnicodeStringIsStaticBuffer(const UNICODE_STRING& _szString) noexcept
+        {
+            return LPBYTE(&_szString) + sizeof(_szString) == LPBYTE(_szString.Buffer);
+        }
+
+        static constexpr LSTATUS __fastcall UnicodeStringAllocByteBuffer(UNICODE_STRING& _szString, size_t _cbNewBuffer) noexcept
+        {
+            if (_szString.MaximumLength >= _cbNewBuffer)
+                return ERROR_SUCCESS;
+
+            if (UINT16_MAX < _cbNewBuffer)
+                return ERROR_TOO_MANY_NAMES;
+
+            wchar_t* _pBuffer = nullptr;
+            if (UnicodeStringIsStaticBuffer(_szString))
+            {
+                _pBuffer = (wchar_t*)internal::Alloc(_cbNewBuffer);
+                if (!_pBuffer)
+                {
+                    return ERROR_NOT_ENOUGH_MEMORY;
+                }
+
+                memcpy(_pBuffer, _szString.Buffer, _szString.Length);
+            }
+            else
+            {
+                _pBuffer = (wchar_t*)internal::ReAlloc(_szString.Buffer, _cbNewBuffer);
+                if (!_pBuffer)
+                {
+                    return ERROR_NOT_ENOUGH_MEMORY;
+                }
+            }
+
+            _szString.Buffer = _pBuffer;
+            _szString.MaximumLength = _cbNewBuffer;
+            return ERROR_SUCCESS;
+        }
+
+        static constexpr void __fastcall UnicodeStringFree(UNICODE_STRING& _szString) noexcept
+        {
+            if (!UnicodeStringIsStaticBuffer(_szString))
+            {
+                internal::Free(_szString.Buffer);
+                _szString.Buffer = nullptr;
+                _szString.Length = 0;
+                _szString.MaximumLength = 0;
+            }
+        }
+
+        static constexpr LSTATUS __fastcall UnicodeStringAppendByte(UNICODE_STRING& _szString, LPCWSTR szAppend, size_t _cbAppend) noexcept
+        {
+            if (_cbAppend == 0)
+                return ERROR_SUCCESS;
+
+            const auto _cbLength = _szString.Length + _cbAppend;
+            if (_cbLength > UINT16_MAX)
+            {
+                return ERROR_TOO_MANY_NAMES;
+            }
+
+            if (_cbLength > _szString.MaximumLength)
+            {
+                auto _cbAlloc = max(_szString.MaximumLength * 2, _cbLength + sizeof(wchar_t));
+                if (_cbAlloc > UINT16_MAX)
+                    _cbAlloc = _cbLength;
+
+                auto _lStatus = UnicodeStringAllocByteBuffer(_szString, max(_cbAlloc, 128));
+                if (_lStatus)
+                {
+                    return _lStatus;
+                }
+            }
+
+            memcpy(LPBYTE(_szString.Buffer) + _szString.Length, szAppend, _cbAppend);
+            _szString.Length = _cbLength;
+            if (_cbLength + sizeof(wchar_t) < _szString.MaximumLength)
+            {
+                *(wchar_t*)(LPBYTE(_szString.Buffer) + _cbLength) = L'\0';
+            }
+            return ERROR_SUCCESS;
+        }
+
+        static constexpr LSTATUS __fastcall UnicodeStringAppend(UNICODE_STRING& _szString, LPCWSTR szAppend, size_t _cchAppend) noexcept
+        {
+            return UnicodeStringAppendByte(_szString, szAppend, _cchAppend * sizeof(wchar_t));
+        }
+
+        static constexpr LSTATUS __fastcall UnicodeStringAppend(UNICODE_STRING& _szString, wchar_t _ch) noexcept
+        {
+            return UnicodeStringAppend(_szString, &_ch, 1);
+        }
+
+        static constexpr UNICODE_STRING __fastcall UnicodeStringGetDir(LPCWSTR _szPath, size_t _cchPath) noexcept
+        {
+            auto _szPathEnd = _szPath + _cchPath;
+            for (; _szPathEnd != _szPath; )
+            {
+                --_szPathEnd;
+                if (*_szPathEnd == L'\\' || *_szPathEnd == L'/')
+                {
+                    ++_szPathEnd;
+                    break;
+                }
+            }
+
+            const auto _cbData = LPBYTE(_szPathEnd) - LPBYTE(_szPath);
+            return UNICODE_STRING{ USHORT(min(_cbData, UINT16_MAX)), USHORT(min(_cchPath * sizeof(wchar_t), UINT16_MAX)), PWSTR(_szPath)};
+        }
+
+        static constexpr UNICODE_STRING __fastcall UnicodeStringGetItem(LPWSTR _szString, LPWSTR _szStringEnd) noexcept
+        {
+            UNICODE_STRING _Result = { 0, 0, _szString };
+            for (; _szString != _szStringEnd; ++_szString)
+            {
+                if (*_szString == L';')
+                {
+                    _Result.Length = LPBYTE(_szString) - LPBYTE(_Result.Buffer);
+                    _Result.MaximumLength = _Result.Length + sizeof(wchar_t);
+                    return _Result;
+                }
+            }
+
+            _Result.Length = LPBYTE(_szString) - LPBYTE(_Result.Buffer);
+            _Result.MaximumLength = _Result.Length;
+            return _Result;
+        }
+
+        template<size_t _kcchStaticBuffer>
+        class UnicodeStringBuffer : public UNICODE_STRING
+        {
+        public:
+            static constexpr auto kcchStaticBuffer = _kcchStaticBuffer;
+            wchar_t StaticBuffer[kcchStaticBuffer];
+
+            constexpr UnicodeStringBuffer()
+                : UNICODE_STRING{0, _kcchStaticBuffer * sizeof(wchar_t), StaticBuffer }
+                , StaticBuffer{}
+            {
+            }
+
+            ~UnicodeStringBuffer()
+            {
+                UnicodeStringFree(*this);
+            }
+
+            UnicodeStringBuffer(const UnicodeStringBuffer&) = delete;
+
+            LSTATUS __fastcall Append(LPCWSTR szAppend) noexcept
+            {
+                return UnicodeStringAppend(*this, szAppend, internal::StringLength(szAppend));
+            }
+
+            LSTATUS __fastcall Append(LPCWSTR szAppend, size_t _cchAppend) noexcept
+            {
+                return UnicodeStringAppend(*this, szAppend, _cchAppend);
+            }
+
+            LSTATUS __fastcall Append(wchar_t _ch) noexcept
+            {
+                return UnicodeStringAppend(*this, &_ch, 1);
+            }
+
+            LSTATUS __fastcall Append(const UNICODE_STRING& _szAppend) noexcept
+            {
+                return UnicodeStringAppend(*this, _szAppend.Buffer, _szAppend.Length / sizeof(wchar_t));
+            }
+
+            LSTATUS __fastcall AppendPath(_In_z_ LPCWSTR _szAppendPath) noexcept
+            {
+                for (; *_szAppendPath == L'\\' || *_szAppendPath == L'/'; ++_szAppendPath);
+
+                if (*_szAppendPath == L'\0')
+                    return ERROR_SUCCESS;
+
+                auto _cchLength = Length / sizeof(wchar_t);
+                if (_cchLength)
+                {
+                    const auto _ch = Buffer[_cchLength - 1];
+                    if (_ch != L'\\' && _ch != L'/')
+                    {
+                        auto _lStatus = Append(L'\\');
+                        if (_lStatus)
+                            return _lStatus;
+                    }
+                }
+
+                return Append(_szAppendPath);
+            }
+
+            LPWSTR __fastcall GetByteBuffer(size_t _cbLength) noexcept
+            {
+                if (UnicodeStringAllocByteBuffer(*this, _cbLength + sizeof(wchar_t)))
+                {
+                    return nullptr;
+                }
+
+                return Buffer;
+            }
+
+            LPWSTR __fastcall GetBuffer(size_t _cchLength) noexcept
+            {
+                return GetByteBuffer(_cchLength * sizeof(wchar_t));
+            }
+
+            void __fastcall SetLength(size_t _cchLength) noexcept
+            {
+                return SetByteLength(_cchLength * sizeof(wchar_t));
+            }
+
+            void __fastcall SetByteLength(size_t _cbLength) noexcept
+            {
+                _ASSERT(_cbLength <= MaximumLength);
+                Length = _cbLength;
+                if (Length + 2 < MaximumLength)
+                {
+                    *(wchar_t*)(LPBYTE(Buffer) + Length) = L'\0';
+                }
+            }
+
+            void __fastcall Empty() noexcept
+            {
+                SetByteLength(0);
+            }
+
+            LPWSTR __fastcall GetAppendBuffer(size_t _cchAppendLength) noexcept
+            {
+                auto _pBuffer = GetByteBuffer(Length + (_cchAppendLength + 1) * sizeof(wchar_t));
+                if (!_pBuffer)
+                    return nullptr;
+
+                return LPWSTR(LPBYTE(_pBuffer) + Length);
+            }
+
+            void __fastcall SetAppendByteLength(size_t _cbLength) noexcept
+            {
+                SetByteLength(Length + _cbLength);
+            }
+
+            void __fastcall SetAppendLength(size_t _cchLength) noexcept
+            {
+                SetByteLength(Length + _cchLength * sizeof(wchar_t));
+            }
+        };
     }
 
 } //namespace YY
