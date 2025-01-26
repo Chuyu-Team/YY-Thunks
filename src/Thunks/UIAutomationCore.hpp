@@ -230,4 +230,28 @@ namespace YY::Thunks
         return S_OK;
     }
 #endif
+    
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端	Windows XP [桌面应用 | UWP 应用]（需要安装 .NET）
+    // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    uiautomationcore,
+    8,
+    int,
+    WINAPI,
+    UiaLookupId,
+        enum AutomationIdentifierType _eType,
+        const GUID* _pGuid
+        )
+    {
+        if (auto const _pfnUiaLookupId = try_get_UiaLookupId())
+        {
+            return _pfnUiaLookupId(_eType, _pGuid);
+        }
+        
+        return 0;
+    }
+#endif
 }
