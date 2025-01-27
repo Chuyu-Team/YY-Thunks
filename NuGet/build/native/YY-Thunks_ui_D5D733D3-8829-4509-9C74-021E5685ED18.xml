@@ -17,36 +17,41 @@
     </Rule.DataSource>
 
     <EnumProperty
-      Name="YY_Thunks_File"
+      Name="WindowsTargetPlatformMinVersion"
       Category="YY_Thunks"
-      DisplayName="YY-Thunks等级"
-      Description="为我的代码兼容到低版本 Windows ，默认兼容到Windows Vista。">
+      DisplayName="最小兼容系统版本"
+      Description="YY-Thunks以最小版本为基准添加API兼容层，以便于早期平台可以正常使用新的API。最小兼容版本越高额外的兼容层越小，选择一个适合的目标可减少二进制文件体积。">
       <EnumValue
-        Name="false"
-        DisplayName="禁用YY-Thunks。"/>
+        Name="5.0.2195.0"
+        DisplayName="5.0.2195.0"/>
 
       <EnumValue
-        Name="YY_Thunks_for_Win2K.obj"
-        DisplayName="为我的代码自动修正到Windows 2000兼容，谢谢。"/>
+        Name="5.1.2600.0"
+        DisplayName="5.1.2600.0"/>
+
+      <EnumValue
+        Name="5.2.3790.0"
+        DisplayName="5.2.3790.0"/>
+
+      <EnumValue
+        Name="6.0.6000.0"
+        DisplayName="6.0.6000.0（默认）"/>
       
       <EnumValue
-        Name="YY_Thunks_for_WinXP.obj"
-        DisplayName="为我的代码自动修正到Windows XP RTM兼容，谢谢。"/>
+        Name="6.1.7600.0"
+        DisplayName="6.1.7600.0"/>
+
       <EnumValue
-        Name="YY_Thunks_for_Vista.obj"
-        DisplayName="为我的代码自动修正到Windows Vista RTM兼容，谢谢。"/>
+        Name="6.2.9200.0"
+        DisplayName="6.2.9200.0"/>
+
       <EnumValue
-        Name="YY_Thunks_for_Win7.obj"
-        DisplayName="为我的代码自动修正到Windows 7 RTM兼容，谢谢。"/>
+        Name="10.0.10240.0"
+        DisplayName="10.0.10240.0"/>
+
       <EnumValue
-        Name="YY_Thunks_for_Win8.obj"
-        DisplayName="为我的代码自动修正到Windows 8 RTM兼容，谢谢。"/>
-      <EnumValue
-        Name="YY_Thunks_for_Win10.0.10240.obj"
-        DisplayName="为我的代码自动修正到Windows 10 10240兼容，谢谢。"/>
-      <EnumValue
-        Name="YY_Thunks_for_Win10.0.19041.obj"
-        DisplayName="为我的代码自动修正到Windows 10 19041兼容，谢谢。"/>
+        Name="10.0.19041.0"
+        DisplayName="10.0.19041.0"/>
     </EnumProperty>
   </Rule>
 </ProjectSchemaDefinitions>

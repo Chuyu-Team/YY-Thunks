@@ -1,26 +1,38 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup Label="UserMacros" Condition="('$(PlatformShortName)'=='x86') Or ('$(PlatformShortName)'=='x64')">
+  <PropertyGroup>
+    <Internal_YY_Thunks_File></Internal_YY_Thunks_File>
+  </PropertyGroup>
+  <PropertyGroup Condition="('$(PlatformShortName)'=='x86') Or ('$(PlatformShortName)'=='x64')">
     <!--[MSBuild]::VersionGreaterThanOrEquals 需要16.5才支持，就用[System.Version]凑合吧-->
-    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('5.1.0.0').CompareTo($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)')))) > 0) And ('$(PlatformShortName)'=='x86')">YY_Thunks_for_Win2K.obj</YY_Thunks_File>
-    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And (('$(SupportWinXP)'=='true') Or ($(PlatformToolset.IndexOf('_xp')) != -1))">YY_Thunks_for_WinXP.obj</YY_Thunks_File>
-    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('6.0.0.0').CompareTo($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)')))) > 0)">YY_Thunks_for_WinXP.obj</YY_Thunks_File>
-    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('6.1.0.0').CompareTo($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)')))) > 0)">YY_Thunks_for_Vista.obj</YY_Thunks_File>
-    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('6.2.0.0').CompareTo($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)')))) > 0)">YY_Thunks_for_Win7.obj</YY_Thunks_File>
-    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('10.0.0.0').CompareTo($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)')))) > 0)">YY_Thunks_for_Win8.obj</YY_Thunks_File>
-    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('10.0.19041.0').CompareTo($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)')))) > 0)">YY_Thunks_for_Win10.0.10240.obj</YY_Thunks_File>
-    <YY_Thunks_File Condition="('$(YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='')">YY_Thunks_for_Win10.0.19041.obj</YY_Thunks_File>
+    <Internal_YY_Thunks_File Condition="('$(Internal_YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)').CompareTo($([System.Version]::Parse('10.0.19041.0')))) >= 0)">YY_Thunks_for_Win10.0.19041.obj</Internal_YY_Thunks_File>
+    <Internal_YY_Thunks_File Condition="('$(Internal_YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)').CompareTo($([System.Version]::Parse('10.0.0.0')))) >= 0)">YY_Thunks_for_Win10.0.10240.obj</Internal_YY_Thunks_File>
+
+    <!--特意兼容下早期的Windows SDK版本规范-->
+    <Internal_YY_Thunks_File Condition="('$(Internal_YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)').CompareTo($([System.Version]::Parse('8.0.0.0')))) >= 0)">YY_Thunks_for_Win8.obj</Internal_YY_Thunks_File>
+    <Internal_YY_Thunks_File Condition="('$(Internal_YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)').CompareTo($([System.Version]::Parse('7.0.0.0')))) >= 0)">YY_Thunks_for_Win7.obj</Internal_YY_Thunks_File>
+
+    <!--继续按系统版本划分-->
+    <Internal_YY_Thunks_File Condition="('$(Internal_YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)').CompareTo($([System.Version]::Parse('6.2.0.0')))) >= 0)">YY_Thunks_for_Win8.obj</Internal_YY_Thunks_File>
+    <Internal_YY_Thunks_File Condition="('$(Internal_YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)').CompareTo($([System.Version]::Parse('6.1.0.0')))) >= 0)">YY_Thunks_for_Win7.obj</Internal_YY_Thunks_File>
+    <Internal_YY_Thunks_File Condition="('$(Internal_YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)').CompareTo($([System.Version]::Parse('6.0.0.0')))) >= 0)">YY_Thunks_for_Vista.obj</Internal_YY_Thunks_File>
+    <Internal_YY_Thunks_File Condition="('$(Internal_YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ($([System.Version]::Parse('$(WindowsTargetPlatformMinVersion)').CompareTo($([System.Version]::Parse('5.1.0.0')))) >= 0)">YY_Thunks_for_WinXP.obj</Internal_YY_Thunks_File>
+    <Internal_YY_Thunks_File Condition="('$(Internal_YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ('$(PlatformShortName)'=='x64')">YY_Thunks_for_WinXP.obj</Internal_YY_Thunks_File>
+    <Internal_YY_Thunks_File Condition="('$(Internal_YY_Thunks_File)'=='') And ('$(WindowsTargetPlatformMinVersion)'!='') And ('$(PlatformShortName)'=='x86')">YY_Thunks_for_Win2K.obj</Internal_YY_Thunks_File>
+
+    <Internal_YY_Thunks_File Condition="('$(Internal_YY_Thunks_File)'=='') And ('$(YY_Thunks_File)'!='')">$(YY_Thunks_File)</Internal_YY_Thunks_File>
+    <Internal_YY_Thunks_File Condition="('$(Internal_YY_Thunks_File)'=='') And (('$(SupportWinXP)'=='true') Or ($(PlatformToolset.IndexOf('_xp')) != -1))">YY_Thunks_for_WinXP.obj</Internal_YY_Thunks_File>
 
     <!--默认值-->
-    <YY_Thunks_File Condition="'$(YY_Thunks_File)'==''">YY_Thunks_for_Vista.obj</YY_Thunks_File>
+    <Internal_YY_Thunks_File Condition="'$(Internal_YY_Thunks_File)'==''">YY_Thunks_for_Vista.obj</Internal_YY_Thunks_File>
   </PropertyGroup>
 
-  <ItemDefinitionGroup Condition="'$(YY_Thunks_File)'!='' and Exists('$(MSBuildThisFileDirectory)objs\$(PlatformShortName)\$(YY_Thunks_File)')">
+  <ItemDefinitionGroup Condition="'$(Internal_YY_Thunks_File)'!='' and Exists('$(MSBuildThisFileDirectory)objs\$(PlatformShortName)\$(Internal_YY_Thunks_File)')">
     <Link>
-      <MinimumRequiredVersion Condition=" '%(Link.MinimumRequiredVersion)' == '' and '$(PlatformShortName)'=='x86' and '$(YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' ">5.01</MinimumRequiredVersion>
-      <MinimumRequiredVersion Condition=" '%(Link.MinimumRequiredVersion)' == '' and '$(PlatformShortName)'=='x64' and '$(YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' ">5.02</MinimumRequiredVersion>
-      <AdditionalDependencies>$(MSBuildThisFileDirectory)objs\$(PlatformShortName)\$(YY_Thunks_File);%(AdditionalDependencies)</AdditionalDependencies>
-      <EntryPointSymbol Condition="'$(ConfigurationType)'=='DynamicLibrary' and ('$(YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' or '$(YY_Thunks_File)'=='YY_Thunks_for_Win2K.obj')">DllMainCRTStartupForYY_Thunks</EntryPointSymbol>
+      <MinimumRequiredVersion Condition=" '%(Link.MinimumRequiredVersion)' == '' and '$(PlatformShortName)'=='x86' and '$(Internal_YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' ">5.01</MinimumRequiredVersion>
+      <MinimumRequiredVersion Condition=" '%(Link.MinimumRequiredVersion)' == '' and '$(PlatformShortName)'=='x64' and '$(Internal_YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' ">5.02</MinimumRequiredVersion>
+      <AdditionalDependencies>$(MSBuildThisFileDirectory)objs\$(PlatformShortName)\$(Internal_YY_Thunks_File);%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol Condition="'$(ConfigurationType)'=='DynamicLibrary' and ('$(Internal_YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' or '$(Internal_YY_Thunks_File)'=='YY_Thunks_for_Win2K.obj')">DllMainCRTStartupForYY_Thunks</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -29,7 +41,7 @@
   </ItemGroup>
   
   <!--如果需要支持Windows 2000，那么需要额外更新最小版本-->
-  <Target Name="YY_Thunks_Update_MinimumRequiredVersion" Condition="'$(YY_Thunks_File)'=='YY_Thunks_for_Win2K.obj' and Exists('$(MSBuildThisFileDirectory)objs\$(PlatformShortName)\$(YY_Thunks_File)') and ('$(ConfigurationType)' == 'Application' Or '$(ConfigurationType)' == 'DynamicLibrary') " AfterTargets="AfterLink">
+  <Target Name="YY_Thunks_Update_MinimumRequiredVersion" Condition="'$(Internal_YY_Thunks_File)'=='YY_Thunks_for_Win2K.obj' and Exists('$(MSBuildThisFileDirectory)objs\$(PlatformShortName)\$(Internal_YY_Thunks_File)') and ('$(ConfigurationType)' == 'Application' Or '$(ConfigurationType)' == 'DynamicLibrary') " AfterTargets="AfterLink">
     <Exec Command="%22$(MSBuildThisFileDirectory)Bin\MinimumRequiredVersionHelper.exe%22 %22$(TargetPath)%22 /MinimumRequiredVersion:5.0"/>
   </Target>
 </Project>
