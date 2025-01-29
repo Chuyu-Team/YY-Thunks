@@ -39,4 +39,28 @@ namespace YY::Thunks
         return E_NOINTERFACE;
     }
 #endif
+
+#if (YY_Thunks_Target <= __WindowsNT6_1)
+    struct IDXGIDevice;
+    struct IInspectable;
+
+    __DEFINE_THUNK(
+        d3d11,
+        8,
+        HRESULT,
+        WINAPI,
+        CreateDirect3D11DeviceFromDXGIDevice,
+        _In_opt_ IDXGIDevice *dxgiDevice,
+        _COM_Outptr_ IInspectable **graphicsDevice)
+    {
+        if (const auto _pfnCreateDirect3D11DeviceFromDXGIDevice = try_get_CreateDirect3D11DeviceFromDXGIDevice())
+        {
+            return _pfnCreateDirect3D11DeviceFromDXGIDevice(dxgiDevice, graphicsDevice);
+        }
+        if (graphicsDevice)
+            *graphicsDevice = nullptr;
+
+        return E_NOINTERFACE;
+    }
+#endif
 }
