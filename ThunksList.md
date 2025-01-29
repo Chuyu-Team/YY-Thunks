@@ -190,6 +190,7 @@
 | 函数                                       | Fallback
 | ----                                       | -----------
 | D3D11CreateDevice                          | 返回 `E_NOINTERFACE`。
+| CreateDirect3D11DeviceFromDXGIDevice       | 返回 `E_NOINTERFACE`。
 
 ## d3d12.dll
 | 函数                                       | Fallback

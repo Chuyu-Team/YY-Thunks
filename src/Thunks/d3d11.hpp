@@ -2,6 +2,10 @@
 #include <d3d11.h>
 #endif
 
+#if (YY_Thunks_Target < __WindowsNT10_10240)
+#include <windows.graphics.directx.direct3d11.interop.h>
+#endif
+
 namespace YY::Thunks
 {
 #if (YY_Thunks_Target < __WindowsNT6_1)
@@ -36,6 +40,32 @@ namespace YY::Thunks
         if (ppImmediateContext)
             *ppImmediateContext = nullptr;
         
+        return E_NOINTERFACE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT10_10240)
+
+    // 已知 Windows 10 10240已经自带
+    __DEFINE_THUNK(
+    d3d11,
+    8,
+    HRESULT,
+    WINAPI,
+    CreateDirect3D11DeviceFromDXGIDevice,
+        _In_opt_ IDXGIDevice* _pDxgiDevice,
+        _COM_Outptr_ IInspectable** _ppGraphicsDevice
+        )
+    {
+        if (const auto _pfnCreateDirect3D11DeviceFromDXGIDevice = try_get_CreateDirect3D11DeviceFromDXGIDevice())
+        {
+            return _pfnCreateDirect3D11DeviceFromDXGIDevice(_pDxgiDevice, _ppGraphicsDevice);
+        }
+
+        if (_ppGraphicsDevice)
+            *_ppGraphicsDevice = nullptr;
+
         return E_NOINTERFACE;
     }
 #endif
