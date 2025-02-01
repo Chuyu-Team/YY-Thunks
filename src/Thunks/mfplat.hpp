@@ -1,5 +1,10 @@
 ﻿#if (YY_Thunks_Target < __WindowsNT6_2)
 #include <mfapi.h>
+
+#if !defined(__Comment_Lib_mfplat)
+#define __Comment_Lib_mfplat
+#pragma comment(lib, "mfplat.lib")
+#endif
 #endif
 
 #if (YY_Thunks_Target < __WindowsNT6)
@@ -628,6 +633,151 @@ namespace YY::Thunks
             return E_POINTER;
 
         *pnumMFTActivate = 0;
+        return E_NOTIMPL;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端    Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    mfplat,
+    8,
+    HRESULT,
+    STDAPICALLTYPE,
+    MFCancelWorkItem,
+        MFWORKITEM_KEY _Key
+        )
+    {
+        if (const auto _pfnMFCancelWorkItem = try_get_MFCancelWorkItem())
+        {
+            return _pfnMFCancelWorkItem(_Key);
+        }
+        return E_NOTIMPL;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    mfplat,
+    16,
+    HRESULT,
+    STDAPICALLTYPE,
+    MFLockSharedWorkQueue,
+        _In_ PCWSTR _szClass,
+        _In_ LONG _nBasePriority,
+        _Inout_ DWORD* _puTaskId,
+        _Out_ DWORD* _puId 
+        )
+    {
+        if (const auto _pfnMFLockSharedWorkQueue = try_get_MFLockSharedWorkQueue())
+        {
+            return _pfnMFLockSharedWorkQueue(_szClass, _nBasePriority, _puTaskId, _puId);
+        }
+        return E_NOTIMPL;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端    Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008 [仅限桌面应用]
+    __DEFINE_THUNK(
+    mfplat,
+    12,
+    HRESULT,
+    STDAPICALLTYPE,
+    MFPutWorkItem,
+        DWORD _uQueue,
+        IMFAsyncCallback* _pCallback,
+        IUnknown* _pState
+        )
+    {
+        if (const auto _pfnMFPutWorkItem = try_get_MFPutWorkItem())
+        {
+            return _pfnMFPutWorkItem(_uQueue, _pCallback, _pState);
+        }
+
+        return E_NOTIMPL;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    mfplat,
+    16,
+    HRESULT,
+    STDAPICALLTYPE,
+    MFPutWorkItem2,
+        DWORD _uQueue,
+        LONG _nPriority,
+        _In_ IMFAsyncCallback* _pCallback,
+        _In_opt_ IUnknown* _pState
+        )
+    {
+        if (const auto _pfnMFPutWorkItem2 = try_get_MFPutWorkItem2())
+        {
+            return _pfnMFPutWorkItem2(_uQueue, _nPriority, _pCallback, _pState);
+        }
+        return MFPutWorkItem(_uQueue, _pCallback, _pState);
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    mfplat,
+    16,
+    HRESULT,
+    STDAPICALLTYPE,
+    MFPutWaitingWorkItem,
+        HANDLE _hEvent,
+        LONG _nPriority,
+        _In_ IMFAsyncResult* _pResult,
+        _Out_opt_ MFWORKITEM_KEY* _pKey
+        )
+    {
+        if (const auto _pfnMFPutWaitingWorkItem = try_get_MFPutWaitingWorkItem())
+        {
+            return _pfnMFPutWaitingWorkItem(_hEvent, _nPriority, _pResult, _pKey);
+        }
+        return E_NOTIMPL;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_1)
+
+    // 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008 [桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    mfplat,
+    4,
+    HRESULT,
+    STDAPICALLTYPE,
+    MFUnlockWorkQueue,
+        _In_ DWORD _uWorkQueue
+        )
+    {
+        if (const auto _pfnMFUnlockWorkQueue = try_get_MFUnlockWorkQueue())
+        {
+            return _pfnMFUnlockWorkQueue(_uWorkQueue);
+        }
+
         return E_NOTIMPL;
     }
 #endif

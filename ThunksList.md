@@ -583,11 +583,22 @@
 | MFShutdown                                 | 返回E_NOTIMPL。
 | MFStartup                                  | 返回E_NOTIMPL。
 | MFTEnumEx                                  | 返回E_NOTIMPL。
+| MFCancelWorkItem                           | 返回E_NOTIMPL。
+| MFLockSharedWorkQueue                      | 返回E_NOTIMPL。
+| MFPutWorkItem                              | 返回E_NOTIMPL。
+| MFPutWorkItem2                             | 调用MFPutWorkItem。
+| MFPutWaitingWorkItem                       | 返回E_NOTIMPL。
+| MFUnlockWorkQueue                          | 返回E_NOTIMPL。
 
 ## mfreadwrite.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
 | MFCreateSourceReaderFromMediaSource        | 返回E_NOTIMPL。
+
+## mmdevapi.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| ActivateAudioInterfaceAsync                | 返回E_NOTIMPL。
 
 ## ndfapi.dll
 | 函数                                       | Fallback
