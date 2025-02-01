@@ -59,6 +59,7 @@ YY-Thunks支持的控制宏：
     _APPLY(mf,                                           "mf"                                 , 0                 ) \
     _APPLY(mfplat,                                       "mfplat"                             , 0                 ) \
     _APPLY(mfreadwrite,                                  "mfreadwrite"                        , 0                 ) \
+    _APPLY(mmdevapi,                                     "mmdevapi"                           , 0                 ) \
     _APPLY(ndfapi,                                       "ndfapi"                             , 0                 ) \
     _APPLY(bluetoothapis,                                "bluetoothapis"                      , 0                 ) \
     _APPLY(netapi32,                                     "netapi32"                           , 0                 ) \
