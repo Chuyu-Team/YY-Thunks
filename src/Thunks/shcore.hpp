@@ -109,4 +109,29 @@ namespace YY::Thunks
     }
 #endif
 
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+#include <shcore.h>
+    // Windows 8 [desktop apps | UWP apps]
+    // Windows Server 2012 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    shcore,
+    16,
+    HRESULT,
+    STDAPICALLTYPE,
+    CreateRandomAccessStreamOverStream,
+        _In_ IStream *stream,
+        _In_ BSOS_OPTIONS options,
+        _In_ REFIID riid,
+        _COM_Outptr_ void **ppv
+        )
+    {
+        if (auto const _pfnCreateRandomAccessStreamOverStream = try_get_CreateRandomAccessStreamOverStream())
+        {
+            return _pfnCreateRandomAccessStreamOverStream(stream, options, riid, ppv);
+        }
+        return E_NOTIMPL;
+    }
+#endif
+
 } //namespace YY::Thunks
