@@ -265,6 +265,7 @@
     <ClInclude Include="..\Thunks\mf.hpp" />
     <ClInclude Include="..\Thunks\mfplat.hpp" />
     <ClInclude Include="..\Thunks\mfreadwrite.hpp" />
+    <ClInclude Include="..\Thunks\mmdevapi.hpp" />
     <ClInclude Include="..\Thunks\ndfapi.hpp" />
     <ClInclude Include="..\Thunks\netapi32.hpp" />
     <ClInclude Include="..\Thunks\ntdll.hpp" />
