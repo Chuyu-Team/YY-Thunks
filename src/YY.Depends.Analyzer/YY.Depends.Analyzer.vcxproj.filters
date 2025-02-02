@@ -35,6 +35,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <Text Include="Config\x64\10.0.10240.txt">
+      <Filter>资源文件\Config\x64</Filter>
+    </Text>
     <Text Include="Config\x64\5.2.3790.txt">
       <Filter>资源文件\Config\x64</Filter>
     </Text>
@@ -53,6 +56,9 @@
     <Text Include="Config\x64\OrdinalMap.txt">
       <Filter>资源文件\Config\x64</Filter>
     </Text>
+    <Text Include="Config\x86\10.0.10240.txt">
+      <Filter>资源文件\Config\x86</Filter>
+    </Text>      
     <Text Include="Config\x86\5.1.2600.txt">
       <Filter>资源文件\Config\x86</Filter>
     </Text>
