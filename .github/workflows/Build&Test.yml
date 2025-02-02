@@ -16,6 +16,7 @@ jobs:
         path: |
             objs/**/*.obj
             Lib/**/*.*
+            Config/**/*.*
             YY.Depends.Analyzer.exe
         key: BinCache_${{github.sha}}
 
@@ -73,6 +74,9 @@ jobs:
           {
               $BuildVersion = $env:GITHUB_REF.Remove(0, 11);
               echo "BuildVersion=$BuildVersion" >> $env:GITHUB_ENV
+              
+              $Prerelease = $BuildVersion.contains("-");
+              echo "Prerelease=$Prerelease" >> $env:GITHUB_ENV
 
               # github的内置版本有Bug，此行必须添加，否则无法获得内容
               git fetch --depth=1 origin +refs/tags/*:refs/tags/*
@@ -177,15 +181,9 @@ jobs:
       shell: cmd
       run: |
           ::打包Release
-          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-${{env.BuildVersion}}-Objs.zip objs LICENSE ReadMe.md ThunksList.md YY.Depends.Analyzer.exe
-          pushd ".\src\YY.Depends.Analyzer"
-          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-${{env.BuildVersion}}-Objs.zip Config
-          popd
+          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-Objs.zip objs LICENSE ReadMe.md ThunksList.md YY.Depends.Analyzer.exe Config
 
-          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-${{env.BuildVersion}}-Lib.zip Lib LICENSE ReadMe.md ThunksList.md YY.Depends.Analyzer.exe
-          pushd ".\src\YY.Depends.Analyzer"
-          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-${{env.BuildVersion}}-Lib.zip Config
-          popd
+          7z a -tzip %GITHUB_WORKSPACE%\YY-Thunks-Lib.zip Lib LICENSE ReadMe.md ThunksList.md YY.Depends.Analyzer.exe Config
 
           ::打包Nuget
           if "${{env.BuildVersion}}" NEQ "" (
@@ -222,6 +220,7 @@ jobs:
         overwrite: true
         tags: true
         draft: false
+        prerelease: ${{env.Prerelease}}
 
     - name: 内容发布
       if: contains(github.ref, 'tags/')
