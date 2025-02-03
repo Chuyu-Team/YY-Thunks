@@ -1,4 +1,4 @@
-﻿#if (YY_Thunks_Target < __WindowsNT6_1)
+﻿#if (YY_Thunks_Target < __WindowsNT6_3)
 #include <combaseapi.h>
 #endif
 
@@ -72,6 +72,39 @@ namespace YY::Thunks
         }
 
         return S_OK;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_3)
+
+    // 最低受支持的客户端	Windows 8.1 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2012 R2[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    ole32,
+    16,
+    HRESULT,
+    WINAPI,
+    RoGetAgileReference,
+        _In_ enum AgileReferenceOptions _eOptions,
+        _In_ REFIID _Id,
+        _In_ IUnknown* pUnk,
+        _COM_Outptr_ IAgileReference** _ppAgileReference
+        )
+    {
+        if (const auto _pfnRoGetAgileReference = try_get_RoGetAgileReference())
+        {
+            return _pfnRoGetAgileReference(_eOptions, _Id, pUnk, _ppAgileReference);
+        }
+
+        if (!_ppAgileReference)
+            return E_POINTER;
+
+        *_ppAgileReference = nullptr;
+        if (!pUnk)
+            return E_POINTER;
+
+        return E_NOINTERFACE;
     }
 #endif
 }
