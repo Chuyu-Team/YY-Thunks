@@ -90,8 +90,12 @@
 ## api-ms-win-core-winrt-error-l1-1-0.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
+| RoFailFastWithErrorContext                 | 什么也不做。
 | RoOriginateError                           | 返回 TRUE.
 | RoOriginateErrorW                          | 返回 TRUE.
+| RoOriginateLanguageException               | 返回 TRUE.
+| RoTransformError                           | 返回 TRUE.
+| RoTransformErrorW                          | 返回 TRUE.
 
 ## api-ms-win-core-winrt-string-l1-1-0.dll
 | 函数                                       | Fallback
@@ -624,6 +628,7 @@
 | 函数                                       | Fallback
 | ----                                       | -----------
 | CoGetApartmentType                         | 调用IComThreadingInfo。
+| RoGetAgileReference                        | 返回E_NOTIMPL
 
 ## pdh.dll
 | 函数                                       | Fallback

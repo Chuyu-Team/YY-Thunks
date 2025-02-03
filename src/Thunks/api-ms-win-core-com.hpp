@@ -1,4 +1,4 @@
-﻿#if (YY_Thunks_Target < __WindowsNT6_1)
+﻿#if (YY_Thunks_Target < __WindowsNT6_3)
 #include <combaseapi.h>
 #endif
 
@@ -72,6 +72,36 @@ namespace YY::Thunks
         }
 
         return S_OK;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_3)
+    // Windows 8.1 [desktop apps | UWP apps]
+    // Windows Server 2012 R2 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    ole32,
+    16,
+    HRESULT,
+    WINAPI,
+    RoGetAgileReference,
+        _In_ enum AgileReferenceOptions options,
+        _In_ REFIID riid,
+        _In_ IUnknown* pUnk,
+        _COM_Outptr_ IAgileReference** ppAgileReference
+        )
+    {
+        if (auto _pfnRoGetAgileReference = try_get_RoGetAgileReference())
+        {
+            return _pfnRoGetAgileReference(options, riid, pUnk, ppAgileReference);
+        }
+
+        if (pUnk == nullptr || ppAgileReference == nullptr)
+            return E_INVALIDARG;
+
+        *ppAgileReference = nullptr;
+
+        return E_NOTIMPL;
     }
 #endif
 }
