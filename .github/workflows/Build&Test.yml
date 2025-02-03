@@ -170,7 +170,7 @@ jobs:
               throw "YY-Thunks.UnitTest单元测试失败！"
           }
     - uses: dorny/test-reporter@v1
-      if: steps.BinCache.outputs.cache-hit != 'true' && (success() || failure())
+      if: contains(fromJSON('["push", "create"]'), github.event_name) && steps.BinCache.outputs.cache-hit != 'true' && (success() || failure())
       with:
         name: 单元测试报告
         path: TestResults/*.trx

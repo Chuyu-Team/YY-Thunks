@@ -673,7 +673,9 @@
 | GetProcessDpiAwareness                     | 调用 IsProcessDPIAware。
 | SetProcessDpiAwareness                     | 调用SetProcessDPIAware。
 | SetProcessDPIAware                         | 直接返回 TRUE。
+| CreateRandomAccessStreamOnFile             | 返回 E_NOTIMPL。
 | CreateRandomAccessStreamOverStream         | 返回 E_NOTIMPL。
+| CreateStreamOverRandomAccessStream         | 返回 E_NOTIMPL。
 
 ## shell32.dll
 | 函数                                       | Fallback
