@@ -123,6 +123,34 @@ namespace YY::Thunks
     16,
     HRESULT,
     STDAPICALLTYPE,
+    CreateRandomAccessStreamOnFile,
+        _In_ PCWSTR filePath, 
+        _In_ DWORD accessMode, 
+        _In_ REFIID riid, 
+        _COM_Outptr_ void **ppv
+        )
+    {
+        if (auto const _pfnCreateRandomAccessStreamOnFile = try_get_CreateRandomAccessStreamOnFile())
+        {
+            return _pfnCreateRandomAccessStreamOnFile(filePath, accessMode, riid, ppv);
+        }
+
+        if (!ppv)
+            return E_POINTER;
+
+        *ppv = nullptr;
+        return E_NOTIMPL;
+    }
+#endif
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    shcore,
+    16,
+    HRESULT,
+    STDAPICALLTYPE,
     CreateRandomAccessStreamOverStream,
         _In_ IStream* _pStream,
         _In_ BSOS_OPTIONS _eOptions,
@@ -139,6 +167,33 @@ namespace YY::Thunks
             return E_POINTER;
 
         *_ppv = nullptr;
+        return E_NOTIMPL;
+    }
+#endif
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    shcore,
+    12,
+    HRESULT,
+    STDAPICALLTYPE,
+    CreateStreamOverRandomAccessStream,
+        _In_ IUnknown *randomAccessStream, 
+        _In_ REFIID riid, 
+        _COM_Outptr_ void **ppv
+        )
+    {
+        if (auto const _pfnCreateStreamOverRandomAccessStream = try_get_CreateStreamOverRandomAccessStream())
+        {
+            return _pfnCreateStreamOverRandomAccessStream(randomAccessStream, riid, ppv);
+        }
+
+        if (!ppv)
+            return E_POINTER;
+
+        *ppv = nullptr;
         return E_NOTIMPL;
     }
 #endif
