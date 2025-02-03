@@ -143,4 +143,63 @@ namespace YY::Thunks
     }
 #endif
 
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    shcore,
+    16,
+    HRESULT,
+    STDAPICALLTYPE,
+    CreateRandomAccessStreamOnFile,
+        _In_ PCWSTR _szFilePath, 
+        _In_ DWORD _fAccessMode, 
+        _In_ REFIID _Id, 
+        _COM_Outptr_ void** _ppv
+        )
+    {
+        if (auto const _pfnCreateRandomAccessStreamOnFile = try_get_CreateRandomAccessStreamOnFile())
+        {
+            return _pfnCreateRandomAccessStreamOnFile(_szFilePath, _fAccessMode, _Id, _ppv);
+        }
+
+        if (!_ppv)
+            return E_POINTER;
+
+        *_ppv = nullptr;
+        return E_NOTIMPL;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    shcore,
+    12,
+    HRESULT,
+    STDAPICALLTYPE,
+    CreateStreamOverRandomAccessStream,
+        _In_ IUnknown* _pRandomAccessStream, 
+        _In_ REFIID _Id, 
+        _COM_Outptr_ void**_ppv
+        )
+    {
+        if (auto const _pfnCreateStreamOverRandomAccessStream = try_get_CreateStreamOverRandomAccessStream())
+        {
+            return _pfnCreateStreamOverRandomAccessStream(_pRandomAccessStream, _Id, _ppv);
+        }
+
+        if (!_ppv)
+            return E_POINTER;
+
+        *_ppv = nullptr;
+        return E_NOTIMPL;
+    }
+#endif
+
 } //namespace YY::Thunks
