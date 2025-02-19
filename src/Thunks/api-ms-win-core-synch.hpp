@@ -173,11 +173,11 @@ namespace YY::Thunks::internal
 
         template<typename KeyType>
         static NTSTATUS NTAPI SecondWaitWorkaroundNtReleaseKeyedEvent(
-	        IN HANDLE               KeyedEventHandle,
-	        IN KeyType*             Key,
-	        IN BOOLEAN              Alertable,
-	        IN PLARGE_INTEGER       Timeout OPTIONAL
-	        )
+            IN HANDLE               KeyedEventHandle,
+            IN KeyType*             Key,
+            IN BOOLEAN              Alertable,
+            IN PLARGE_INTEGER       Timeout OPTIONAL
+            )
         {
 #if !defined(__USING_NTDLL_LIB)
             const auto NtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
@@ -196,32 +196,39 @@ namespace YY::Thunks::internal
             //Windows XP等平台则 使用系统自身的 CritSecOutOfMemoryEvent，Vista或者更高平台 我们直接返回 nullptr 即可。
             if (NtCurrentTeb()->ProcessEnvironmentBlock->OSMajorVersion < 6)
             {
-                if (_GlobalKeyedEventHandle == nullptr)
+                auto _pSharedData = GetYY_ThunksSharedData();
+                if (auto _hGlobalKeyedEventHandle = _pSharedData->hGlobalKeyedEventHandle)
                 {
-#if !defined(__USING_NTDLL_LIB)
-                    auto NtOpenKeyedEvent = try_get_NtOpenKeyedEvent();
-
-                    if(!NtOpenKeyedEvent)
-                        RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
-#endif
-
-                    UNICODE_STRING ObjectName = internal::MakeNtString(L"\\KernelObjects\\CritSecOutOfMemoryEvent");
-                    OBJECT_ATTRIBUTES attr = { sizeof(attr), nullptr, &ObjectName };
-
-                    HANDLE KeyedEventHandle;
-
-                    if (NtOpenKeyedEvent(&KeyedEventHandle, MAXIMUM_ALLOWED, &attr) < 0)
-                    {
-                        RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
-                    }
-
-                    if (InterlockedCompareExchange((size_t*)&_GlobalKeyedEventHandle, (size_t)KeyedEventHandle, (size_t)nullptr))
-                    {
-                        CloseHandle(KeyedEventHandle);
-                    }
+                    return _hGlobalKeyedEventHandle;
                 }
 
-                return _GlobalKeyedEventHandle;
+#if !defined(__USING_NTDLL_LIB)
+                auto NtOpenKeyedEvent = try_get_NtOpenKeyedEvent();
+
+                if (!NtOpenKeyedEvent)
+                    RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+#endif
+
+                UNICODE_STRING ObjectName = internal::MakeNtString(L"\\KernelObjects\\CritSecOutOfMemoryEvent");
+                OBJECT_ATTRIBUTES attr = { sizeof(attr), nullptr, &ObjectName };
+
+                HANDLE KeyedEventHandle;
+
+                if (NtOpenKeyedEvent(&KeyedEventHandle, MAXIMUM_ALLOWED, &attr) < 0)
+                {
+                    RaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+                }
+
+                const auto _hLastKeyedEventHandle = (HANDLE)InterlockedCompareExchange((size_t*)&_pSharedData->hGlobalKeyedEventHandle, (size_t)KeyedEventHandle, (size_t)nullptr);
+                if (_hLastKeyedEventHandle)
+                {
+                    CloseHandle(KeyedEventHandle);
+                    return _hLastKeyedEventHandle;
+                }
+                else
+                {
+                    return KeyedEventHandle;
+                }
             }
 #endif
             //Vista以上平台支持给 KeyedEvent直接传 nullptr
@@ -850,11 +857,8 @@ namespace YY::Thunks::internal
 #if (YY_Thunks_Target < __WindowsNT6_2)
         static auto __fastcall GetBlockByWaitOnAddressHashTable(LPVOID Address)
         {
-            static volatile ULONG_PTR WaitOnAddressHashTable[128];
-
-            const auto Index = (size_t(Address) >> 5) & 0x7F;
-
-            return &WaitOnAddressHashTable[Index];
+            const auto Index = (size_t(Address) >> 5) & 0x7F;      
+            return &GetYY_ThunksSharedData()->WaitOnAddressHashTable[Index];
         }
 
         static void __fastcall RtlpWaitOnAddressWakeEntireList(YY_ADDRESS_WAIT_BLOCK* pBlock)

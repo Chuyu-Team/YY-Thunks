@@ -298,9 +298,6 @@ namespace YY::Thunks::Fallback
 
         static void __fastcall DoWhenCallbackReturns(_TP_CALLBACK_INSTANCE* Instance);
 
-        // XP系统默认值是500，我们难以知道
-        volatile LONG uAvailableWorkerCount = 500;
-
         // 结构跟微软完全不同！！！
         class TP_Pool
         {
@@ -408,20 +405,22 @@ namespace YY::Thunks::Fallback
                     AddRef();
                 }
 
-                InterlockedDecrement(&uAvailableWorkerCount);
+                auto _pSharedData = GetYY_ThunksSharedData();
+                InterlockedIncrement(&_pSharedData->uThreadPoolWorkerCount);
                 auto _bRet = QueueUserWorkItem([](LPVOID lpThreadParameter) -> DWORD
                     {
                         auto _pPool = (TP_Pool*)lpThreadParameter;
 
                         _pPool->ExecuteTaskRunner();
-                        InterlockedIncrement(&uAvailableWorkerCount);
+                        auto _pSharedData = GetYY_ThunksSharedData();
+                        InterlockedDecrement(&_pSharedData->uThreadPoolWorkerCount);
                         return 0;
 
                     }, this, 0);
 
                 if (!_bRet)
                 {
-                    InterlockedIncrement(&uAvailableWorkerCount);
+                    InterlockedDecrement(&_pSharedData->uThreadPoolWorkerCount);
                     Release();
                 }
 
@@ -2339,8 +2338,9 @@ namespace YY::Thunks
 
         pci->bCallbackMayRunLong = true;
         // 底层调用的是QueueUserWorkItem，我们无法完全知道现在可用的线程情况
-        // 自己记录一个 AvailableWorkerCount凑合用吧……
-        return Fallback::uAvailableWorkerCount > 0;
+        // 自己记录一个 uThreadPoolWorkerCount 凑合用吧……
+        auto _pSharedData = GetYY_ThunksSharedData();
+        return _pSharedData->uThreadPoolWorkerCount < YY_ThunksSharedData::kMaxThreadPoolWorkerCount;
     }
 #endif
 }

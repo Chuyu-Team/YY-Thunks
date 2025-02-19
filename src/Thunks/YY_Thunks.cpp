@@ -1541,3 +1541,93 @@ static __forceinline void* __fastcall try_get_proc_address_from_first_available_
 
     return try_get_proc_address_from_dll(_ProcInfo);
 }
+
+_Ret_notnull_ static YY_ThunksSharedData* __fastcall GetYY_ThunksSharedData() noexcept
+{
+    if (auto _pData = s_pYY_ThunksSharedData)
+        return _pData;
+
+    wchar_t _szYY_ThunksSharedDataMapNameBuffer[MAX_PATH] = {};
+    YY::Thunks::internal::StringBuffer<wchar_t> _szBuffer(_szYY_ThunksSharedDataMapNameBuffer, _countof(_szYY_ThunksSharedDataMapNameBuffer));
+    _szBuffer.AppendString(L"YY_ThunksSharedData_53302349-F6BE-49C4-AC98-DA275C0CE653_");
+
+    _szBuffer.AppendUint32(GetCurrentProcessId());
+#if defined(_X86_)
+    _szBuffer.AppendString(L"_x86");
+#elif defined(_AMD64_)
+    _szBuffer.AppendString(L"_amd64");
+#elif defined(_ARM_)
+    _szBuffer.AppendString(L"_arm");
+#elif defined(_ARM64_)
+    _szBuffer.AppendString(L"_arm");
+#else
+#error "位置CPU架构"
+#endif
+
+    SYSTEM_INFO _SystemInfo;
+    GetSystemInfo(&_SystemInfo);
+    const auto _cbSharedData = max(_SystemInfo.dwPageSize * 2, 4096 * 2);
+
+    YY_ThunksSharedData* _pData = nullptr;
+
+    auto _hSharedData = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, _cbSharedData, _szYY_ThunksSharedDataMapNameBuffer);
+    if (_hSharedData)
+    {
+        const auto _lCreateStatus = GetLastError();
+        _pData = (YY_ThunksSharedData*)MapViewOfFile(_hSharedData, FILE_MAP_WRITE, 0, 0, _cbSharedData);
+
+        // 首次创建时不关闭 FileMapping，这是为了保证进程生命周期内其中的数据不被销毁，意外导致数据丢失
+        if (_pData == nullptr || InterlockedBitTestAndSet(&_pData->fYY_ThunksInitFlags, 0))
+        {
+            CloseHandle(_hSharedData);
+        }
+    }
+
+    if (!_pData)
+    {
+        _pData = &s_DefaultSharedData;
+    }
+
+    auto _pLastSharedData = (YY_ThunksSharedData*)InterlockedCompareExchangePointer((void**)&s_pYY_ThunksSharedData, _pData, NULL);
+    if (_pLastSharedData)
+    {
+        if (_pData != &s_DefaultSharedData)
+        {
+            UnmapViewOfFile(_pData);
+        }
+
+        return _pLastSharedData;
+    }
+    else
+    {
+        return _pData;
+    }
+}
+
+static void __fastcall FreeYY_ThunksSharedData(YY_ThunksSharedData* _pSharedData) noexcept
+{
+    if (!_pSharedData)
+        return;
+
+#if (YY_Thunks_Target < __WindowsNT5_1_SP1)
+    YY::Thunks::internal::UnicodeStringFree(_pSharedData->sDllDirectory);
+#endif
+
+#if YY_Thunks_Target < __WindowsNT6_2
+    auto _pItem = _pSharedData->DllDirectoryList.pFirst;
+    _pSharedData->DllDirectoryList.pFirst = nullptr;
+    _pSharedData->DllDirectoryList.pLast = nullptr;
+
+    while (_pItem)
+    {
+        auto _pNext = _pItem->pNext;
+        YY::Thunks::internal::Free(_pNext);
+        _pItem = _pNext;
+    }
+#endif
+
+#if (YY_Thunks_Target < __WindowsNT6)
+    if (_pSharedData->hGlobalKeyedEventHandle)
+        CloseHandle(_pSharedData->hGlobalKeyedEventHandle);
+#endif
+}

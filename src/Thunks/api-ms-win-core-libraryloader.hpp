@@ -1,37 +1,25 @@
-﻿#if YY_Thunks_Target < __WindowsNT6_2
-#include <Shared/List.h>
-#endif
-
-#ifdef YY_Thunks_Implemented
+﻿#ifdef YY_Thunks_Implemented
 namespace YY::Thunks::Fallback
 {
     namespace
     {
 #if (YY_Thunks_Target < __WindowsNT5_1_SP1)
-        static SRWLOCK s_DllDirectoryLock;
-        static UNICODE_STRING s_sDllDirectory;
-
-        static void __cdecl FreeDllDirectory() noexcept
-        {
-            internal::UnicodeStringFree(s_sDllDirectory);
-        }
-
         static BOOL WINAPI DownlevelSetDllDirectoryW(
             _In_opt_ LPCWSTR _szPathName
             )
         {
-            __declspec(allocate(".YYThr$AAB")) static void* s_FreeDllDirectoryData = reinterpret_cast<void*>(&Fallback::FreeDllDirectory);
+            auto _pSharedData = GetYY_ThunksSharedData();
 
             const auto _cchPathName = internal::StringLength(_szPathName);
 
             LSTATUS _lStatus = ERROR_SUCCESS;
-            ::AcquireSRWLockExclusive(&Fallback::s_DllDirectoryLock);
-            Fallback::s_sDllDirectory.Length = 0;
+            ::AcquireSRWLockExclusive(&_pSharedData->DllDirectoryLock);
+            _pSharedData->sDllDirectory.Length = 0;
             if (_cchPathName)
             {
-                _lStatus = internal::UnicodeStringAppend(Fallback::s_sDllDirectory, _szPathName, _cchPathName);
+                _lStatus = internal::UnicodeStringAppend(_pSharedData->sDllDirectory, _szPathName, _cchPathName);
             }
-            ::ReleaseSRWLockExclusive(&Fallback::s_DllDirectoryLock);
+            ::ReleaseSRWLockExclusive(&_pSharedData->DllDirectoryLock);
 
             if (_lStatus)
             {
@@ -42,33 +30,6 @@ namespace YY::Thunks::Fallback
             return TRUE;
         }
 #endif // (YY_Thunks_Target < __WindowsNT5_1_SP1)
-
-#if YY_Thunks_Target < __WindowsNT6_2
-        static DWORD s_DirectoryFlags/* = 0*/;
-        static SRWLOCK s_DllDirectoryListLock;
-
-        struct DllDirectoryListEntry : public ListEntryImpl<DllDirectoryListEntry>
-        {
-            size_t cchPath = 0;
-            wchar_t szPath[0];
-        };
-
-        static ListImpl<DllDirectoryListEntry> s_DllDirectoryList;
-
-        static void __cdecl FreeDllDirectoryList() noexcept
-        {
-            auto _pItem = s_DllDirectoryList.pFirst;
-            s_DllDirectoryList.pFirst = nullptr;
-            s_DllDirectoryList.pLast = nullptr;
-
-            while (_pItem)
-            {
-                auto _pNext = _pItem->pNext;
-                internal::Free(_pNext);
-                _pItem = _pNext;
-            }
-        }
-#endif
 
         /*LSTATUS __fastcall BasepGetModuleHandleExParameterValidation(
             _In_ DWORD _fFlags,
@@ -453,6 +414,7 @@ namespace YY::Thunks
             }
         }
 #endif
+        auto _pSharedData = GetYY_ThunksSharedData();
 
         constexpr DWORD kLoadLibrarySearchMarks = 0xFFFFFF00ul;
 
@@ -461,7 +423,7 @@ namespace YY::Thunks
         //  * LOAD_WITH_ALTERED_SEARCH_PATH与所有 LOAD_LIBRARY_SEARCH_* 互斥，因此无需附加 s_DirectoryFlags
         if ((_fFlags & (kLoadLibrarySearchMarks | LOAD_WITH_ALTERED_SEARCH_PATH)) == 0)
         {
-            _fFlags |= Fallback::s_DirectoryFlags;
+            _fFlags |= _pSharedData->fDirectoryFlags;
         }
 
 #if defined(_M_IX86) && YY_Thunks_Target < __WindowsNT6_1_SP1
@@ -509,7 +471,7 @@ namespace YY::Thunks
 #if (YY_Thunks_Target < __WindowsNT5_1_SP1)
                 // 不支持 GetDllDirectoryW时后续任然需要模拟
                 // 这是因为GetDllDirectoryW的路径在默认搜索列表中。
-                if (try_get_GetDllDirectoryW() || Fallback::s_sDllDirectory.Length == 0)
+                if (try_get_GetDllDirectoryW() || _pSharedData->sDllDirectory.Length == 0)
 #endif
                 {
                     break;
@@ -584,8 +546,8 @@ namespace YY::Thunks
                     LSTATUS _lStatus = ERROR_SUCCESS;
                     HMODULE _hModule = nullptr;
 
-                    ::AcquireSRWLockShared(&Fallback::s_DllDirectoryListLock);
-                    for (auto _pItem = Fallback::s_DllDirectoryList.pFirst; _pItem; _pItem= _pItem->pNext)
+                    ::AcquireSRWLockShared(&_pSharedData->DllDirectoryListLock);
+                    for (auto _pItem = _pSharedData->DllDirectoryList.pFirst; _pItem; _pItem= _pItem->pNext)
                     {
                         if (_pItem->cchPath == 0)
                             continue;
@@ -609,7 +571,7 @@ namespace YY::Thunks
                             break;
                         }
                     }
-                    ::ReleaseSRWLockShared(&Fallback::s_DllDirectoryListLock);
+                    ::ReleaseSRWLockShared(&_pSharedData->DllDirectoryListLock);
 
                     if (_hModule)
                     {
@@ -876,9 +838,9 @@ namespace YY::Thunks
             // AddDllDirectory
             if (_fOriginalFlags & (LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS))
             {
-                ::AcquireSRWLockShared(&Fallback::s_DllDirectoryListLock);
+                ::AcquireSRWLockShared(&_pSharedData->DllDirectoryListLock);
                 LSTATUS _lStatus = ERROR_SUCCESS;
-                for (auto _pItem = Fallback::s_DllDirectoryList.pFirst; _pItem; _pItem = _pItem->pNext)
+                for (auto _pItem = _pSharedData->DllDirectoryList.pFirst; _pItem; _pItem = _pItem->pNext)
                 {
                     if (_pItem->cchPath == 0)
                         continue;
@@ -891,7 +853,7 @@ namespace YY::Thunks
                     if (_lStatus)
                         break;
                 }
-                ::ReleaseSRWLockShared(&Fallback::s_DllDirectoryListLock);
+                ::ReleaseSRWLockShared(&_pSharedData->DllDirectoryListLock);
                 if(_lStatus)
                 {
                     SetLastError(ERROR_OUTOFMEMORY);
@@ -1476,7 +1438,8 @@ namespace YY::Thunks
             return FALSE;
         }
 
-        Fallback::s_DirectoryFlags = _fDirectoryFlags;
+        auto _pSharedData = GetYY_ThunksSharedData();
+        _pSharedData->fDirectoryFlags = _fDirectoryFlags;
         return TRUE;
     }
 #endif
@@ -1500,8 +1463,6 @@ namespace YY::Thunks
             return _pfnAddDllDirectory(_szNewDirectory);
         }
 
-        __declspec(allocate(".YYThr$AAB")) static void* s_FreeDllDirectoryListData = reinterpret_cast<void*>(&Fallback::FreeDllDirectoryList);
-
         LSTATUS _lStatus = ERROR_SUCCESS;
         do
         {
@@ -1522,7 +1483,7 @@ namespace YY::Thunks
 
             const auto _cchNewDirectory = internal::StringLength(_szNewDirectory);
             const auto _cbNewDirectory = _cchNewDirectory * sizeof(wchar_t);
-            auto _pEntry = (Fallback::DllDirectoryListEntry*)internal::Alloc(sizeof(Fallback::DllDirectoryListEntry) + _cbNewDirectory + sizeof(wchar_t));
+            auto _pEntry = (DllDirectoryListEntry*)internal::Alloc(sizeof(DllDirectoryListEntry) + _cbNewDirectory + sizeof(wchar_t));
             if (!_pEntry)
             {
                 _lStatus = ERROR_NOT_ENOUGH_MEMORY;
@@ -1533,9 +1494,10 @@ namespace YY::Thunks
             memcpy(_pEntry->szPath, _szNewDirectory, _cbNewDirectory);
             _pEntry->szPath[_cchNewDirectory] = L'\0';
 
-            ::AcquireSRWLockExclusive(&Fallback::s_DllDirectoryListLock);
-            Fallback::s_DllDirectoryList.PushBack(_pEntry);
-            ::ReleaseSRWLockExclusive(&Fallback::s_DllDirectoryListLock);
+            auto _pSharedData = GetYY_ThunksSharedData();
+            ::AcquireSRWLockExclusive(&_pSharedData->DllDirectoryListLock);
+            _pSharedData->DllDirectoryList.PushBack(_pEntry);
+            ::ReleaseSRWLockExclusive(&_pSharedData->DllDirectoryListLock);
 
             return _pEntry;
         } while (false);
@@ -1564,9 +1526,10 @@ namespace YY::Thunks
             return _pfnRemoveDllDirectory(_pCookie);
         }
 
-        ::AcquireSRWLockExclusive(&Fallback::s_DllDirectoryListLock);
-        const auto _bSuccess = Fallback::s_DllDirectoryList.Remove((Fallback::DllDirectoryListEntry*)_pCookie);
-        ::ReleaseSRWLockExclusive(&Fallback::s_DllDirectoryListLock);
+        auto _pSharedData = GetYY_ThunksSharedData();
+        ::AcquireSRWLockExclusive(&_pSharedData->DllDirectoryListLock);
+        const auto _bSuccess = _pSharedData->DllDirectoryList.Remove((DllDirectoryListEntry*)_pCookie);
+        ::ReleaseSRWLockExclusive(&_pSharedData->DllDirectoryListLock);
 
         if (!_bSuccess)
         {
@@ -1607,19 +1570,20 @@ namespace YY::Thunks
         DWORD _uResult = 0;
 
         const auto _cbBufferLength = _cchBufferLength * sizeof(wchar_t);
-        ::AcquireSRWLockShared(&Fallback::s_DllDirectoryLock);
-        const auto _cbResult = Fallback::s_sDllDirectory.Length + sizeof(wchar_t);
+        auto _pSharedData = GetYY_ThunksSharedData();
+        ::AcquireSRWLockShared(&_pSharedData->DllDirectoryLock);
+        const auto _cbResult = _pSharedData->sDllDirectory.Length + sizeof(wchar_t);
         if (_szBuffer && _cbResult <= _cbBufferLength)
         {
-            memcpy(_szBuffer, Fallback::s_sDllDirectory.Buffer, Fallback::s_sDllDirectory.Length);
-            _uResult = Fallback::s_sDllDirectory.Length / sizeof(wchar_t);
+            memcpy(_szBuffer, _pSharedData->sDllDirectory.Buffer, _pSharedData->sDllDirectory.Length);
+            _uResult = _pSharedData->sDllDirectory.Length / sizeof(wchar_t);
             _szBuffer[_uResult] = L'\0';
         }
         else
         {
             _uResult = _cbResult / sizeof(wchar_t);
         }
-        ::ReleaseSRWLockShared(&Fallback::s_DllDirectoryLock);
+        ::ReleaseSRWLockShared(&_pSharedData->DllDirectoryLock);
 
         SetLastError(_lStatus);
         return _uResult;
@@ -1655,15 +1619,16 @@ namespace YY::Thunks
         DWORD _uResult = 0;
 
         const UINT _uCodePage = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
-        ::AcquireSRWLockShared(&Fallback::s_DllDirectoryLock);
-        if (const auto _cchLength = Fallback::s_sDllDirectory.Length / sizeof(wchar_t))
+        auto _pSharedData = GetYY_ThunksSharedData();
+        ::AcquireSRWLockShared(&_pSharedData->DllDirectoryLock);
+        if (const auto _cchLength = _pSharedData->sDllDirectory.Length / sizeof(wchar_t))
         {
             int _nResult;
             do
             {
                 if (_szBuffer && _cchBufferLength > 1)
                 {
-                    _nResult = WideCharToMultiByte(_uCodePage, 0, Fallback::s_sDllDirectory.Buffer, _cchLength, _szBuffer, _cchBufferLength - 1, nullptr, nullptr);
+                    _nResult = WideCharToMultiByte(_uCodePage, 0, _pSharedData->sDllDirectory.Buffer, _cchLength, _szBuffer, _cchBufferLength - 1, nullptr, nullptr);
                     if (_nResult > 0)
                     {
                         _uResult = _nResult;
@@ -1679,7 +1644,7 @@ namespace YY::Thunks
                     }
                 }
 
-                _nResult = WideCharToMultiByte(_uCodePage, 0, Fallback::s_sDllDirectory.Buffer, _cchLength, 0, 0, nullptr, nullptr);
+                _nResult = WideCharToMultiByte(_uCodePage, 0, _pSharedData->sDllDirectory.Buffer, _cchLength, 0, 0, nullptr, nullptr);
                 if (_nResult <= 0)
                 {
                     _lStatus = GetLastError();
@@ -1690,7 +1655,7 @@ namespace YY::Thunks
                 _uResult = _nResult + 1;
             } while (false);
         }
-        ::ReleaseSRWLockShared(&Fallback::s_DllDirectoryLock);
+        ::ReleaseSRWLockShared(&_pSharedData->DllDirectoryLock);
 
         SetLastError(_lStatus);
         return _uResult;

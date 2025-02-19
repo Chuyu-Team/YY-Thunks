@@ -10,7 +10,7 @@
 #include <crtdbg.h>
 #include <intrin.h>
 
-
+#include "Shared/List.h"
 
 #if defined(_M_IX86)
     #define _LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME(_FUNCTION, _SIZE) _CRT_CONCATENATE(_CRT_CONCATENATE(_imp__, _FUNCTION), _CRT_CONCATENATE(_, _SIZE))
@@ -140,10 +140,6 @@ EXTERN_C extern HMODULE (__fastcall * const __pfnYY_Thunks_CustomLoadLibrary)(co
 // -1：开始进程准备终止
 static int __YY_Thunks_Process_Terminating;
 
-#if (YY_Thunks_Target < __WindowsNT6)
-static HANDLE _GlobalKeyedEventHandle;
-#endif
-
 static uintptr_t __security_cookie_yy_thunks;
 
 extern "C" IMAGE_DOS_HEADER __ImageBase;
@@ -158,6 +154,39 @@ extern "C" IMAGE_DOS_HEADER __ImageBase;
     _YY_APPLY_TO_LATE_BOUND_FUNCTIONS(_APPLY)
 #undef _APPLY
 
+#pragma pack(push, 8)
+namespace
+{
+    struct DllDirectoryListEntry : public YY::Thunks::ListEntryImpl<DllDirectoryListEntry>
+    {
+        size_t cchPath = 0;
+        wchar_t szPath[0];
+    };
+
+    struct YY_ThunksSharedData
+    {
+        LONG fYY_ThunksInitFlags;
+        DWORD fDirectoryFlags/* = 0*/;
+        SRWLOCK DllDirectoryLock;
+        UNICODE_STRING sDllDirectory;
+        SRWLOCK DllDirectoryListLock;
+        YY::Thunks::ListImpl<DllDirectoryListEntry> DllDirectoryList;
+        SRWLOCK CompareObjectHandlesLock;
+        HANDLE hGlobalKeyedEventHandle;
+        volatile ULONG_PTR WaitOnAddressHashTable[128];
+        // XP系统默认值是500，我们难以知道
+        LONG uThreadPoolWorkerCount;
+        static constexpr auto kMaxThreadPoolWorkerCount = 500;
+    };
+}
+#pragma pack(pop)
+
+static YY_ThunksSharedData* s_pYY_ThunksSharedData;
+static YY_ThunksSharedData s_DefaultSharedData;
+
+_Ret_notnull_ static YY_ThunksSharedData* __fastcall GetYY_ThunksSharedData() noexcept;
+
+static void __fastcall FreeYY_ThunksSharedData(_In_ YY_ThunksSharedData* _pSharedData) noexcept;
 
 // Implements wcsncpmp for ASCII chars only.
 // NOTE: We can't use wcsncmp in this context because we may end up trying to modify
@@ -621,15 +650,22 @@ static void __cdecl __YY_uninitialize_winapi_thunks()
             module = nullptr;
         }
     }
-#if (YY_Thunks_Target < __WindowsNT6)
-    CloseHandle(_GlobalKeyedEventHandle);
-#endif
 
     //执行本库中所有的反初始化工作。
     for (auto p = (UninitFunType*)__YY_THUNKS_UNINIT_FUN_START; p != (UninitFunType*)__YY_THUNKS_UNINIT_FUN_END; ++p)
     {
         if (auto pUninitFun = *p)
             pUninitFun();
+    }
+
+    if (s_pYY_ThunksSharedData == &s_DefaultSharedData)
+    {
+        FreeYY_ThunksSharedData(&s_DefaultSharedData);
+    }
+    else if (s_pYY_ThunksSharedData)
+    {
+        // 来自共享内存的永远也不要释放这块内存。因为其他模块可能引用这些信息。
+        UnmapViewOfFile(s_pYY_ThunksSharedData);
     }
 }
 
@@ -693,7 +729,7 @@ static ThunksInitStatus __cdecl _YY_initialize_winapi_thunks(ThunksInitStatus _s
 
     // 初始化已经完成
     return _eStatus;
-}
+        }
 
 // 外部weak符号，用于判断当前是否静态
 EXTERN_C extern void* __acrt_atexit_table;
