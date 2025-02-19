@@ -10,8 +10,6 @@ namespace YY::Thunks
     namespace
     {
 #if (YY_Thunks_Target < __WindowsNT10_10240)
-        static SRWLOCK g_CompareObjectHandles;
-
         union ObjectStaticBuffer
         {
             wchar_t Buffer[1024];
@@ -53,7 +51,8 @@ namespace YY::Thunks
             HANDLE _hFirstTmp = NULL;
             BOOL _bHandleIsSame = FALSE;
 
-            ::AcquireSRWLockExclusive(&g_CompareObjectHandles);
+            auto _pSharedData = GetYY_ThunksSharedData();
+            ::AcquireSRWLockExclusive(&_pSharedData->CompareObjectHandlesLock);
 
             do
             {
@@ -121,7 +120,7 @@ namespace YY::Thunks
                 break;
             } while (false);
 
-            ::ReleaseSRWLockExclusive(&g_CompareObjectHandles);
+            ::ReleaseSRWLockExclusive(&_pSharedData->CompareObjectHandlesLock);
 
             if (_hFirstTmp)
                 _pfnCloseHandle(_hFirstTmp);
@@ -362,10 +361,11 @@ namespace YY::Thunks
     {
         const auto _pfnCloseHandle = try_get_CloseHandle();
         const auto _pfnCompareObjectHandles = try_get_CompareObjectHandles();
+        auto _pSharedData = GetYY_ThunksSharedData();
 
         if (_pfnCompareObjectHandles == nullptr && _hObject && _hObject != INVALID_HANDLE_VALUE)
         {
-            ::AcquireSRWLockShared(&g_CompareObjectHandles);
+            ::AcquireSRWLockShared(&_pSharedData->CompareObjectHandlesLock);
         }
         // 空指针故意崩溃
         auto _bRet = _pfnCloseHandle(_hObject);
@@ -373,7 +373,7 @@ namespace YY::Thunks
         if (_pfnCompareObjectHandles == nullptr && _hObject && _hObject != INVALID_HANDLE_VALUE)
         {
             auto _lStatus = GetLastError();
-            ::ReleaseSRWLockShared(&g_CompareObjectHandles);
+            ::ReleaseSRWLockShared(&_pSharedData->CompareObjectHandlesLock);
             SetLastError(_lStatus);
         }
 
@@ -420,9 +420,10 @@ namespace YY::Thunks
             _bNeedLock = true;
         }
 
+        auto _pSharedData = GetYY_ThunksSharedData();
         if (_bNeedLock)
         {
-            ::AcquireSRWLockShared(&g_CompareObjectHandles);
+            ::AcquireSRWLockShared(&_pSharedData->CompareObjectHandlesLock);
         }
         
         // 空指针故意崩溃
@@ -431,7 +432,7 @@ namespace YY::Thunks
         if (_bNeedLock)
         {
             auto _lStatus = GetLastError();
-            ::ReleaseSRWLockShared(&g_CompareObjectHandles);
+            ::ReleaseSRWLockShared(&_pSharedData->CompareObjectHandlesLock);
             SetLastError(_lStatus);
         }
         return _bRet;

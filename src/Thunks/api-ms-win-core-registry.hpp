@@ -763,10 +763,11 @@ namespace YY::Thunks
         auto const _pfnRegCloseKey = try_get_RegCloseKey();
         const auto _pfnCompareObjectHandles = try_get_CompareObjectHandles();
 
+        auto _pSharedData = GetYY_ThunksSharedData();
         // 伪句柄不用加锁
         if (_pfnCompareObjectHandles == nullptr && _hKey && (uintptr_t(_hKey) & uintptr_t(0x80000000)) == 0)
         {
-            ::AcquireSRWLockShared(&g_CompareObjectHandles);
+            ::AcquireSRWLockShared(&_pSharedData->CompareObjectHandlesLock);
         }
 
         // 空指针故意崩溃
@@ -774,7 +775,7 @@ namespace YY::Thunks
 
         if (_pfnCompareObjectHandles == nullptr && _hKey && (uintptr_t(_hKey) & uintptr_t(0x80000000)) == 0)
         {
-            ::ReleaseSRWLockShared(&g_CompareObjectHandles);
+            ::ReleaseSRWLockShared(&_pSharedData->CompareObjectHandlesLock);
         }
 
         return _lStatus;
