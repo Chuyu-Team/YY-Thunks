@@ -7,6 +7,8 @@
       <YY_Thunks_PlatformShortName></YY_Thunks_PlatformShortName>
       <YY_Thunks_PlatformShortName Condition="'$(RuntimeIdentifier)'=='win-x64'">x64</YY_Thunks_PlatformShortName>
       <YY_Thunks_PlatformShortName Condition="'$(RuntimeIdentifier)'=='win-x86'">x86</YY_Thunks_PlatformShortName>
+      <YY_Thunks_LinkerSubsystemMinVersion Condition="'$(YY_Thunks_PlatformShortName)'=='x64'">5.02</YY_Thunks_LinkerSubsystemMinVersion>
+      <YY_Thunks_LinkerSubsystemMinVersion Condition="'$(YY_Thunks_PlatformShortName)'=='x86'">5.01</YY_Thunks_LinkerSubsystemMinVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(RuntimeIdentifier)'=='win-x64' or '$(RuntimeIdentifier)'=='win-x86'">
       <Internal_YY_Thunks_File Condition="'$(Internal_YY_Thunks_File)' == '' and $([MSBuild]::VersionGreaterThanOrEquals($(TargetPlatformMinVersion), 10.0.19041.0))">YY_Thunks_for_Win10.0.19041.obj</Internal_YY_Thunks_File>
@@ -28,15 +30,14 @@
       <Internal_YY_Thunks_File Condition="'$(Internal_YY_Thunks_File)' == ''">YY_Thunks_for_Win2K.obj</Internal_YY_Thunks_File>
     </PropertyGroup>
     <PropertyGroup Condition="('$(LinkerSubsystem)'=='WINDOWS' or '$(LinkerSubsystem)'=='CONSOLE') and ('$(Internal_YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' or '$(Internal_YY_Thunks_File)'=='YY_Thunks_for_Win2K.obj')">
-      <LinkerSubsystem Condition="'$(YY_Thunks_PlatformShortName)'=='x64'">$(LinkerSubsystem),5.02</LinkerSubsystem>
-      <!--微软的链接器无法设置 5.0，一般人应该也不需要兼容Windows 2K，先统一设置为Windows XP吧。-->
-      <LinkerSubsystem Condition="'$(YY_Thunks_PlatformShortName)'=='x86'">$(LinkerSubsystem),5.01</LinkerSubsystem>
+      <LinkerSubsystem>$(LinkerSubsystem),$(YY_Thunks_LinkerSubsystemMinVersion)</LinkerSubsystem>
     </PropertyGroup>
     <ItemGroup Condition="'$(Internal_YY_Thunks_File)' != ''">
       <LinkerArg Include="$(MSBuildThisFileDirectory)..\native\objs\$(YY_Thunks_PlatformShortName)\$(Internal_YY_Thunks_File)" />
       <!--为早期版本的系统增强Tls支持，如果不使用DllMainCRTStartupForYY_Thunks，使用thread_local时可能发生崩溃。-->
-      <LinkerArg Condition="'$(NativeLib)' == 'Shared' and '$(OutputType)' == 'Library' and '$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_WinXP.obj'" Include="/ENTRY:DllMainCRTStartupForYY_Thunks" />
-      <LinkerArg Condition="'$(NativeLib)' == 'Shared' and '$(OutputType)' == 'Library' and '$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_Win2K.obj'" Include="/ENTRY:DllMainCRTStartupForYY_Thunks" />
+      <LinkerArg Condition="('$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_WinXP.obj' or '$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_Win2K.obj') and '$(NativeLib)' == 'Shared' and '$(OutputType)' == 'Library'" Include="/ENTRY:DllMainCRTStartupForYY_Thunks" />
+      <!--.NET 9的Microsoft.NETCore.Native.Windows.targets只为exe配置SUBSYSTEM，所以兼容XP时我们需要手工为DLL配置一次SUBSYSTEM-->
+      <LinkerArg Condition="('$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_WinXP.obj' or '$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_Win2K.obj') and '$(NativeLib)' == 'Shared' and '$(OutputType)' == 'Library' and '$(LinkerSubsystem)'==''" Include="/SUBSYSTEM:WINDOWS,$(YY_Thunks_LinkerSubsystemMinVersion)" />
     </ItemGroup>
   </Target>
 </Project>
