@@ -70,10 +70,14 @@ namespace YY::Thunks
         switch (_eValue)
         {
         case PROCESS_DPI_UNAWARE:
+            if (IsProcessDPIAware())
+            {
+                return E_ACCESSDENIED;
+            }
             return S_OK;
         case PROCESS_SYSTEM_DPI_AWARE:
         case PROCESS_PER_MONITOR_DPI_AWARE:
-            return SetProcessDPIAware() ? S_OK : E_FAIL;
+            return SetProcessDPIAware() ? S_OK : E_ACCESSDENIED;
         default:
             return E_INVALIDARG;
         }
@@ -100,15 +104,70 @@ namespace YY::Thunks
             return _pfnGetProcessDpiAwareness(_hProcess, _peValue);
         }
         
-        if (_hProcess == NULL || _hProcess == NtCurrentProcess()
-            || GetProcessId(_hProcess) == (ULONG)NtCurrentTeb()->ClientId.UniqueProcess)
+        do
         {
-            *_peValue = IsProcessDPIAware() ? PROCESS_SYSTEM_DPI_AWARE : PROCESS_DPI_UNAWARE;
-        }
-        else
-        {
-            *_peValue = PROCESS_DPI_UNAWARE;
-        }
+            if (_hProcess == NULL || _hProcess == NtCurrentProcess())
+                break;
+
+            const auto _uProcessId = GetProcessId(_hProcess);
+            if (_uProcessId == 0)
+                return E_INVALIDARG;
+
+            if (_uProcessId == (ULONG)NtCurrentTeb()->ClientId.UniqueProcess)
+                break;
+
+            if (internal::GetSystemVersion() < __WindowsNT6)
+            {
+                *_peValue = PROCESS_SYSTEM_DPI_AWARE;
+                return S_OK;
+            }
+            else
+            {
+                // (,6.2] 所有屏幕的Dpi均为SystemDpi。所以 SystemDpi == USER_DEFAULT_SCREEN_DPI时，所有进程Dpi均为 USER_DEFAULT_SCREEN_DPI。
+                // 虽然 GetDpiForGlobalSystemDownlevel() == USER_DEFAULT_SCREEN_DPI 不代表进程开了系统感知。但是反正他们是相同的，怎么返回其实无所谓。
+                const auto _uGlobalSystemDpi = internal::GetDpiForGlobalSystemDownlevel();
+                if (_uGlobalSystemDpi == USER_DEFAULT_SCREEN_DPI)
+                {
+                    *_peValue = PROCESS_SYSTEM_DPI_AWARE;
+                    return S_OK;
+                }
+
+                struct EnumData
+                {
+                    PROCESS_DPI_AWARENESS eValue = PROCESS_DPI_UNAWARE;
+                    DWORD uProcessId = 0;
+                };
+
+                EnumData _oData = { PROCESS_DPI_AWARENESS::PROCESS_DPI_UNAWARE, _uProcessId };
+                EnumWindows(
+                    [](HWND _hWnd, LPARAM _lParam) -> BOOL
+                    {
+                        auto _pData = (EnumData*)_lParam;
+                        if (!_hWnd)
+                            return TRUE;
+
+                        DWORD _uTargrtPocressId;
+                        if (GetWindowThreadProcessId(_hWnd, &_uTargrtPocressId) == 0)
+                            return TRUE;
+
+                        if (_uTargrtPocressId != _pData->uProcessId)
+                            return TRUE;
+
+                        bool _bScale;
+                        if(FAILED(internal::IsWindowsScaleLessThanNt6_3(_hWnd, &_bScale)))
+                            return TRUE;
+
+                        _pData->eValue = _bScale ? PROCESS_DPI_UNAWARE : PROCESS_SYSTEM_DPI_AWARE;
+                        return FALSE;
+                    },
+                    LPARAM(&_oData));
+
+                *_peValue = _oData.eValue;
+                return S_OK;
+            }
+        } while (false);
+
+        *_peValue = IsProcessDPIAware() ? PROCESS_SYSTEM_DPI_AWARE : PROCESS_DPI_UNAWARE;
         return S_OK;
     }
 #endif

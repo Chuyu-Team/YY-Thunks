@@ -727,14 +727,14 @@
 | IsWow64Process                             | 返回TRUE，并设置 `*Wow64Process = FALSE`。
 | SetProcessDpiAwarenessContext              | 调用SetProcessDpiAwareness。
 | GetDpiForSystem                            | 调用GetDeviceCaps。
-| GetDpiForWindow                            | 调用GetDpiForMonitor。
+| GetDpiForWindow                            | 调用GetDpiForMonitor。温馨提示：如果窗口宽度或者高度为0时可能返回不正确的Dpi。
 | GetSystemMetricsForDpi                     | 调用GetSystemMetrics。
 | AdjustWindowRectExForDpi                   | 调用AdjustWindowRectEx。
 | SystemParametersInfoW(A)                   | SPI_GETNONCLIENTMETRICS修正。
 | SystemParametersInfoForDpi                 | 调用SystemParametersInfoW。
 | RegisterSuspendResumeNotification          | 使用窗口模拟。
 | UnregisterSuspendResumeNotification        | 内部实现。
-| IsProcessDPIAware                          | 返回 FALSE。
+| IsProcessDPIAware                          | 返回 TRUE。
 | SetProcessDPIAware                         | 什么都不做，假装成功。
 | GetWindowDisplayAffinity                   | TRUE，并报告窗口没有任何保护`WDA_NONE`。
 | SetWindowDisplayAffinity                   | 什么都不做，假装成功。
@@ -778,6 +778,10 @@
 | IsMouseInPointerEnabled                    | 返回关闭。
 | EnableMouseInPointer                       | 假装处于关闭状态。
 | GetPointerDeviceRects                      | 报告错误 ERROR_INVALID_PARAMETER。
+| PhysicalToLogicalPoint                     | 假装成功。
+| LogicalToPhysicalPoint                     | 假装成功。
+| PhysicalToLogicalPointForPerMonitorDPI     | 调用 PhysicalToLogicalPoint。
+| LogicalToPhysicalPointForPerMonitorDPI     | 调用 LogicalToPhysicalPoint。
 
 ## userenv.dll
 | 函数                                       | Fallback
