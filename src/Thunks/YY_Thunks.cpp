@@ -1569,7 +1569,7 @@ _Ret_notnull_ static YY_ThunksSharedData* __fastcall GetYY_ThunksSharedData() no
     const auto _cbSharedData = max(_SystemInfo.dwPageSize * 2, 4096 * 2);
 
     YY_ThunksSharedData* _pData = nullptr;
-
+    DWORD lastError = GetLastError();
     auto _hSharedData = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, _cbSharedData, _szYY_ThunksSharedDataMapNameBuffer);
     if (_hSharedData)
     {
@@ -1600,11 +1600,12 @@ _Ret_notnull_ static YY_ThunksSharedData* __fastcall GetYY_ThunksSharedData() no
         {
             UnmapViewOfFile(_pData);
         }
-
+        SetLastError(lastError);
         return _pLastSharedData;
     }
     else
     {
+        SetLastError(lastError);
         return _pData;
     }
 }
