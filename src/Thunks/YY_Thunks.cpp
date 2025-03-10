@@ -1573,6 +1573,7 @@ _Ret_notnull_ static YY_ThunksSharedData* __fastcall GetYY_ThunksSharedData() no
     auto _hSharedData = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, _cbSharedData, _szYY_ThunksSharedDataMapNameBuffer);
     if (_hSharedData)
     {
+        SetLastError(0);
         _pData = (YY_ThunksSharedData*)MapViewOfFile(_hSharedData, FILE_MAP_WRITE, 0, 0, _cbSharedData);
 
         // 首次创建时不关闭 FileMapping，这是为了保证进程生命周期内其中的数据不被销毁，意外导致数据丢失
