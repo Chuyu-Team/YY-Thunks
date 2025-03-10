@@ -428,32 +428,7 @@ namespace YY::Thunks
 
 #if defined(_M_IX86) && YY_Thunks_Target < __WindowsNT6_1_SP1
         //我们先关闭重定向，再加载DLL，Windows 7 SP1以前的系统不会关闭重定向，而导致某些线程关闭重定向后DLL加载问题。
-        class LoadDllEnalbeFsRedirection
-        {
-            PVOID OldFsRedirectionLevel = nullptr;
-            decltype(RtlWow64EnableFsRedirectionEx)* pfnRtlWow64EnableFsRedirectionEx = nullptr;
-            LONG Status = STATUS_NOINTERFACE;
-
-        public:
-            LoadDllEnalbeFsRedirection()
-            {
-                pfnRtlWow64EnableFsRedirectionEx = try_get_RtlWow64EnableFsRedirectionEx();
-                if (pfnRtlWow64EnableFsRedirectionEx)
-                {
-                    Status = pfnRtlWow64EnableFsRedirectionEx(nullptr, &OldFsRedirectionLevel);
-                }
-            }
-
-            ~LoadDllEnalbeFsRedirection()
-            {
-                if (Status >= 0 && pfnRtlWow64EnableFsRedirectionEx)
-                {
-                    pfnRtlWow64EnableFsRedirectionEx(OldFsRedirectionLevel, &OldFsRedirectionLevel);
-                }
-            }
-        };
-
-        LoadDllEnalbeFsRedirection _AutoEnalbeFsRedirection;
+        internal::AutoEnalbeFsRedirection _AutoEnalbeFsRedirection;
 #endif
 
         internal::UnicodeStringBuffer<1024> _szFilePathBuffer;

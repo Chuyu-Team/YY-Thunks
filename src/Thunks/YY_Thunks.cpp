@@ -277,6 +277,33 @@ namespace YY::Thunks::internal
             }
         };
 
+        class AutoEnalbeFsRedirection
+        {
+        private:
+            PVOID OldFsRedirectionLevel = nullptr;
+            LONG Status = STATUS_NOINTERFACE;
+
+        public:
+            AutoEnalbeFsRedirection()
+            {
+                if (auto _pfnRtlWow64EnableFsRedirectionEx = try_get_RtlWow64EnableFsRedirectionEx())
+                {
+                    Status = _pfnRtlWow64EnableFsRedirectionEx(nullptr, &OldFsRedirectionLevel);
+                }
+            }
+
+            ~AutoEnalbeFsRedirection()
+            {
+                if (Status >= 0)
+                {
+                    if (auto _pfnRtlWow64EnableFsRedirectionEx = try_get_RtlWow64EnableFsRedirectionEx())
+                    {
+                        _pfnRtlWow64EnableFsRedirectionEx(OldFsRedirectionLevel, &OldFsRedirectionLevel);
+                    }
+                }
+            }
+        };
+
         inline UINT8 __fastcall BitsCount(ULONG32 _fBitMask)
         {
 #if defined(_M_IX86) || defined(_M_AMD64)

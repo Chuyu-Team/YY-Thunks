@@ -88,6 +88,9 @@
 // Windows 10 1709(RS3)，注意ARM64从这个版本开始才支持。
 #define __WindowsNT10_16299 __Version(10, 0, 16299, 0)
 
+// Windows 10 1803(RS4)
+#define __WindowsNT10_17134 __Version(10, 0, 17134, 0)
+
 // Windows 10 2004(VB)
 #define __WindowsNT10_19041 __Version(10, 0, 19041, 0)
 
