@@ -265,6 +265,18 @@ namespace YY::Thunks::internal
 {
     namespace
     {
+        class AutoResetLastError
+        {
+        private:
+            LSTATUS lStatus = GetLastError();
+
+        public:
+            ~AutoResetLastError()
+            {
+                SetLastError(lStatus);
+            }
+        };
+
         inline UINT8 __fastcall BitsCount(ULONG32 _fBitMask)
         {
 #if defined(_M_IX86) || defined(_M_AMD64)
@@ -1547,6 +1559,10 @@ _Ret_notnull_ static YY_ThunksSharedData* __fastcall GetYY_ThunksSharedData() no
     if (auto _pData = s_pYY_ThunksSharedData)
         return _pData;
 
+    // 有一些外部代码没有再API完成后及时的调用GetLastError获取错误信息。而我们的GetYY_ThunksSharedData后面又CreateFileMappingW调用可能覆盖LastError，
+    // 这会让可能导致那些不及时调用GetLastError的代码发生逻辑异常，暂时YY帮忙兜底一下……
+    // https://github.com/Chuyu-Team/YY-Thunks/pull/150
+    YY::Thunks::internal::AutoResetLastError _AutoReset;
     wchar_t _szYY_ThunksSharedDataMapNameBuffer[MAX_PATH] = {};
     YY::Thunks::internal::StringBuffer<wchar_t> _szBuffer(_szYY_ThunksSharedDataMapNameBuffer, _countof(_szYY_ThunksSharedDataMapNameBuffer));
     _szBuffer.AppendString(L"YY_ThunksSharedData_53302349-F6BE-49C4-AC98-DA275C0CE653_");
