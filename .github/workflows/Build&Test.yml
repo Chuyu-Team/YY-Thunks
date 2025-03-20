@@ -119,7 +119,7 @@ jobs:
           if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
           endlocal
 
-          msbuild src\YY.Depends.Analyzer\YY.Depends.Analyzer.vcxproj "-p:Configuration=Release;Platform=Win32;OutDir=%GITHUB_WORKSPACE%\;SolutionDir=%GITHUB_WORKSPACE%\src\\"
+          msbuild src\YY.Depends.Analyzer\YY.Depends.Analyzer.vcxproj -r "-p:Configuration=Release;Platform=Win32;OutDir=%GITHUB_WORKSPACE%\;SolutionDir=%GITHUB_WORKSPACE%\src\\"
           if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
     - name: 执行单元测试
       if: steps.BinCache.outputs.cache-hit != 'true'
