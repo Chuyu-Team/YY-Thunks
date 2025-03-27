@@ -57,6 +57,7 @@ namespace YY::Thunks
     }
 #endif
 
+
 #if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
@@ -87,22 +88,27 @@ namespace YY::Thunks
         }
 
         *ulNumEntriesRemoved = 0;
-
-        auto& _Entry = lpCompletionPortEntries[0];
-            
+        DWORD _cEntry = 0;
         if (fAlertable)
         {
-            constexpr auto kMaxSleepTime = 10;
+            constexpr DWORD kMaxSleepTime = 6;
             // 使用 SleepEx 进行等待触发 APC
             if (dwMilliseconds == INFINITE)
             {
                 for (;;)
                 {
-                    auto _bRet = GetQueuedCompletionStatus(CompletionPort, &_Entry.dwNumberOfBytesTransferred, &_Entry.lpCompletionKey, &_Entry.lpOverlapped, 0);
-                    if (_bRet)
+                    for (; _cEntry != ulCount; ++_cEntry)
                     {
-                        break;
+                        auto& _Entry = lpCompletionPortEntries[_cEntry];
+                        auto _bRet = GetQueuedCompletionStatus(CompletionPort, &_Entry.dwNumberOfBytesTransferred, &_Entry.lpCompletionKey, &_Entry.lpOverlapped, 0);
+                        if (!_bRet)
+                        {
+                            break;
+                        }
                     }
+
+                    if (_cEntry)
+                        break;
 
                     if (GetLastError() != WAIT_TIMEOUT)
                     {
@@ -121,11 +127,18 @@ namespace YY::Thunks
                 const auto _uStartTick = GetTickCount();
                 for (;;)
                 {
-                    auto _bRet = GetQueuedCompletionStatus(CompletionPort, &_Entry.dwNumberOfBytesTransferred, &_Entry.lpCompletionKey, &_Entry.lpOverlapped, 0);
-                    if (_bRet)
+                    for (; _cEntry != ulCount; ++_cEntry)
                     {
-                        break;
+                        auto& _Entry = lpCompletionPortEntries[_cEntry];
+                        auto _bRet = GetQueuedCompletionStatus(CompletionPort, &_Entry.dwNumberOfBytesTransferred, &_Entry.lpCompletionKey, &_Entry.lpOverlapped, 0);
+                        if (!_bRet)
+                        {
+                            break;
+                        }
                     }
+
+                    if (_cEntry)
+                        break;
 
                     if (GetLastError() != WAIT_TIMEOUT)
                     {
@@ -155,19 +168,27 @@ namespace YY::Thunks
                     }
                 }
             }
-
-            *ulNumEntriesRemoved = 1;
-            return TRUE;
         }
         else
         {
-            auto _bRet = GetQueuedCompletionStatus(CompletionPort, &_Entry.dwNumberOfBytesTransferred, &_Entry.lpCompletionKey, &_Entry.lpOverlapped, dwMilliseconds);
-            if (_bRet)
+            auto& _FirstEntry = lpCompletionPortEntries[_cEntry];
+            if (!GetQueuedCompletionStatus(CompletionPort, &_FirstEntry.dwNumberOfBytesTransferred, &_FirstEntry.lpCompletionKey, &_FirstEntry.lpOverlapped, dwMilliseconds))
+                return FALSE;
+
+            ++_cEntry;
+            for (; _cEntry != ulCount; ++_cEntry)
             {
-                *ulNumEntriesRemoved = 1;
+                auto& _Entry = lpCompletionPortEntries[_cEntry];
+                auto _bRet = GetQueuedCompletionStatus(CompletionPort, &_Entry.dwNumberOfBytesTransferred, &_Entry.lpCompletionKey, &_Entry.lpOverlapped, 0);
+                if (!_bRet)
+                {
+                    break;
+                }
             }
-            return _bRet;
         }
+
+        *ulNumEntriesRemoved = _cEntry;
+        return TRUE;
     }
 #endif
 } //namespace YY::Thunks
