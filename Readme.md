@@ -55,20 +55,71 @@ ULONGLONG WINAPI GetTickCount64(VOID)
 You can choose one of the following options, but it is recommended to use NuGet first,
 as NuGet is designed to be foolproof and easier to use.
 
-### 2.1. NuGet (Recommend)
-#### 2.1.1. C++ Project
+### 2.1. For Vistual Studio C++ Project
 1. Right-click on the `Project` and select `Manage NuGet Packages`, then search for `YY-Thunks` and choose the version that suits you, and finally click Install.
-2. In Project Right-Click - `Properties` - `YY-Thunks`, adjust the YY-Thunks level,
-    which can be set to: Windows 2000, Windows XP, and Windows Vista (default).
+2. For XP support, Right click on the project, Properties - NuGet Packages Settings - YY-Thunks - 最小兼容系统版本 - 5.1.2600.0.
 3. Rebuild the solution.
 
-#### 2.1.2. .NET Native AOT Project
+### 2.2. For Vistual Studio .NET Native AOT Project
 1. modify the value of `TargetFramework` to `net8.0-windows` or `net9.0-windows`。
 2. Right-click on the `Project` and select `Manage NuGet Packages`, then search for `YY-Thunks` and choose the version that suits you, and finally click Install.
-3. Optional, if you need run on Windows XP, please modify the value of `SupportedOSPlatformVersion` to `5.1`
+3. For XP support, please modify the value of `SupportedOSPlatformVersion` to `5.1`. For example:
+    ```xml
+    <Project Sdk="Microsoft.NET.Sdk">
+        <PropertyGroup>
+            <!-- ... -->
+            <TargetFramework>net8.0-windows</TargetFramework>
+            <SupportedOSPlatformVersion>5.1</SupportedOSPlatformVersion>
+            <!-- ... -->
+        </PropertyGroup>
+      <!--...-->
+    </Project>
+    ```
+3. Rebuild the solution.
 
-### 2.2. Manual
-#### 2.2.1. using obj file (MSVC Link)
+### 2.3. For CMake Project
+1. Create file `Directory.Build.props` in source directory, and add the following code:
+    ```xml
+    <?xml version="1.0" encoding="utf-8"?>
+    <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+      <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj'">
+        <ProjectCapability Include="PackageReferences" />
+      </ItemGroup>
+      <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj'">
+        <NuGetTargetMoniker Condition="'$(NuGetTargetMoniker)' == ''">native,Version=v0.0</NuGetTargetMoniker>
+        <RuntimeIdentifiers Condition="'$(RuntimeIdentifiers)' == ''">win;win-x86;win-x64;win-arm;win-arm64</RuntimeIdentifiers>
+
+        <!--Turn on Windows XP support, and you can choose according to your situation.-->
+        <WindowsTargetPlatformMinVersion>5.1.2600</WindowsTargetPlatformMinVersion>
+      </PropertyGroup>
+      <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj'">
+        <PackageReference Include="YY-Thunks">
+          <!--YY-Thunks Version-->
+          <Version>1.1.7-Beta3</Version>
+        </PackageReference>      
+      </ItemGroup>
+      <!--从兼容性考虑，继续向上搜索 Directory.Build.props-->
+      <PropertyGroup>
+        <DirectoryBuildPropsPath>$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))</DirectoryBuildPropsPath>
+      </PropertyGroup>
+      <Import Project="$(DirectoryBuildPropsPath)" Condition="'$(DirectoryBuildPropsPath)' != ''"/>
+    </Project>
+    ```
+2. Start Build, for example:
+    ```
+    # The Gen parameter must be use `Visual Studio`, as Visual Studio only supports nuget.
+    # Assuming that the output dir is `.build\x86-Release`, you can modify it as needed.
+    cmake -G "Visual Studio 17 2022" -A Win32 -DCMAKE_CONFIGURATION_TYPES:STRING=Release -DCMAKE_INSTALL_PREFIX:PATH=.\build\x86-Release .
+
+    # Note the `-- -r` at the end, which is the command to restore the nuget package.
+    cmake --build .\build\x86-Release --config Release -- -r
+
+    cmake --install .\build\x86-Release --config Release
+    ```
+3. Rebuild the project
+
+### 2.4. I don't want to use NuGet, how do I configure the project manually?
+#### 2.4.1. using obj file (MSVC Link)
 1. Download and unzip [YY-Thunks-Objs](https://github.com/Chuyu-Team/YY-Thunks/releases) to project directory.
 2. `Linker` - `Input` - `Additional Dependencies`, add `objs\$(PlatformShortName)\YY_Thunks_for_WinXP.obj`.
 3. `Linker` - `System` - `Minimum Required Version`, set to `5.1` (WinXP 32-bit) or `5.2` (WinXP x64 or Win2003).
@@ -79,7 +130,7 @@ as NuGet is designed to be foolproof and easier to use.
 > Note: If your app needs to be compatible with Vista or later, please set `Additional Dependencies` to 
   `objs\$(PlatformShortName)\YY_Thunks_for_Vista.obj`。
 
-#### 2.2.2. using lib files (LLD-Link)
+#### 2.4.2. using lib files (LLD-Link)
 > LLD-Link linkers using obj files will encounter duplicate symbol errors.
 
 1. Download and unzip [YY-Thunks-Lib](https://github.com/Chuyu-Team/YY-Thunks/releases) to project directory.

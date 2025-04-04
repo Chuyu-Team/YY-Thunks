@@ -50,22 +50,71 @@ ULONGLONG WINAPI GetTickCount64(VOID)
 
 大家可以在以下方案中任选一种，但是我们优先推荐 NuGet 方案，因为NuGet采用傻瓜式设计，使用更便捷。
 
-### 2.1. NuGet（推荐）
-#### 2.1.1. C++项目
-1. 项目右键 “管理 NuGet 程序包”。
-2. NuGet搜索框中输入：`YY-Thunks`，搜索后点击安装。
-3. 项目右键 - 属性 - YY-Thunks 中，自行调整YY-Thunks等级，允许 Windows 2000, 
-   Windows XP 以及 Windows Vista（默认）。
+#### 2.1. Vistual Studio C++项目如何使用？
+1. 项目右键 “管理 NuGet 程序包”。NuGet搜索框中输入：`YY-Thunks`，搜索后点击安装。
+2. 如果需要支持XP，请项目右键 - 属性 - YY-Thunks - 最小兼容系统版本，设置为5.1.2600.0。
+3. 重新编译代码
+
+#### 2.2. Vistual Studio .NET Native AOT项目如何使用？
+1. 给`TargetFramework`添加`Windows`系统平台，比如修改为`net8.0-windows`或者`net9.0-windows`。
+2. 项目右键 `管理 NuGet 程序包`。NuGet搜索框中输入：`YY-Thunks`，搜索后点击安装。
+3. 如果需要支持XP，请将项目属性`WindowsSupportedOSPlatformVersion`调整为`5.1`。大致如下：
+    ```xml
+    <Project Sdk="Microsoft.NET.Sdk">
+        <PropertyGroup>
+            <!-- ... -->
+            <TargetFramework>net8.0-windows</TargetFramework>
+            <SupportedOSPlatformVersion>5.1</SupportedOSPlatformVersion>
+            <!-- ... -->
+        </PropertyGroup>
+      <!--...-->
+    </Project>
+    ```
 4. 重新编译代码
 
-#### 2.1.2. .NET Native AOT项目
-1. 给`TargetFramework`添加`Windows`系统平台，比如修改为`net8.0-windows`或者`net9.0-windows`。
-2. 项目右键 `管理 NuGet 程序包`。
-3. NuGet搜索框中输入：`YY-Thunks`，搜索后点击安装。
-4. 默认兼容到Windows Vista（默认）,如果需要兼容Windows XP可以将`WindowsSupportedOSPlatformVersion`调整为`5.1`。
+### 2.3. CMake项目如何使用？
+1. 在CMake根目录创建`Directory.Build.props`，内容如下：
+    ```xml
+    <?xml version="1.0" encoding="utf-8"?>
+    <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+      <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj'">
+        <ProjectCapability Include="PackageReferences" />
+      </ItemGroup>
+      <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj'">
+        <NuGetTargetMoniker Condition="'$(NuGetTargetMoniker)' == ''">native,Version=v0.0</NuGetTargetMoniker>
+        <RuntimeIdentifiers Condition="'$(RuntimeIdentifiers)' == ''">win;win-x86;win-x64;win-arm;win-arm64</RuntimeIdentifiers>
 
-### 2.2. 手工配置
-#### 2.2.1. obj方式（适合微软的链接器）
+        <!--将项目最小支持到Windows XP，可根据自己的情况设置-->
+        <WindowsTargetPlatformMinVersion>5.1.2600</WindowsTargetPlatformMinVersion>
+      </PropertyGroup>
+      <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.vcxproj'">
+        <PackageReference Include="YY-Thunks">
+          <!--根据自己的情况选择YY-Thunks版本-->
+          <Version>1.1.7-Beta3</Version>
+        </PackageReference>      
+      </ItemGroup>
+      <!--从兼容性考虑，继续向上搜索 Directory.Build.props-->
+      <PropertyGroup>
+        <DirectoryBuildPropsPath>$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))</DirectoryBuildPropsPath>
+      </PropertyGroup>
+      <Import Project="$(DirectoryBuildPropsPath)" Condition="'$(DirectoryBuildPropsPath)' != ''"/>
+    </Project>
+    ```
+2. 将VS作为Gen启动编译过程，代码如下：
+    ```
+    # Gen必须选择Visual Studio系列，因为Visual Studio才支持nuget。
+    # 假设输出目录为build\x86-Release，自己可根据情况修改。
+    cmake -G "Visual Studio 17 2022" -A Win32 -DCMAKE_CONFIGURATION_TYPES:STRING=Release -DCMAKE_INSTALL_PREFIX:PATH=.\build\x86-Release .
+
+    # 注意尾部的 `-- -r`，该命令是还原nuget包，此时会自动下载YY-Thunks，并且配置到工程。
+    cmake --build .\build\x86-Release --config Release -- -r
+
+    cmake --install .\build\x86-Release --config Release
+    ```
+3. 重新编译代码
+
+### 2.4. 我不喜欢NuGet，如何纯手工配置链接器参数？
+#### 2.4.1. obj方式（适合微软的链接器）
 1. 下载 [YY-Thunks-Objs](https://github.com/Chuyu-Team/YY-Thunks/releases)，
    然后解压到你的工程目录。
 2. 【链接器】-【输入】-【附加依赖项】，添加 
@@ -77,7 +126,7 @@ ULONGLONG WINAPI GetTickCount64(VOID)
 > 温馨提示：如果需要兼容 Vista，【所需的最低版本】无需修改，但是【附加依赖项】请选择 
   `objs\$(PlatformShortName)\YY_Thunks_for_Vista.obj`。
 
-#### 2.2.2. lib方式（适合LLD-Link链接器）
+#### 2.4.2. lib方式（适合LLD-Link链接器）
 > LLD-Link链接器无法使用obj方式，因为遇到重复符号会报告错误。
 
 1. 下载 [YY-Thunks-Lib](https://github.com/Chuyu-Team/YY-Thunks/releases)，
