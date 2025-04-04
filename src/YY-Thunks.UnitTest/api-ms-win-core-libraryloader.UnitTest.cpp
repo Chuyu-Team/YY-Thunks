@@ -199,4 +199,34 @@ namespace api_ms_win_core_libraryloader
             Assert::IsTrue(RemoveDllDirectory(_pCookie1));
         }
     };
+
+    TEST_CLASS(LoadLibraryExW)
+    {
+        AwaysNullGuard Guard;
+
+    public:
+        LoadLibraryExW()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_AddDllDirectory;
+        }
+
+        TEST_METHOD(LOAD_WITH_ALTERED_SEARCH_PATH验证)
+        {
+            auto _hModlule = ::LoadLibraryExW(LR"(C:\Windows\System32\advapi32)", nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
+            Assert::IsNotNull(_hModlule);
+            FreeLibrary(_hModlule);
+        }
+
+        TEST_METHOD(参数合法性校验检查)
+        {
+            {
+                // LOAD_WITH_ALTERED_SEARCH_PATH 预期无法与LOAD_LIBRARY_SEARCH_* 等一起使用
+                auto _hModlule = ::LoadLibraryExW(LR"(C:\Windows\System32\advapi32)", nullptr, LOAD_WITH_ALTERED_SEARCH_PATH | LOAD_LIBRARY_SEARCH_SYSTEM32);
+                auto _lStatus = GetLastError();
+                Assert::IsNull(_hModlule);
+                Assert::AreEqual(_lStatus, DWORD(ERROR_INVALID_PARAMETER));
+            }
+        }
+
+    };
 }
