@@ -392,11 +392,19 @@ namespace YY::Thunks
             return Fallback::ForwardDll(_szLibFileName);
         }
 
-        if (((LOAD_WITH_ALTERED_SEARCH_PATH | 0xFFFFE000 | 0x00000004) & _fFlags) || _szLibFileName == nullptr || _hFile)
+        if (((0xFFFFE000 | 0x00000004) & _fFlags) || _szLibFileName == nullptr || _hFile)
         {
-            //LOAD_WITH_ALTERED_SEARCH_PATH 标记不允许跟其他标记组合使用
             //0xFFFFE000 为 其他不支持的数值
             //LOAD_PACKAGED_LIBRARY: 0x00000004 Windows 8以上平台才支持
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return nullptr;
+        }
+
+        // 所有可能的 LOAD_LIBRARY_SEARCH_*标记组合
+        constexpr DWORD kLoadLibrarySearchMarks = 0xFFFFFF00ul;
+        if ((_fFlags & LOAD_WITH_ALTERED_SEARCH_PATH) && (_fFlags & kLoadLibrarySearchMarks))
+        {
+            //LOAD_WITH_ALTERED_SEARCH_PATH 标记不允许跟其他LOAD_LIBRARY_SEARCH_*标记组合使用
             SetLastError(ERROR_INVALID_PARAMETER);
             return nullptr;
         }
@@ -415,8 +423,6 @@ namespace YY::Thunks
         }
 #endif
         auto _pSharedData = GetYY_ThunksSharedData();
-
-        constexpr DWORD kLoadLibrarySearchMarks = 0xFFFFFF00ul;
 
         // 检测是否包含 LOAD_LIBRARY_SEARCH_* | LOAD_WITH_ALTERED_SEARCH_PATH
         //  * 已包含 LOAD_LIBRARY_SEARCH_* 说明用户自行指定了这个参数，因此无需附加 s_DirectoryFlags
