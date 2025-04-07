@@ -557,7 +557,7 @@
 | GetCurrentPackageFullName                  | 返回 APPMODEL_ERROR_NO_PACKAGE。
 | GetPackageFullName                         | 返回 APPMODEL_ERROR_NO_PACKAGE。
 | GetPackageFamilyName                       | 返回 APPMODEL_ERROR_NO_PACKAGE。
-| GetPackagePathByFullName                   | 返回 ERROR_SUCCESS。
+| GetPackagePathByFullName                   | 返回 ERROR_NOT_FOUND。
 | GetPackagesByPackageFamily                 | 返回 ERROR_SUCCESS。
 | FindPackagesByPackageFamily                | 返回 ERROR_SUCCESS。
 | OpenProcess                                | 额外处理 PROCESS_QUERY_LIMITED_INFORMATION、PROCESS_SET_LIMITED_INFORMATION。
