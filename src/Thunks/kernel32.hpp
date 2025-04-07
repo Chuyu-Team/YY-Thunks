@@ -619,7 +619,6 @@ namespace YY::Thunks
         {
             return ERROR_INVALID_PARAMETER;
         }
-        *pathLength = 0;
         return ERROR_NOT_FOUND;
     }
 #endif // (YY_Thunks_Target < __WindowsNT6_2)
