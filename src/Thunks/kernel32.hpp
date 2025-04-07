@@ -528,4 +528,70 @@ namespace YY::Thunks
         return APPMODEL_ERROR_NO_PACKAGE;
     }
 #endif // (YY_Thunks_Target < __WindowsNT6_2)
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8  [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    kernel32,
+    12,
+    LONG,
+    WINAPI,
+    GetPackageFullName,
+        _In_ HANDLE _hProcess,
+        _Inout_ UINT32* _pcchPackageFullNameLength,
+        _Out_writes_opt_(*_pcchPackageFullNameLength) PWSTR _szPackageFullName
+        )
+    {
+        if (const auto _pfnGetPackageFullName = try_get_GetPackageFullName())
+        {
+            return _pfnGetPackageFullName(_hProcess, _pcchPackageFullNameLength, _szPackageFullName);
+        }
+
+        if (_hProcess && _hProcess != NtGetCurrentProcess())
+        {
+            if (GetProcessId(_hProcess) == 0)
+            {
+                return GetLastError();
+            }
+        }
+
+        return APPMODEL_ERROR_NO_PACKAGE;
+    }
+#endif // (YY_Thunks_Target < __WindowsNT6_2)
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8  [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    kernel32,
+    12,
+    LONG,
+    WINAPI,
+    GetPackageFamilyName,
+        _In_ HANDLE _hProcess,
+        _Inout_ UINT32* _pcchPackageFamilyNameLength,
+        _Out_writes_opt_(*_pcchPackageFamilyNameLength) PWSTR _szPackageFamilyName
+        )
+    {
+        if (const auto _pfnGetPackageFamilyName = try_get_GetPackageFamilyName())
+        {
+            return _pfnGetPackageFamilyName(_hProcess, _pcchPackageFamilyNameLength, _szPackageFamilyName);
+        }
+
+        if (_hProcess && _hProcess != NtGetCurrentProcess())
+        {
+            if (GetProcessId(_hProcess) == 0)
+            {
+                return GetLastError();
+            }
+        }
+
+        return APPMODEL_ERROR_NO_PACKAGE;
+    }
+#endif // (YY_Thunks_Target < __WindowsNT6_2)
 }
