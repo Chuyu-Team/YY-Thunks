@@ -594,4 +594,97 @@ namespace YY::Thunks
         return APPMODEL_ERROR_NO_PACKAGE;
     }
 #endif // (YY_Thunks_Target < __WindowsNT6_2)
+
+#if (YY_Thunks_Target < __WindowsNT6_3)
+
+    // 最低受支持的客户端	Windows 8.1  [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 R2 [仅限桌面应用]
+    __DEFINE_THUNK(
+    kernel32,
+    12,
+    LONG,
+    WINAPI,
+    GetPackagePathByFullName,
+        _In_ PCWSTR packageFullName,
+        _Inout_ UINT32 *pathLength,
+        _Out_writes_opt_(*pathLength) PWSTR path
+        )
+    {
+        if (const auto _pfnGetPackagePathByFullName = try_get_GetPackagePathByFullName())
+        {
+            return _pfnGetPackagePathByFullName(packageFullName, pathLength, path);
+        }
+
+        if (!packageFullName || !pathLength)
+        {
+            return ERROR_INVALID_PARAMETER;
+        }
+        *pathLength = 0;
+        return ERROR_SUCCESS;
+    }
+#endif // (YY_Thunks_Target < __WindowsNT6_2)
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8  [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 [仅限桌面应用]
+    __DEFINE_THUNK(
+    kernel32,
+    20,
+    LONG,
+    WINAPI,
+    GetPackagesByPackageFamily,
+        _In_ PCWSTR packageFamilyName,
+        _Inout_ UINT32* count,
+        _Out_writes_opt_(*count) PWSTR* packageFullNames,
+        _Inout_ UINT32* bufferLength,
+        _Out_writes_opt_(*bufferLength) WCHAR* buffer
+        )
+    {
+        if (const auto _pfnGetPackagesByPackageFamily = try_get_GetPackagesByPackageFamily())
+        {
+            return _pfnGetPackagesByPackageFamily(packageFamilyName, count, packageFullNames, bufferLength, buffer);
+        }
+
+        if (!packageFamilyName || !count || !bufferLength)
+        {
+            return ERROR_INVALID_PARAMETER;
+        }
+        *count = *bufferLength = 0;
+        return ERROR_SUCCESS;
+    }
+#endif // (YY_Thunks_Target < __WindowsNT6_2)
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8.1  [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2012 R2 [仅限桌面应用]
+    __DEFINE_THUNK(
+    kernel32,
+    28,
+    LONG,
+    WINAPI,
+    FindPackagesByPackageFamily,
+        _In_ PCWSTR packageFamilyName,
+        _In_ UINT32 packageFilters,
+        _Inout_ UINT32 *count,
+        _Out_writes_opt_(*count) PWSTR *packageFullNames,
+        _Inout_ UINT32 *bufferLength,
+        _Out_writes_opt_(*bufferLength) WCHAR *buffer,
+        _Out_writes_opt_(*count) UINT32 *packageProperties 
+        )
+    {
+        if (const auto _pfnFindPackagesByPackageFamily = try_get_FindPackagesByPackageFamily())
+        {
+            return _pfnFindPackagesByPackageFamily(packageFamilyName, packageFilters, count, packageFullNames, bufferLength, buffer, packageProperties);
+        }
+
+        if (!packageFamilyName || !count || !bufferLength)
+        {
+            return ERROR_INVALID_PARAMETER;
+        }
+        *count = *bufferLength  = 0;
+        return ERROR_SUCCESS;
+    }
+#endif // (YY_Thunks_Target < __WindowsNT6_2)
 }
