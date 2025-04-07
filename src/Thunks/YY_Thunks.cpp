@@ -831,6 +831,20 @@ namespace YY::Thunks::internal
             return _cchString;
         }
 
+        static LPCWSTR __fastcall FindStringTable(LPCWSTR* _pszTable, size_t _cCount, LPCWSTR _szFound) noexcept
+        {
+            const auto _pszTableEnded = _pszTable + _cCount;
+            for (; _pszTable != _pszTableEnded; ++_pszTable)
+            {
+                if (StringCompareIgnoreCaseByAscii(*_pszTable, _szFound, -1) == 0)
+                {
+                    return *_pszTable;
+                }
+            }
+
+            return nullptr;
+        }
+
         template<typename Char>
         class StringBuffer
         {

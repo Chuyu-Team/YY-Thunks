@@ -191,6 +191,7 @@
     <ClCompile Include="bcrypt.UnitTest.cpp" />
     <ClCompile Include="Crypt32.UnitTest.cpp" />
     <ClCompile Include="Iphlpapi.UnitTest.cpp" />
+    <ClCompile Include="api-ms-win-appmodel-runtime.UnitTest.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -229,6 +230,7 @@
     <ClInclude Include="..\Shared\List.h" />
     <ClInclude Include="..\Shared\SharedDefs.h" />
     <ClInclude Include="..\Shared\SmBios.h" />
+    <ClInclude Include="..\Thunks\api-ms-win-appmodel-runtime.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-com.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-handle.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-kernel32-legacy.hpp" />

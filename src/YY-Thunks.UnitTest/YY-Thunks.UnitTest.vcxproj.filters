@@ -99,6 +99,9 @@
     <ClCompile Include="api-ms-win-core-libraryloader.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
+    <ClCompile Include="api-ms-win-appmodel-runtime.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -379,6 +382,12 @@
     </ClInclude>
     <ClInclude Include="..\Shared\List.h">
       <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\mmdevapi.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\api-ms-win-appmodel-runtime.hpp">
+      <Filter>Thunks</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
