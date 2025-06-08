@@ -437,6 +437,7 @@
 | GetNumaNodeProcessorMaskEx                 | 调用GetNumaNodeProcessorMask。
 | GetThreadGroupAffinity                     | 调用NtQueryInformationThread。
 | SetThreadGroupAffinity                     | 调用SetThreadAffinityMask。
+| GetOverlappedResultEx						 | 调用WaitForSingleObjectEx。
 | *CancelIoEx                                | 调用CancelIo。警告，会把此句柄的所有IO操作取消掉！
 | *CancelSynchronousIo                       | 仅返回失败。警告，实际无法取消！
 | OpenFileById                               | 调用NtCreateFile。
