@@ -367,6 +367,7 @@
 | GetNumberFormatEx                          | 调用GetNumberFormatW。
 | GetCurrencyFormatEx                        | 调用GetCurrencyFormatW。
 | GetUserDefaultLocaleName                   | 调用LCIDToLocaleName。
+| GetOverlappedResultEx						 | 内部实现。
 | GetSystemDefaultLocaleName                 | 调用LCIDToLocaleName。
 | EnumCalendarInfoExEx                       | 调用EnumCalendarInfoExW。
 | EnumDateFormatsExEx                        | 调用EnumDateFormatsExW。

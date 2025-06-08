@@ -501,4 +501,67 @@ namespace YY::Thunks
         return DEP_SYSTEM_POLICY_TYPE::DEPPolicyAlwaysOff;
     }
 #endif // (YY_Thunks_Target < __WindowsNT6_SP1)
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+	// 最低受支持的客户端	Windows 8 [仅限桌面应用]
+	// 最低受支持的服务器	Windows Server 2012[仅限桌面应用]
+	__DEFINE_THUNK(
+    kernel32,
+	8,
+	BOOL,
+	WINAPI,
+	GetOverlappedResultEx,
+	_In_  HANDLE       hFile,
+	_In_  LPOVERLAPPED lpOverlapped,
+	_Out_ LPDWORD      lpNumberOfBytesTransferred,
+	_In_  DWORD        dwMilliseconds,
+	_In_  BOOL         bAlertable)
+	{
+		if (const auto _pfnGetOverlappedResultEx = try_get_GetOverlappedResultEx())
+        {
+            return _pfnGetOverlappedResultEx(hFile, lpOverlapped, lpNumberOfBytesTransferred, dwMilliseconds, bAlertable);
+        }
+	NTSTATUS status;
+	DWORD ret;
+	
+	status = (NTSTATUS)lpOverlapped->Internal;
+	
+	if (status == STATUS_PENDING)
+	{
+		if (!dwMilliseconds)
+		{
+			SetLastError(ERROR_IO_INCOMPLETE);
+			return FALSE;
+		}
+		
+		ret = WaitForSingleObjectEx(
+			lpOverlapped->hEvent ? 
+			lpOverlapped->hEvent : 
+			hFile, dwMilliseconds, bAlertable);
+		if (ret == WAIT_FAILED)
+			return FALSE;
+		else if (ret)
+		{
+			SetLastError(ret);
+			return FALSE;
+		}
+		
+		status = (NTSTATUS)lpOverlapped->Internal;
+		if (status == STATUS_PENDING) status = STATUS_SUCCESS;
+	}
+	
+	*lpNumberOfBytesTransferred = (DWORD)lpOverlapped->InternalHigh;
+	
+	if (!((NTSTATUS(status))>= 0))
+	{
+		internal::BaseSetLastNTError(status);
+		return FALSE;
+	}
+	else
+	{
+		return TRUE;
+	}
+	
+	}
+#endif // (YY_Thunks_Target < __WindowsNT6_2)
 }
