@@ -552,7 +552,7 @@ namespace YY::Thunks
 	
 	*lpNumberOfBytesTransferred = (DWORD)lpOverlapped->InternalHigh;
 	
-	if (!((NTSTATUS(status))>= 0))
+	if (!(((NTSTATUS)(status)) >= 0))
 	{
 		internal::BaseSetLastNTError(status);
 		return FALSE;
