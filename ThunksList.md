@@ -298,7 +298,6 @@
 | JetOpenDatabaseA                           | 调用JetOpenDatabase。
 | JetOpenFileA                               | 调用JetOpenFile。
 | JetOpenFileInstanceA                       | 调用JetOpenFileInstance。
-| JetOpenFileSectionInstanceA                | 调用JetOpenFileSectionInstance。
 | JetOpenTableA                              | 调用JetOpenTable。
 | JetOSSnapshotFreezeA                       | 调用JetOSSnapshotFreeze。
 | JetRenameColumnA                           | 调用JetRenameColumn。
