@@ -28,4 +28,53 @@ namespace YY::Thunks
         return E_NOINTERFACE;
     }
 #endif
+
+#if (YY_Thunks_Target < __WindowsNT10_10240)
+
+    // Windows 10
+    __DEFINE_THUNK(
+    d3d12,
+    8,
+    HRESULT,
+    WINAPI,
+    D3D12GetDebugInterface,
+        _In_ REFIID riid,
+        _COM_Outptr_opt_ void** ppvDebug)
+    {
+        if (const auto _pfnD3D12GetDebugInterface = try_get_D3D12GetDebugInterface())
+        {
+            return _pfnD3D12GetDebugInterface(riid, ppvDebug);
+        }
+
+        if (ppvDebug)
+            *ppvDebug = nullptr;
+        return E_NOINTERFACE;
+    }
+#endif
+
+#if (YY_Thunks_Target < __WindowsNT10_10240)
+
+    // Windows 10
+    __DEFINE_THUNK(
+    d3d12,
+    12,
+    HRESULT,
+    WINAPI,
+    D3D12SerializeVersionedRootSignature ,
+        _In_ const D3D12_VERSIONED_ROOT_SIGNATURE_DESC* pRootSignature,
+        _Out_ ID3DBlob** ppBlob,
+        _Always_(_Outptr_opt_result_maybenull_) ID3DBlob** ppErrorBlob)
+    {
+        if (const auto _pfnD3D12SerializeVersionedRootSignature = try_get_D3D12SerializeVersionedRootSignature())
+        {
+            return _pfnD3D12SerializeVersionedRootSignature(pRootSignature, ppBlob, ppErrorBlob);
+        }
+
+        if (ppBlob)
+            *ppBlob = nullptr;
+        if (ppErrorBlob)
+            *ppErrorBlob = nullptr;
+        return E_NOINTERFACE;
+    }
+#endif
 }
