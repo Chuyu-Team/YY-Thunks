@@ -200,6 +200,8 @@
 | 函数                                       | Fallback
 | ----                                       | -----------
 | D3D12CreateDevice                          | 返回 `E_NOINTERFACE`。
+| D3D12GetDebugInterface                     | 返回 `E_NOINTERFACE`。
+| D3D12SerializeVersionedRootSignature       | 返回 `E_NOINTERFACE`。
 
 ## DbgHelp.dll
 | 函数                                       | Fallback
@@ -791,6 +793,7 @@
 | PhysicalToLogicalPointForPerMonitorDPI     | 调用 PhysicalToLogicalPoint。
 | LogicalToPhysicalPointForPerMonitorDPI     | 调用 LogicalToPhysicalPoint。
 | GetSystemDpiForProcess                     | 调用GetDpiForSystem、GetProcessDpiAwareness。
+| IsValidDpiAwarenessContext                 | 内部实现。
 
 ## userenv.dll
 | 函数                                       | Fallback
