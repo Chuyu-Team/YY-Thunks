@@ -1848,4 +1848,30 @@ namespace YY::Thunks
         }
     }
 #endif
+
+#if (YY_Thunks_Target < __WindowsNT10_14393)
+
+    // 最低受支持的客户端    Windows 10版本 1607 [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2016 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    4,
+    BOOL,
+    WINAPI,
+    IsValidDpiAwarenessContext,
+        _In_ DPI_AWARENESS_CONTEXT* value
+        )
+    {
+        if (auto const _pfnIsValidDpiAwarenessContext = try_get_IsValidDpiAwarenessContext())
+        {
+            return _pfnIsValidDpiAwarenessContext(value);
+        }
+
+        return (ULONG_PTR)value == (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE ||
+               (ULONG_PTR)value == (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED ||
+               (ULONG_PTR)value == (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE ||
+               (ULONG_PTR)value == (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE ||
+               (ULONG_PTR)value == (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2;
+    }
+#endif
 } //namespace YY::Thunks

@@ -793,6 +793,7 @@
 | PhysicalToLogicalPointForPerMonitorDPI     | 调用 PhysicalToLogicalPoint。
 | LogicalToPhysicalPointForPerMonitorDPI     | 调用 LogicalToPhysicalPoint。
 | GetSystemDpiForProcess                     | 调用GetDpiForSystem、GetProcessDpiAwareness。
+| IsValidDpiAwarenessContext                 | 内部实现。
 
 ## userenv.dll
 | 函数                                       | Fallback
