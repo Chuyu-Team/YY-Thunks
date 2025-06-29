@@ -1269,7 +1269,11 @@ namespace YY::Thunks
         {
             if (const auto _pfnDisableThreadLibraryCalls = try_get_DisableThreadLibraryCalls())
             {
-                return _pfnDisableThreadLibraryCalls(_hLibModule);
+                // 至少从 Windows 8.1开始，改API会始终返回TRUE，如果DLL存在TLS，则DLL_THREAD_ATTACH可能继续发送
+                // 而Windows 7如果，DLL存在TLS会导致接口失败。
+                // msvcp140_2.dll，会调用此接口。如果失败，DLL则加载失败。为了规避早期系统加载失败的问题。我们保持跟Windows 8.1以及更改版本系统一致，始终返回TRUE，即可。
+                // 具体请参考："C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\crt\src\stl\dllmain_satellite.cpp"
+                _pfnDisableThreadLibraryCalls(_hLibModule);
             }
         }
 
