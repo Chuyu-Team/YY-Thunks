@@ -190,6 +190,7 @@
     <ClCompile Include="api-ms-win-power-base.UnitTest.cpp" />
     <ClCompile Include="bcrypt.UnitTest.cpp" />
     <ClCompile Include="Crypt32.UnitTest.cpp" />
+    <ClCompile Include="Dnsapi.Unittest.cpp" />
     <ClCompile Include="Iphlpapi.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-appmodel-runtime.UnitTest.cpp" />
     <ClCompile Include="pch.cpp">
@@ -251,6 +252,7 @@
     <ClInclude Include="..\Thunks\d3d9.hpp" />
     <ClInclude Include="..\Thunks\dbghelp.hpp" />
     <ClInclude Include="..\Thunks\DllMainCRTStartup.hpp" />
+    <ClInclude Include="..\Thunks\dnsapi.hpp" />
     <ClInclude Include="..\Thunks\dwmapi.hpp" />
     <ClInclude Include="..\Thunks\dwrite.hpp" />
     <ClInclude Include="..\Thunks\dxgi.hpp" />
