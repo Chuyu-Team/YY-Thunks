@@ -102,6 +102,9 @@
     <ClCompile Include="api-ms-win-appmodel-runtime.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
+    <ClCompile Include="Dnsapi.Unittest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -387,6 +390,9 @@
       <Filter>Thunks</Filter>
     </ClInclude>
     <ClInclude Include="..\Thunks\api-ms-win-appmodel-runtime.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\dnsapi.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
   </ItemGroup>

@@ -35,6 +35,7 @@ YY-Thunks支持的控制宏：
     _APPLY(d3d11,                                        "d3d11"                              , 0                 ) \
     _APPLY(d3d12,                                        "d3d12"                              , 0                 ) \
     _APPLY(dbghelp,                                      "dbghelp"                            , USING_UNSAFE_LOAD ) \
+    _APPLY(dnsapi,                                       "dnsapi"                             , 0                 ) \
     _APPLY(dxgi,                                         "dxgi"                               , 0                 ) \
     _APPLY(dwrite,                                       "dwrite"                             , 0                 ) \
     _APPLY(dxva2,                                        "dxva2"                              , 0                 ) \
