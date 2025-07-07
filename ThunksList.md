@@ -209,6 +209,12 @@
 | SymSetSearchPathW                          | 调用SymSetSearchPath。
 | SymGetSearchPathW                          | 调用SymGetSearchPath。
 
+## Dnsapi.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| DnsQueryEx                                 | 调用DnsQuery_W。
+| DnsCancelQuery                             | 内部实现。
+
 ## dwmapi.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
