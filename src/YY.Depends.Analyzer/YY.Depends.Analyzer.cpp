@@ -248,7 +248,7 @@ private:
             DllImportItem Info;
             Info.szDllName = DllName;
 
-            auto pThunkData = (IMAGE_THUNK_DATA_T*)YY::RtlImageRvaToVa(pNtHeader, pBase, pImport->OriginalFirstThunk, NULL);
+            auto pThunkData = (IMAGE_THUNK_DATA_T*)YY::RtlImageRvaToVa(pNtHeader, pBase, pImport->OriginalFirstThunk ? pImport->OriginalFirstThunk : pImport->FirstThunk, NULL);
             if (!pThunkData)
             {
                 //wprintf(L"Error：程序无法读取 dllname = %S OriginalFirstThunk Rva= 0x%.8X。\n", DllName, pImport->OriginalFirstThunk);
