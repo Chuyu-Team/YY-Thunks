@@ -124,4 +124,27 @@ namespace YY::Thunks
         return LogicalToPhysicalPoint(_hWnd, _pPoint);
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_1)
+
+    // 最低受支持的客户端	Windows Vista [仅限桌面应用]
+    // 最低受支持的服务器	Windows Server 2008[仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    8,
+    HWND,
+    WINAPI,
+    WindowFromPhysicalPoint,
+        _In_ POINT _oPoint
+        )
+    {
+        if (auto const _pfnWindowFromPhysicalPoint = try_get_WindowFromPhysicalPoint())
+        {
+            return _pfnWindowFromPhysicalPoint(_oPoint);
+        }
+
+        return WindowFromPoint(_oPoint);
+    }
+#endif
 }
