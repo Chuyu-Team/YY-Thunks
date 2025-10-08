@@ -2132,4 +2132,57 @@ namespace YY::Thunks
         }
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8.1，Windows 8 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    ws2_32,
+    8,
+    int,
+    WSAAPI,
+    GetHostNameW,
+        _Out_writes_(namelen) PWSTR _szName,
+        _In_ int _iNameLen
+        )
+    {
+        if (auto const _pfnGetHostNameW = try_get_GetHostNameW())
+        {
+            return _pfnGetHostNameW(_szName, _iNameLen);
+        }
+
+        if(_szName == nullptr || _iNameLen <= 0)
+        {
+            WSASetLastError(WSAEFAULT);
+            return SOCKET_ERROR;
+        }
+
+        char _szHostNameA[256];
+        auto _iResult = gethostname(_szHostNameA, _countof(_szHostNameA));
+        if(_iResult != ERROR_SUCCESS)
+        {
+            return _iResult;
+        }
+
+        const auto _cchHostNameW = MultiByteToWideChar(CP_ACP, 0, _szHostNameA, -1, _szName, _iNameLen);
+        if(_cchHostNameW != 0)
+        {
+            return 0;
+        }
+
+        if (ERROR_INSUFFICIENT_BUFFER == GetLastError())
+        {
+            WSASetLastError(WSAEFAULT);
+        }
+        else
+        {
+            // 这种情况下应该不会发生……
+            WSASetLastError(ERROR_FUNCTION_FAILED);
+        }
+
+        return SOCKET_ERROR;
+    }
+#endif
 } //namespace YY

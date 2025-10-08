@@ -344,4 +344,55 @@ namespace WS2_32
             }
         }
     };
+
+    TEST_CLASS(GetHostNameW)
+    {
+        AwaysNullGuard Guard;
+
+    public:
+        GetHostNameW()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_GetHostNameW;
+            WSADATA wsaData;
+            WSAStartup(MAKEWORD(2, 2), &wsaData);
+        }
+
+        TEST_METHOD(常规测试)
+        {
+            wchar_t _szHostNameW[256] = {};
+            Assert::AreEqual(::GetHostNameW(_szHostNameW, _countof(_szHostNameW)), (int)0);
+            Assert::AreNotEqual(_szHostNameW, L"");
+        }
+
+        TEST_METHOD(错误参数验证)
+        {
+            wchar_t _szHostNameW[256] = {};
+
+            // null缓冲区
+            WSASetLastError(0);
+            Assert::AreEqual(::GetHostNameW(nullptr, _countof(_szHostNameW)), (int)SOCKET_ERROR);
+            Assert::AreEqual(WSAGetLastError(), (int)WSAEFAULT);
+
+            // 缓冲区不足
+            WSASetLastError(0);
+            Assert::AreEqual(::GetHostNameW(_szHostNameW, 1), (int)SOCKET_ERROR);
+            Assert::AreEqual(WSAGetLastError(), (int)WSAEFAULT);
+
+            // 缓冲区边界，比够用小一点或者大一点
+            {
+                Assert::AreEqual(::GetHostNameW(_szHostNameW, _countof(_szHostNameW)), (int)0);
+                auto _cchHaostNameW = wcslen(_szHostNameW);
+
+                wchar_t _szHostNameW2[256];
+                memset(_szHostNameW2, 0xCC, sizeof(_szHostNameW2));
+                Assert::AreEqual(::GetHostNameW(_szHostNameW2, _cchHaostNameW), (int)SOCKET_ERROR);
+                Assert::AreEqual(WSAGetLastError(), (int)WSAEFAULT);
+
+
+                memset(_szHostNameW2, 0xCC, sizeof(_szHostNameW2));
+                Assert::AreEqual(::GetHostNameW(_szHostNameW2, _cchHaostNameW + 1), (int)0);
+                Assert::AreEqual(_szHostNameW, _szHostNameW2);
+            }
+        }
+    };
 }
