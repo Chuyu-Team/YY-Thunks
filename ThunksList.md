@@ -801,6 +801,7 @@
 | GetSystemDpiForProcess                     | 调用GetDpiForSystem、GetProcessDpiAwareness。
 | IsValidDpiAwarenessContext                 | 内部实现。
 | WindowFromPhysicalPoint                    | 调用WindowFromPoint。
+| SetWindowsHookExW(A)                       | WH_KEYBOARD_LL/WH_MOUSE_LL且dwThreadId为0时，hMod允许为NULL。
 
 ## userenv.dll
 | 函数                                       | Fallback

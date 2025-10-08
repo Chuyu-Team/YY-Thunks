@@ -147,4 +147,66 @@ namespace YY::Thunks
         return WindowFromPoint(_oPoint);
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 6.0开始：WH_KEYBOARD_LL/WH_MOUSE_LL且dwThreadId为0时，hMod可以为NULL
+    __DEFINE_THUNK(
+    user32,
+    16,
+    HHOOK,
+    WINAPI,
+    SetWindowsHookExW,
+        _In_ int _idHook,
+        _In_ HOOKPROC _pfn,
+        _In_opt_ HINSTANCE _hMod,
+        _In_ DWORD _uThreadId
+        )
+    {
+        if (auto const _pfnSetWindowsHookExW = try_get_SetWindowsHookExW())
+        {
+            if(_hMod == nullptr && _uThreadId == 0 && (_idHook == WH_KEYBOARD_LL || _idHook == WH_MOUSE_LL))
+            {
+                _hMod = reinterpret_cast<HINSTANCE>(&__ImageBase);
+            }
+
+            return _pfnSetWindowsHookExW(_idHook, _pfn, _hMod, _uThreadId);
+        }
+
+        SetLastError(ERROR_INVALID_FUNCTION);
+        return nullptr;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 6.0开始：WH_KEYBOARD_LL/WH_MOUSE_LL且dwThreadId为0时，hMod可以为NULL
+    __DEFINE_THUNK(
+    user32,
+    16,
+    HHOOK,
+    WINAPI,
+    SetWindowsHookExA,
+        _In_ int _idHook,
+        _In_ HOOKPROC _pfn,
+        _In_opt_ HINSTANCE _hMod,
+        _In_ DWORD _uThreadId
+        )
+    {
+        if (auto const _pfnSetWindowsHookExA = try_get_SetWindowsHookExA())
+        {
+            if(_hMod == nullptr && _uThreadId == 0 && (_idHook == WH_KEYBOARD_LL || _idHook == WH_MOUSE_LL))
+            {
+                _hMod = reinterpret_cast<HINSTANCE>(&__ImageBase);
+            }
+
+            return _pfnSetWindowsHookExA(_idHook, _pfn, _hMod, _uThreadId);
+        }
+
+        SetLastError(ERROR_INVALID_FUNCTION);
+        return nullptr;
+    }
+#endif
 }
