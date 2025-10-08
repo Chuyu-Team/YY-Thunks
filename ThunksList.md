@@ -4,6 +4,12 @@
 
 > 开头带`*`的函数并不建议使用，存在一些较大负面影响，仅用于编译通过处理，具体负面影响可参考注释内容。
 
+## api-ms-win-core-file-l1-1-0.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| WriteFile                                  | 允许_puNumberOfBytesWritten、_pOverlapped同时为nullptr。
+| ReadFile                                   | 允许_puNumberOfBytesRead、_pOverlapped同时为nullptr。
+
 ## api-ms-win-core-handle-l1-1-0.dll
 | 函数                                       | Fallback
 | ----                                       | -----------

@@ -1336,4 +1336,70 @@ namespace YY::Thunks
         return FindFirstFileA(lpFileName, (WIN32_FIND_DATAA*)lpFindFileData);
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // * 6.2开始，_puNumberOfBytesWritten与_pOverlapped可以同时为NULL
+    __DEFINE_THUNK(
+    kernel32,
+    20,
+    BOOL,
+    WINAPI,
+    WriteFile,
+        _In_ HANDLE _hFile,
+        _In_reads_bytes_opt_(_uNumberOfBytesToWrite) LPCVOID _pBuffer,
+        _In_ DWORD _uNumberOfBytesToWrite,
+        _Out_opt_ LPDWORD _puNumberOfBytesWritten,
+        _Inout_opt_ LPOVERLAPPED _pOverlapped
+        )
+    {
+        if (const auto _pfnWriteFile = try_get_WriteFile())
+        {
+            DWORD _uNumberOfBytesWritten = 0;
+            if (_puNumberOfBytesWritten == nullptr && _pOverlapped == nullptr)
+            {
+                _puNumberOfBytesWritten = &_uNumberOfBytesWritten;
+            }
+
+            return _pfnWriteFile(_hFile, _pBuffer, _uNumberOfBytesToWrite, _puNumberOfBytesWritten, _pOverlapped);
+        }
+
+        SetLastError(ERROR_INVALID_FUNCTION);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // * 6.2开始，_puNumberOfBytesRead与_pOverlapped可以同时为NULL
+    __DEFINE_THUNK(
+    kernel32,
+    20,
+    BOOL,
+    WINAPI,
+    ReadFile,
+        _In_ HANDLE _hFile,
+        _Out_writes_bytes_to_opt_(_uNumberOfBytesToRead, *_puNumberOfBytesRead) __out_data_source(FILE) LPVOID _pBuffer,
+        _In_ DWORD _uNumberOfBytesToRead,
+        _Out_opt_ LPDWORD _puNumberOfBytesRead,
+        _Inout_opt_ LPOVERLAPPED _pOverlapped
+        )
+    {
+        if (const auto _pfnReadFile = try_get_ReadFile())
+        {
+            DWORD _uNumberOfBytesRead = 0;
+            if (_puNumberOfBytesRead == nullptr && _pOverlapped == nullptr)
+            {
+                _puNumberOfBytesRead = &_uNumberOfBytesRead;
+            }
+
+            return _pfnReadFile(_hFile, _pBuffer, _uNumberOfBytesToRead, _puNumberOfBytesRead, _pOverlapped);
+        }
+
+        SetLastError(ERROR_INVALID_FUNCTION);
+        return FALSE;
+    }
+#endif
 } //namespace YY::Thunks
