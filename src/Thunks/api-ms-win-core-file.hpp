@@ -22,6 +22,140 @@ namespace YY::Thunks
             } DUMMYUNIONNAME;
         };
 #endif
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+        struct CopyFileExToCopyFile2CallbackContext
+        {
+            COPYFILE2_EXTENDED_PARAMETERS* pExtendedParameters = nullptr;
+            uint32_t uCurrentStreamNumber = 0;
+            uint64_t uCurrentChunkNumber = 0;
+            uint64_t uStreamBytesTransferred = 0;
+        };
+
+        static constexpr DWORD __fastcall CopyFile2ActionToResult(_In_ COPYFILE2_MESSAGE_ACTION _eAction)
+        {
+            switch (_eAction)
+            {
+            case COPYFILE2_PROGRESS_CONTINUE:
+                return PROGRESS_CONTINUE;
+            case COPYFILE2_PROGRESS_STOP:
+            case COPYFILE2_PROGRESS_PAUSE:
+                return PROGRESS_STOP;
+            case COPYFILE2_PROGRESS_QUIET:
+                return PROGRESS_QUIET;
+            case COPYFILE2_PROGRESS_CANCEL:
+            default:
+                return PROGRESS_CANCEL;
+            }
+        }
+
+        static DWORD WINAPI CopyFileExToCopyFile2Callback(
+            _In_     LARGE_INTEGER TotalFileSize,
+            _In_     LARGE_INTEGER TotalBytesTransferred,
+            _In_     LARGE_INTEGER StreamSize,
+            _In_     LARGE_INTEGER StreamBytesTransferred,
+            _In_     DWORD dwStreamNumber,
+            _In_     DWORD dwCallbackReason,
+            _In_     HANDLE hSourceFile,
+            _In_     HANDLE hDestinationFile,
+            _In_opt_ LPVOID lpData
+            )
+        {
+            auto _pContext = reinterpret_cast<CopyFileExToCopyFile2CallbackContext*>(lpData);
+            COPYFILE2_MESSAGE _oMessage = {};
+
+            COPYFILE2_MESSAGE_ACTION _eAction = COPYFILE2_PROGRESS_CONTINUE;
+
+            do
+            {
+                if (dwCallbackReason == CALLBACK_CHUNK_FINISHED)
+                {
+                    const auto _uCurrentChunkNumber = _pContext->uCurrentChunkNumber;
+                    const auto _uChunkSize = StreamBytesTransferred.QuadPart - _pContext->uStreamBytesTransferred;
+                    _pContext->uCurrentChunkNumber += 1;
+                    _pContext->uStreamBytesTransferred = StreamBytesTransferred.QuadPart;
+
+                    _oMessage.Type = COPYFILE2_CALLBACK_CHUNK_STARTED;
+                    _oMessage.Info.ChunkStarted.dwStreamNumber = dwStreamNumber;
+                    _oMessage.Info.ChunkStarted.hSourceFile = hSourceFile;
+                    _oMessage.Info.ChunkStarted.hDestinationFile = hDestinationFile;
+                    _oMessage.Info.ChunkStarted.uliChunkNumber.QuadPart = _uCurrentChunkNumber;
+                    _oMessage.Info.ChunkStarted.uliChunkSize.QuadPart = _uChunkSize;
+                    _oMessage.Info.ChunkStarted.uliStreamSize.QuadPart = StreamSize.QuadPart;
+                    _oMessage.Info.ChunkStarted.uliTotalFileSize.QuadPart = TotalFileSize.QuadPart;
+                    _eAction = _pContext->pExtendedParameters->pProgressRoutine(&_oMessage, _pContext->pExtendedParameters->pvCallbackContext);
+                    if (_eAction != COPYFILE2_PROGRESS_CONTINUE)
+                        break;
+
+                    _oMessage.Type = COPYFILE2_CALLBACK_CHUNK_FINISHED;
+                    _oMessage.Info.ChunkFinished.dwStreamNumber = dwStreamNumber;
+                    _oMessage.Info.ChunkFinished.hSourceFile = hSourceFile;
+                    _oMessage.Info.ChunkFinished.hDestinationFile = hDestinationFile;
+                    _oMessage.Info.ChunkFinished.uliChunkNumber.QuadPart = _uCurrentChunkNumber;
+                    _oMessage.Info.ChunkFinished.uliChunkSize.QuadPart = _uChunkSize;
+                    _oMessage.Info.ChunkFinished.uliStreamSize.QuadPart = StreamSize.QuadPart;
+                    _oMessage.Info.ChunkFinished.uliStreamBytesTransferred.QuadPart = StreamBytesTransferred.QuadPart;
+                    _oMessage.Info.ChunkFinished.uliTotalFileSize.QuadPart = TotalFileSize.QuadPart;
+                    _oMessage.Info.ChunkFinished.uliTotalBytesTransferred.QuadPart = TotalBytesTransferred.QuadPart;
+                    _eAction = _pContext->pExtendedParameters->pProgressRoutine(&_oMessage, _pContext->pExtendedParameters->pvCallbackContext);
+                    if (_eAction != COPYFILE2_PROGRESS_CONTINUE)
+                        break;
+
+                    if (StreamSize.QuadPart != StreamBytesTransferred.QuadPart)
+                    {
+                        break;
+                    }
+
+                    _oMessage.Type = COPYFILE2_CALLBACK_STREAM_FINISHED;
+                    _oMessage.Info.StreamFinished.dwStreamNumber = dwStreamNumber;
+                    _oMessage.Info.StreamFinished.hSourceFile = hSourceFile;
+                    _oMessage.Info.StreamFinished.hDestinationFile = hDestinationFile;
+                    _oMessage.Info.StreamFinished.uliStreamSize.QuadPart = StreamSize.QuadPart;
+                    _oMessage.Info.StreamFinished.uliStreamBytesTransferred.QuadPart = StreamBytesTransferred.QuadPart;
+                    _oMessage.Info.StreamFinished.uliTotalFileSize.QuadPart = TotalFileSize.QuadPart;
+                    _oMessage.Info.StreamFinished.uliTotalBytesTransferred.QuadPart = TotalBytesTransferred.QuadPart;
+                    _eAction = _pContext->pExtendedParameters->pProgressRoutine(&_oMessage, _pContext->pExtendedParameters->pvCallbackContext);
+                    return CopyFile2ActionToResult(_eAction);
+                }
+                else if (dwCallbackReason == CALLBACK_STREAM_SWITCH)
+                {
+                    _pContext->uCurrentStreamNumber = dwStreamNumber;
+                    _pContext->uCurrentChunkNumber = 0;
+                    _pContext->uStreamBytesTransferred = StreamBytesTransferred.QuadPart;
+
+                    _oMessage.Type = COPYFILE2_CALLBACK_STREAM_STARTED;
+                    _oMessage.Info.StreamStarted.dwStreamNumber = dwStreamNumber;
+                    _oMessage.Info.StreamStarted.hSourceFile = hSourceFile;
+                    _oMessage.Info.StreamStarted.hDestinationFile = hDestinationFile;
+                    _oMessage.Info.StreamStarted.uliStreamSize.QuadPart = StreamSize.QuadPart;
+                    _oMessage.Info.StreamStarted.uliTotalFileSize.QuadPart = TotalFileSize.QuadPart;
+                    _eAction = _pContext->pExtendedParameters->pProgressRoutine(&_oMessage, _pContext->pExtendedParameters->pvCallbackContext);
+                }
+                else
+                {
+                    _oMessage.Type = COPYFILE2_CALLBACK_POLL_CONTINUE;
+                    _oMessage.Info.PollContinue.dwReserved = 0;
+                    _eAction = _pContext->pExtendedParameters->pProgressRoutine(&_oMessage, _pContext->pExtendedParameters->pvCallbackContext);
+                }
+            } while (false);
+
+            const auto _uResult = CopyFile2ActionToResult(_eAction);
+            if (_uResult == PROGRESS_STOP)
+            {
+                _oMessage.Type = COPYFILE2_CALLBACK_STREAM_FINISHED;
+                _oMessage.Info.StreamFinished.dwStreamNumber = dwStreamNumber;
+                _oMessage.Info.StreamFinished.hSourceFile = hSourceFile;
+                _oMessage.Info.StreamFinished.hDestinationFile = hDestinationFile;
+                _oMessage.Info.StreamFinished.uliStreamSize.QuadPart = StreamSize.QuadPart;
+                _oMessage.Info.StreamFinished.uliStreamBytesTransferred.QuadPart = StreamBytesTransferred.QuadPart;
+                _oMessage.Info.StreamFinished.uliTotalFileSize.QuadPart = TotalFileSize.QuadPart;
+                _oMessage.Info.StreamFinished.uliTotalBytesTransferred.QuadPart = TotalBytesTransferred.QuadPart;
+                _pContext->pExtendedParameters->pProgressRoutine(&_oMessage, _pContext->pExtendedParameters->pvCallbackContext);
+            }
+
+            return _uResult;
+        }
+#endif
     }
 }
 #endif
@@ -1400,6 +1534,64 @@ namespace YY::Thunks
 
         SetLastError(ERROR_INVALID_FUNCTION);
         return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    kernel32,
+    12,
+    HRESULT,
+    WINAPI,
+    CopyFile2,
+        _In_      PCWSTR                         _szExistingFileName,
+        _In_      PCWSTR                         _szNewFileName,
+        _In_opt_  COPYFILE2_EXTENDED_PARAMETERS* _pExtendedParameters
+        )
+    {      
+        if (const auto _pfnCopyFile2 = try_get_CopyFile2())
+        {
+            return _pfnCopyFile2(_szExistingFileName, _szNewFileName, _pExtendedParameters);
+        }
+
+        if (_pExtendedParameters)
+        {
+            if (_pExtendedParameters->dwSize < sizeof(COPYFILE2_EXTENDED_PARAMETERS))
+            {
+                return E_INVALIDARG;
+            }
+
+            CopyFileExToCopyFile2CallbackContext _oContext = { _pExtendedParameters };
+            if (CopyFileExW(
+                _szExistingFileName,
+                _szNewFileName,
+                _pExtendedParameters->pProgressRoutine ? CopyFileExToCopyFile2Callback : nullptr,
+                &_oContext,
+                _pExtendedParameters->pfCancel,
+                _pExtendedParameters->dwCopyFlags))
+            {
+                return S_OK;
+            }
+        }
+        else
+        {
+            if (CopyFileExW(
+                _szExistingFileName,
+                _szNewFileName,
+                nullptr,
+                nullptr,
+                nullptr,
+                0))
+            {
+                return S_OK;
+            }
+        }
+
+        return __HRESULT_FROM_WIN32(GetLastError());
     }
 #endif
 } //namespace YY::Thunks
