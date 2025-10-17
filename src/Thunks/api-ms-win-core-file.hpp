@@ -1014,6 +1014,41 @@ namespace YY::Thunks
 #endif
 
 
+#if (YY_Thunks_Target < __WindowsNT10_26100)
+
+    // 最低支持的客户端	Windows 11 24H2 [桌面应用 |UWP 应用]
+    // 支持的最低服务器	Windows Server 2025[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    kernel32,
+    20,
+    HANDLE,
+    WINAPI,
+    CreateFile3,
+        _In_z_ LPCWSTR _szFileName,
+        _In_ DWORD _uDesiredAccess,
+        _In_ DWORD _uShareMode,
+        _In_ DWORD _uCreationDisposition,
+        _In_opt_ LPCREATEFILE3_EXTENDED_PARAMETERS _pCreateExParams
+        )
+    {
+        if (const auto _pfnCreateFile3 = try_get_CreateFile3())
+        {
+            return _pfnCreateFile3(_szFileName, _uDesiredAccess, _uShareMode, _uCreationDisposition, _pCreateExParams);
+        }
+
+        static_assert(sizeof(CREATEFILE3_EXTENDED_PARAMETERS) == sizeof(CREATEFILE2_EXTENDED_PARAMETERS), "");
+        static_assert(UFIELD_OFFSET (CREATEFILE3_EXTENDED_PARAMETERS, dwSize) == UFIELD_OFFSET(CREATEFILE2_EXTENDED_PARAMETERS, dwSize), "");
+        static_assert(UFIELD_OFFSET (CREATEFILE3_EXTENDED_PARAMETERS, dwFileAttributes) == UFIELD_OFFSET(CREATEFILE2_EXTENDED_PARAMETERS, dwFileAttributes), "");
+        static_assert(UFIELD_OFFSET(CREATEFILE3_EXTENDED_PARAMETERS, dwFileFlags) == UFIELD_OFFSET(CREATEFILE2_EXTENDED_PARAMETERS, dwFileFlags), "");
+        static_assert(UFIELD_OFFSET(CREATEFILE3_EXTENDED_PARAMETERS, dwSecurityQosFlags) == UFIELD_OFFSET(CREATEFILE2_EXTENDED_PARAMETERS, dwSecurityQosFlags), "");
+        static_assert(UFIELD_OFFSET(CREATEFILE3_EXTENDED_PARAMETERS, lpSecurityAttributes) == UFIELD_OFFSET(CREATEFILE2_EXTENDED_PARAMETERS, lpSecurityAttributes), "");
+        static_assert(UFIELD_OFFSET(CREATEFILE3_EXTENDED_PARAMETERS, hTemplateFile) == UFIELD_OFFSET(CREATEFILE2_EXTENDED_PARAMETERS, hTemplateFile), "");
+
+        return CreateFile2(_szFileName, _uDesiredAccess, _uShareMode, _uCreationDisposition, reinterpret_cast<LPCREATEFILE2_EXTENDED_PARAMETERS>(_pCreateExParams));
+    }
+#endif
+
+
 #if (YY_Thunks_Target < __WindowsNT6)
 
     //Windows Vista [desktop apps only]

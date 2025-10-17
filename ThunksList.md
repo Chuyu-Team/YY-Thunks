@@ -10,10 +10,16 @@
 | WriteFile                                  | 允许_puNumberOfBytesWritten、_pOverlapped同时为nullptr。
 | ReadFile                                   | 允许_puNumberOfBytesRead、_pOverlapped同时为nullptr。
 
+## api-ms-win-core-file-l1-2-5.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| CreateFile3                                | 调用CreateFile2。
+
 ## api-ms-win-core-file-l2-1-0.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
 | CopyFile2                                  | 调用CopyFileExW。
+
 
 ## api-ms-win-core-handle-l1-1-0.dll
 | 函数                                       | Fallback

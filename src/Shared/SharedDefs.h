@@ -97,6 +97,9 @@
 // Windows Server 2022(FE)
 #define __WindowsNT10_20348 __Version(10, 0, 20348, 0)
 
+// Windows 11 24H2、Windows Server 2025
+#define __WindowsNT10_26100 __Version(10, 0, 26100, 0)
+
 #if defined(_M_IX86)
 #define __WindowsMinTarget __WindowsNT5
 #elif defined(_M_AMD64)
