@@ -1629,4 +1629,52 @@ namespace YY::Thunks
         return __HRESULT_FROM_WIN32(GetLastError());
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT10_20348)
+
+    // 最低支持的客户端	Windows 11 内部版本 22000
+    // 支持的最低服务器	Windows Server 2022 内部版本 20348
+    __DEFINE_THUNK(
+    kernel32,
+    8,
+    DWORD,
+    WINAPI,
+    GetTempPath2W,
+        _In_ DWORD BufferLength,
+        _Out_writes_to_opt_(BufferLength,return + 1) LPWSTR Buffer
+        )
+    {
+        if (const auto _pfnGetTempPath2W = try_get_GetTempPath2W())
+        {
+            return _pfnGetTempPath2W(BufferLength, Buffer);
+        }
+
+        return GetTempPathW(BufferLength, Buffer);
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT10_20348)
+
+    // 最低支持的客户端	Windows 11 内部版本 22000
+    // 支持的最低服务器	Windows Server 2022 内部版本 20348
+    __DEFINE_THUNK(
+    kernel32,
+    8,
+    DWORD,
+    WINAPI,
+    GetTempPath2A,
+        _In_ DWORD BufferLength,
+        _Out_writes_to_opt_(BufferLength,return + 1) LPSTR Buffer
+        )
+    {
+        if (const auto _pfnGetTempPath2A = try_get_GetTempPath2A())
+        {
+            return _pfnGetTempPath2A(BufferLength, Buffer);
+        }
+
+        return GetTempPathA(BufferLength, Buffer);
+    }
+#endif
 } //namespace YY::Thunks

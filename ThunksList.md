@@ -10,6 +10,11 @@
 | WriteFile                                  | 允许_puNumberOfBytesWritten、_pOverlapped同时为nullptr。
 | ReadFile                                   | 允许_puNumberOfBytesRead、_pOverlapped同时为nullptr。
 
+## api-ms-win-core-file-l1-2-4.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| GetTempPath2W(A)                           | 调用GetTempPathW(A)。
+
 ## api-ms-win-core-file-l1-2-5.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
