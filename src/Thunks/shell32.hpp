@@ -957,7 +957,7 @@ namespace YY::Thunks
             return E_INVALIDARG;
         }
 
-        if (GUID_NULL != _pIdentifier->guidItem)
+        if (!IsEqualGUID(GUID_NULL, _pIdentifier->guidItem))
         {
             return E_FAIL;
         }

@@ -23,6 +23,8 @@ YY-Thunks支持的控制宏：
 // 忽略非标准的 0 数组警告。
 #pragma warning(disable:4200)
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+// 7.1 SDK与 10 SDK的GUID ==定义可能不存，具体请参考：https://github.com/Chuyu-Team/YY-Thunks/issues/161
+#define _NO_SYS_GUID_OPERATOR_EQ_
 
 #define _YY_APPLY_TO_LATE_BOUND_MODULES(_APPLY)                                                                     \
     _APPLY(ntdll,                                        "ntdll"                              , USING_GET_MODULE_HANDLE ) \
