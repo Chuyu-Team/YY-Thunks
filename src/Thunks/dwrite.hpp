@@ -73,11 +73,11 @@ namespace YY::Thunks::Fallback
                     return E_POINTER;
 
                 *ppvObject = nullptr;
-                if (riid == __uuidof(IUnknown)
-                    || riid == __uuidof(IDWriteRenderingParams)
-                    || riid == __uuidof(IDWriteRenderingParams1)
-                    || riid == __uuidof(IDWriteRenderingParams2)
-                    || riid == __uuidof(IDWriteRenderingParams3))
+                if (IsEqualGUID(riid, __uuidof(IUnknown))
+                    || IsEqualGUID(riid, __uuidof(IDWriteRenderingParams))
+                    || IsEqualGUID(riid, __uuidof(IDWriteRenderingParams1))
+                    || IsEqualGUID(riid, __uuidof(IDWriteRenderingParams2))
+                    || IsEqualGUID(riid, __uuidof(IDWriteRenderingParams3)))
                 {
                     AddRef();
                     *ppvObject = this;
@@ -204,9 +204,9 @@ namespace YY::Thunks::Fallback
                     return E_POINTER;
 
                 *ppvObject = nullptr;
-                if (riid == __uuidof(IUnknown)
-                    || riid == __uuidof(IDWriteFontCollection)
-                    || riid == __uuidof(IDWriteFontCollection1))
+                if (IsEqualGUID(riid, __uuidof(IUnknown))
+                    || IsEqualGUID(riid, __uuidof(IDWriteFontCollection))
+                    || IsEqualGUID(riid, __uuidof(IDWriteFontCollection1)))
                 {
                     AddRef();
                     *ppvObject = this;
@@ -368,8 +368,8 @@ namespace YY::Thunks::Fallback
                     return E_POINTER;
 
                 *ppvObject = nullptr;
-                if (riid == __uuidof(IUnknown)
-                    || riid == __uuidof(IDWriteFontFallback))
+                if (IsEqualGUID(riid, __uuidof(IUnknown))
+                    || IsEqualGUID(riid, __uuidof(IDWriteFontFallback)))
                 {
                     AddRef();
                     *ppvObject = this;
@@ -480,11 +480,11 @@ namespace YY::Thunks::Fallback
                 /* [in] */ REFIID riid,
                 /* [iid_is][out] */ _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject) override
             {
-                if (riid == __uuidof(IUnknown)
-                    || riid == __uuidof(IDWriteFactory)
-                    || riid == __uuidof(IDWriteFactory1)
-                    || riid == __uuidof(IDWriteFactory2)
-                    || riid == __uuidof(IDWriteFactory3))
+                if (IsEqualGUID(riid, __uuidof(IUnknown))
+                    || IsEqualGUID(riid, __uuidof(IDWriteFactory))
+                    || IsEqualGUID(riid, __uuidof(IDWriteFactory1))
+                    || IsEqualGUID(riid, __uuidof(IDWriteFactory2))
+                    || IsEqualGUID(riid, __uuidof(IDWriteFactory3)))
                 {
                     if (!ppvObject)
                         return E_POINTER;
@@ -1173,8 +1173,10 @@ namespace YY::Thunks
             return E_NOINTERFACE;
         }
 
-        if (iid == __uuidof(IDWriteFactory) || iid == __uuidof(IDWriteFactory1)
-            || iid == __uuidof(IDWriteFactory2) || iid == __uuidof(IDWriteFactory3))
+        if (IsEqualGUID(iid, __uuidof(IDWriteFactory))
+            || IsEqualGUID(iid, __uuidof(IDWriteFactory1))
+            || IsEqualGUID(iid, __uuidof(IDWriteFactory2))
+            || IsEqualGUID(iid, __uuidof(IDWriteFactory3)))
         {
             auto _hr = _pfnDWriteCreateFactory(factoryType, __uuidof(IDWriteFactory3), factory);
             if (_hr != E_NOINTERFACE)

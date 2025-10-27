@@ -27,19 +27,19 @@ namespace YY::Thunks::Fallback::PowrProf
 
         static int __fastcall PowerPolicyGuidToPowerSchemeId(const GUID& PolicyGuid) noexcept
         {
-            if (PolicyGuid == kPowerSaver)
+            if (IsEqualGUID(PolicyGuid, kPowerSaver))
             {
                 return 5;
             }
-            else if (PolicyGuid == kBalanced)
+            else if (IsEqualGUID(PolicyGuid, kBalanced))
             {
                 return 0;
             }
-            else if (PolicyGuid == kHighPerformance)
+            else if (IsEqualGUID(PolicyGuid, kHighPerformance))
             {
                 return 4;
             }
-            else if(PolicyGuid == GUID{ PolicyGuid.Data1 })
+            else if (IsEqualGUID(PolicyGuid, GUID{ PolicyGuid.Data1 }))
             {
                 return PolicyGuid.Data1;
             }
@@ -68,10 +68,10 @@ namespace YY::Thunks::Fallback::PowrProf
                 return ERROR_INVALID_PARAMETER;
             }
 
-            if (*_pSchemeGuid != Fallback::PowrProf::kBalanced)
+            if (!IsEqualGUID(*_pSchemeGuid, Fallback::PowrProf::kBalanced))
                 return ERROR_FILE_NOT_FOUND;
 
-            if (kConsoleLock == *_pPowerSettingGuid && (_pSubGroupOfPowerSettingsGuid == nullptr || *_pSubGroupOfPowerSettingsGuid == NO_SUBGROUP_GUID))
+            if (IsEqualGUID(kConsoleLock, *_pPowerSettingGuid) && (_pSubGroupOfPowerSettingsGuid == nullptr || IsEqualGUID(*_pSubGroupOfPowerSettingsGuid, NO_SUBGROUP_GUID)))
             {
                 if (_puType)
                     *_puType = REG_DWORD;
