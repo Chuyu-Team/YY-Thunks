@@ -327,96 +327,15 @@ namespace YY::Thunks
         {
             return _pfnGetTimeZoneInformationForYear(_uYear, _pDynamicTimeZoneInfo, _pTimeZoneInfo);
         }
-            
+
+        // Windows XP系统没有Dynamic DST信息
         DYNAMIC_TIME_ZONE_INFORMATION _DynamicTimeZoneInfoBuffer;
         if (!_pDynamicTimeZoneInfo)
         {
-            if (::GetDynamicTimeZoneInformation(&_DynamicTimeZoneInfoBuffer) == TIME_ZONE_ID_INVALID)
-                return FALSE;
-
-            _pDynamicTimeZoneInfo = &_DynamicTimeZoneInfoBuffer;
+            return GetTimeZoneInformation(_pTimeZoneInfo) != TIME_ZONE_ID_INVALID;
         }
 
-        if (_pDynamicTimeZoneInfo->DynamicDaylightTimeDisabled)
-        {
-            memcpy(_pTimeZoneInfo, _pDynamicTimeZoneInfo, sizeof(*_pTimeZoneInfo));
-            return TRUE;
-        }
-
-#pragma pack(push, 1)
-        struct TZI
-        {
-            LONG Bias;
-            LONG StandardBias;
-            LONG DaylightBias;
-            SYSTEMTIME StandardDate;
-            SYSTEMTIME DaylightDate;
-        };
-#pragma pack(pop)
-
-        LSTATUS _lStatus;
-        HKEY _hTimeZoneRootKey = NULL;
-        HKEY _hTimeZoneKey = NULL;
-        do
-        {
-            _lStatus = RegOpenKeyExW(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones)", 0, KEY_READ, &_hTimeZoneRootKey);
-            if (_lStatus)
-            {
-                break;
-            }
-
-            _lStatus = RegOpenKeyExW(_hTimeZoneRootKey, _pDynamicTimeZoneInfo->TimeZoneKeyName, 0, KEY_READ, &_hTimeZoneKey);
-            if (_lStatus)
-            {
-                break;
-            }
-
-            TZI _Tzi;
-            DWORD _cdData = 0;
-            HKEY _hDynamicDSTKey = NULL;
-            _lStatus = RegOpenKeyExW(_hTimeZoneKey, L"Dynamic DST", 0, KEY_READ, &_hDynamicDSTKey);
-            if (_lStatus == ERROR_SUCCESS)
-            {
-                wchar_t _szStaticStringBuffer[64];
-                internal::StringBuffer<wchar_t> _szStringBuffer(_szStaticStringBuffer, _countof(_szStaticStringBuffer));
-                _szStringBuffer.AppendUint32(_uYear);
-                _cdData = sizeof(_Tzi);
-                _lStatus = RegQueryValueExW(_hDynamicDSTKey, _szStringBuffer.GetC_String(), nullptr, nullptr, (BYTE*)&_Tzi, &_cdData);
-                RegCloseKey(_hDynamicDSTKey);
-            }
-
-            if (_lStatus || _cdData != sizeof(_Tzi))
-            {
-                _cdData = sizeof(_Tzi);
-                _lStatus = RegQueryValueExW(_hTimeZoneKey, L"TZI", nullptr, nullptr, (BYTE*)&_Tzi, &_cdData);
-
-                if (_lStatus || _cdData != sizeof(_Tzi))
-                {
-                    _lStatus = ERROR_NOT_FOUND;
-                    break;
-                }
-            }
-
-            memcpy(_pTimeZoneInfo, _pDynamicTimeZoneInfo, sizeof(*_pTimeZoneInfo));
-            _pTimeZoneInfo->Bias = _Tzi.Bias;
-            _pTimeZoneInfo->StandardBias = _Tzi.StandardBias;
-            _pTimeZoneInfo->DaylightBias = _Tzi.DaylightBias;
-            _pTimeZoneInfo->StandardDate = _Tzi.StandardDate;
-            _pTimeZoneInfo->DaylightDate = _Tzi.DaylightDate;
-                
-        } while (false);
-
-        if (_hTimeZoneKey)
-            RegCloseKey(_hTimeZoneKey);
-
-        if (_hTimeZoneRootKey)
-            RegCloseKey(_hTimeZoneRootKey);
-
-        if (_lStatus)
-        {
-            SetLastError(_lStatus);
-            return FALSE;
-        }
+        memcpy(_pTimeZoneInfo, _pDynamicTimeZoneInfo, sizeof(*_pTimeZoneInfo));
         return TRUE;
     }
 #endif

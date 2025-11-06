@@ -576,7 +576,7 @@
 | FindNLSStringEx                            | 调用 CompareStringW。
 | SetProcessWorkingSetSizeEx                 | 调用SetProcessWorkingSetSize。
 | GetProcessWorkingSetSizeEx                 | 调用GetProcessWorkingSetSize。
-| GetTimeZoneInformationForYear              | 直接读取`Time Zones`注册表。
+| GetTimeZoneInformationForYear              | 调用GetTimeZoneInformation。
 | SetProcessDEPPolicy                        | 调用NtSetInformationProcess。
 | GetSystemDEPPolicy                         | 返回总是关闭。
 | DisableThreadLibraryCalls                  | 始终返回成功。
