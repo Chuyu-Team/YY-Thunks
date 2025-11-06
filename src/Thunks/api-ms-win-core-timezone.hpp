@@ -283,6 +283,31 @@ namespace YY::Thunks
 #endif
 
 
+#if (YY_Thunks_Target < __WindowsNT6_1)
+
+    // 最低受支持的客户端	Windows 7 [桌面应用|UWP 应用]
+    // 最低受支持的服务器	Windows Server 2012 [桌面应用|UWP 应用]
+    __DEFINE_THUNK(
+    kernel32,
+    12,
+    BOOL,
+    WINAPI,
+    SystemTimeToTzSpecificLocalTimeEx,
+        _In_opt_ CONST DYNAMIC_TIME_ZONE_INFORMATION* _pTimeZoneInformation,
+        _In_ CONST SYSTEMTIME* _pUniversalTime,
+        _Out_ LPSYSTEMTIME _pLocalTime
+        )
+    {
+        if (const auto _pfnSystemTimeToTzSpecificLocalTimeEx = try_get_SystemTimeToTzSpecificLocalTimeEx())
+        {
+            return _pfnSystemTimeToTzSpecificLocalTimeEx(_pTimeZoneInformation, _pUniversalTime, _pLocalTime);
+        }
+
+        return SystemTimeToTzSpecificLocalTime((LPTIME_ZONE_INFORMATION)_pTimeZoneInformation, _pUniversalTime, _pLocalTime);
+    }
+#endif
+
+
 #if (YY_Thunks_Target < __WindowsNT6_SP1)
 
     // 最低受支持的客户端	Windows Vista SP1 [桌面应用 |UWP 应用]
