@@ -251,6 +251,7 @@
     <ClInclude Include="..\Thunks\d3d12.hpp" />
     <ClInclude Include="..\Thunks\d3d9.hpp" />
     <ClInclude Include="..\Thunks\dbghelp.hpp" />
+    <ClInclude Include="..\Thunks\dcomp.hpp" />
     <ClInclude Include="..\Thunks\DllMainCRTStartup.hpp" />
     <ClInclude Include="..\Thunks\dnsapi.hpp" />
     <ClInclude Include="..\Thunks\dwmapi.hpp" />

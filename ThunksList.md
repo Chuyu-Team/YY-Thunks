@@ -236,6 +236,13 @@
 | D3D12GetDebugInterface                     | 返回 `E_NOINTERFACE`。
 | D3D12SerializeVersionedRootSignature       | 返回 `E_NOINTERFACE`。
 
+## dcomp.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| DCompositionCreateDevice                   | 返回 `E_NOTIMPL`。
+| DCompositionCreateDevice2                  | 调用DCompositionCreateDevice。
+| DCompositionCreateDevice3                  | 调用DCompositionCreateDevice2。
+
 ## DbgHelp.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
