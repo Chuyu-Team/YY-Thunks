@@ -769,6 +769,8 @@ CStringA FindInAllTarget(CStringA _szDllName, CStringA _szImportName, CStringW _
     UINT16 _CurrentTargetVersion[4] = {};
     swscanf_s(_szCurrentTarget, L"%hd.%hd.%hd.%hd", &_CurrentTargetVersion[3], &_CurrentTargetVersion[2], &_CurrentTargetVersion[1], &_CurrentTargetVersion[0]);
 
+    std::map<UINT64, CStringW> _TargetVersions;
+
     do
     {
         if (_FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -785,23 +787,28 @@ CStringA FindInAllTarget(CStringA _szDllName, CStringA _szImportName, CStringW _
                 {
                     if (_pModuleInfo->FindImport(_szImportName))
                     {
-                        if (_szResult.GetLength())
-                        {
-                            _szResult += ',';
-                            _szResult += ' ';
-                        }
-                        _szResult += _FindFileData.cFileName;
                         // 去掉后缀 ".txt"
-                        _szResult.ReleaseBufferSetLength(_szResult.GetLength() - 4);
+                        _TargetVersions[*(UINT64*)_TargetVersion] = CStringW(_FindFileData.cFileName, wcslen(_FindFileData.cFileName) - 4);
                     }
                 }
             }
-
         }
 
     } while (FindNextFileW(_hFindFile, &_FindFileData));
 
     FindClose(_hFindFile);
+
+    if (_TargetVersions.size())
+    {
+        for (const auto& _oTargetVersion : _TargetVersions)
+        {
+            _szResult += _oTargetVersion.second;
+            _szResult += ',';
+            _szResult += ' ';
+        }
+
+        _szResult.GetBufferSetLength(_szResult.GetLength() - 2);
+    }
 
     return _szResult;
 }
