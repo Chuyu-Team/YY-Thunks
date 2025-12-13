@@ -177,6 +177,7 @@ namespace
         // XP系统默认值是500，我们难以知道
         LONG uThreadPoolWorkerCount;
         static constexpr auto kMaxThreadPoolWorkerCount = 500;
+        volatile DWORD bHasCoInitializeMultithreaded;
     };
 }
 #pragma pack(pop)
