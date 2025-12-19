@@ -1,0 +1,48 @@
+﻿name: "Feature Request Template - English"
+description: "Use this template to request a new feature or API support"
+title: "Brief title, such as: Report missing related APIs such as YYY when executing XXX"
+labels: ["进度：等待审核"]
+type: Feature
+body:
+  - type: markdown
+    attributes:
+      value: "* Tips: After raising an issue, we do not guarantee follow-up. We appreciate PR submissions more than issues.
+              * Clearly and concisely describe the suggestion. Examples: Report missing related APIs such as YYY when executing XXX; Hope to support a new feature provided by VS."
+
+  - type: textarea
+    id: background_en
+    attributes:
+      label: "Background Information"
+      description: "Provide the following relevant information (fill in item by item if applicable)."
+      placeholder: |
+        - Why do we use this feature/API? What actual needs are encountered?
+          - If it is just \"feels useful\" or \"feels good\", personal preferences will not be considered.
+        - How is the interface/function implemented in other similar projects? (if any)
+        - The degree of support needed (e.g., at least needs to run on Windows 7)
+        - If the API is missing, please provide the scan results of YY.Depends.Analyzer in detail (one API missing may be accompanied by multiple other APIs missing)
+          - For details, refer to Fea 138: https://github.com/Chuyu-Team/YY-Thunks/issues/138
+    validations:
+      required: true
+
+  - type: textarea
+    id: details_en
+    attributes:
+      label: "Detailed Explanation"
+      description: "Add details that help understand the need: scenarios, constraints, compatibility expectations, risks, alternatives, etc."
+      placeholder: |
+        - Specific usage scenario:
+        - Relation to existing interfaces:
+        - Compatibility expectations (minimum OS version, architecture, etc.):
+        - Potential risks or impacts:
+        - Alternatives and their drawbacks:
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmations_en
+    attributes:
+      label: "Confirm before submitting"
+      options:
+        - label: "I have searched existing issues for duplicates"
+        - label: "I have provided background information and expected support scope"
+        - label: "If APIs are missing, I have attached YY.Depends.Analyzer results or links"

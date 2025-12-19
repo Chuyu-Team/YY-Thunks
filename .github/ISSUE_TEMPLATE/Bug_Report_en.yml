@@ -1,0 +1,81 @@
+﻿name: "Bug Report Template - English"
+description: "Use this template to report a bug when using YY-Thunks"
+title: "Brief title, such as: Crash/deadlock when calling XXXX"
+labels: ["进度：等待审核"]
+type: bug
+body:
+  - type: markdown
+    attributes:
+      value: "Clearly and concisely describe the bug title. Examples: Crash/deadlock when calling XXXX; Cannot find XXXX when linking; Calling XXXX returns unexpected results."
+
+  - type: textarea
+    id: background_en
+    attributes:
+      label: "Background Information"
+      description: "Provide relevant environment details."
+      placeholder: |
+        - Screenshot of error: <paste or drag image>
+        - Operating System Version: Windows 10 16299 arm64
+        - YY-Thunks Version: v1.1.9
+        - YY-Thunks Configuration: Compatible to 6.0.6000
+        - VC Toolset Version: 14.14.26428
+        - Project Platform: x64
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_en
+    attributes:
+      label: "Expected behavior"
+      description: "Describe what should happen. Example: Calling XXXX should normally return XXX."
+      placeholder: "Calling XXXX should normally return XXX"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_en
+    attributes:
+      label: "Steps to reproduce"
+      description: "Detail the steps to reproduce or provide minimum reproducible code."
+      placeholder: |
+        1. Use XXXX version of YY-Thunks
+        2. Call XXXX function
+        3. Then call YYYY function
+        4. Observe crash/deadlock/unexpected results
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro_code_en
+    attributes:
+      label: "Reproduction code example (C++)"
+      description: "Provide a minimal, compilable C++14 example."
+      placeholder: |
+        ```cpp
+        int main()
+        {
+            // Minimal reproducible code
+            return 0;
+        }
+        ```
+      render: cpp
+
+  - type: textarea
+    id: investigation_en
+    attributes:
+      label: "Your Investigation Results"
+      description: "Record the work done and clues found."
+      placeholder: |
+        - I have tried different versions of YY-Thunks; result is the same.
+        - Only XXX OS version can reproduce.
+        - Only the first call to XXXX gives incorrect results.
+
+  - type: checkboxes
+    id: confirmations_en
+    attributes:
+      label: "Confirm before submitting"
+      options:
+        - label: "I have searched existing issues for duplicates"
+        - label: "I included detailed steps or a minimal repro"
+        - label: "I included environment details"

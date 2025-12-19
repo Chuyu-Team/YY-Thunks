@@ -1,0 +1,81 @@
+﻿name: "Bug反馈模板 - 简体中文"
+description: "使用YY-Thunks时遇到Bug请选择此模板"
+title: "简要标题，如：调用XXXX函数时发生崩溃/死锁"
+labels: ["进度：等待审核"]
+type: bug
+body:
+  - type: markdown
+    attributes:
+      value: "请简洁明了地描述此Bug的标题。示例：调用XXXX函数时发生崩溃/死锁；链接时找不到XXXX函数；调用XXXX函数时返回结果非预期。"
+
+  - type: textarea
+    id: background_cn
+    attributes:
+      label: "背景信息"
+      description: "请提供以下相关信息（可逐条填写）：错误截图（如有）；操作系统版本；YY-Thunks版本；YY-Thunks配置；VC工具集版本；工程平台。"
+      placeholder: |
+        - 错误截图：<粘贴或拖拽图片>
+        - 操作系统版本：Windows 10 16299 arm64
+        - YY-Thunks版本：v1.1.9
+        - YY-Thunks配置：兼容到 6.0.6000
+        - VC工具集版本：14.14.26428
+        - 工程平台：x64
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_cn
+    attributes:
+      label: "预期行为"
+      description: "请描述此Bug的预期行为。示例：调用XXXX函数时应该正常返回XXX。"
+      placeholder: "调用XXXX函数时应该正常返回XXX"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_cn
+    attributes:
+      label: "重现步骤或最小复现代码"
+      description: "详细描述重现此Bug的步骤或提供最小复现代码。"
+      placeholder: |
+        1. 使用XXXX版本的YY-Thunks
+        2. 调用XXXX函数
+        3. 再调用YYYY函数
+        4. 观察到崩溃/死锁/非预期返回结果
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro_code_cn
+    attributes:
+      label: "复现代码示例（C++）"
+      description: "提供可编译运行的最小复现代码（C++14）。"
+      placeholder: |
+        ```cpp
+        int main()
+        {
+            // 这里是最小复现代码
+            return 0;
+        }
+        ```
+      render: cpp
+
+  - type: textarea
+    id: investigation_cn
+    attributes:
+      label: "你的调查结果"
+      description: "记录你为调查此Bug所做的工作和线索。"
+      placeholder: |
+        - 我尝试过使用不同版本的YY-Thunks，结果是一样的。
+        - 我发现只有XXX版本的系统能复现此问题。
+        - 我发现只有第一次调用XXXX函数时结果才不对。
+
+  - type: checkboxes
+    id: confirmations_cn
+    attributes:
+      label: "提交前确认"
+      options:
+        - label: "我已搜索现有Issue，未发现重复问题"
+        - label: "我已提供尽可能详细的重现步骤或最小复现代码"
+        - label: "我已填写完整环境信息"

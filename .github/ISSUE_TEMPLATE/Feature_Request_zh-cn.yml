@@ -1,0 +1,48 @@
+﻿name: "新功能建议模板 - 简体中文"
+description: "需要新的API支持或者功能请选择此模板"
+title: "简要标题，如：执行XXX程序时报告YYY等相关API缺失"
+labels: ["进度：等待审核"]
+type: Feature
+body:
+  - type: markdown
+    attributes:
+      value: "* 温馨提示：提出问题后我们不保证跟进，与其提出问题我们更欣赏提交PR。
+              * 请简洁明了地描述此建议。如：执行XXX程序时报告YYY等相关API缺失；希望支持某个VS新提供的功能。"
+
+  - type: textarea
+    id: background_cn
+    attributes:
+      label: "背景信息"
+      description: "请提供以下相关信息（可逐条填写）。"
+      placeholder: |
+        - 我们为什么使用这个功能/API？遇到了实际什么需求？
+          - 如果仅仅是“觉得有用”或者“觉得不错”等个人喜好我们不予考虑。
+        - 该接口/功能在其他类似项目中是如何实现的？（如果有的话）
+        - 需要支持的程度（比如：至少需要在 Windows 7 上可以跑起来）
+        - 如果缺API，请详细提供 YY.Depends.Analyzer 的扫描结果（因为一个API缺失可能伴随着其他多个API缺失）
+          - 具体请参考 Fea 138 中的 YY.Depends.Analyzer 使用方法：https://github.com/Chuyu-Team/YY-Thunks/issues/138
+    validations:
+      required: true
+
+  - type: textarea
+    id: details_cn
+    attributes:
+      label: "详细说明"
+      description: "补充任何有助于理解需求的细节：场景、限制、兼容性期望、风险、替代方案等。"
+      placeholder: |
+        - 具体使用场景：
+        - 与现有接口的关系：
+        - 兼容性期望（最低系统版本、架构等）：
+        - 潜在风险或影响：
+        - 可替代方案及其不足：
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmations_cn
+    attributes:
+      label: "提交前确认"
+      options:
+        - label: "我已搜索现有 Issue，未发现重复建议"
+        - label: "我已提供背景信息与期望支持范围"
+        - label: "如涉及缺API，我已附上 YY.Depends.Analyzer 扫描结果或链接"
