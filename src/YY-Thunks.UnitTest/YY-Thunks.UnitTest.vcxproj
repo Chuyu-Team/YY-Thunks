@@ -115,6 +115,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <EntryPointSymbol>DllMainCRTStartupForYY_Thunks</EntryPointSymbol>
+      <AdditionalOptions>/alternatename:_YY_ThunksOriginalDllMainCRTStartup=__DllMainCRTStartup@12 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -135,6 +136,7 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <EntryPointSymbol>DllMainCRTStartupForYY_Thunks</EntryPointSymbol>
+      <AdditionalOptions>/alternatename:_YY_ThunksOriginalDllMainCRTStartup=__DllMainCRTStartup@12 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -155,6 +157,7 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <EntryPointSymbol>DllMainCRTStartupForYY_Thunks</EntryPointSymbol>
+      <AdditionalOptions>/alternatename:YY_ThunksOriginalDllMainCRTStartup=_DllMainCRTStartup %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -180,6 +183,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <EntryPointSymbol>DllMainCRTStartupForYY_Thunks</EntryPointSymbol>
+      <AdditionalOptions>/alternatename:YY_ThunksOriginalDllMainCRTStartup=_DllMainCRTStartup %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
