@@ -8,7 +8,19 @@ namespace YY::Thunks::internal
         LPVOID    const reserved
         );
 
-    // 如果希望自定义函数入口点，可以设置此函数
+    extern "C" BOOL WINAPI YY_ThunksOriginalDllMainCRTStartup(
+        HINSTANCE const instance,
+        DWORD     const reason,
+        LPVOID    const reserved
+        );
+
+#ifdef _WIN64
+#pragma comment(linker, "/alternatename:YY_ThunksOriginalDllMainCRTStartup=_DllMainCRTStartup")
+#else
+#pragma comment(linker, "/alternatename:_YY_ThunksOriginalDllMainCRTStartup@12=__DllMainCRTStartup@12")
+#endif
+
+    // 如果希望自定义函数入口点，可以设置此函数（已经废除，未来移除！！！）
     extern "C" extern decltype(_DllMainCRTStartup)* const __pfnDllMainCRTStartupForYY_Thunks;
 
 #if YY_Thunks_Target < __WindowsNT6
@@ -483,7 +495,7 @@ namespace YY::Thunks::internal
         LPVOID    const _pReserved
         )
     {
-        const auto _pfnDllMainCRTStartup = __pfnDllMainCRTStartupForYY_Thunks ? __pfnDllMainCRTStartupForYY_Thunks : &_DllMainCRTStartup;
+        const auto _pfnDllMainCRTStartup = __pfnDllMainCRTStartupForYY_Thunks ? __pfnDllMainCRTStartupForYY_Thunks : &YY_ThunksOriginalDllMainCRTStartup;
 
         // Vista开始已经可以动态的处理TLS问题了，所以这里只针对老系统处理。
         switch (_uReason)
