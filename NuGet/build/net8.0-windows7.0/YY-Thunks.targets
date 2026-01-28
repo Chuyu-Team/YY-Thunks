@@ -36,6 +36,8 @@
       <LinkerArg Include="$(MSBuildThisFileDirectory)..\native\objs\$(YY_Thunks_PlatformShortName)\$(Internal_YY_Thunks_File)" />
       <!--为早期版本的系统增强Tls支持，如果不使用DllMainCRTStartupForYY_Thunks，使用thread_local时可能发生崩溃。-->
       <LinkerArg Condition="('$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_WinXP.obj' or '$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_Win2K.obj') and '$(NativeLib)' == 'Shared' and '$(OutputType)' == 'Library'" Include="/ENTRY:DllMainCRTStartupForYY_Thunks" />
+      <LinkerArg Condition="('$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_WinXP.obj' or '$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_Win2K.obj') and '$(NativeLib)' == 'Shared' and '$(OutputType)' == 'Library' and '$(RuntimeIdentifier)'=='win-x86'" Include="/alternatename:_YY_ThunksOriginalDllMainCRTStartup=__DllMainCRTStartup@12" />
+      <LinkerArg Condition="('$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_WinXP.obj' or '$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_Win2K.obj') and '$(NativeLib)' == 'Shared' and '$(OutputType)' == 'Library' and '$(RuntimeIdentifier)'=='win-x64'" Include="/alternatename:YY_ThunksOriginalDllMainCRTStartup=_DllMainCRTStartup" />
       <!--.NET 9的Microsoft.NETCore.Native.Windows.targets只为exe配置SUBSYSTEM，所以兼容XP时我们需要手工为DLL配置一次SUBSYSTEM-->
       <LinkerArg Condition="('$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_WinXP.obj' or '$(Internal_YY_Thunks_File)' == 'YY_Thunks_for_Win2K.obj') and '$(NativeLib)' == 'Shared' and '$(OutputType)' == 'Library' and '$(LinkerSubsystem)'==''" Include="/SUBSYSTEM:WINDOWS,$(YY_Thunks_LinkerSubsystemMinVersion)" />
     </ItemGroup>

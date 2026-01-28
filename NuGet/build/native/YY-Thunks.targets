@@ -32,8 +32,17 @@
       <MinimumRequiredVersion Condition=" '%(Link.MinimumRequiredVersion)' == '' and '$(PlatformShortName)'=='x86' and '$(Internal_YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' ">5.01</MinimumRequiredVersion>
       <MinimumRequiredVersion Condition=" '%(Link.MinimumRequiredVersion)' == '' and '$(PlatformShortName)'=='x64' and '$(Internal_YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' ">5.02</MinimumRequiredVersion>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)objs\$(PlatformShortName)\$(Internal_YY_Thunks_File);%(AdditionalDependencies)</AdditionalDependencies>
-      <EntryPointSymbol Condition="'$(ConfigurationType)'=='DynamicLibrary' and ('$(Internal_YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' or '$(Internal_YY_Thunks_File)'=='YY_Thunks_for_Win2K.obj')">DllMainCRTStartupForYY_Thunks</EntryPointSymbol>
     </Link>
+    <Link Condition="'$(PlatformShortName)'=='x86' and '$(ConfigurationType)'=='DynamicLibrary' and ('$(Internal_YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' or '$(Internal_YY_Thunks_File)'=='YY_Thunks_for_Win2K.obj')">
+      <AdditionalOptions Condition="'%(Link.EntryPointSymbol)' == ''">/alternatename:_YY_ThunksOriginalDllMainCRTStartup=__DllMainCRTStartup@12 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'%(Link.EntryPointSymbol)' != ''">/alternatename:_YY_ThunksOriginalDllMainCRTStartup=_%(EntryPointSymbol)@12 %(AdditionalOptions)</AdditionalOptions>
+      <EntryPointSymbol>DllMainCRTStartupForYY_Thunks</EntryPointSymbol>
+    </Link>
+    <Link Condition="'$(PlatformShortName)'=='x64' and '$(ConfigurationType)'=='DynamicLibrary' and ('$(Internal_YY_Thunks_File)'=='YY_Thunks_for_WinXP.obj' or '$(Internal_YY_Thunks_File)'=='YY_Thunks_for_Win2K.obj')">
+      <AdditionalOptions Condition="'%(Link.EntryPointSymbol)' == ''">/alternatename:YY_ThunksOriginalDllMainCRTStartup=_DllMainCRTStartup %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'%(Link.EntryPointSymbol)' != '''">/alternatename:YY_ThunksOriginalDllMainCRTStartup=%(EntryPointSymbol) %(AdditionalOptions)</AdditionalOptions>
+      <EntryPointSymbol>DllMainCRTStartupForYY_Thunks</EntryPointSymbol>
+    </Link>      
   </ItemDefinitionGroup>
   <ItemGroup>
     <!-- 属性页配置 -->

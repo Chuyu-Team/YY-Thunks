@@ -123,8 +123,11 @@ as NuGet is designed to be foolproof and easier to use.
 1. Download and unzip [YY-Thunks-Objs](https://github.com/Chuyu-Team/YY-Thunks/releases) to project directory.
 2. `Linker` - `Input` - `Additional Dependencies`, add `objs\$(PlatformShortName)\YY_Thunks_for_WinXP.obj`.
 3. `Linker` - `System` - `Minimum Required Version`, set to `5.1` (WinXP 32-bit) or `5.2` (WinXP x64 or Win2003).
-4. If the project is a `Dynamic Link Library`, then change `Linker` - `Advanced` - `Custom Entry Point` to `DllMainCRTStartupForYY_Thunks`
-    (If you ignore this step, the XP system may crash with `thread_local`).
+4. If the project is a `Dynamic Link Library` (If you ignore this step, the XP system may crash with `thread_local`).
+    - 4.1. change `Linker` - `Advanced` - `Custom Entry Point` to `DllMainCRTStartupForYY_Thunks`
+    - 4.2. `Linker`- `CommandLine` add:
+       - 32bit DLL：`/alternatename:_YY_ThunksOriginalDllMainCRTStartup=__DllMainCRTStartup@12`
+       - 64bit DLL：`/alternatename:YY_ThunksOriginalDllMainCRTStartup=_DllMainCRTStartup`
 5. Rebuild the solution.
 
 > Note: If your app needs to be compatible with Vista or later, please set `Additional Dependencies` to 
@@ -136,8 +139,11 @@ as NuGet is designed to be foolproof and easier to use.
 1. Download and unzip [YY-Thunks-Lib](https://github.com/Chuyu-Team/YY-Thunks/releases) to project directory.
 2. Add a parameter like `-LIBPATH:YY-Thunks_Root_Dir/lib/5.1.2600.0/x86` to the linker and make sure the order is higher than WinSDK.
 3. Please add parameter `-SUBSYSTEM:WINDOWS",5.1"` or `-SUBSYSTEM:CONSOLE",5.1"` or `-SUBSYSTEM:WINDOWS",5.2"` or `-SUBSYSTEM:CONSOLE",5.2"` to linker.
-4. If the project is a `Dynamic Link Library`, please add parameter `-ENTRY:DllMainCRTStartupForYY_Thunks` to linker
-    (If you ignore this step, the XP system may crash with `thread_local`).
+4. If the project is a `Dynamic Link Library` (If you ignore this step, the XP system may crash with `thread_local`)
+    - 4.1. add parameter `-ENTRY:DllMainCRTStartupForYY_Thunks` to linker
+    - 4.2. add parameter
+       - 32bit DLL：`-alternatename:_YY_ThunksOriginalDllMainCRTStartup=__DllMainCRTStartup@12`
+       - 64bit DLL：`-alternatename:YY_ThunksOriginalDllMainCRTStartup=_DllMainCRTStartup`
 5. Rebuild the solution.
 
 ## 3. Compatibility
