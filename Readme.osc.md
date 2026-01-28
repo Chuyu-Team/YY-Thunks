@@ -58,7 +58,7 @@ ULONGLONG WINAPI GetTickCount64(VOID)
 #### 2.2. Vistual Studio .NET Native AOT项目如何使用？
 1. 给`TargetFramework`添加`Windows`系统平台，比如修改为`net8.0-windows`或者`net9.0-windows`。
 2. 项目右键 `管理 NuGet 程序包`。NuGet搜索框中输入：`YY-Thunks`，搜索后点击安装。
-3. 如果需要支持XP，请将项目属性`WindowsSupportedOSPlatformVersion`调整为`5.1`。大致如下：
+3. 如果需要支持XP，请将项目属性`SupportedOSPlatformVersion`调整为`5.1`。大致如下：
     ```xml
     <Project Sdk="Microsoft.NET.Sdk">
         <PropertyGroup>
@@ -119,8 +119,14 @@ ULONGLONG WINAPI GetTickCount64(VOID)
    然后解压到你的工程目录。
 2. 【链接器】-【输入】-【附加依赖项】，添加 
    `objs\$(PlatformShortName)\YY_Thunks_for_WinXP.obj`。
-3. 【链接器】-【系统】-【所需的最低版本】，根据实际情况填写 `5.01`（WinXP 32位） 或者 `5.02`（WinXP x64、2003）。
-4. 如果是编译DLL，那么【链接器】-【高级】-【自定义入口点】更改为`DllMainCRTStartupForYY_Thunks`（不这样做XP下使用thread_local可能崩溃！）
+3. 【链接器】-【系统】-【所需的最低版本】，根据实际情况填写
+   - WinXP 32位填写`5.01`
+   - WinXP x64、2003填写`5.02`
+4. 如果是编译DLL（不这样做XP下使用thread_local可能崩溃！）
+   - 4.1. 【链接器】-【高级】-【自定义入口点】更改为`DllMainCRTStartupForYY_Thunks`
+   - 4.2. 【链接器】-【命令行】额外添加：
+       - 32位 DLL：`/alternatename:_YY_ThunksOriginalDllMainCRTStartup@12=__DllMainCRTStartup@12`
+       - 64位 DLL：`/alternatename:YY_ThunksOriginalDllMainCRTStartup=_DllMainCRTStartup`
 5. 重新编译代码。
 
 > 温馨提示：如果需要兼容 Vista，【所需的最低版本】无需修改，但是【附加依赖项】请选择 
@@ -133,7 +139,11 @@ ULONGLONG WINAPI GetTickCount64(VOID)
    然后解压到你的工程目录。
 2. 将 `-LIBPATH:YY-Thunks根目录/Lib/5.1.2600.0/x86` 类似的参数添加到链接器参数中，并确保顺序比系统SDK靠前。
 3. 链接器额外传递 `-SUBSYSTEM:WINDOWS",5.1"` 或者 `-SUBSYSTEM:CONSOLE",5.1"` 或者 `-SUBSYSTEM:WINDOWS",5.2"` 或者 `-SUBSYSTEM:CONSOLE",5.2"`。
-4. 如果是编译DLL，额外给链接器传递 `-ENTRY:DllMainCRTStartupForYY_Thunks`，修改DLL入口点（不这样做XP下使用thread_local可能崩溃！）
+4. 如果是编译DLL（不这样做XP下使用thread_local可能崩溃！）
+   - 4.1. 额外给链接器传递 `-ENTRY:DllMainCRTStartupForYY_Thunks`，修改DLL入口点
+   - 4.2. 额外给链接器传递
+       - 32位 DLL：`-alternatename:_YY_ThunksOriginalDllMainCRTStartup@12=__DllMainCRTStartup@12`
+       - 64位 DLL：`-alternatename:YY_ThunksOriginalDllMainCRTStartup=_DllMainCRTStartup`
 5. 重新编译代码。
 
 > 温馨提示：如果您看不懂链接器的配置指引那么请使用NuGet版！NuGet对新手友好。
