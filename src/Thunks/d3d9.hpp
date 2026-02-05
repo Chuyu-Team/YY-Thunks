@@ -26,4 +26,24 @@ namespace YY::Thunks
         return D3DERR_NOTAVAILABLE;
     }
 #endif
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    __DEFINE_THUNK(
+    d3d9,
+    4,
+    IDirect3D9*,
+    WINAPI,
+    Direct3DCreate9,
+        UINT SDKVersion
+        )
+    {
+        if (const auto _pfnDirect3DCreate9 = try_get_Direct3DCreate9())
+        {
+            return _pfnDirect3DCreate9(SDKVersion);
+        }
+
+        return nullptr;
+    }
+#endif
 }

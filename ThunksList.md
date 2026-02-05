@@ -222,6 +222,7 @@
 | 函数                                       | Fallback
 | ----                                       | -----------
 | Direct3DCreate9Ex                          | 返回 `D3DERR_NOTAVAILABLE`。
+| Direct3DCreate9                            | 返回 `nullptr`。
 
 ## d3d11.dll
 | 函数                                       | Fallback
