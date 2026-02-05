@@ -146,6 +146,20 @@ as NuGet is designed to be foolproof and easier to use.
        - 64bit DLL：`-alternatename:YY_ThunksOriginalDllMainCRTStartup=_DllMainCRTStartup`
 5. Rebuild the solution.
 
+#### 2.4.3. For Rust (cargo) Project
+If you are using the MSVC toolchain, you can pass the required linker options via `RUSTFLAGS`.
+
+- `YY-Thunks-Objs` can be downloaded from [YY-Thunks releases](https://github.com/Chuyu-Team/YY-Thunks/releases). It contains `objs\<arch>\YY_Thunks_for_*.obj`.
+- `VC-LTL-Binary` can be downloaded from [VC-LTL5 releases](https://github.com/Chuyu-Team/VC-LTL5/releases). It contains `TargetPlatform\<SDKVersion>\lib\<arch>`.
+
+PowerShell example:
+```powershell
+$env:RUSTFLAGS="-Clink-args=<PATH_TO_YY-Thunks-Objs>\objs\x64\YY_Thunks_for_Win7.obj -L <PATH_TO_VC-LTL-Binary>\TargetPlatform\10.0.19041.0\lib\x64 -Clink-args=/subsystem:console,5.01 -Clink-args=oldnames.lib"
+cargo build --release
+```
+
+> Note: Replace the `<PATH_...>` parts with your actual extraction paths, and adjust `x86`/`x64`, `.obj` name and subsystem version as needed.
+
 ## 3. Compatibility
 
 ### 3.1. Supported Compiler
