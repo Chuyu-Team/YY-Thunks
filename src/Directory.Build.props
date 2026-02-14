@@ -10,7 +10,12 @@ Visual Studio 2019 16.8或者更高版本可以直接让Visual Studio NuGet插�
 
 
 作者：mingkuang
-最后修订：2021-06-21
+更新日志：
+# 2026年2月11日
+* 兼容VS2026
+
+# 2021-06-21
+* 初始版本
 
 -->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
@@ -23,8 +28,9 @@ Visual Studio 2019 16.8或者更高版本可以直接让Visual Studio NuGet插�
     <NuGetTargetMoniker Condition="'$(NuGetTargetMoniker)' == ''">native,Version=v0.0</NuGetTargetMoniker>
     <!--如果不指定这一行，那么arm64平台会找不到RID而失败-->
     <RuntimeIdentifiers Condition="'$(RuntimeIdentifiers)' == ''">win;win-x86;win-x64;win-arm;win-arm64</RuntimeIdentifiers>
+    <TargetFramework>native</TargetFramework>
   </PropertyGroup>
-
+  
   <!--从兼容性考虑，继续向上搜索 Directory.Build.props-->
   <PropertyGroup>
     <DirectoryBuildPropsPath>$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))</DirectoryBuildPropsPath>

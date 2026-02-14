@@ -33,7 +33,6 @@
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WindowsTargetPlatformMinVersion>5.1.2600.0</WindowsTargetPlatformMinVersion>
-    <YY_Thunks_File>YY_Thunks_for_WinXP.obj</YY_Thunks_File>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -42,7 +41,6 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <WindowsTargetPlatformMinVersion>5.1.2600.0</WindowsTargetPlatformMinVersion>
-    <YY_Thunks_File>YY_Thunks_for_WinXP.obj</YY_Thunks_File>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -50,7 +48,6 @@
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WindowsTargetPlatformMinVersion>5.1.2600.0</WindowsTargetPlatformMinVersion>
-    <YY_Thunks_File>YY_Thunks_for_WinXP.obj</YY_Thunks_File>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -59,7 +56,6 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <WindowsTargetPlatformMinVersion>5.1.2600.0</WindowsTargetPlatformMinVersion>
-    <YY_Thunks_File>YY_Thunks_for_WinXP.obj</YY_Thunks_File>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -149,7 +145,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="VC-LTL">
-      <Version>5.1.1-Beta1</Version>
+      <Version>5.3.1</Version>
+    </PackageReference>
+    <PackageReference Include="YY-Thunks">
+      <Version>1.1.9</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
