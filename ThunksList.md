@@ -129,6 +129,7 @@
 | RoOriginateLanguageException               | 调用RoOriginateError。
 | RoTransformError                           | 根据oldError以及newError值返回TRUE或者FLASE。
 | RoTransformErrorW                          | 根据oldError以及newError值返回TRUE或者FLASE。
+| GetRestrictedErrorInfo                     | 返回 E_NOTIMPL。
 
 ## api-ms-win-core-winrt-string-l1-1-0.dll
 | 函数                                       | Fallback
@@ -910,3 +911,4 @@
 | WSASocketW(A)                              | 低于6.1.7601时自动去除 `WSA_FLAG_NO_HANDLE_INHERIT`。
 | WSAIoctl                                   | 低于6.0时，`SIO_BASE_HANDLE` 代码返回SOCKET自身。
 | GetHostNameW                               | 调用gethostname。
+
