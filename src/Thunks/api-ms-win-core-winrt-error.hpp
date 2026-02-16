@@ -170,4 +170,27 @@ namespace YY::Thunks
         return TRUE;
     }
 #endif
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端	Windows 8 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    api_ms_win_core_winrt_error_l1_1_0,
+    4,
+    HRESULT,
+    WINAPI,
+    GetRestrictedErrorInfo,
+        _Out_ IUnknown** _ppRestrictedErrorInfo
+        )
+    {
+        if (const auto _pfnGetRestrictedErrorInfo = try_get_GetRestrictedErrorInfo())
+        {
+            return _pfnGetRestrictedErrorInfo(_ppRestrictedErrorInfo);
+        }
+
+        return E_NOTIMPL;
+    }
+#endif
 }
+
