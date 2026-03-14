@@ -1103,6 +1103,32 @@ namespace YY ::Thunks
     }
 #endif
 
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    kernel32,
+    8,
+    VOID,
+    WINAPI,
+    GetCurrentThreadStackLimits,
+        _Out_ PULONG_PTR _pLowLimit,
+        _Out_ PULONG_PTR _pHighLimit
+        )
+    {
+        if (const auto _pfnGetCurrentThreadStackLimits = try_get_GetCurrentThreadStackLimits())
+        {
+            return _pfnGetCurrentThreadStackLimits(_pLowLimit, _pHighLimit);
+        }
+
+        const auto _pTeb = NtCurrentTeb();
+        *_pLowLimit = reinterpret_cast<ULONG_PTR>(_pTeb->DeallocationStack);
+        *_pHighLimit = reinterpret_cast<ULONG_PTR>(_pTeb->NtTib.StackBase);
+    }
+#endif
+
 #if (YY_Thunks_Target < __WindowsNT6_1)
 
     // 最低受支持的客户端	Windows 7 [桌面应用 |UWP 应用]

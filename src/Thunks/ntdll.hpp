@@ -183,4 +183,66 @@ namespace YY::Thunks
         return _Status;
     }
 #endif
+
+
+#if defined(_WIN64) && (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    ntdll,
+    24,
+    NTSTATUS,
+    NTAPI,
+    RtlAddGrowableFunctionTable,
+        _Out_ PVOID* _pDynamicTable,
+        _In_reads_(_uEntryCount) PRUNTIME_FUNCTION _pFunctionTable,
+        _In_ DWORD _uEntryCount,
+        _In_ DWORD _uMaximumEntryCount,
+        _In_ ULONG_PTR _uRangeBase,
+        _In_ ULONG_PTR _uRangeEnd
+        )
+    {
+        if (const auto _pfnRtlAddGrowableFunctionTable = try_get_RtlAddGrowableFunctionTable())
+        {
+            return _pfnRtlAddGrowableFunctionTable(_pDynamicTable, _pFunctionTable, _uEntryCount, _uMaximumEntryCount, _uRangeBase, _uRangeEnd);
+        }
+
+        if (RtlAddFunctionTable(_pFunctionTable, _uEntryCount, _uRangeBase))
+        {
+            // 把 _pFunctionTable 本身作为句柄返回
+            *_pDynamicTable = reinterpret_cast<PVOID>(_pFunctionTable);
+            return STATUS_SUCCESS;
+        }
+
+        *_pDynamicTable = nullptr;
+        return STATUS_UNSUCCESSFUL;
+    }
+#endif
+
+
+#if defined(_WIN64) && (YY_Thunks_Target < __WindowsNT6_2)
+
+    // 最低受支持的客户端    Windows 8 [桌面应用|UWP 应用]
+    // 最低受支持的服务器    Windows Server 2012[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    ntdll,
+    4,
+    VOID,
+    NTAPI,
+    RtlDeleteGrowableFunctionTable,
+        _In_ PVOID _pDynamicTable
+        )
+    {
+        if (const auto _pfnRtlDeleteGrowableFunctionTable = try_get_RtlDeleteGrowableFunctionTable())
+        {
+            return _pfnRtlDeleteGrowableFunctionTable(_pDynamicTable);
+        }
+
+        if (_pDynamicTable)
+        {
+            RtlDeleteFunctionTable(reinterpret_cast<PRUNTIME_FUNCTION>(_pDynamicTable));
+        }
+    }
+#endif
 } // namespace YY::Thunks
