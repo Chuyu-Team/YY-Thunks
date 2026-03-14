@@ -547,6 +547,7 @@
 | UpdateProcThreadAttribute                  | 内部实现。PROC_THREAD_ATTRIBUTE_PARENT_PROCESS与PROC_THREAD_ATTRIBUTE_HANDLE_LIST特性会被忽略处理。
 | GetLargePageMinimum                        | 假定为0。
 | SetThreadStackGuarantee                    | 调用VirtualAlloc。
+| GetCurrentThreadStackLimits                | 读取当前线程TEB中的 DeallocationStack 与 StackBase。
 | SetCoalescableTimer                        | 调用SetTimer。
 | SetWaitableTimerEx                         | 调用SetWaitableTimer。
 | EnumResourceLanguagesExW(A)                | 调用EnumResourceLanguagesW(A)。
@@ -681,6 +682,8 @@
 | ----                                       | -----------
 | * NtCancelIoFileEx                         | 尝试对所有线程调用 NtCancelIoFile。警告：将取消此文件的所有IO请求。
 | NtOpenKeyEx                                | 调用 NtOpenKey 或者 NtCreateKey。
+| RtlAddGrowableFunctionTable                | 调用 RtlAddFunctionTable；成功后将 _pFunctionTable 作为句柄写入 _pDynamicTable。
+| RtlDeleteGrowableFunctionTable             | 将 _pDynamicTable 视为 PRUNTIME_FUNCTION，并调用 RtlDeleteFunctionTable。
 
 ## ole32.dll
 | 函数                                       | Fallback
