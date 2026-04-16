@@ -190,6 +190,7 @@
     <ClCompile Include="api-ms-win-core-handle.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-kernel32-legacy.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-libraryloader.UnitTest.cpp" />
+    <ClCompile Include="api-ms-win-core-sysinfo.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-winrt-string.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-power-base.UnitTest.cpp" />
     <ClCompile Include="bcrypt.UnitTest.cpp" />
