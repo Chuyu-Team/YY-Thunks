@@ -145,6 +145,7 @@ namespace YY::Thunks
             goto __End;
         }
 
+        lStatus = ERROR_SUCCESS;
 
         {
             const auto pProcessorInfoLastItem = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION*)((byte*)pProcessorInfo + cbLogicalProcessorInformation - sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION));
@@ -181,12 +182,11 @@ namespace YY::Thunks
                     if (0 == cbInfoNeed)
                         continue;
 
+                    auto pInfo = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*)((byte*)Buffer + cbBufferUsed);
                     cbBufferUsed += cbInfoNeed;
 
                     if (cbBuffer >= cbBufferUsed)
                     {
-                        auto pInfo = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*)((byte*)Buffer + cbBufferUsed);
-
                         memset(pInfo, 0, cbInfoNeed);
 
                         pInfo->Size = cbInfoNeed;
@@ -222,14 +222,12 @@ namespace YY::Thunks
             if (RelationshipType == LOGICAL_PROCESSOR_RELATIONSHIP::RelationAll
                 || RelationGroup == RelationshipType)
             {
+                auto pInfo = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*)((byte*)Buffer + cbBufferUsed);
                 const auto cbInfoNeed = RTL_SIZEOF_THROUGH_FIELD(SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, Group);
-
                 cbBufferUsed += cbInfoNeed;
 
                 if (cbBuffer >= cbBufferUsed)
                 {
-                    auto pInfo = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*)((byte*)Buffer + cbBufferUsed);
-
                     memset(pInfo, 0, cbInfoNeed);
 
                     pInfo->Size = cbInfoNeed;
