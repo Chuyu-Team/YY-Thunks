@@ -42,6 +42,46 @@ namespace Iphlpapi
         }
     };
 
+    TEST_CLASS(GetTcpTable2)
+    {
+    public:
+        std::vector<BYTE> GetTcpTable2Helper(BOOL Order)
+        {
+            ULONG _uTcpTable2Size = 0;
+            auto _lStatus = ::GetTcpTable2(nullptr, &_uTcpTable2Size, FALSE);
+            Assert::AreEqual(_lStatus, (DWORD)ERROR_INSUFFICIENT_BUFFER);
+
+            std::vector<BYTE> _TcpTable2Buffer(_uTcpTable2Size);
+            auto _pTcpTable2 = reinterpret_cast<PMIB_TCPTABLE2>(_TcpTable2Buffer.data());
+            _lStatus = ::GetTcpTable2(_pTcpTable2, &_uTcpTable2Size, FALSE);
+            Assert::AreEqual(_lStatus, (DWORD)NO_ERROR);
+            return _TcpTable2Buffer;
+        }
+
+        TEST_METHOD(GetTcpTable2简单验证)
+        {
+            auto _TcpTable2Buffer1 = GetTcpTable2Helper(FALSE);
+            AwaysNullGuard Guard;
+            Guard |= YY::Thunks::aways_null_try_get_GetTcpTable2;
+            auto _TcpTable2Buffer2 = GetTcpTable2Helper(FALSE);
+
+            auto _pTcpTable1 = reinterpret_cast<PMIB_TCPTABLE2>(_TcpTable2Buffer1.data());
+            auto _pTcpTable2 = reinterpret_cast<PMIB_TCPTABLE2>(_TcpTable2Buffer2.data());
+
+            Assert::AreEqual(_pTcpTable2->dwNumEntries, _pTcpTable1->dwNumEntries);
+            for (DWORD i = 0; i != _pTcpTable2->dwNumEntries; ++i)
+            {
+                Assert::AreEqual(_pTcpTable2->table[i].dwState, _pTcpTable1->table[i].dwState);
+                Assert::AreEqual(_pTcpTable2->table[i].dwLocalAddr, _pTcpTable1->table[i].dwLocalAddr);
+                Assert::AreEqual(_pTcpTable2->table[i].dwLocalPort, _pTcpTable1->table[i].dwLocalPort);
+                Assert::AreEqual(_pTcpTable2->table[i].dwRemoteAddr, _pTcpTable1->table[i].dwRemoteAddr);
+                Assert::AreEqual(_pTcpTable2->table[i].dwRemotePort, _pTcpTable1->table[i].dwRemotePort);
+                Assert::AreEqual(_pTcpTable2->table[i].dwOwningPid, _pTcpTable1->table[i].dwOwningPid);
+                Assert::AreEqual(DWORD(_pTcpTable2->table[i].dwOffloadState), DWORD(TCP_CONNECTION_OFFLOAD_STATE::TcpConnectionOffloadStateInHost));
+            }
+        }
+    };
+
     TEST_CLASS(ConvertInterfaceNameToLuid)
     {
         struct Input

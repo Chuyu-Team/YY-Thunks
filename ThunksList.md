@@ -388,6 +388,7 @@
 | if_indextoname                             | 调用ConvertInterfaceIndexToLuid、ConvertInterfaceLuidToNameA。
 | ConvertInterfaceLuidToGuid                 | 调用GetIfEntry。
 | ConvertInterfaceLuidToIndex                | 内部实现。
+| GetTcpTable2                               | 调用GetExtendedTcpTable。
 | * NotifyIpInterfaceChange                  | 什么也不做，假装成功。
 | CancelMibChangeNotify2                     | 什么也不做，假装成功。
 

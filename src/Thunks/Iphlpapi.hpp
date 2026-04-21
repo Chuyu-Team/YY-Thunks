@@ -809,4 +809,68 @@ namespace YY::Thunks
         return NO_ERROR;
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    iphlpapi,
+    12,
+    ULONG,
+    WINAPI,
+    GetTcpTable2,
+        _Out_writes_bytes_opt_(*_pSizePointer)   PMIB_TCPTABLE2 _pTcpTable,
+        _Inout_                          PULONG         _pSizePointer,
+        _In_                             BOOL           _bOrder
+        )
+    {
+        if (const auto _pfnGetTcpTable2 = try_get_GetTcpTable2())
+        {
+            return _pfnGetTcpTable2(_pTcpTable, _pSizePointer, _bOrder);
+        }
+
+        if (_pSizePointer == nullptr)
+        {
+            return ERROR_INVALID_PARAMETER;
+        }
+
+        DWORD _uOwnerPidTableSize = *_pSizePointer;
+        auto _pOwnerPidTable = reinterpret_cast<PMIB_TCPTABLE_OWNER_PID>(_pTcpTable);
+        const auto _lStatus = GetExtendedTcpTable(_pOwnerPidTable, &_uOwnerPidTableSize, _bOrder, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0);
+        if (_lStatus == ERROR_INSUFFICIENT_BUFFER)
+        {
+            const auto _uNeedSize = FIELD_OFFSET(MIB_TCPTABLE2, table) + (_uOwnerPidTableSize - FIELD_OFFSET(MIB_TCPTABLE_OWNER_PID, table)) / sizeof(MIB_TCPROW_OWNER_PID) * sizeof(MIB_TCPROW2);
+            *_pSizePointer = _uNeedSize;
+            return ERROR_INSUFFICIENT_BUFFER;
+        }
+        else if (_lStatus != NO_ERROR)
+        {
+            return _lStatus;
+        }
+        
+        const auto _uNeedSize = FIELD_OFFSET(MIB_TCPTABLE2, table) + (_uOwnerPidTableSize - FIELD_OFFSET(MIB_TCPTABLE_OWNER_PID, table)) / sizeof(MIB_TCPROW_OWNER_PID) * sizeof(MIB_TCPROW2);
+        if (*_pSizePointer < _uNeedSize)
+        {
+            *_pSizePointer = _uNeedSize;
+            return ERROR_INSUFFICIENT_BUFFER;
+        }
+
+        for (DWORD i = _pOwnerPidTable->dwNumEntries; i != 0; )
+        {
+            --i;
+            _pTcpTable->table[i].dwOffloadState = TcpConnectionOffloadStateInHost;
+            _pTcpTable->table[i].dwOwningPid = _pOwnerPidTable->table[i].dwOwningPid;
+            _pTcpTable->table[i].dwRemotePort = _pOwnerPidTable->table[i].dwRemotePort;
+            _pTcpTable->table[i].dwRemoteAddr = _pOwnerPidTable->table[i].dwRemoteAddr;
+            _pTcpTable->table[i].dwLocalPort = _pOwnerPidTable->table[i].dwLocalPort;
+            _pTcpTable->table[i].dwLocalAddr = _pOwnerPidTable->table[i].dwLocalAddr;
+            _pTcpTable->table[i].dwState = _pOwnerPidTable->table[i].dwState;
+        }
+
+        *_pSizePointer = _uNeedSize;
+        return NO_ERROR;
+    }
+#endif
 }
