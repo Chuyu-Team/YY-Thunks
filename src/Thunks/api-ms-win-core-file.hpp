@@ -4,25 +4,6 @@ namespace YY::Thunks
 {
     namespace
     {
-#if (YY_Thunks_Target < __WindowsNT6)
-        enum _FILE_ID_TYPE_win7
-        {
-            FileIdType,
-            ObjectIdType,
-            MaximumFileIdType
-        };
-
-        struct FILE_ID_DESCRIPTOR_win7
-        {
-            DWORD dwSize;  // Size of the struct
-            FILE_ID_TYPE Type; // Describes the type of identifier passed in.
-            union {
-                LARGE_INTEGER FileId;
-                GUID ObjectId;
-            } DUMMYUNIONNAME;
-        };
-#endif
-
 #if (YY_Thunks_Target < __WindowsNT6_2)
         struct CopyFileExToCopyFile2CallbackContext
         {
@@ -162,7 +143,7 @@ namespace YY::Thunks
 
 namespace YY::Thunks
 {
-#if (YY_Thunks_Target < __WindowsNT6)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     //Windows Vista,  Windows Server 2008
     __DEFINE_THUNK(
@@ -178,6 +159,55 @@ namespace YY::Thunks
         _In_  DWORD dwBufferSize
         )
     {
+#if (YY_Thunks_Target < __WindowsNT6_2)
+        // FileIdInfo Windows 8开始支持
+        if (FileIdInfo == FileInformationClass && internal::GetSystemVersion() < internal::MakeVersion(6, 2))
+        {
+            if (sizeof(FILE_ID_INFO) > dwBufferSize)
+            {
+                SetLastError(ERROR_BAD_LENGTH);
+                return FALSE;
+            }
+
+#if !defined(__USING_NTDLL_LIB)
+            const auto NtQueryVolumeInformationFile = try_get_NtQueryVolumeInformationFile();
+            if (!NtQueryVolumeInformationFile)
+            {
+                SetLastError(ERROR_INVALID_FUNCTION);
+                return FALSE;
+            }
+
+            const auto NtQueryInformationFile = try_get_NtQueryInformationFile();
+            if (!NtQueryInformationFile)
+            {
+                SetLastError(ERROR_INVALID_FUNCTION);
+                return FALSE;
+            }
+#endif
+
+            IO_STATUS_BLOCK IoStatusBlock;
+            FILE_FS_VOLUME_INFORMATION _oVolumeInfo;
+            LONG Status = NtQueryVolumeInformationFile(hFile, &IoStatusBlock, &_oVolumeInfo, sizeof(_oVolumeInfo), FileFsVolumeInformation);
+            if (STATUS_BUFFER_OVERFLOW != Status && Status < STATUS_SUCCESS)
+            {
+                internal::BaseSetLastNTError(Status);
+                return FALSE;
+            }
+
+            auto _pFileIdInfo = reinterpret_cast<FILE_ID_INFO*>(lpFileInformation);
+            Status = NtQueryInformationFile(hFile, &IoStatusBlock, &_pFileIdInfo->FileId, sizeof(FILE_INTERNAL_INFORMATION), FileInternalInformation);
+            if (Status < STATUS_SUCCESS)
+            {
+                internal::BaseSetLastNTError(Status);
+                return FALSE;
+            }
+
+            *(uint64_t*)(_pFileIdInfo->FileId.Identifier + 8) = 0;
+            _pFileIdInfo->VolumeSerialNumber = _oVolumeInfo.VolumeSerialNumber;
+            return TRUE;
+        }
+#endif // (YY_Thunks_Target < __WindowsNT6_2)
+
         if (auto const pGetFileInformationByHandleEx = try_get_GetFileInformationByHandleEx())
         {
             return pGetFileInformationByHandleEx(hFile, FileInformationClass, lpFileInformation, dwBufferSize);
@@ -1049,7 +1079,7 @@ namespace YY::Thunks
 #endif
 
 
-#if (YY_Thunks_Target < __WindowsNT6)
+#if (YY_Thunks_Target < __WindowsNT6_2)
 
     //Windows Vista [desktop apps only]
     //Windows Server 2008 [desktop apps only]
@@ -1069,10 +1099,29 @@ namespace YY::Thunks
     {
         if (const auto pOpenFileById = try_get_OpenFileById())
         {
+#if (YY_Thunks_Target < __WindowsNT6_2)
+            // ExtendedFileIdType Windows 8开始支持，用FileId模拟
+            FILE_ID_DESCRIPTOR _oFileIdFix;
+            if (internal::GetSystemVersion() < internal::MakeVersion(6, 2) && lpFileId && lpFileId->Type == ExtendedFileIdType)
+            {
+                if (lpFileId->dwSize < RTL_SIZEOF_THROUGH_FIELD(FILE_ID_DESCRIPTOR, ExtendedFileId))
+                {
+                    SetLastError(ERROR_INVALID_PARAMETER);
+                    return INVALID_HANDLE_VALUE;
+                }
+
+                _oFileIdFix.dwSize = sizeof(FILE_ID_DESCRIPTOR);
+                _oFileIdFix.Type = FileIdType;
+                _oFileIdFix.ExtendedFileId = lpFileId->ExtendedFileId;
+
+                lpFileId = &_oFileIdFix;
+            }
+#endif // YY_Thunks_Target < __WindowsNT6_2
+
             return pOpenFileById(hVolumeHint, lpFileId, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlagsAndAttributes);
         }
 
-        if (lpFileId == nullptr || lpFileId->dwSize < sizeof(FILE_ID_DESCRIPTOR_win7) || lpFileId->Type >= _FILE_ID_TYPE_win7::MaximumFileIdType)
+        if (lpFileId == nullptr)
         {
             SetLastError(ERROR_INVALID_PARAMETER);
             return INVALID_HANDLE_VALUE;
@@ -1093,13 +1142,42 @@ namespace YY::Thunks
 
         if (FileIdType == lpFileId->Type)
         {
+            if (lpFileId->dwSize < RTL_SIZEOF_THROUGH_FIELD(FILE_ID_DESCRIPTOR, FileId))
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return INVALID_HANDLE_VALUE;
+            }
+
+            ObjectName.Buffer = (PWSTR)(&lpFileId->FileId);
+            ObjectName.Length = ObjectName.MaximumLength = sizeof(lpFileId->FileId);
+        }
+        else if (ObjectIdType == lpFileId->Type)
+        {
+            if (lpFileId->dwSize < RTL_SIZEOF_THROUGH_FIELD(FILE_ID_DESCRIPTOR, ObjectId))
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return INVALID_HANDLE_VALUE;
+            }
+
+            ObjectName.Buffer = (PWSTR)(&lpFileId->ObjectId);
+            ObjectName.Length = ObjectName.MaximumLength = sizeof(lpFileId->ObjectId);
+        }
+        else if (ExtendedFileIdType == lpFileId->Type)
+        {
+            if (lpFileId->dwSize < RTL_SIZEOF_THROUGH_FIELD(FILE_ID_DESCRIPTOR, ExtendedFileId))
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                return INVALID_HANDLE_VALUE;
+            }
+
+            // ExtendedFileIdType 仅在 Windows 8 及更高版本中受支持，用FileId模拟
             ObjectName.Buffer = (PWSTR)(&lpFileId->FileId);
             ObjectName.Length = ObjectName.MaximumLength = sizeof(lpFileId->FileId);
         }
         else
         {
-            ObjectName.Buffer = (PWSTR)(&lpFileId->ObjectId);
-            ObjectName.Length = ObjectName.MaximumLength = sizeof(lpFileId->ObjectId);
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return INVALID_HANDLE_VALUE;
         }
 
         OBJECT_ATTRIBUTES ObjectAttributes = {sizeof(ObjectAttributes), hVolumeHint, &ObjectName,  OBJ_CASE_INSENSITIVE };
