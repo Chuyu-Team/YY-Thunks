@@ -31,6 +31,7 @@ YY-Thunks支持的控制宏：
     _APPLY(kernel32,                                     "kernel32"                           , USING_GET_MODULE_HANDLE ) \
     _APPLY(kernelbase,                                   "kernelbase"                         , USING_GET_MODULE_HANDLE ) \
     _APPLY(cfgmgr32,                                     "cfgmgr32"                           , 0                 ) \
+    _APPLY(credui,                                       "credui"                             , 0                 ) \
     _APPLY(crypt32,                                      "crypt32"                            , 0                 ) \
     _APPLY(dcomp,                                        "dcomp"                              , 0                 ) \
     _APPLY(dwmapi,                                       "dwmapi"                             , 0                 ) \

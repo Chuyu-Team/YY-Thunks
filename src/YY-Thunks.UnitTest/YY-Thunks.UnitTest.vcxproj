@@ -183,6 +183,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="credui.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-file.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-handle.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-kernel32-legacy.UnitTest.cpp" />
@@ -248,6 +249,7 @@
     <ClInclude Include="..\Thunks\BCryptPrimitives.hpp" />
     <ClInclude Include="..\Thunks\bluetoothapis.hpp" />
     <ClInclude Include="..\Thunks\CfgMgr32.hpp" />
+    <ClInclude Include="..\Thunks\credui.hpp" />
     <ClInclude Include="..\Thunks\Crypt32.hpp" />
     <ClInclude Include="..\Thunks\d3d11.hpp" />
     <ClInclude Include="..\Thunks\d3d12.hpp" />

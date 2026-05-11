@@ -217,6 +217,13 @@
 | CM_Get_DevNode_PropertyW                   | 调用CM_Get_DevNode_Property_ExW。
 | CM_Set_DevNode_PropertyW                   | 调用CM_Set_DevNode_Property_ExW。
 
+## Credui.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| CredUIPromptForWindowsCredentialsW(A)      | 调用CredUIPromptForCredentialsW(A)。
+| CredPackAuthenticationBufferW(A)           | 内部实现。
+| CredUnPackAuthenticationBufferW(A)         | 内部实现。
+
 ## Crypt32.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
