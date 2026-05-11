@@ -65,6 +65,7 @@ YY-Thunks支持的控制宏：
     _APPLY(mfplat,                                       "mfplat"                             , 0                 ) \
     _APPLY(mfreadwrite,                                  "mfreadwrite"                        , 0                 ) \
     _APPLY(mmdevapi,                                     "mmdevapi"                           , 0                 ) \
+    _APPLY(ncrypy,                                       "ncrypy"                             , 0                 ) \
     _APPLY(ndfapi,                                       "ndfapi"                             , 0                 ) \
     _APPLY(bluetoothapis,                                "bluetoothapis"                      , 0                 ) \
     _APPLY(netapi32,                                     "netapi32"                           , 0                 ) \
@@ -834,6 +835,24 @@ namespace YY::Thunks::internal
                 ++_cchString;
             }
 
+            return _cchString;
+        }
+
+        template<typename Char>
+        constexpr size_t StringCopy(_Out_writes_z_(_cchOut) Char* _szOut, size_t _cchOut, _In_z_ const Char* _szString, size_t _cchMaxLength = -1)
+        {
+            if (_szOut == nullptr || _cchOut == 0)
+                return 0;
+
+            const auto _cchString = StringLength(_szString, _cchMaxLength);
+            if (_cchOut <= _cchString)
+            {
+                *_szOut = '\0';
+                return 0;
+            }
+
+            memcpy(_szOut, _szString, _cchString * sizeof(Char));
+            _szOut[_cchString] = L'\0';
             return _cchString;
         }
 

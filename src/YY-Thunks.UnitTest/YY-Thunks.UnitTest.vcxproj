@@ -184,6 +184,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="credui.UnitTest.cpp" />
+    <ClCompile Include="ncrypy.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-file.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-handle.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-kernel32-legacy.UnitTest.cpp" />
@@ -276,6 +277,7 @@
     <ClInclude Include="..\Thunks\mfplat.hpp" />
     <ClInclude Include="..\Thunks\mfreadwrite.hpp" />
     <ClInclude Include="..\Thunks\mmdevapi.hpp" />
+    <ClInclude Include="..\Thunks\ncrypy.hpp" />
     <ClInclude Include="..\Thunks\ndfapi.hpp" />
     <ClInclude Include="..\Thunks\netapi32.hpp" />
     <ClInclude Include="..\Thunks\ntdll.hpp" />
