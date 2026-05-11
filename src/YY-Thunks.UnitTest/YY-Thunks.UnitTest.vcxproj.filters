@@ -111,6 +111,9 @@
     <ClCompile Include="api-ms-win-core-file.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
+    <ClCompile Include="credui.UnitTest.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -405,6 +408,9 @@
       <Filter>Thunks</Filter>
     </ClInclude>
     <ClInclude Include="..\Thunks\credui.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\api-ms-win-security-cpwl.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
   </ItemGroup>

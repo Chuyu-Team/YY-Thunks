@@ -144,6 +144,11 @@
 | WindowsStringHasEmbeddedNull               | 内部实现。
 | WindowsCompareStringOrdinal                | 内部实现。
 
+## api-ms-win-security-cpwl-l1-1-0.dll
+| 函数                                       | Fallback
+| ----                                       | -----------
+| CreateProcessWithTokenW                    | 调用CreateProcessAsUserW。
+
 ## advapi32.dll
 | 函数                                       | Fallback
 | ----                                       | -----------
