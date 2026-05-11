@@ -1776,4 +1776,79 @@ namespace bcrypt
             RunTest(BCRYPT_RSA_SIGN_ALGORITHM);
         }
     };
+
+    TEST_CLASS(CryptImportPublicKeyInfoEx2)
+    {
+        AwaysNullGuard Guard;
+
+    public:
+        CryptImportPublicKeyInfoEx2()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_CryptImportPublicKeyInfoEx2;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptOpenAlgorithmProvider;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptExportKey;
+            Guard |= YY::Thunks::aways_null_try_get_BCryptDestroyKey;
+        }
+
+        TEST_METHOD(RSA公钥导入)
+        {
+            HCRYPTPROV _hProv = NULL;
+            if (!::CryptAcquireContextW(&_hProv, nullptr, nullptr, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
+            {
+                const auto _uLastError = GetLastError();
+                if (_uLastError != NTE_PROV_TYPE_NOT_DEF || !::CryptAcquireContextW(&_hProv, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
+                {
+                    Assert::Fail(L"CryptAcquireContextW failed.");
+                }
+            }
+
+            HCRYPTKEY _hSourceKey = NULL;
+            Assert::IsTrue(::CryptGenKey(_hProv, AT_KEYEXCHANGE, CRYPT_EXPORTABLE | (1024 << 16), &_hSourceKey));
+
+            DWORD _cbPublicBlob = 0;
+            Assert::IsTrue(::CryptExportKey(_hSourceKey, 0, PUBLICKEYBLOB, 0, nullptr, &_cbPublicBlob));
+            std::vector<BYTE> _SourcePublicBlob(_cbPublicBlob);
+            Assert::IsTrue(::CryptExportKey(_hSourceKey, 0, PUBLICKEYBLOB, 0, _SourcePublicBlob.data(), &_cbPublicBlob));
+            _SourcePublicBlob.resize(_cbPublicBlob);
+
+            DWORD _cbPublicKeyInfo = 0;
+            Assert::IsTrue(::CryptExportPublicKeyInfo(_hProv, AT_KEYEXCHANGE, X509_ASN_ENCODING, nullptr, &_cbPublicKeyInfo));
+
+            std::vector<BYTE> _PublicKeyInfoBuffer(_cbPublicKeyInfo);
+            auto _pPublicKeyInfo = reinterpret_cast<PCERT_PUBLIC_KEY_INFO>(_PublicKeyInfoBuffer.data());
+            Assert::IsTrue(::CryptExportPublicKeyInfo(_hProv, AT_KEYEXCHANGE, X509_ASN_ENCODING, _pPublicKeyInfo, &_cbPublicKeyInfo));
+
+            BCRYPT_KEY_HANDLE _hImportKey = nullptr;
+            if (!::CryptImportPublicKeyInfoEx2(X509_ASN_ENCODING, _pPublicKeyInfo, 0, nullptr, &_hImportKey))
+            {
+                CStringW _szMessage;
+                _szMessage.Format(L"CryptImportPublicKeyInfoEx2 failed. LastError=%u, OID=%S", GetLastError(), _pPublicKeyInfo->Algorithm.pszObjId ? _pPublicKeyInfo->Algorithm.pszObjId : "(null)");
+                Assert::Fail(_szMessage.GetString());
+            }
+            Assert::IsNotNull(_hImportKey);
+
+            ULONG _cbImportedBlob = 0;
+            auto _Status = ::BCryptExportKey(_hImportKey, nullptr, LEGACY_RSAPUBLIC_BLOB, nullptr, 0, &_cbImportedBlob, 0);
+            Assert::IsTrue(_Status >= 0);
+
+            std::vector<BYTE> _ImportedPublicBlob(_cbImportedBlob);
+            _Status = ::BCryptExportKey(_hImportKey, nullptr, LEGACY_RSAPUBLIC_BLOB, _ImportedPublicBlob.data(), (ULONG)_ImportedPublicBlob.size(), &_cbImportedBlob, 0);
+            Assert::IsTrue(_Status >= 0);
+            _ImportedPublicBlob.resize(_cbImportedBlob);
+
+            Assert::AreEqual(ToHexString(_SourcePublicBlob), ToHexString(_ImportedPublicBlob));
+
+            _Status = ::BCryptDestroyKey(_hImportKey);
+            Assert::IsTrue(_Status >= 0);
+
+            Assert::IsTrue(::CryptDestroyKey(_hSourceKey));
+            Assert::IsTrue(::CryptReleaseContext(_hProv, 0));
+        }
+
+        TEST_METHOD(参数校验)
+        {
+            Assert::IsFalse(::CryptImportPublicKeyInfoEx2(X509_ASN_ENCODING, nullptr, 0, nullptr, nullptr));
+            Assert::AreEqual(DWORD(ERROR_INVALID_PARAMETER), GetLastError());
+        }
+    };
 }

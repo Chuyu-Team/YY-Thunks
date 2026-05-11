@@ -13,6 +13,11 @@
 #pragma comment(lib, "bcrypt.lib")
 #endif
 
+#if (YY_Thunks_Target < __WindowsNT6) && !defined(__Comment_Lib_crypt32)
+#define __Comment_Lib_crypt32
+#pragma comment(lib, "Crypt32.lib")
+#endif
+
 namespace YY::Thunks
 {
 #if defined(YY_Thunks_Implemented) && YY_Thunks_Target < __WindowsNT6
@@ -2485,7 +2490,7 @@ namespace YY::Thunks
                 _Out_   BCryptKey** _ppKey,
                 _In_    ULONG _uBitLength,
                 _In_    ULONG _fFlags
-                )
+            )
             {
                 *_ppKey = nullptr;
                 auto _pCryptPairKey = (BCryptKeyPair*)internal::Alloc(sizeof(BCryptKeyPair));
@@ -3888,6 +3893,103 @@ namespace YY::Thunks
 
         auto _pKey = reinterpret_cast<BCryptKeyPair*>(hKey);
         return _pKey->VerifySignature(pPaddingInfo, pbHash, cbHash, pbSignature, cbSignature, dwFlags);
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低支持的客户端	Windows Vista [桌面应用 |UWP 应用]
+    // 支持的最低服务器	Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    crypt32,
+    20,
+    BOOL,
+    WINAPI,
+    CryptImportPublicKeyInfoEx2,
+        _In_ DWORD dwCertEncodingType,
+        _In_ PCERT_PUBLIC_KEY_INFO pInfo,
+        _In_ DWORD dwFlags,
+        _In_opt_ void* pvAuxInfo,
+        _Out_ BCRYPT_KEY_HANDLE* phKey
+        )
+    {
+        if (const auto _pfnCryptImportPublicKeyInfoEx2 = try_get_CryptImportPublicKeyInfoEx2())
+        {
+            return _pfnCryptImportPublicKeyInfoEx2(dwCertEncodingType, pInfo, dwFlags, pvAuxInfo, phKey);
+        }
+
+        if (!phKey)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        *phKey = nullptr;
+
+        if (pInfo == nullptr || pInfo->Algorithm.pszObjId == nullptr)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        LPCWSTR _szBCryptAlgId = nullptr;
+
+        if (strcmp(pInfo->Algorithm.pszObjId, szOID_RSA_RSA) == 0)
+        {
+            _szBCryptAlgId = BCRYPT_RSA_ALGORITHM;
+        }
+        else if (strcmp(pInfo->Algorithm.pszObjId, szOID_RSA_SSA_PSS) == 0)
+        {
+            _szBCryptAlgId = BCRYPT_RSA_SIGN_ALGORITHM;
+        }
+        else if (strcmp(pInfo->Algorithm.pszObjId, szOID_RSAES_OAEP) == 0)
+        {
+            _szBCryptAlgId = BCRYPT_RSA_ALGORITHM;
+        }
+        else
+        {
+            SetLastError(ERROR_NOT_SUPPORTED);
+            return FALSE;
+        }
+
+        BCRYPT_ALG_HANDLE _hBCryptAlg = nullptr;
+        LONG _Status = ::BCryptOpenAlgorithmProvider(&_hBCryptAlg, _szBCryptAlgId, nullptr, 0);
+        if (_Status < 0)
+        {
+            internal::BaseSetLastNTError(_Status);
+            return FALSE;
+        }
+
+        if (!Is<BCryptAlgorithm>(_hBCryptAlg))
+        {
+            ::BCryptCloseAlgorithmProvider(_hBCryptAlg, 0);
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        auto _pBCryptAlgorithm = reinterpret_cast<BCryptAlgorithm*>(_hBCryptAlg);
+        HCRYPTKEY _hLegacyKey = 0;    
+        if (!CryptImportPublicKeyInfoEx(_pBCryptAlgorithm->hProv, dwCertEncodingType, pInfo, _pBCryptAlgorithm->pMapItem->uAlgId, 0, pvAuxInfo, &_hLegacyKey))
+        {
+            const auto _uLastError = GetLastError();
+            ::BCryptCloseAlgorithmProvider(_hBCryptAlg, 0);
+            SetLastError(_uLastError);
+            return FALSE;
+        }
+
+        auto _pKeyPair = internal::New<BCryptKeyPair>(_pBCryptAlgorithm);
+        if (_pKeyPair == nullptr)
+        {
+            CryptDestroyKey(_hLegacyKey);
+            ::BCryptCloseAlgorithmProvider(_hBCryptAlg, 0);
+            SetLastError(ERROR_OUTOFMEMORY);
+            return FALSE;
+        }
+
+        _pKeyPair->hKey = _hLegacyKey;
+        *phKey = reinterpret_cast<BCRYPT_KEY_HANDLE>(_pKeyPair);
+        return TRUE;
     }
 #endif
 }
