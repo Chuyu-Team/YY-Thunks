@@ -432,9 +432,11 @@
 | if_indextoname                             | 调用ConvertInterfaceIndexToLuid、ConvertInterfaceLuidToNameA。
 | ConvertInterfaceLuidToGuid                 | 调用GetIfEntry。
 | ConvertInterfaceLuidToIndex                | 内部实现。
+| GetUnicastIpAddressTable                   | 调用GetAdaptersAddresses。
 | GetTcpTable2                               | 调用GetExtendedTcpTable。
-| * NotifyIpInterfaceChange                  | 什么也不做，假装成功。
-| CancelMibChangeNotify2                     | 什么也不做，假装成功。
+| NotifyIpInterfaceChange                    | 调用NotifyAddrChange。
+| NotifyStableUnicastIpAddressTable          | 调用NotifyAddrChange。
+| CancelMibChangeNotify2                     | 调用CancelIPChangeNotify。
 
 ## kernel32.dll
 | 函数                                       | Fallback

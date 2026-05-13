@@ -4,6 +4,141 @@
 
 namespace Iphlpapi
 {
+    TEST_CLASS(GetUnicastIpAddressTable)
+    {
+        AwaysNullGuard Guard;
+
+    public:
+        GetUnicastIpAddressTable()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_GetUnicastIpAddressTable;
+            Guard |= YY::Thunks::aways_null_try_get_FreeMibTable;
+        }
+
+        TEST_METHOD(Fallback简单验证)
+        {
+            PMIB_UNICASTIPADDRESS_TABLE _pTable = nullptr;
+            auto _lStatus = ::GetUnicastIpAddressTable(AF_UNSPEC, &_pTable);
+            Assert::AreEqual(_lStatus, (DWORD)NO_ERROR);
+            Assert::IsNotNull(_pTable);
+            ::FreeMibTable(_pTable);
+        }
+
+        TEST_METHOD(参数验证)
+        {
+            auto _lStatus = ::GetUnicastIpAddressTable(AF_UNSPEC, nullptr);
+            Assert::AreEqual(_lStatus, (DWORD)ERROR_INVALID_PARAMETER);
+
+            PMIB_UNICASTIPADDRESS_TABLE _pTable = nullptr;
+            _lStatus = ::GetUnicastIpAddressTable(AF_MAX, &_pTable);
+            Assert::AreEqual(_lStatus, (DWORD)ERROR_INVALID_PARAMETER);
+        }
+    };
+
+    TEST_CLASS(NotifyIpInterfaceChange)
+    {
+        AwaysNullGuard Guard;
+
+        struct CallbackContext
+        {
+            uint32_t uCalled = 0;
+            PMIB_IPINTERFACE_ROW pRow = nullptr;
+            MIB_NOTIFICATION_TYPE eNotificationType = MibInitialNotification;
+        };
+
+        static void WINAPI Callback(
+            _In_ PVOID _pCallerContext,
+            _In_ PMIB_IPINTERFACE_ROW _pRow,
+            _In_ MIB_NOTIFICATION_TYPE _eNotificationType
+            )
+        {
+            if (MibInitialNotification == _eNotificationType)
+            {
+                auto _pContext = reinterpret_cast<CallbackContext*>(_pCallerContext);
+                InterlockedIncrement(&_pContext->uCalled);
+                _pContext->pRow = _pRow;
+                _pContext->eNotificationType = _eNotificationType;
+            }
+        }
+
+    public:
+        NotifyIpInterfaceChange()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_NotifyIpInterfaceChange;
+            Guard |= YY::Thunks::aways_null_try_get_CancelMibChangeNotify2;
+        }
+
+        TEST_METHOD(InitialNotification验证)
+        {
+            {
+                CallbackContext _oContext;
+                HANDLE _hNotify = nullptr;
+                auto _lStatus = ::NotifyIpInterfaceChange(AF_INET, Callback, &_oContext, TRUE, &_hNotify);
+                Assert::AreEqual(_lStatus, (DWORD)NO_ERROR);
+                Assert::AreEqual(_oContext.uCalled, uint32_t(1));
+                Assert::IsNull(_oContext.pRow);
+                Assert::AreEqual((DWORD)_oContext.eNotificationType, (DWORD)MibInitialNotification);
+                Assert::IsNotNull(_hNotify);
+
+                _lStatus = ::CancelMibChangeNotify2(_hNotify);
+                Assert::AreEqual(_lStatus, (DWORD)NO_ERROR);
+            }
+
+            {
+                CallbackContext _oContext;
+                HANDLE _hNotify = nullptr;
+                auto _lStatus = ::NotifyIpInterfaceChange(AF_INET6, Callback, &_oContext, TRUE, &_hNotify);
+                Assert::AreEqual(_lStatus, (DWORD)NO_ERROR);
+                Assert::AreEqual(_oContext.uCalled, uint32_t(1));
+                Assert::IsNull(_oContext.pRow);
+                Assert::AreEqual((DWORD)_oContext.eNotificationType, (DWORD)MibInitialNotification);
+                Assert::IsNotNull(_hNotify);
+
+                _lStatus = ::CancelMibChangeNotify2(_hNotify);
+                Assert::AreEqual(_lStatus, (DWORD)NO_ERROR);
+            }
+
+            {
+                CallbackContext _oContext;
+                HANDLE _hNotify = nullptr;
+                auto _lStatus = ::NotifyIpInterfaceChange(AF_UNSPEC, Callback, &_oContext, TRUE, &_hNotify);
+                Assert::AreEqual(_lStatus, (DWORD)NO_ERROR);
+                Assert::AreEqual(_oContext.uCalled, uint32_t(2));
+                Assert::IsNull(_oContext.pRow);
+                Assert::AreEqual((DWORD)_oContext.eNotificationType, (DWORD)MibInitialNotification);
+                Assert::IsNotNull(_hNotify);
+
+                _lStatus = ::CancelMibChangeNotify2(_hNotify);
+                Assert::AreEqual(_lStatus, (DWORD)NO_ERROR);
+            }
+
+            {
+                CallbackContext _oContext;
+                HANDLE _hNotify = nullptr;
+                auto _lStatus = ::NotifyIpInterfaceChange(AF_UNSPEC, Callback, &_oContext, FALSE, &_hNotify);
+                Assert::AreEqual(_lStatus, (DWORD)NO_ERROR);
+                Assert::AreEqual(_oContext.uCalled, uint32_t(0));
+                Assert::IsNull(_oContext.pRow);
+                Assert::AreEqual((DWORD)_oContext.eNotificationType, (DWORD)MibInitialNotification);
+                Assert::IsNotNull(_hNotify);
+
+                _lStatus = ::CancelMibChangeNotify2(_hNotify);
+                Assert::AreEqual(_lStatus, (DWORD)NO_ERROR);
+            }
+        }
+
+        TEST_METHOD(参数验证)
+        {
+            auto _lStatus = ::NotifyIpInterfaceChange(AF_UNSPEC, nullptr, nullptr, FALSE, nullptr);
+            Assert::AreEqual(_lStatus, (DWORD)ERROR_INVALID_PARAMETER);
+
+            HANDLE _hNotify = nullptr;
+            _lStatus = ::NotifyIpInterfaceChange(AF_MAX, Callback, nullptr, FALSE, &_hNotify);
+            Assert::AreEqual(_lStatus, (DWORD)ERROR_INVALID_PARAMETER);
+            Assert::IsNull(_hNotify);
+        }
+    };
+
     TEST_CLASS(GetIfTable2)
     {
         AwaysNullGuard Guard;
@@ -326,6 +461,121 @@ namespace Iphlpapi
                 Assert::AreEqual(InterfaceGuid1, InterfaceGuid2);
 
             }
+        }
+    };
+
+    TEST_CLASS(NotifyStableUnicastIpAddressTable)
+    {
+        AwaysNullGuard Guard;
+
+        static void WINAPI Callback(
+            _In_ PVOID _pCallerContext,
+            _In_ PMIB_UNICASTIPADDRESS_TABLE _pAddressTable
+            )
+        {
+            auto _pbCalled = reinterpret_cast<bool*>(_pCallerContext);
+            *_pbCalled = true;
+            Assert::IsNotNull(_pAddressTable);
+        }
+
+    public:
+        NotifyStableUnicastIpAddressTable()
+        {
+            Guard |= YY::Thunks::aways_null_try_get_NotifyStableUnicastIpAddressTable;
+            Guard |= YY::Thunks::aways_null_try_get_CancelMibChangeNotify2;
+        }
+
+        TEST_METHOD(Fallback简单验证)
+        {
+            {
+                bool _bCalled = false;
+                PMIB_UNICASTIPADDRESS_TABLE _pTable = nullptr;
+                HANDLE _hNotify = nullptr;
+
+                auto _lStatus = ::NotifyStableUnicastIpAddressTable(
+                    AF_UNSPEC,
+                    &_pTable,
+                    Callback,
+                    &_bCalled,
+                    &_hNotify);
+
+                Assert::AreEqual(_lStatus, (DWORD)ERROR_IO_PENDING);
+                Assert::IsNotNull(_hNotify);
+
+                _lStatus = ::CancelMibChangeNotify2(_hNotify);
+                Assert::IsFalse(_bCalled);
+                Assert::AreEqual(_lStatus, (DWORD)NO_ERROR);
+
+                if (_pTable)
+                {
+                    ::FreeMibTable(_pTable);
+                }
+            }
+
+            // 5秒超时获取结果
+            {
+                bool _bCalled = false;
+                PMIB_UNICASTIPADDRESS_TABLE _pTable = nullptr;
+                HANDLE _hNotify = nullptr;
+
+                auto _lStatus = ::NotifyStableUnicastIpAddressTable(
+                    AF_UNSPEC,
+                    &_pTable,
+                    Callback,
+                    &_bCalled,
+                    &_hNotify);
+
+                Assert::AreEqual(_lStatus, (DWORD)ERROR_IO_PENDING);
+                Assert::IsNotNull(_hNotify);
+
+                Sleep(6 * 1000);
+                _lStatus = ::CancelMibChangeNotify2(_hNotify);
+                Assert::IsTrue(_bCalled);
+                Assert::AreEqual(_lStatus, (DWORD)NO_ERROR);
+
+                if (_pTable)
+                {
+                    ::FreeMibTable(_pTable);
+                }
+            }
+        }
+
+        TEST_METHOD(参数验证)
+        {
+            HANDLE _hNotify = reinterpret_cast<HANDLE>(1);
+            PMIB_UNICASTIPADDRESS_TABLE _pTable = nullptr;
+
+            auto _lStatus = ::NotifyStableUnicastIpAddressTable(
+                AF_UNSPEC,
+                nullptr,
+                Callback,
+                nullptr,
+                &_hNotify);
+            Assert::AreEqual(_lStatus, (DWORD)ERROR_INVALID_PARAMETER);
+
+            _lStatus = ::NotifyStableUnicastIpAddressTable(
+                AF_UNSPEC,
+                &_pTable,
+                nullptr,
+                nullptr,
+                &_hNotify);
+            Assert::AreEqual(_lStatus, (DWORD)ERROR_INVALID_PARAMETER);
+
+            _lStatus = ::NotifyStableUnicastIpAddressTable(
+                AF_MAX,
+                &_pTable,
+                Callback,
+                nullptr,
+                &_hNotify);
+            Assert::AreEqual(_lStatus, (DWORD)ERROR_INVALID_PARAMETER);
+
+            _lStatus = ::NotifyStableUnicastIpAddressTable(
+                AF_UNSPEC,
+                &_pTable,
+                Callback,
+                nullptr,
+                nullptr);
+            Assert::AreEqual(_lStatus, (DWORD)ERROR_INVALID_PARAMETER);
         }
     };
 }

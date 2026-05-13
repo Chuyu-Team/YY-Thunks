@@ -194,6 +194,270 @@ namespace YY::Thunks
 
             return "other";
         }
+
+        static NETIO_STATUS __fastcall GetAdaptersAddressesSnapshot(
+            _In_ ADDRESS_FAMILY _uFamily,
+            _Outptr_result_maybenull_ PIP_ADAPTER_ADDRESSES* _ppAdapters
+            )
+        {
+            *_ppAdapters = nullptr;
+
+            ULONG _cbAdaptersAddresses = 0;
+            auto _lStatus = GetAdaptersAddresses(_uFamily, 0, nullptr, nullptr, &_cbAdaptersAddresses);
+            if (_lStatus == ERROR_NO_DATA)
+            {
+                return NO_ERROR;
+            }
+
+            if (_lStatus != ERROR_BUFFER_OVERFLOW)
+            {
+                return _lStatus;
+            }
+
+            auto _pAdapters = reinterpret_cast<PIP_ADAPTER_ADDRESSES>(internal::Alloc(_cbAdaptersAddresses));
+            if (_pAdapters == nullptr)
+            {
+                return ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            _lStatus = GetAdaptersAddresses(_uFamily, 0, nullptr, _pAdapters, &_cbAdaptersAddresses);
+            if (_lStatus != NO_ERROR)
+            {
+                internal::Free(_pAdapters);
+                return _lStatus;
+            }
+
+            *_ppAdapters = _pAdapters;
+            return NO_ERROR;
+        }
+
+        static NETIOAPI_API GetUnicastIpAddressTableDownlevel(
+            _In_ ADDRESS_FAMILY _uFamily,
+            _Outptr_ PMIB_UNICASTIPADDRESS_TABLE* _ppTable
+            )
+        {
+            if (_ppTable == nullptr)
+            {
+                return ERROR_INVALID_PARAMETER;
+            }
+
+            if (_uFamily != AF_INET && _uFamily != AF_INET6 && _uFamily != AF_UNSPEC)
+            {
+                *_ppTable = nullptr;
+                return ERROR_INVALID_PARAMETER;
+            }
+
+            *_ppTable = nullptr;
+
+            PIP_ADAPTER_ADDRESSES _pAdaptersAddresses = nullptr;
+            auto _lStatus = GetAdaptersAddressesSnapshot(_uFamily, &_pAdaptersAddresses);
+            if (_lStatus != NO_ERROR)
+            {
+                return _lStatus;
+            }
+
+            ULONG _uCount = 0;
+            for (auto _pAdapter = _pAdaptersAddresses; _pAdapter != nullptr; _pAdapter = _pAdapter->Next)
+            {
+                for (auto _pUnicast = _pAdapter->FirstUnicastAddress; _pUnicast != nullptr; _pUnicast = _pUnicast->Next)
+                {
+                    if (_pUnicast->Address.lpSockaddr == nullptr)
+                    {
+                        continue;
+                    }
+
+                    if (_pUnicast->Address.lpSockaddr->sa_family == AF_INET
+                        || _pUnicast->Address.lpSockaddr->sa_family == AF_INET6)
+                    {
+                        ++_uCount;
+                    }
+                }
+            }
+
+            const auto _cbTable = FIELD_OFFSET(MIB_UNICASTIPADDRESS_TABLE, Table) + _uCount * sizeof(MIB_UNICASTIPADDRESS_ROW);
+            auto _pTable = reinterpret_cast<PMIB_UNICASTIPADDRESS_TABLE>(internal::Alloc(_cbTable));
+            if (_pTable == nullptr)
+            {
+                internal::Free(_pAdaptersAddresses);
+                return ERROR_NOT_ENOUGH_MEMORY;
+            }
+
+            _pTable->NumEntries = _uCount;
+
+            ULONG _uIndex = 0;
+            for (auto _pAdapter = _pAdaptersAddresses; _pAdapter != nullptr; _pAdapter = _pAdapter->Next)
+            {
+                for (auto _pUnicast = _pAdapter->FirstUnicastAddress; _pUnicast != nullptr; _pUnicast = _pUnicast->Next)
+                {
+                    if (_pUnicast->Address.lpSockaddr == nullptr)
+                    {
+                        continue;
+                    }
+
+                    auto _pAddress = _pUnicast->Address.lpSockaddr;
+                    if (_pAddress->sa_family != AF_INET && _pAddress->sa_family != AF_INET6)
+                    {
+                        continue;
+                    }
+
+                    auto& _Item = _pTable->Table[_uIndex++];
+                    _Item.InterfaceLuid.Info.IfType = _pAdapter->IfType;
+                    _Item.InterfaceLuid.Info.Reserved = 0;
+                    _Item.Address.si_family = _pAddress->sa_family;
+                    if (_pAddress->sa_family == AF_INET6)
+                    {
+                        _Item.InterfaceIndex = _pAdapter->Ipv6IfIndex;
+                        _Item.InterfaceLuid.Value = _pAdapter->Ipv6IfIndex;
+
+                        _Item.Address.Ipv6 = *reinterpret_cast<const SOCKADDR_IN6*>(_pAddress);
+                        _Item.ScopeId.Value = _Item.Address.Ipv6.sin6_scope_id;
+                    }
+                    else
+                    {
+                        _Item.InterfaceIndex = _pAdapter->IfIndex;
+                        _Item.InterfaceLuid.Value = _pAdapter->IfIndex;
+
+                        _Item.Address.Ipv4 = *reinterpret_cast<const SOCKADDR_IN*>(_pAddress);
+                        _Item.ScopeId.Value = 0;
+                    }
+                    _Item.PrefixOrigin = _pUnicast->PrefixOrigin;
+                    _Item.SuffixOrigin = _pUnicast->SuffixOrigin;
+                    _Item.ValidLifetime = _pUnicast->ValidLifetime;
+                    _Item.PreferredLifetime = _pUnicast->PreferredLifetime;
+                    _Item.OnLinkPrefixLength = _pUnicast->OnLinkPrefixLength;
+                    _Item.SkipAsSource = true;
+
+                    _Item.DadState = _pUnicast->DadState;
+                    _Item.CreationTimeStamp.QuadPart = 0;
+                }
+            }
+
+            internal::Free(_pAdaptersAddresses);
+            *_ppTable = _pTable;
+            return NO_ERROR;
+        }
+
+        static bool __fastcall IsSameSockaddrInet(_In_ const SOCKADDR_INET& _Address1, _In_ const SOCKADDR_INET& _Address2)
+        {
+            if (_Address1.si_family != _Address2.si_family)
+            {
+                return false;
+            }
+
+            if (_Address1.si_family == AF_INET)
+            {
+                return _Address1.Ipv4.sin_addr.S_un.S_addr == _Address2.Ipv4.sin_addr.S_un.S_addr;
+            }
+            else if (_Address1.si_family == AF_INET6)
+            {
+                return memcmp(&_Address1.Ipv6.sin6_addr, &_Address2.Ipv6.sin6_addr, sizeof(_Address1.Ipv6.sin6_addr)) == 0
+                    && _Address1.Ipv6.sin6_scope_id == _Address2.Ipv6.sin6_scope_id;
+            }
+
+            return false;
+        }
+
+        static bool __fastcall ShouldIncludeUnicastAddress(
+            _In_ ADDRESS_FAMILY _uFamily,
+            _In_ const SOCKADDR* _pAddress
+            )
+        {
+            if (_pAddress == nullptr)
+            {
+                return false;
+            }
+
+            const auto _uAddressFamily = static_cast<ADDRESS_FAMILY>(_pAddress->sa_family);
+            if (_uAddressFamily != AF_INET && _uAddressFamily != AF_INET6)
+            {
+                return false;
+            }
+
+            return _uFamily == AF_UNSPEC || _uFamily == _uAddressFamily;
+        }
+
+        //static const IP_ADAPTER_ADDRESSES* __fastcall FindAdapterByAdapterName(
+        //    _In_ const IP_ADAPTER_ADDRESSES* _pAdapters,
+        //    _In_z_ LPCSTR _szAdapterName
+        //    )
+        //{
+        //    for (auto _pAdapter = _pAdapters; _pAdapter != nullptr; _pAdapter = _pAdapter->Next)
+        //    {
+        //        if (StringCompareIgnoreCaseByAscii(_pAdapter->AdapterName, _szAdapterName, -1) == 0)
+        //        {
+        //            return _pAdapter;
+        //        }
+        //    }
+
+        //    return nullptr;
+        //}
+
+        static NET_IFINDEX __fastcall GetUnicastAddressInterfaceIndex(
+            _In_ ADDRESS_FAMILY _uAddressFamily,
+            _In_ const IP_ADAPTER_ADDRESSES* _pAdapter
+            )
+        {
+            return _uAddressFamily == AF_INET6 ? _pAdapter->Ipv6IfIndex : _pAdapter->IfIndex;
+        }
+
+        static bool __fastcall IsInterfaceUp(_In_ const IP_ADAPTER_ADDRESSES* _pAdapter)
+        {
+            return _pAdapter->OperStatus == IfOperStatusUp;
+        }
+
+        static const IP_ADAPTER_ADDRESSES* __fastcall FindAdapterByInterfaceIndex(
+            _In_opt_ const IP_ADAPTER_ADDRESSES* _pAdapters,
+            _In_ ADDRESS_FAMILY _uFamily,
+            _In_ NET_IFINDEX _uInterfaceIndex
+            )
+        {
+            for (auto _pAdapter = _pAdapters; _pAdapter != nullptr; _pAdapter = _pAdapter->Next)
+            {
+                if (GetUnicastAddressInterfaceIndex(_uFamily, _pAdapter) == _uInterfaceIndex)
+                {
+                    return _pAdapter;
+                }
+            }
+
+            return nullptr;
+        }
+
+        static void __fastcall BuildIpInterfaceRowFromAdapter(
+            _In_ ADDRESS_FAMILY _uFamily,
+            _In_ const IP_ADAPTER_ADDRESSES* _pAdapter,
+            _Out_ MIB_IPINTERFACE_ROW* _pRow
+            )
+        {
+            memset(_pRow, 0, sizeof(*_pRow));
+
+            _pRow->Family = _uFamily;
+            _pRow->InterfaceIndex = GetUnicastAddressInterfaceIndex(_uFamily, _pAdapter);
+            _pRow->InterfaceLuid.Info.IfType = _pAdapter->IfType;
+            _pRow->InterfaceLuid.Info.NetLuidIndex = _pRow->InterfaceIndex;
+            _pRow->InterfaceLuid.Info.Reserved = 0;
+            _pRow->NlMtu = _pAdapter->Mtu;
+            _pRow->Connected = IsInterfaceUp(_pAdapter);
+        }
+
+        static bool __fastcall IsSameIpInterfaceParameters(
+            _In_ const IP_ADAPTER_ADDRESSES* _pAdapter1,
+            _In_ const IP_ADAPTER_ADDRESSES* _pAdapter2
+            )
+        {
+            return _pAdapter1->Mtu == _pAdapter2->Mtu
+                && _pAdapter1->OperStatus == _pAdapter2->OperStatus;
+        }
+
+        static constexpr DWORD kMibChangeNotifyDownlevelContextSignature = 0x4D42434E;
+
+        struct MibChangeNotifyDownlevelContext
+        {
+            DWORD uSignature = kMibChangeNotifyDownlevelContextSignature;
+
+            virtual ~MibChangeNotifyDownlevelContext() = default;
+
+            virtual LSTATUS __fastcall Cancel() = 0;
+        };
 #endif // (YY_Thunks_Target < __WindowsNT6)
     }
 }
@@ -775,9 +1039,382 @@ namespace YY::Thunks
             return ERROR_INVALID_PARAMETER;
         }
 
-        // TODO: 或许可以启动一个线程定时轮询。
-        *_phNotificationHandle = reinterpret_cast<HANDLE>(2);
+        struct NotifyIpInterfaceChangeDownlevelContext : MibChangeNotifyDownlevelContext
+        {
+            ADDRESS_FAMILY uFamily = AF_UNSPEC;
+            PIPINTERFACE_CHANGE_CALLBACK pfnCallback = nullptr;
+            PVOID pCallerContext = nullptr;
+            HANDLE hWaitObject = nullptr;
+            HANDLE hNotifyHandle = nullptr;
+            OVERLAPPED Overlapped = {};
+            PIP_ADAPTER_ADDRESSES pAdapters = nullptr;
+
+            ~NotifyIpInterfaceChangeDownlevelContext() override
+            {
+                Cancel();
+
+                if (Overlapped.hEvent)
+                {
+                    CloseHandle(Overlapped.hEvent);
+                    Overlapped.hEvent = nullptr;
+                }
+
+                if (pAdapters)
+                {
+                    internal::Free(pAdapters);
+                    pAdapters = nullptr;
+                }
+            }
+
+            LSTATUS __fastcall InstallNotify()
+            {
+                auto _lStatus = NotifyAddrChange(&hNotifyHandle, &Overlapped);
+                if (_lStatus == ERROR_IO_PENDING || _lStatus == ERROR_SUCCESS)
+                {
+                    return ERROR_SUCCESS;
+                }
+
+                return _lStatus;
+            }
+
+            LSTATUS __fastcall Cancel() override
+            {
+                if (InterlockedExchange(&uSignature, 0) == 0)
+                {
+                    return NO_ERROR;
+                }
+
+                if (auto _hWaitObject = InterlockedExchangePointer(&hWaitObject, NULL))
+                {
+                    UnregisterWaitEx(_hWaitObject, INVALID_HANDLE_VALUE);
+                }
+
+                if (hNotifyHandle)
+                {
+                    ::CancelIPChangeNotify(&Overlapped);
+                    hNotifyHandle = NULL;
+                }
+
+                return NO_ERROR;
+            }
+
+            void __fastcall Fired(ADDRESS_FAMILY _uFamily, const IP_ADAPTER_ADDRESSES* _pAdapter, MIB_NOTIFICATION_TYPE _eNotificationType)
+            {
+                MIB_IPINTERFACE_ROW _Row;
+                if (uFamily == AF_UNSPEC || uFamily == _uFamily)
+                {
+                    BuildIpInterfaceRowFromAdapter(_uFamily, _pAdapter, &_Row);
+                    pfnCallback(pCallerContext, &_Row, _eNotificationType);
+                }
+            }
+
+            void __fastcall DiffAdapters(ADDRESS_FAMILY _uFamily, const IP_ADAPTER_ADDRESSES* _pNewAdapters)
+            {
+                if (uFamily != AF_UNSPEC && uFamily != _uFamily)
+                {
+                    return;
+                }
+
+                for (auto _pAdapter = _pNewAdapters; _pAdapter != nullptr; _pAdapter = _pAdapter->Next)
+                {
+                    auto _uInterfaceIndex = GetUnicastAddressInterfaceIndex(_uFamily, _pAdapter);
+                    if (_uInterfaceIndex == 0)
+                        continue;
+
+                    auto _pOldAdapter = FindAdapterByInterfaceIndex(pAdapters, _uFamily, _uInterfaceIndex);
+                    if (!_pOldAdapter)
+                    {
+                        // 新增的适配器
+                        Fired(_uFamily, _pAdapter, MibAddInstance);
+                        Fired(_uFamily, _pAdapter, MibParameterNotification);
+                    }
+                    else if (!IsSameIpInterfaceParameters(_pOldAdapter, _pAdapter))
+                    {
+                        Fired(_uFamily, _pAdapter, MibParameterNotification);
+                    }
+                }
+
+                for (auto _pOldAdapter = pAdapters; _pOldAdapter != nullptr; _pOldAdapter = _pOldAdapter->Next)
+                {
+                    auto _uInterfaceIndex = GetUnicastAddressInterfaceIndex(_uFamily, _pOldAdapter);
+                    if (_uInterfaceIndex == 0)
+                        continue;
+
+                    auto _pNewAdapter = FindAdapterByInterfaceIndex(_pNewAdapters, _uFamily, _uInterfaceIndex);
+                    if (!_pNewAdapter)
+                    {
+                        // 删除的适配器
+                        Fired(_uFamily, _pOldAdapter, MibParameterNotification);
+                        Fired(_uFamily, _pOldAdapter, MibDeleteInstance);
+                    }
+                }
+            }
+        };
+
+        auto _pContext = internal::New<NotifyIpInterfaceChangeDownlevelContext>();
+        if (_pContext == nullptr)
+        {
+            return ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        _pContext->uFamily = _uFamily;
+        _pContext->pfnCallback = _pfnCallback;
+        _pContext->pCallerContext = _pCallerContext;
+
+        auto _lStatus = GetAdaptersAddressesSnapshot(_uFamily, &_pContext->pAdapters);
+        if (_lStatus != NO_ERROR)
+        {
+            internal::Delete(_pContext);
+            return _lStatus;
+        }
+
+        _pContext->Overlapped.hEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+        if (_pContext->Overlapped.hEvent == nullptr)
+        {
+            _lStatus = GetLastError();
+            internal::Delete(_pContext);
+            return _lStatus;
+        }
+
+        _lStatus = _pContext->InstallNotify();
+        if (_lStatus != NO_ERROR)
+        {
+            internal::Delete(_pContext);
+            return _lStatus;
+        }
+
+        if (_bInitialNotification)
+        {
+            if (_uFamily == AF_UNSPEC)
+            {
+                _pfnCallback(_pCallerContext, nullptr, MibInitialNotification);
+            }
+
+            _pfnCallback(_pCallerContext, nullptr, MibInitialNotification);
+        }
+
+        if (!RegisterWaitForSingleObject(
+            &_pContext->hWaitObject,
+            _pContext->Overlapped.hEvent,
+            [](_In_ PVOID _pParameter, _In_ BOOLEAN _bTimerOrWaitFired)
+            {
+                UNREFERENCED_PARAMETER(_bTimerOrWaitFired);
+                auto _pContext = reinterpret_cast<NotifyIpInterfaceChangeDownlevelContext*>(_pParameter);
+
+                PIP_ADAPTER_ADDRESSES _pNewAdapters = nullptr;
+                auto _lStatus = GetAdaptersAddressesSnapshot(_pContext->uFamily, &_pNewAdapters);
+                if (_lStatus == NO_ERROR)
+                {
+                    _pContext->DiffAdapters(AF_INET, _pNewAdapters);
+                    _pContext->DiffAdapters(AF_INET6, _pNewAdapters);
+
+                    auto _pOldAdapters = _pContext->pAdapters;
+                    _pContext->pAdapters = _pNewAdapters;
+                    _pNewAdapters = nullptr;
+                    if (_pOldAdapters)
+                    {
+                        internal::Free(_pOldAdapters);
+                    }
+                }
+
+                _pContext->InstallNotify();
+            },
+            _pContext,
+            INFINITE,
+            WT_EXECUTEDEFAULT))
+        {
+            // 这里失败了也没有太好的补救措施，通知已经注册成功了，只是无法收到后续通知了。
+        }
+
+        *_phNotificationHandle = reinterpret_cast<HANDLE>(_pContext);
         return NO_ERROR;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    iphlpapi,
+    8,
+    NETIO_STATUS,
+    NETIOAPI_API_,
+    GetUnicastIpAddressTable,
+        _In_ ADDRESS_FAMILY _uFamily,
+        _Outptr_ PMIB_UNICASTIPADDRESS_TABLE* _ppTable
+        )
+    {
+        if (const auto _pfnGetUnicastIpAddressTable = try_get_GetUnicastIpAddressTable())
+        {
+            return _pfnGetUnicastIpAddressTable(_uFamily, _ppTable);
+        }
+
+        return GetUnicastIpAddressTableDownlevel(_uFamily, _ppTable);
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端	Windows Vista [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    iphlpapi,
+    20,
+    NETIO_STATUS,
+    NETIOAPI_API_,
+    NotifyStableUnicastIpAddressTable,
+        _In_ ADDRESS_FAMILY _uFamily,
+        _Outptr_ PMIB_UNICASTIPADDRESS_TABLE* _ppTable,
+        _In_ PSTABLE_UNICAST_IPADDRESS_TABLE_CALLBACK _pfnCallback,
+        _In_ PVOID _pCallerContext,
+        _Inout_ HANDLE* _phNotificationHandle
+        )
+    {
+        if (const auto _pfnNotifyStableUnicastIpAddressTable = try_get_NotifyStableUnicastIpAddressTable())
+        {
+            return _pfnNotifyStableUnicastIpAddressTable(_uFamily, _ppTable, _pfnCallback, _pCallerContext, _phNotificationHandle);
+        }
+
+        if (_ppTable == nullptr || _phNotificationHandle == nullptr)
+        {
+            return ERROR_INVALID_PARAMETER;
+        }
+
+        *_ppTable = nullptr;
+        *_phNotificationHandle = nullptr;
+
+        if (_pfnCallback == nullptr
+            || (_uFamily != AF_INET && _uFamily != AF_INET6 && _uFamily != AF_UNSPEC))
+        {
+            return ERROR_INVALID_PARAMETER;
+        }
+
+        struct StableUnicastIpAddressChangeContext : MibChangeNotifyDownlevelContext
+        {
+            ADDRESS_FAMILY uFamily = AF_UNSPEC;
+            PSTABLE_UNICAST_IPADDRESS_TABLE_CALLBACK pfnCallback = nullptr;
+            PVOID pCallerContext = nullptr;
+            HANDLE hWaitObject = nullptr;
+            HANDLE hNotifyHandle = nullptr;
+            OVERLAPPED Overlapped = {};
+
+            ~StableUnicastIpAddressChangeContext() override
+            {
+                Cancel();
+
+                if (Overlapped.hEvent)
+                {
+                    CloseHandle(Overlapped.hEvent);
+                    Overlapped.hEvent = nullptr;
+                }
+            }
+
+            LSTATUS __fastcall Cancel() override
+            {
+                if (InterlockedExchange(&uSignature, 0) == 0)
+                {
+                    return NO_ERROR;
+                }
+
+                if (auto _hWaitObject = InterlockedExchangePointer(&hWaitObject, NULL))
+                {
+                    UnregisterWaitEx(_hWaitObject, INVALID_HANDLE_VALUE);
+                }
+
+                if (hNotifyHandle)
+                {
+                    ::CancelIPChangeNotify(&Overlapped);
+                    hNotifyHandle = NULL;
+                }
+
+                return NO_ERROR;
+            }
+
+            LSTATUS __fastcall InstallNotify()
+            {
+                auto _lStatus = NotifyAddrChange(&hNotifyHandle, &Overlapped);
+                if (_lStatus == ERROR_IO_PENDING || _lStatus == ERROR_SUCCESS)
+                {
+                    return ERROR_SUCCESS;
+                }
+
+                return _lStatus;
+            }
+        };
+
+        auto _pContext = internal::New<StableUnicastIpAddressChangeContext>();
+        if (_pContext == nullptr)
+        {
+            return ERROR_NOT_ENOUGH_MEMORY;
+        }
+
+        _pContext->uFamily = _uFamily;
+        _pContext->pfnCallback = _pfnCallback;
+        _pContext->pCallerContext = _pCallerContext;
+
+        _pContext->Overlapped.hEvent= CreateEventW(nullptr, FALSE, FALSE, nullptr);
+        if (_pContext->Overlapped.hEvent == nullptr)
+        {
+            auto _lStatus = GetLastError();
+            internal::Delete(_pContext);
+            return _lStatus;
+        }
+
+        auto _lStatus = _pContext->InstallNotify();
+        if (_lStatus != NO_ERROR)
+        {
+            internal::Delete(_pContext);
+            return _lStatus;
+        }
+
+        if (!RegisterWaitForSingleObject(
+            &_pContext->hWaitObject,
+            _pContext->Overlapped.hEvent,
+            [](_In_ PVOID _pParameter, _In_ BOOLEAN _bTimerOrWaitFired)
+            {
+                UNREFERENCED_PARAMETER(_bTimerOrWaitFired);
+                auto _pContext = reinterpret_cast<StableUnicastIpAddressChangeContext*>(_pParameter);
+
+                if (_bTimerOrWaitFired)
+                {
+                    PMIB_UNICASTIPADDRESS_TABLE _pTable = nullptr;
+                    auto _lStatus = GetUnicastIpAddressTableDownlevel(_pContext->uFamily, &_pTable);
+                    if (_lStatus == NO_ERROR)
+                    {
+                        _pContext->pfnCallback(_pContext->pCallerContext, _pTable);
+                        internal::Free(_pTable);
+                    }
+                    else
+                    {
+                        MIB_UNICASTIPADDRESS_TABLE _oTable = {};
+                        _pContext->pfnCallback(_pContext->pCallerContext, &_oTable);
+                    }
+
+                    if (auto _hWaitObject = InterlockedExchangePointer(&_pContext->hWaitObject, NULL))
+                    {
+                        UnregisterWaitEx(_hWaitObject, NULL);
+                    }
+                    return;
+                }
+                else
+                {
+                    _pContext->InstallNotify();
+                }
+            },
+            _pContext,
+            5 * 1000,
+            WT_EXECUTEDEFAULT))
+        {
+            _lStatus = GetLastError();
+            internal::Delete(_pContext);
+            return _lStatus;
+        }
+
+        *_phNotificationHandle = reinterpret_cast<HANDLE>(_pContext);
+        return ERROR_IO_PENDING;
     }
 #endif
 
@@ -800,10 +1437,33 @@ namespace YY::Thunks
             return _pfnCancelMibChangeNotify2(_hNotificationHandle);
         }
 
-        // NotifyIpInterfaceChange返回的句柄始终等于 2
-        if (_hNotificationHandle != reinterpret_cast<HANDLE>(2))
+        if (_hNotificationHandle == NULL)
         {
             return ERROR_INVALID_PARAMETER;
+        }
+        else if (_hNotificationHandle == reinterpret_cast<HANDLE>(2))
+        {
+            // 早期 NotifyIpInterfaceChange返回的句柄始终等于 2。
+            return NO_ERROR;
+        }
+        else
+        {
+            auto _pBaseContext = reinterpret_cast<MibChangeNotifyDownlevelContext*>(_hNotificationHandle);
+            __try
+            {
+                if (_pBaseContext->uSignature != kMibChangeNotifyDownlevelContextSignature)
+                {
+                    return ERROR_INVALID_PARAMETER;
+                }
+
+                auto _lStatus = _pBaseContext->Cancel();
+                internal::Delete(_pBaseContext);
+                return _lStatus;
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER)
+            {
+                return ERROR_INVALID_PARAMETER;
+            }
         }
 
         return NO_ERROR;
