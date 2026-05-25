@@ -112,10 +112,10 @@
 | ----                                       | -----------
 | RoInitialize                               | 调用 CoInitializeEx。
 | RoUninitialize                             | 调用 CoUninitialize。
-| RoActivateInstance                         | 返回 E_NOTIMPL。
+| RoActivateInstance                         | 内部实现。
 | RoRegisterActivationFactories              | 返回 E_NOTIMPL。
 | RoRevokeActivationFactories                | 什么也不做。
-| RoGetActivationFactory                     | 返回 CLASS_E_CLASSNOTAVAILABLE
+| RoGetActivationFactory                     | 内部实现。
 | RoRegisterForApartmentShutdown             | 返回 E_NOTIMPL。
 | RoUnregisterForApartmentShutdown           | 返回 E_NOTIMPL。
 | RoGetApartmentIdentifier                   | 返回 E_NOTIMPL。
