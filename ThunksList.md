@@ -115,7 +115,7 @@
 | RoActivateInstance                         | 返回 E_NOTIMPL。
 | RoRegisterActivationFactories              | 返回 E_NOTIMPL。
 | RoRevokeActivationFactories                | 什么也不做。
-| RoGetActivationFactory                     | 返回 CLASS_E_CLASSNOTAVAILABLE
+| RoGetActivationFactory                     | 内部实现。
 | RoRegisterForApartmentShutdown             | 返回 E_NOTIMPL。
 | RoUnregisterForApartmentShutdown           | 返回 E_NOTIMPL。
 | RoGetApartmentIdentifier                   | 返回 E_NOTIMPL。

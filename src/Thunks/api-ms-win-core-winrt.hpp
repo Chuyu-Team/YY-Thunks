@@ -1,11 +1,58 @@
-﻿#if (YY_Thunks_Target < __WindowsNT6_2)
+﻿#if (YY_Thunks_Target < __WindowsNT10_10240)
 #include <roapi.h>
+#include <activation.h>
+#include <inspectable.h>
 #endif
 
-#if (YY_Thunks_Target < __WindowsNT6_2) && !defined(__Comment_Lib_ole32)
+#if (YY_Thunks_Target < __WindowsNT10_10240) && !defined(__Comment_Lib_ole32)
 #define __Comment_Lib_ole32
 #pragma comment(lib, "Ole32.lib")
 #endif
+
+#if defined(YY_Thunks_Implemented)
+namespace YY::Thunks::Fallback
+{
+    namespace
+    {
+#if (YY_Thunks_Target < __WindowsNT10_10240)
+        struct RoGetActivationFactoryMapEntry
+        {
+            _In_z_ PCWSTR RuntimeClassId;
+            _In_ HRESULT(__fastcall* Resolver)(_In_ REFIID iid, _COM_Outptr_ void** factory);
+        };
+
+        #pragma section(".RoGetActivationFactory$AAA", read)
+        #pragma section(".RoGetActivationFactory$AAB", read)
+        #pragma section(".RoGetActivationFactory$AAC", read)
+        #pragma comment(linker, "/merge:.RoGetActivationFactory=.rdata")
+
+        __declspec(allocate(".RoGetActivationFactory$AAA")) static const RoGetActivationFactoryMapEntry g_RoGetActivationFactoryMapStart[] =
+        {
+            { nullptr, nullptr }
+        };
+
+#if defined(_M_IX86)
+#define __DEFINE_RoGetActivationFactoryMapEntry(_CLASS_ID, _FUNCTION)                                                                                                   \
+    __pragma(warning(suppress:4483))                                                                                                                                    \
+    extern "C" __declspec(allocate(".RoGetActivationFactory$AAB")) const YY::Thunks::Fallback::RoGetActivationFactoryMapEntry __identifier(_CRT_STRINGIZE_(RoGetActivationFactory ## @ ## _CLASS_ID)) = {  _CRT_WIDE_(# _CLASS_ID), &_FUNCTION }
+#else
+#define __DEFINE_RoGetActivationFactoryMapEntry(_CLASS_ID, _FUNCTION)                                                                                                   \
+    __pragma(warning(suppress:4483))                                                                                                                                    \
+    extern "C" __declspec(allocate(".RoGetActivationFactory$AAB")) const YY::Thunks::Fallback::RoGetActivationFactoryMapEntry __identifier(_CRT_STRINGIZE_(_RoGetActivationFactory ## @ ## _CLASS_ID)) = {  _CRT_WIDE_(# _CLASS_ID), &_FUNCTION }
+
+#endif
+
+        __declspec(allocate(".RoGetActivationFactory$AAC")) static const RoGetActivationFactoryMapEntry g_RoGetActivationFactoryMapEnd[] =
+        {
+            { nullptr, nullptr }
+        };
+#endif
+    }
+}
+
+#include "WinRT/Windows.UI.ViewManagement.UIViewSettings.h"
+
+#endif // (YY_Thunks_Implemented)
 
 namespace YY::Thunks
 {
@@ -132,7 +179,7 @@ namespace YY::Thunks
     }
 #endif
 
-#if (YY_Thunks_Target < __WindowsNT6_2)
+#if (YY_Thunks_Target < __WindowsNT10_10240)
 
     //Windows 8 [desktop apps | UWP apps]
     //Windows Server 2012 [desktop apps | UWP apps]
@@ -142,22 +189,54 @@ namespace YY::Thunks
     HRESULT,
     WINAPI,
     RoGetActivationFactory,
-        _In_ HSTRING activatableClassId,
-        _In_ REFIID iid,
-        _COM_Outptr_ void** factory
+        _In_ HSTRING _hActivatableClassId,
+        _In_ REFIID _iid,
+        _COM_Outptr_ void** _ppFactory
         )
     {
-        if (auto const pRoGetActivationFactory = try_get_RoGetActivationFactory())
+        if (auto const _pfnRoGetActivationFactory = try_get_RoGetActivationFactory())
         {
-            return pRoGetActivationFactory(activatableClassId, iid, factory);
+            auto _hr = _pfnRoGetActivationFactory(_hActivatableClassId, _iid, _ppFactory);
+
+            if (_hr != CLASS_E_CLASSNOTAVAILABLE && _hr != REGDB_E_CLASSNOTREG)
+            {
+                return _hr;
+            }
+
+            // 支持RoGetActivationFactory不代表就一定支持所有的ClassId，所以我们需要Fallback到我们的对象。
         }
 
-        if (factory)
-            *factory = nullptr;
+        if (!_ppFactory)
+            return E_POINTER;
 
-        // According to the C++/WinRT fallback implementation, we should
-        // return CLASS_E_CLASSNOTAVAILABLE.
-        return CLASS_E_CLASSNOTAVAILABLE;
+        *_ppFactory = nullptr;
+
+        if (!_hActivatableClassId)
+            return E_INVALIDARG;
+
+        UINT32 _cchActivatableClassId = 0;
+        auto _szActivatableClassId = WindowsGetStringRawBuffer(_hActivatableClassId, &_cchActivatableClassId);
+
+        for (auto _pEntry = YY::Thunks::Fallback::g_RoGetActivationFactoryMapStart + 1; _pEntry < YY::Thunks::Fallback::g_RoGetActivationFactoryMapEnd; ++_pEntry)
+        {
+            if (!_pEntry->RuntimeClassId || !_pEntry->Resolver)
+                continue;
+
+            const auto _cchRuntimeClassId = internal::StringLength(_pEntry->RuntimeClassId);
+            if (_cchRuntimeClassId != _cchActivatableClassId)
+            {
+                continue;
+            }
+
+            if (CompareStringOrdinal(_szActivatableClassId, _cchActivatableClassId, _pEntry->RuntimeClassId, _cchRuntimeClassId, FALSE) != CSTR_EQUAL)
+            {
+                continue;
+            }
+
+            return _pEntry->Resolver(_iid, _ppFactory);
+        }
+
+        return REGDB_E_CLASSNOTREG;
     }
 #endif
 

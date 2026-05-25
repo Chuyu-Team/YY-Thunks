@@ -53,5 +53,11 @@
         Name="10.0.19041.0"
         DisplayName="10.0.19041.0"/>
     </EnumProperty>
+
+    <BoolProperty
+      Name="YY_Thunks_RoGetActivationFactory_UIViewSettings"
+      Category="YY_Thunks"
+      DisplayName="Windows.UI.ViewManagement.UIViewSettings支持"
+      Description="启用后，RoGetActivationFactory内将额外模拟Windows.UI.ViewManagement.UIViewSettings接口类。目标二进制体积将增加。" />
   </Rule>
 </ProjectSchemaDefinitions>

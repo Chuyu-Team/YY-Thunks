@@ -31,6 +31,9 @@
     <Filter Include="Shared">
       <UniqueIdentifier>{95ed93c5-b5db-4021-b71e-91b48c16e83d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="WinRT">
+      <UniqueIdentifier>{e886e72e-8b00-4354-8455-031f074bb2c8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -112,7 +115,13 @@
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
     <ClCompile Include="credui.UnitTest.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
+    <ClCompile Include="ncrypy.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
+    <ClCompile Include="api-ms-win-core-winrt.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -415,6 +424,9 @@
     </ClInclude>
     <ClInclude Include="..\Thunks\ncrypy.hpp">
       <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\WinRT\Windows.UI.ViewManagement.UIViewSettings.h">
+      <Filter>WinRT</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
