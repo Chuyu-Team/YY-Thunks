@@ -12,11 +12,17 @@
 #pragma comment(lib, "Ole32.lib")
 #endif
 
-#if (YY_Thunks_Target < __WindowsNT6_2)
+#if (YY_Thunks_Target < __WindowsNT6_2) && !defined(YY_WINRT_QT6_STUBS)
+#define YY_WINRT_QT6_STUBS
+
 #define SafeAllocEx(Heap, Flags, Type, Count) ((Type*)HeapAlloc((Heap), (Flags), sizeof(Type) * (Count)))
 #define SafeAlloc(Type, Count) SafeAllocEx(GetProcessHeap(), 0, Type, (Count))
 #define SafeFreeEx(Heap, Flags, Pointer)  do { if (Pointer) { HeapFree((Heap), (Flags), (Pointer)); (Pointer) = nullptr; } } while(0)
 #define SafeFree(Pointer) SafeFreeEx(GetProcessHeap(), 0, (Pointer))
+
+#ifndef boolean
+typedef unsigned char boolean;
+#endif
 
 typedef enum _YY_AsyncStatus {
     YY_AsyncStatus_Started = 0,
@@ -110,7 +116,7 @@ class StubAsyncOperationBoolean : public IAsyncOperationBoolean
 public:
     STDMETHODIMP QueryInterface(REFIID riid, void** ppv) override {
         if (!ppv) return E_POINTER; *ppv = nullptr;
-        if (riid == IID_IUnknown || riid == __uuidof(IAsyncInfo) || riid == __uuidof(IAsyncOperationBoolean)) {
+        if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, __uuidof(IAsyncInfo)) || IsEqualIID(riid, __uuidof(IAsyncOperationBoolean))) {
             AddRef(); *ppv = static_cast<IAsyncOperationBoolean*>(this); return S_OK;
         }
         return E_NOINTERFACE;
@@ -135,14 +141,14 @@ public:
     STDMETHODIMP get_Completed(void**) override { return E_NOTIMPL; }
 };
 
-__declspec(selectany) static StubAsyncOperationBoolean g_StubAsyncOpBool;
+static StubAsyncOperationBoolean g_StubAsyncOpBool;
 
 class fakeLauncherStatics : public ILauncherStatics
 {
 public:
     STDMETHODIMP QueryInterface(_In_ REFIID riid, _Out_ void** ppv) override {
         if (!ppv) return E_POINTER; *ppv = nullptr;
-        if (riid == IID_IUnknown || riid == __uuidof(ILauncherStatics) || riid == __uuidof(IInspectable) || riid == __uuidof(IAgileObject)) {
+        if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, __uuidof(ILauncherStatics)) || IsEqualIID(riid, __uuidof(IInspectable)) || IsEqualIID(riid, __uuidof(IAgileObject))) {
             AddRef(); *ppv = static_cast<ILauncherStatics*>(this); return S_OK;
         }
         return E_NOINTERFACE;
@@ -191,14 +197,14 @@ public:
     }
 };
 
-__declspec(selectany) static fakeLauncherStatics f_launcherstatics;
+static fakeLauncherStatics f_launcherstatics;
 
 class fakeActivationFactory : public IActivationFactory
 {
 public:
     STDMETHODIMP QueryInterface(_In_ REFIID riid, _Out_ void** ppv) override {
         if (!ppv) return E_POINTER; *ppv = nullptr;
-        if ((IID_IUnknown == riid) || (__uuidof(IActivationFactory) == riid) || (__uuidof(IInspectable) == riid) || (__uuidof(IAgileObject) == riid)) {
+        if (IsEqualIID(IID_IUnknown, riid) || IsEqualIID(__uuidof(IActivationFactory), riid) || IsEqualIID(__uuidof(IInspectable), riid) || IsEqualIID(__uuidof(IAgileObject), riid)) {
             AddRef(); *ppv = static_cast<IActivationFactory*>(this); return S_OK;
         }
         return E_NOINTERFACE;
@@ -221,13 +227,13 @@ public:
     STDMETHODIMP ActivateInstance(_Out_ IInspectable** instance) override { if (instance) *instance = nullptr; return E_NOTIMPL; }
 };
 
-__declspec(selectany) static fakeActivationFactory f_factory;
+static fakeActivationFactory f_factory;
 
 class fakeUiViewSettings : public IUIViewSettings
 {
     STDMETHODIMP QueryInterface(_In_ REFIID riid, _Out_ void** ppv) override {
         if (!ppv) return E_POINTER; *ppv = nullptr;
-        if ((riid == IID_IUnknown) || (riid == IID_IAgileObject) || (riid == IID_IInspectable) || (riid == __uuidof(IUIViewSettings))) {
+        if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_IAgileObject) || IsEqualIID(riid, IID_IInspectable) || IsEqualIID(riid, __uuidof(IUIViewSettings))) {
             AddRef(); *ppv = static_cast<IUIViewSettings*>(this); return S_OK;
         }
         return E_NOINTERFACE;
@@ -253,14 +259,14 @@ class fakeUiViewSettings : public IUIViewSettings
     }
 };
 
-__declspec(selectany) static fakeUiViewSettings f_viewsettings;
+static fakeUiViewSettings f_viewsettings;
 
 class fakeUiViewSettingsInterop : public IUIViewSettingsInterop {
 public:
     STDMETHODIMP QueryInterface(_In_ REFIID riid, _Out_ void** ppv) override {
         if (!ppv) return E_POINTER; *ppv = nullptr;
-        if (riid == IID_IUnknown || riid == IID_IAgileObject ||
-            riid == IID_IInspectable || riid == __uuidof(IUIViewSettingsInterop)) {
+        if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_IAgileObject) ||
+            IsEqualIID(riid, IID_IInspectable) || IsEqualIID(riid, __uuidof(IUIViewSettingsInterop))) {
             AddRef(); *ppv = static_cast<IUIViewSettingsInterop*>(this); return S_OK;
         }
         return E_NOINTERFACE;
@@ -284,16 +290,14 @@ public:
         if (!ppv) return E_POINTER;
         *ppv = NULL;
 
-        if (!(riid == __uuidof(IUIViewSettings))) {
-            return E_NOINTERFACE;
-        }
+        if (!IsEqualIID(riid, __uuidof(IUIViewSettings))) { return E_NOINTERFACE; }
 
         *ppv = &f_viewsettings;
         return S_OK;
     }
 };
 
-__declspec(selectany) static fakeUiViewSettingsInterop f_viewsettingsinterop;
+static fakeUiViewSettingsInterop f_viewsettingsinterop;
 
 class StubVectorView_HSTRING : public IVectorView_HSTRING {
 public:
@@ -332,7 +336,7 @@ public:
 
     STDMETHODIMP QueryInterface(REFIID riid, void** ppv) override {
         if (!ppv) return E_POINTER; *ppv = nullptr;
-        if (riid == IID_IUnknown || riid == IID_IInspectable || riid == __uuidof(IVectorView_HSTRING)) {
+        if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_IInspectable) || IsEqualIID(riid, __uuidof(IVectorView_HSTRING))) {
             AddRef(); *ppv = static_cast<IVectorView_HSTRING*>(this); return S_OK;
         }
         return E_NOINTERFACE;
@@ -355,7 +359,7 @@ public:
         return S_OK;
     }
     STDMETHODIMP GetRuntimeClassName(HSTRING* className) override {
-        PCWSTR Name = L"Windows.Foundation.Collections.IVector";
+        PCWSTR Name = L"Windows.Foundation.Collections.IVectorView";
         return WindowsCreateString(Name, (ULONG)wcslen(Name), className);
     }
     STDMETHODIMP GetTrustLevel(_Out_ TrustLevel* trustLevel) override { *trustLevel = BaseTrust; return S_OK; };
@@ -439,8 +443,8 @@ class fakeGlobalizationPreferencesStatics : public IGlobalizationPreferencesStat
 public:
     STDMETHODIMP QueryInterface(_In_ REFIID riid, _Out_ void** ppv) override {
         if (!ppv) return E_POINTER; *ppv = nullptr;
-        if (riid == IID_IUnknown || riid == IID_IAgileObject ||
-            riid == IID_IInspectable || riid == __uuidof(IGlobalizationPreferencesStatics)) {
+        if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_IAgileObject) ||
+            IsEqualIID(riid, IID_IInspectable) || IsEqualIID(riid, __uuidof(IGlobalizationPreferencesStatics))) {
             AddRef(); *ppv = static_cast<IGlobalizationPreferencesStatics*>(this); return S_OK;
         }
         return E_NOINTERFACE;
@@ -463,7 +467,6 @@ public:
         *trustLevel = BaseTrust; return S_OK;
     }
 
-    // Коллекции не критичны для Qt6 → возвращаем E_NOTIMPL
     STDMETHODIMP get_Calendars(IVectorView_HSTRING** value) override { return E_NOTIMPL; }
     STDMETHODIMP get_Currencies(IVectorView_HSTRING**) override { return E_NOTIMPL; }
     STDMETHODIMP get_Clocks(IVectorView_HSTRING** value) override { return E_NOTIMPL; }
@@ -527,8 +530,8 @@ public:
     }
 };
 
-__declspec(selectany) static fakeGlobalizationPreferencesStatics f_globalization;
-#endif // YY_Thunks_Target < __WindowsNT10_0
+static fakeGlobalizationPreferencesStatics f_globalization;
+#endif // YY_WINRT_QT6_STUBS, YY_Thunks_Target < __WindowsNT6_2
 
 namespace YY::Thunks
 {
