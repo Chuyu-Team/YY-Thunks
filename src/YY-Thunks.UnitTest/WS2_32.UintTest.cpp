@@ -395,4 +395,218 @@ namespace WS2_32
             }
         }
     };
+
+
+    TEST_CLASS(GetNameInfoW)
+    {
+        AwaysNullGuard Guard;
+        WSADATA wsaData;
+
+    public:
+        GetNameInfoW()
+        {
+            __if_exists(YY::Thunks::aways_null_try_get_GetNameInfoW)
+            {
+                Guard |= YY::Thunks::aways_null_try_get_GetNameInfoW;
+            }
+            WSAStartup(MAKEWORD(2, 2), &wsaData);
+        }
+
+        ~GetNameInfoW()
+        {
+            // WSACleanup();
+        }
+
+        TEST_METHOD(常规测试)
+        {
+            // 准备一个 IPv4 地址结构 (127.0.0.1)
+            SOCKADDR_IN _Addr = {};
+            _Addr.sin_family = AF_INET;
+            _Addr.sin_port = htons(80);
+            _Addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+            wchar_t _szNodeBuffer[NI_MAXHOST] = {};
+            wchar_t _szServiceBuffer[NI_MAXSERV] = {};
+
+            auto _iResult = ::GetNameInfoW(
+                reinterpret_cast<SOCKADDR*>(&_Addr),
+                sizeof(_Addr),
+                _szNodeBuffer,
+                _countof(_szNodeBuffer),
+                _szServiceBuffer,
+                _countof(_szServiceBuffer),
+                0);
+
+            Assert::AreEqual(_iResult, 0);
+            // 节点名应该非空 (可能是 localhost 或 127.0.0.1)
+            Assert::AreNotEqual(wcslen(_szNodeBuffer), (size_t)0);
+            // 服务名应该是 "http" 或 "80"
+            Assert::AreNotEqual(wcslen(_szServiceBuffer), (size_t)0);
+        }
+
+        TEST_METHOD(仅获取节点名)
+        {
+            SOCKADDR_IN _Addr = {};
+            _Addr.sin_family = AF_INET;
+            _Addr.sin_port = htons(443);
+            _Addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+            wchar_t _szNodeBuffer[NI_MAXHOST] = {};
+
+            auto _iResult = ::GetNameInfoW(
+                reinterpret_cast<SOCKADDR*>(&_Addr),
+                sizeof(_Addr),
+                _szNodeBuffer,
+                _countof(_szNodeBuffer),
+                nullptr,    // 不需要服务名
+                0,
+                0);
+
+            Assert::AreEqual(_iResult, 0);
+            Assert::AreNotEqual(wcslen(_szNodeBuffer), (size_t)0);
+        }
+
+        TEST_METHOD(仅获取服务名)
+        {
+            SOCKADDR_IN _Addr = {};
+            _Addr.sin_family = AF_INET;
+            _Addr.sin_port = htons(80);
+            _Addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+            wchar_t _szServiceBuffer[NI_MAXSERV] = {};
+
+            auto _iResult = ::GetNameInfoW(
+                reinterpret_cast<SOCKADDR*>(&_Addr),
+                sizeof(_Addr),
+                nullptr,    // 不需要节点名
+                0,
+                _szServiceBuffer,
+                _countof(_szServiceBuffer),
+                0);
+
+            Assert::AreEqual(_iResult, 0);
+            Assert::AreNotEqual(wcslen(_szServiceBuffer), (size_t)0);
+        }
+
+        TEST_METHOD(空指针缓冲区)
+        {
+            SOCKADDR_IN _Addr = {};
+            _Addr.sin_family = AF_INET;
+            _Addr.sin_port = htons(80);
+            _Addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+            // 两个缓冲区都是 nullptr，应该成功但不返回任何内容
+            auto _iResult = ::GetNameInfoW(
+                reinterpret_cast<SOCKADDR*>(&_Addr),
+                sizeof(_Addr),
+                nullptr,
+                0,
+                nullptr,
+                0,
+                0);
+
+            Assert::AreEqual(_iResult, 0);
+        }
+
+        TEST_METHOD(缓冲区不足)
+        {
+            SOCKADDR_IN _Addr = {};
+            _Addr.sin_family = AF_INET;
+            _Addr.sin_port = htons(80);
+            _Addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+            // 给一个非常小的缓冲区
+            wchar_t _szNodeBuffer[2] = {};
+
+            auto _iResult = ::GetNameInfoW(
+                reinterpret_cast<SOCKADDR*>(&_Addr),
+                sizeof(_Addr),
+                _szNodeBuffer,
+                _countof(_szNodeBuffer),
+                nullptr,
+                0,
+                0);
+
+            // 缓冲区不足应该返回错误码 (EAI_OVERFLOW)
+            Assert::AreNotEqual(_iResult, 0);
+        }
+
+        TEST_METHOD(NI_NUMERICHOST标志)
+        {
+            SOCKADDR_IN _Addr = {};
+            _Addr.sin_family = AF_INET;
+            _Addr.sin_port = htons(80);
+            _Addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+            wchar_t _szNodeBuffer[NI_MAXHOST] = {};
+
+            // 使用 NI_NUMERICHOST 直接返回 IP 地址字符串
+            auto _iResult = ::GetNameInfoW(
+                reinterpret_cast<SOCKADDR*>(&_Addr),
+                sizeof(_Addr),
+                _szNodeBuffer,
+                _countof(_szNodeBuffer),
+                nullptr,
+                0,
+                NI_NUMERICHOST);
+
+            Assert::AreEqual(_iResult, 0);
+            // 应该包含 "127.0.0.1"
+            Assert::AreEqual(wcscmp(_szNodeBuffer, L"127.0.0.1"), 0);
+        }
+
+        TEST_METHOD(NI_NUMERICSERV标志)
+        {
+            SOCKADDR_IN _Addr = {};
+            _Addr.sin_family = AF_INET;
+            _Addr.sin_port = htons(80);
+            _Addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+            wchar_t _szServiceBuffer[NI_MAXSERV] = {};
+
+            // 使用 NI_NUMERICSERV 直接返回端口号字符串
+            auto _iResult = ::GetNameInfoW(
+                reinterpret_cast<SOCKADDR*>(&_Addr),
+                sizeof(_Addr),
+                nullptr,
+                0,
+                _szServiceBuffer,
+                _countof(_szServiceBuffer),
+                NI_NUMERICSERV);
+
+            Assert::AreEqual(_iResult, 0);
+            // 应该包含 "80"
+            Assert::AreEqual(wcscmp(_szServiceBuffer, L"80"), 0);
+        }
+
+        __if_exists(YY::Thunks::aways_null_try_get_GetNameInfoW)
+        {
+            TEST_METHOD(WinXP_RTM模式)
+            {
+                AwaysNullGuard Guard;
+                Guard |= YY::Thunks::aways_null_try_get_GetNameInfoW;
+
+                SOCKADDR_IN _Addr = {};
+                _Addr.sin_family = AF_INET;
+                _Addr.sin_port = htons(80);
+                _Addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+                wchar_t _szNodeBuffer[NI_MAXHOST] = {};
+                wchar_t _szServiceBuffer[NI_MAXSERV] = {};
+
+                auto _iResult = ::GetNameInfoW(
+                    reinterpret_cast<SOCKADDR*>(&_Addr),
+                    sizeof(_Addr),
+                    _szNodeBuffer,
+                    _countof(_szNodeBuffer),
+                    _szServiceBuffer,
+                    _countof(_szServiceBuffer),
+                    0);
+
+                Assert::AreEqual(_iResult, 0);
+                Assert::AreNotEqual(wcslen(_szNodeBuffer), (size_t)0);
+                Assert::AreNotEqual(wcslen(_szServiceBuffer), (size_t)0);
+            }
+        }
+    };
 }

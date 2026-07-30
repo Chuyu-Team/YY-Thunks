@@ -2185,4 +2185,86 @@ namespace YY::Thunks
         return SOCKET_ERROR;
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT5_1_SP2)
+
+    // 最低受支持的客户端	Windows XP SP2 [桌面应用 |UWP 应用]
+    // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    ws2_32,
+    28,
+    INT,
+    WSAAPI,
+    GetNameInfoW,
+        _In_reads_bytes_(_iAddrLen) const SOCKADDR* _pAddr,
+        _In_ socklen_t _iAddrLen,
+        _Out_writes_opt_(_iNodeBufferSize) PWSTR _szNodeBuffer,
+        _In_ DWORD _iNodeBufferSize,
+        _Out_writes_opt_(_iServiceBufferSize) PWSTR _szServiceBuffer,
+        _In_ DWORD _iServiceBufferSize,
+        _In_ INT _iFlags
+        )
+    {
+        if (auto const _pfnGetNameInfoW = try_get_GetNameInfoW())
+        {
+            return _pfnGetNameInfoW(_pAddr, _iAddrLen, _szNodeBuffer, _iNodeBufferSize, _szServiceBuffer, _iServiceBufferSize, _iFlags);
+        }
+
+        char _szNodeBufferA[NI_MAXHOST];
+        char _szServiceBufferA[NI_MAXSERV];
+
+        auto _iResult = getnameinfo(
+            _pAddr,
+            _iAddrLen,
+            _szNodeBuffer && _iNodeBufferSize > 0 ? _szNodeBufferA : nullptr,
+            _szNodeBuffer && _iNodeBufferSize > 0 ? sizeof(_szNodeBufferA) : 0,
+            _szServiceBuffer && _iServiceBufferSize > 0 ? _szServiceBufferA : nullptr,
+            _szServiceBuffer && _iServiceBufferSize > 0 ? sizeof(_szServiceBufferA) : 0,
+            _iFlags);
+
+        if (_iResult != 0)
+        {
+            return _iResult;
+        }
+
+        // 转换节点名称
+        if (_szNodeBuffer && _iNodeBufferSize > 0)
+        {
+            const auto _cchNodeW = MultiByteToWideChar(CP_ACP, 0, _szNodeBufferA, -1, _szNodeBuffer, _iNodeBufferSize);
+            if (_cchNodeW == 0)
+            {
+                if (ERROR_INSUFFICIENT_BUFFER == GetLastError())
+                {
+                    WSASetLastError(WSAEFAULT);
+                }
+                else
+                {
+                    WSASetLastError(ERROR_FUNCTION_FAILED);
+                }
+                return SOCKET_ERROR;
+            }
+        }
+
+        // 转换服务名称
+        if (_szServiceBuffer && _iServiceBufferSize > 0)
+        {
+            const auto _cchServiceW = MultiByteToWideChar(CP_ACP, 0, _szServiceBufferA, -1, _szServiceBuffer, _iServiceBufferSize);
+            if (_cchServiceW == 0)
+            {
+                if (ERROR_INSUFFICIENT_BUFFER == GetLastError())
+                {
+                    WSASetLastError(WSAEFAULT);
+                }
+                else
+                {
+                    WSASetLastError(ERROR_FUNCTION_FAILED);
+                }
+                return SOCKET_ERROR;
+            }
+        }
+
+        return 0;
+    }
+#endif
 } //namespace YY
