@@ -1235,6 +1235,85 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6_1)
 
+    // 最低受支持的客户端    Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008 R2 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    20,
+    BOOL,
+    WINAPI,
+    SetGestureConfig,
+        _In_ HWND _hWnd,
+        _In_ DWORD _dwReserved,
+        _In_ UINT _uDefinitions,
+        _In_reads_(_uDefinitions) PGESTURECONFIG _pGestureConfig,
+        _In_ UINT _cbSize
+        )
+    {
+        if (auto const _pfnSetGestureConfig = try_get_SetGestureConfig())
+        {
+            return _pfnSetGestureConfig(_hWnd, _dwReserved, _uDefinitions, _pGestureConfig, _cbSize);
+        }
+
+        // 低版本系统没有手势支持，忽略配置并假装成功。
+        return TRUE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_1)
+
+    // 最低受支持的客户端    Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008 R2 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    4,
+    BOOL,
+    WINAPI,
+    CloseGestureInfoHandle,
+        _In_ HGESTUREINFO _hGestureInfo
+        )
+    {
+        if (auto const _pfnCloseGestureInfoHandle = try_get_CloseGestureInfoHandle())
+        {
+            return _pfnCloseGestureInfoHandle(_hGestureInfo);
+        }
+
+        // 低版本系统不会产生手势信息句柄，因此该句柄必然不可用。
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_1)
+
+    // 最低受支持的客户端    Windows 7 [仅限桌面应用]
+    // 最低受支持的服务器    Windows Server 2008 R2 [仅限桌面应用]
+    __DEFINE_THUNK(
+    user32,
+    8,
+    BOOL,
+    WINAPI,
+    GetGestureInfo,
+        _In_ HGESTUREINFO _hGestureInfo,
+        _Out_ PGESTUREINFO _pGestureInfo
+        )
+    {
+        if (auto const _pfnGetGestureInfo = try_get_GetGestureInfo())
+        {
+            return _pfnGetGestureInfo(_hGestureInfo, _pGestureInfo);
+        }
+
+        // 低版本系统不会产生手势信息句柄，因此无法获取手势信息。
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_1)
+
     // 最低受支持的客户端	Windows 7 [仅限桌面应用]
     // 最低受支持的服务器	Windows Server 2008 R2[仅限桌面应用]
     __DEFINE_THUNK(

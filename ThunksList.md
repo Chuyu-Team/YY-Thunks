@@ -851,6 +851,9 @@
 | IsTouchWindow                              | 始终报告非触摸窗口。
 | GetTouchInputInfo                          | 报告错误 ERROR_INVALID_HANDLE。
 | CloseTouchInputHandle                      | 报告错误 ERROR_INVALID_HANDLE。
+| SetGestureConfig                            | 什么都不做，假装成功。
+| CloseGestureInfoHandle                      | 报告错误 ERROR_INVALID_HANDLE。
+| GetGestureInfo                              | 报告错误 ERROR_INVALID_HANDLE。
 | *ChangeWindowMessageFilterEx               | 调用ChangeWindowMessageFilter。温馨提示：将影响该进程的所有窗口。
 | ChangeWindowMessageFilter                  | 什么都不做，假装成功。
 | UpdateLayeredWindowIndirect                | 调用UpdateLayeredWindow。
