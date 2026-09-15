@@ -261,6 +261,7 @@
 | CryptProtectMemory                         | 返回TRUE。
 | CryptUnprotectMemory                       | 返回TRUE。
 | CryptBinaryToStringW(A)                    | 为Windows XP模拟 CRYPT_STRING_NOCRLF。
+| CryptHashCertificate2                      | 调用CryptHashCertificate。
 | CryptImportPublicKeyInfoEx2                | 调用CryptImportPublicKeyInfoEx。
 
 ## d3d9.dll

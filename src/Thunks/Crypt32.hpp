@@ -1,9 +1,83 @@
 ﻿#if (YY_Thunks_Target < __WindowsNT6)
 #include <dpapi.h>
+#include <bcrypt.h>
 #endif
 
 namespace YY::Thunks
 {
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    // 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
+    // 最低受支持的服务器	Windows Server 2008[桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    crypt32,
+    28,
+    BOOL,
+    WINAPI,
+    CryptHashCertificate2,
+        _In_ LPCWSTR _szCNGHashAlgId,
+        _In_ DWORD _fFlags,
+        _Reserved_ void* pvReserved,
+        _In_reads_bytes_opt_(cbEncoded) const BYTE* pbEncoded,
+        _In_ DWORD cbEncoded,
+        _Out_writes_bytes_to_opt_(*pcbComputedHash, *pcbComputedHash) BYTE* pbComputedHash,
+        _Inout_ DWORD* pcbComputedHash
+        )
+    {
+        if (const auto _pfnCryptHashCertificate2 = try_get_CryptHashCertificate2())
+        {
+            return _pfnCryptHashCertificate2(_szCNGHashAlgId, _fFlags, pvReserved, pbEncoded, cbEncoded, pbComputedHash, pcbComputedHash);
+        }
+
+        if (pcbComputedHash == nullptr)
+        {
+            SetLastError(E_INVALIDARG);
+            return FALSE;
+        }
+
+        ALG_ID _AlgId;
+        do
+        {
+            if (StringCompareIgnoreCaseByAscii(_szCNGHashAlgId, BCRYPT_MD5_ALGORITHM, -1) == 0)
+            {
+                _AlgId = CALG_MD5;
+                break;
+            }
+
+            if (StringCompareIgnoreCaseByAscii(_szCNGHashAlgId, BCRYPT_SHA1_ALGORITHM, -1) == 0)
+            {
+                _AlgId = CALG_SHA1;
+                break;
+            }
+
+            if (StringCompareIgnoreCaseByAscii(_szCNGHashAlgId, BCRYPT_SHA256_ALGORITHM, -1) == 0)
+            {
+                _AlgId = CALG_SHA_256;
+                break;
+            }
+
+            if (StringCompareIgnoreCaseByAscii(_szCNGHashAlgId, BCRYPT_SHA384_ALGORITHM, -1) == 0)
+            {
+                _AlgId = CALG_SHA_384;
+                break;
+            }
+
+            if (StringCompareIgnoreCaseByAscii(_szCNGHashAlgId, BCRYPT_SHA512_ALGORITHM, -1) == 0)
+            {
+                _AlgId = CALG_SHA_512;
+                break;
+            }
+
+            SetLastError(ERROR_NOT_SUPPORTED);
+            return FALSE;
+        } while (false);
+
+        // Vista 之前通过旧 CryptoAPI 做算法名映射，避免重复实现证书哈希流程。
+        return ::CryptHashCertificate(NULL, _AlgId, 0, pbEncoded, cbEncoded, pbComputedHash, pcbComputedHash);
+    }
+#endif
+
+
 #if (YY_Thunks_Target < __WindowsNT6)
 
     // 最低受支持的客户端	Windows Vista [桌面应用|UWP 应用]
@@ -56,13 +130,13 @@ namespace YY::Thunks
 
 #if (YY_Thunks_Target < __WindowsNT6)
 
-	// 最低受支持的客户端	Windows XP [桌面应用 | UWP 应用]
+    // 最低受支持的客户端	Windows XP [桌面应用 | UWP 应用]
     // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
     // CRYPT_STRING_NOCRLF 需要Windows Vista或者更高
-	__DEFINE_THUNK(
-	crypt32,
-	20,
-	BOOL,
+    __DEFINE_THUNK(
+    crypt32,
+    20,
+    BOOL,
     WINAPI,
     CryptBinaryToStringW,
         _In_reads_bytes_(_cbBinary) CONST BYTE* _pBinary,
@@ -71,14 +145,14 @@ namespace YY::Thunks
         _Out_writes_to_opt_(*_pcString, *_pcString) LPWSTR _szString,
         _Inout_ DWORD* _pcString
         )
-	{
+    {
         const auto _pfnCryptBinaryToStringW = try_get_CryptBinaryToStringW();
-		if (!_pfnCryptBinaryToStringW)
-		{
+        if (!_pfnCryptBinaryToStringW)
+        {
             // Windows 2000？
             SetLastError(ERROR_FUNCTION_FAILED);
             return FALSE;
-		}
+        }
 
         // CRYPT_STRING_NOCRLF 需要 Windows Vista
         if ((_fFlags & CRYPT_STRING_NOCRLF) && internal::GetSystemVersion() < internal::MakeVersion(6, 0))
@@ -121,19 +195,19 @@ namespace YY::Thunks
         }
 
         return _pfnCryptBinaryToStringW(_pBinary, _cbBinary, _fFlags, _szString, _pcString);
-	}
+    }
 #endif
 
 
 #if (YY_Thunks_Target < __WindowsNT6)
 
-	// 最低受支持的客户端	Windows XP [桌面应用 | UWP 应用]
+    // 最低受支持的客户端	Windows XP [桌面应用 | UWP 应用]
     // 最低受支持的服务器	Windows Server 2003[桌面应用 | UWP 应用]
     // CRYPT_STRING_NOCRLF 需要Windows Vista或者更高
-	__DEFINE_THUNK(
-	crypt32,
-	20,
-	BOOL,
+    __DEFINE_THUNK(
+    crypt32,
+    20,
+    BOOL,
     WINAPI,
     CryptBinaryToStringA,
         _In_reads_bytes_(_cbBinary) CONST BYTE* _pBinary,
@@ -142,14 +216,14 @@ namespace YY::Thunks
         _Out_writes_to_opt_(*_pcString, *_pcString) LPSTR _szString,
         _Inout_ DWORD* _pcString
         )
-	{
+    {
         const auto _pfnCryptBinaryToStringA = try_get_CryptBinaryToStringA();
-		if (!_pfnCryptBinaryToStringA)
-		{
+        if (!_pfnCryptBinaryToStringA)
+        {
             // Windows 2000？
             SetLastError(ERROR_FUNCTION_FAILED);
             return FALSE;
-		}
+        }
 
         // CRYPT_STRING_NOCRLF 需要 Windows Vista
         if ((_fFlags & CRYPT_STRING_NOCRLF) && internal::GetSystemVersion() < internal::MakeVersion(6, 0))
@@ -192,6 +266,6 @@ namespace YY::Thunks
         }
 
         return _pfnCryptBinaryToStringA(_pBinary, _cbBinary, _fFlags, _szString, _pcString);
-	}
+    }
 #endif
 } // namespace YY::Thunks
