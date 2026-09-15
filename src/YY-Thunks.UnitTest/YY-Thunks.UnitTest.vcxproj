@@ -183,6 +183,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="api-ms-win-core-winrt.UnitTest.cpp" />
     <ClCompile Include="credui.UnitTest.cpp" />
     <ClCompile Include="ncrypy.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-file.UnitTest.cpp" />
@@ -290,6 +291,7 @@
     <ClInclude Include="..\Thunks\uxtheme.hpp" />
     <ClInclude Include="..\Thunks\wevtapi.hpp" />
     <ClInclude Include="..\Thunks\WinHttp.hpp" />
+    <ClInclude Include="..\Thunks\WinRT\Windows.UI.ViewManagement.UIViewSettings.h" />
     <ClInclude Include="..\Thunks\WinUsb.hpp" />
     <ClInclude Include="..\Thunks\YY_Thunks.h" />
     <ClInclude Include="pch.h" />

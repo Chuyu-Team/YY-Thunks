@@ -112,7 +112,7 @@
 | ----                                       | -----------
 | RoInitialize                               | 调用 CoInitializeEx。
 | RoUninitialize                             | 调用 CoUninitialize。
-| RoActivateInstance                         | 内部实现。
+| RoActivateInstance                         | 返回 E_NOTIMPL。
 | RoRegisterActivationFactories              | 返回 E_NOTIMPL。
 | RoRevokeActivationFactories                | 什么也不做。
 | RoGetActivationFactory                     | 内部实现。

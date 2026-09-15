@@ -7,6 +7,7 @@
         DisplayName="NuGet程序包设置">
     <Rule.Categories>
       <Category Name="YY_Thunks" DisplayName="YY-Thunks" />
+      <Category Name="RoGetActivationFactory" DisplayName="RoGetActivationFactory" />
     </Rule.Categories>
 
     <Rule.DataSource>
@@ -53,5 +54,11 @@
         Name="10.0.19041.0"
         DisplayName="10.0.19041.0"/>
     </EnumProperty>
+
+    <BoolProperty
+      Name="YY_Thunks_RoGetActivationFactory_UIViewSettings"
+      Category="RoGetActivationFactory"
+      DisplayName="Windows.UI.ViewManagement.UIViewSettings"
+      Description="启用后，当目标最低平台版本低于 10.0.10240.0 时，为 RoGetActivationFactory 的 Windows.UI.ViewManagement.UIViewSettings fallback 注入强制引用符号 _RoGetActivationFactory@Windows.UI.ViewManagement.UIViewSettings。" />
   </Rule>
 </ProjectSchemaDefinitions>

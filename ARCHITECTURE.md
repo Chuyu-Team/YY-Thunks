@@ -1,7 +1,7 @@
 ﻿# YY-Thunks 架构总览
 
 > 置信度说明：🔍 自动探测 | 🟡 规划中 | ✅ 已确认
-> 最后更新：2026-09-03 17:17:28 +08:00
+> 最后更新：2026-09-15 16:30:00 +08:00
 
 ## 1. 项目概述
 
@@ -42,6 +42,7 @@ graph TD
 | --- | --- | --- | --- |
 | Thunks 兼容实现 | `src/Thunks` | 按系统 DLL/API 提供动态解析和 Fallback 实现；例如 `user32.hpp` | 🔍 |
 | 共享基础设施 | `src/Shared` | 提供多个 Thunks 模块复用的基础设施 | 🔍 |
+| WinRT Fallback 实现 | `src/Thunks/WinRT` | 承载 `RoGetActivationFactory` 等 WinRT 相关 fallback 的具体实现，按 RuntimeClass 或相关 WinRT 能力拆分文件 | ✅ |
 | 原生单元测试 | `src/YY-Thunks.UnitTest` | 验证兼容层行为和回归场景 | 🔍 |
 | 最低版本辅助工具 | `src/MinimumRequiredVersionHelper` | 辅助处理最低系统版本相关信息 | 🔍 |
 | 依赖分析器 | `src/YY.Depends.Analyzer` | 分析 Windows API 与依赖信息 | 🔍 |
@@ -75,12 +76,16 @@ graph LR
 | --- | --- | --- | --- | --- |
 | ADR-001 | 优先动态解析原生 API，不存在时执行 Fallback | 避免旧系统因导入表缺少 API 而无法启动，同时在新系统保留原生行为 | `src/Thunks` 全部 API 兼容模块 | 🔍 |
 | ADR-002 | 按 Windows DLL 和 API 划分 Thunks 实现 | 与系统 API 边界对应，便于维护、定位和生成兼容性产物 | `src/Thunks` | 🔍 |
+| ADR-003 | `RoGetActivationFactory` 的特定 RuntimeClass fallback 统一放入 `src/Thunks/WinRT/`，NuGet 配置层只负责暴露开关与构建期符号保留 | 将运行时实现与 NuGet 配置职责分离，避免 WinRT fallback 逻辑散落到非 WinRT 模块或配置层 | `src/Thunks/WinRT`、`NuGet/build` | ✅ |
 
 ## 7. 跨模块契约与公共接口
 
 - API 解析契约：每个 Fallback 优先调用对应的 `try_get_<ApiName>()` 解析结果；解析成功时转发到系统 API，解析失败时执行模块定义的兼容行为。🔍
 - 工程契约：`src/YY_Thunks.sln` 统一组织单元测试、最低版本辅助工具和依赖分析器工程。🔍
 - 清单契约：`ThunksList.md` 记录可用的 API Fallback 及其行为摘要。🔍
+- WinRT 兼容契约：`src/Thunks/api-ms-win-core-winrt.hpp` 中的 `RoGetActivationFactory`、`RoActivateInstance` 等 API 由 WinRT/COM fallback 提供兼容行为，当前已观察到 `RoGetActivationFactory` 仅对有限接口提供本地工厂返回。🔍
+- WinRT 实现边界契约：新增 `RoGetActivationFactory` RuntimeClass fallback 时，优先将具体实现放在 `src/Thunks/WinRT/` 同级目录体系下，由 WinRT 入口层统一映射；NuGet 侧仅负责构建期启用条件与符号保留。✅
+- WinRT NuGet 配置能力：项目的 NuGet 集成同时包含 native 属性页扩展与 native/.NET 两套 targets，可为特定 WinRT fallback 提供配置开关，并按目标最低平台版本决定是否生效。✅
 
 ## 8. 已知技术债务与限制
 
@@ -88,3 +93,4 @@ graph LR
 | --- | --- | --- | --- | --- |
 | TD-001 | 部分旧系统 Fallback 只能提供占位成功或固定失败语义，无法模拟不存在的硬件/系统能力 | 调用方只能获得兼容返回值，不能获得真实系统能力 | 在 API 级文档和测试中明确行为边界 | 🔍 |
 | TD-002 | 完整构建依赖正确配置的 Windows SDK/WDK 头文件环境 | 缺少系统头文件时无法构建测试工程 | 在开发环境中固定并验证所需 SDK/WDK 组件 | 🔍 |
+| TD-003 | WinRT fallback 覆盖面仍有限；当前 `RoGetActivationFactory` 仅观察到 `IUIViewSettings` / `IUIViewSettingsInterop` 特判 | 新增 WinRT 兼容需求需要扩展类工厂映射、错误语义与回归测试 | 在具体 feature 中补充设计、实现与测试 | 🔍 |
