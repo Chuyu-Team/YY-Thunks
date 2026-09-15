@@ -7,6 +7,8 @@
 #include <windows.ui.viewmanagement.h>
 #include <UIViewSettingsInterop.h>
 
+#pragma comment(linker, "/INCLUDE:_RoGetActivationFactory@Windows.UI.ViewManagement.UIViewSettings")
+
 namespace Microsoft {
 namespace VisualStudio {
 namespace CppUnitTestFramework {
