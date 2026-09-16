@@ -330,6 +330,7 @@
     <ClInclude Include="..\Thunks\user32.hpp" />
     <ClInclude Include="..\Thunks\WS2_32.hpp" />
     <ClInclude Include="..\Thunks\shcore.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-shcore-sysinfo.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\def\x64\esent.def" />

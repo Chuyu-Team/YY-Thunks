@@ -810,6 +810,7 @@
 | SHGetStockIconInfo                         | 调用LoadImageW。
 | SHGetPropertyStoreForWindow                | 报告错误 E_NOTIMPL。
 | SHOpenWithDialog                           | 报告错误 E_NOTIMPL。
+| SetCurrentProcessExplicitAppUserModelID    | 返回 S_OK，不提供真实 AppUserModelID 语义。
 
 ## shlwapi.dll
 | 函数                                       | Fallback

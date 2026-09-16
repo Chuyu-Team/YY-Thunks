@@ -206,6 +206,9 @@
     <ClInclude Include="..\Thunks\shcore.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
+    <ClInclude Include="..\Thunks\api-ms-win-shcore-sysinfo.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
     <ClInclude Include="..\Thunks\shell32.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
