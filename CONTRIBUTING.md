@@ -1,6 +1,6 @@
 ﻿# 编码规范 - YY-Thunks
 
- > 最后更新：2026-09-16 11:18:46 +08:00
+ > 最后更新：2026-09-18 18:13:53 +08:00
 
 ## 1. 命名规范
 请参考仓库根目录的[C++编码风格约定.md](./C++编码风格约定.md)
@@ -36,7 +36,16 @@
 ## 4.3 API Set 归属约定
 - 判定接口归属的 API Set 时以其真实所属 DLL 为准，例如 `SetCurrentProcessExplicitAppUserModelID` 属于 `api-ms-win-shcore-sysinfo-l1-1-0.dll`，实现须放入 `api-ms-win-shcore-sysinfo.hpp`。
 - 不得依据宿主 DLL 名（如 `shell32`）反推 API Set 名，两者可能并不一致。
+- **查询 API Set 归属的权威来源是本仓库的 `src/APISet.txt`**，其中按导出清单记录了每个 API Set 导出的符号（格式为 `<序号>.<API Set DLL 名> <符号名>`）。判定新增 API 归属时应优先检索该文件。
+- 注意同一函数的 A/W 版本可能分属不同 API Set。例如 `CreateNamedPipeA` 属 `api-ms-win-core-kernel32-legacy-l1-1-0.dll`，而 `CreateNamedPipeW` 属 `api-ms-win-core-namedpipe-l1-1-0.dll`。
+- **功能族聚合（优先于按 API Set 拆分）**：同一功能族的 API 优先聚合到族内最相关的 `api-ms-win-*.hpp` 单一文件，便于集中管理与查阅，即使这些 API 分属不同 API Set。例如管道族（`GetNamedPipeClientProcessId`、`GetNamedPipeServerProcessId`、`CreateNamedPipeA`、`CreateNamedPipeW`）统一放入 `api-ms-win-core-namedpipe.hpp`。
+  - 聚合时 `__DEFINE_THUNK` 的模块名仍取该 API 的真实导入库（通常为 `kernel32`），不受文件名影响。
+  - 仅当某 API 是跨族的通用入口时（如 `CreateFileW`、`CloseHandle`）才保留在其原属通用文件中，不迁入功能族文件。
+  - 聚合文件需在文件头或以注释注明各 API 的真实 API Set 归属，避免后续维护误解。
 - 新增 API Set 头文件后，需要在测试工程 `YY-Thunks.UnitTest.vcxproj` 与其 `filters` 中登记，`YY_Thunks_List.hpp` 由构建系统自动重新生成，无需手工修改。
+- `YY_Thunks_List.hpp` 的生成顺序与 `vcxproj` 中 `ClInclude` 的登记顺序一致；存在跨头文件调用时，被调用方必须排在调用方之前，或在使用点之前的公共头文件（如 `YY_Thunks.h`）中声明。
+- 头文件内非 thunk 的类型/常量定义（如共享数据结构与布局常量）须限定在 `YY_Thunks_Implemented` 块内并以防重入宏保护：`YY_Thunks.cpp` 会在同一翻译单元内两次包含清单头文件（声明遍与实现遍），条件过宽会触发 C2011/C2086 重复定义编译错误。
+- 清单登记约定：仅"提供 Fallback 实现"的 API 登记到 `ThunksList.md`；仅为支撑其他 Thunk 而被拦截、但本机已存在的 API（如 `CloseHandle`、`DuplicateHandle`、`CreateFileW`）不单独登记条目。`ThunksList.md` 中的分组按导入库/宿主 DLL 名（如 `## kernel32.dll`），而非 API Set 名。
 
 ## 5. 测试规范
 - 测试框架：MSTest Native Unit Test。

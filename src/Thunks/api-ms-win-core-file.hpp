@@ -1755,4 +1755,98 @@ namespace YY::Thunks
         return GetTempPathA(BufferLength, Buffer);
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    //Minimum supported client  Windows XP [desktop apps | UWP apps]
+    //Minimum supported server  Windows Server 2003 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    kernel32,
+    28,
+    HANDLE,
+    WINAPI,
+    CreateFileW,
+        _In_ LPCWSTR _szFileName,
+        _In_ DWORD _uDesiredAccess,
+        _In_ DWORD _uShareMode,
+        _In_opt_ LPSECURITY_ATTRIBUTES _pSecurityAttributes,
+        _In_ DWORD _uCreationDisposition,
+        _In_ DWORD _uFlagsAndAttributes,
+        _In_opt_ HANDLE _hTemplateFile
+        )
+    {
+        const auto _pfnCreateFileW = try_get_CreateFileW();
+        if (_pfnCreateFileW == nullptr)
+        {
+            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            return INVALID_HANDLE_VALUE;
+        }
+
+        const auto _hFile = _pfnCreateFileW(_szFileName, _uDesiredAccess, _uShareMode,
+            _pSecurityAttributes, _uCreationDisposition, _uFlagsAndAttributes, _hTemplateFile);
+
+        if(_hFile != INVALID_HANDLE_VALUE && YY::Thunks::internal::GetSystemVersion() < __WindowsNT6)
+        {
+            // 为 GetNamedPipeClientProcessId 登记客户端 PID
+            if (IsLocalNamedPipePath(_szFileName))
+            {
+                const auto _ulLastError = GetLastError();
+
+                RegisterPipeClientProcessId(_hFile);
+
+                SetLastError(_ulLastError);
+            }
+        }
+
+        return _hFile;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6)
+
+    //Minimum supported client  Windows XP [desktop apps | UWP apps]
+    //Minimum supported server  Windows Server 2003 [desktop apps | UWP apps]
+    __DEFINE_THUNK(
+    kernel32,
+    28,
+    HANDLE,
+    WINAPI,
+    CreateFileA,
+        _In_ LPCSTR _szFileName,
+        _In_ DWORD _uDesiredAccess,
+        _In_ DWORD _uShareMode,
+        _In_opt_ LPSECURITY_ATTRIBUTES _pSecurityAttributes,
+        _In_ DWORD _uCreationDisposition,
+        _In_ DWORD _uFlagsAndAttributes,
+        _In_opt_ HANDLE _hTemplateFile
+        )
+    {
+        const auto _pfnCreateFileA = try_get_CreateFileA();
+        if (_pfnCreateFileA == nullptr)
+        {
+            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            return INVALID_HANDLE_VALUE;
+        }
+
+        const auto _hFile = _pfnCreateFileA(_szFileName, _uDesiredAccess, _uShareMode,
+            _pSecurityAttributes, _uCreationDisposition, _uFlagsAndAttributes, _hTemplateFile);
+
+        if (_hFile != INVALID_HANDLE_VALUE && YY::Thunks::internal::GetSystemVersion() < __WindowsNT6)
+        {
+            // 为 GetNamedPipeClientProcessId 登记客户端 PID
+            if (IsLocalNamedPipePath(_szFileName))
+            {
+                const auto _ulLastError = GetLastError();
+
+                RegisterPipeClientProcessId(_hFile);
+
+                SetLastError(_ulLastError);
+            }
+        }
+
+        return _hFile;
+    }
+#endif
 } //namespace YY::Thunks

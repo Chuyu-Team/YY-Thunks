@@ -178,6 +178,8 @@ namespace
         LONG uThreadPoolWorkerCount;
         static constexpr auto kMaxThreadPoolWorkerCount = 500;
         volatile DWORD bHasCoInitializeMultithreaded;
+        // 主、备2条 管道PID池，用于支持GetNamedPipeClientProcessId&GetNamedPipeServerProcessId
+        volatile ULONG_PTR pPipePeerPidPoolv1[2];
     };
 }
 #pragma pack(pop)

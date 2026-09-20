@@ -667,6 +667,8 @@
 | SetThreadDescription                       | 返回 `E_NOTIMPL`。
 | GetSystemFirmwareTable                     | 读取PhysicalMemory或者注册表。注意：目前仅支持'RSMB'、'ACPI'。
 | GetPhysicallyInstalledSystemMemory         | 调用GetSystemFirmwareTable。
+| GetNamedPipeClientProcessId                | 内部维护管道PID。
+| GetNamedPipeServerProcessId                | 内部维护管道PID。
 
 ## mfplat.dll
 | 函数                                       | Fallback

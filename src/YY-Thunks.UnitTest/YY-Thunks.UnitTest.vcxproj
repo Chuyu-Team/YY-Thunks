@@ -189,6 +189,7 @@
     <ClCompile Include="api-ms-win-core-file.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-handle.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-kernel32-legacy.UnitTest.cpp" />
+    <ClCompile Include="api-ms-win-core-namedpipe.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-libraryloader.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-sysinfo.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-winrt-string.UnitTest.cpp" />
@@ -304,6 +305,7 @@
     <ClInclude Include="..\Thunks\api-ms-win-core-libraryloader.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-localization.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-memory.hpp" />
+    <ClInclude Include="..\Thunks\api-ms-win-core-namedpipe.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-path.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-processthreads.hpp" />
     <ClInclude Include="..\Thunks\api-ms-win-core-processtopology-obsolete.hpp" />

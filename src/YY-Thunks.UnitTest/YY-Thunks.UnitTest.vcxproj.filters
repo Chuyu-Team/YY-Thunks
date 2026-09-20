@@ -72,6 +72,9 @@
     <ClCompile Include="api-ms-win-core-kernel32-legacy.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
+<ClCompile Include="api-ms-win-core-namedpipe.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
     <ClCompile Include="weak.c">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -225,6 +228,9 @@
       <Filter>Thunks</Filter>
     </ClInclude>
     <ClInclude Include="..\Thunks\api-ms-win-core-memory.hpp">
+      <Filter>Thunks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Thunks\api-ms-win-core-namedpipe.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
     <ClInclude Include="..\Thunks\api-ms-win-core-threadpool.hpp">
