@@ -82,21 +82,26 @@ jobs:
               git fetch --depth=1 origin +refs/tags/*:refs/tags/*
 
               $releaseNotes = & git tag -l --format='%(contents)' $env:GITHUB_REF.Remove(0, 10)
-              $content = [System.IO.File]::ReadAllText("NuGet\YY-Thunks.nuspec")
-              
-              # 使用此文本替换 .nuspec 中的 releaseNotes
-              # [System.IO.File]::WriteAllText("YY-Thunks-New.nuspec", $content)
-              # 微软这个大爷……
-              
-              $releaseNotesToken = '$releaseNotes$'
-              $releaseNotesIndex = $content.IndexOf($releaseNotesToken)
-              
-              if($releaseNotesIndex -ne -1)
+
+              # 以 XML 方式解析 .nuspec 并直接改写 releaseNotes 节点，转义交给 XML 序列化处理，
+              # 避免 Release Notes 中的 & < > 等字符破坏 .nuspec
+              $nuspecPath = Join-Path $env:GITHUB_WORKSPACE "NuGet\YY-Thunks.nuspec"
+              $newNuspecPath = Join-Path $env:GITHUB_WORKSPACE "YY-Thunks-New.nuspec"
+
+              $nuspecDocument = New-Object System.Xml.XmlDocument
+              $nuspecDocument.PreserveWhitespace = $true
+              $nuspecDocument.Load($nuspecPath)
+
+              $releaseNotesNode = $nuspecDocument.SelectSingleNode("/*/*[local-name()='metadata']/*[local-name()='releaseNotes']")
+
+              if($null -eq $releaseNotesNode)
               {
-                  echo $content.Substring(0, $releaseNotesIndex) | out-file "YY-Thunks-New.nuspec" -NoNewline
-                  echo $releaseNotes | out-file "YY-Thunks-New.nuspec" -Append
-                  echo $content.Remove(0, $releaseNotesIndex + $releaseNotesToken.Length) | out-file "YY-Thunks-New.nuspec" -NoNewline -Append
+                  throw "NuGet\YY-Thunks.nuspec 中找不到 releaseNotes 节点！"
               }
+
+              $releaseNotesNode.InnerText = $releaseNotes
+
+              $nuspecDocument.Save($newNuspecPath)
           }
 
     - name: 执行编译
