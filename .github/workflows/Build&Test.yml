@@ -82,6 +82,10 @@ jobs:
               git fetch --depth=1 origin +refs/tags/*:refs/tags/*
 
               $releaseNotes = & git tag -l --format='%(contents)' $env:GITHUB_REF.Remove(0, 10)
+              # .nuspec 是 XML，releaseNotes 里的 & < > 等字符必须转义，否则会生成损坏的 XML
+              $releaseNotes = [System.Security.SecurityElement]::Escape($releaseNotes)
+              # 顺带剔除 XML 1.0 不允许的控制字符（如 \x01 等）
+              $releaseNotes = [regex]::Replace($releaseNotes, '[\x00-\x08\x0B\x0C\x0E-\x1F]', '')
               $content = [System.IO.File]::ReadAllText("NuGet\YY-Thunks.nuspec")
               
               # 使用此文本替换 .nuspec 中的 releaseNotes
