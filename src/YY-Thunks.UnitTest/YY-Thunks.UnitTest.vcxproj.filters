@@ -72,7 +72,7 @@
     <ClCompile Include="api-ms-win-core-kernel32-legacy.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
-<ClCompile Include="api-ms-win-core-namedpipe.UnitTest.cpp">
+    <ClCompile Include="api-ms-win-core-namedpipe.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
     <ClCompile Include="weak.c">
@@ -124,6 +124,9 @@
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
     <ClCompile Include="api-ms-win-core-winrt.UnitTest.cpp">
+      <Filter>源文件\UnitTest</Filter>
+    </ClCompile>
+    <ClCompile Include="api-ms-win-core-string.UnitTest.cpp">
       <Filter>源文件\UnitTest</Filter>
     </ClCompile>
   </ItemGroup>

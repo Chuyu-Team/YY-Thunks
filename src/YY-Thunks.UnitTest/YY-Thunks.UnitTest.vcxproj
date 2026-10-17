@@ -206,6 +206,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="api-ms-win-core-fibers.UnitTest.cpp" />
+    <ClCompile Include="api-ms-win-core-string.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-localization.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-path.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-synch.UnitTest.cpp" />
