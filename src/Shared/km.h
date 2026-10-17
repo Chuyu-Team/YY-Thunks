@@ -5251,6 +5251,11 @@ EXTERN_C NTSYSAPI LONG NTAPI RtlCompareUnicodeString(
     _In_ BOOLEAN CaseInSensitive
     );
 
+// Windows 2000+ 由 ntdll 导出，返回字符的系统 Unicode 大写映射，用于序数大小写忽略比较。
+EXTERN_C NTSYSAPI WCHAR NTAPI RtlUpcaseUnicodeChar(
+    _In_ WCHAR SourceCharacter
+    );
+
 #pragma warning(pop)
 #if defined __cplusplus && !defined _Disallow_YY_KM_Namespace
 } //namespace YY

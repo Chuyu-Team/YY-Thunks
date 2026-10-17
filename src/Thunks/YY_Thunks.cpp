@@ -97,6 +97,7 @@ YY-Thunks支持的控制宏：
     _APPLY(NtSetInformationFile,                         ntdll                                         ) \
     _APPLY(RtlNtStatusToDosError,                        ntdll                                         ) \
     _APPLY(RtlDetermineDosPathNameType_U,                ntdll                                         ) \
+    _APPLY(RtlUpcaseUnicodeChar,                         ntdll                                         ) \
     _APPLY(RtlDosPathNameToNtPathName_U,                 ntdll                                         ) \
     _APPLY(RtlDosPathNameToNtPathName_U_WithStatus,      ntdll                                         ) \
     _APPLY(RtlFreeUnicodeString,                         ntdll                                         ) \
