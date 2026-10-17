@@ -14,13 +14,15 @@ md "objs\\%Platform%"
 
 ::先生成 YY_Thunks_List.hpp
 msbuild "%~dp0YY-Thunks.UnitTest\YY-Thunks.UnitTest.vcxproj" -t:Build_YY_Thunks_List_hpp
+if %ErrorLevel% NEQ 0 goto :BuildComplete
 
 call:Build%Platform%
 
 
+:BuildComplete
+set "YY_THUNKS_BUILD_RESULT=%ErrorLevel%"
 popd
-
-goto:eof
+exit /b %YY_THUNKS_BUILD_RESULT%
 
 :: BuildObj YY_Thunks_for_Vista.obj NTDDI_WIN6 1.def+2.def
 :BuildObj
@@ -46,6 +48,7 @@ if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
 ::生成weak符号，一些非必须符号安排为weak可以避免链接失败
 call:FixObj "%~dp0..\\Lib\\%1\\%Platform%\\YY_Thunks_for_%1.obj" %3
+if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
 set "SupportApiSet=/SupportApiSet"
 set "WinVersion=%1"
@@ -148,7 +151,9 @@ set DEF_FILES=%2
 for /f "tokens=1* delims=+" %%a in ("%DEF_FILES%") do (
     echo "AppendWeak %~dp0def\\%Platform%\\%%a" %1
     LibMaker.exe AppendWeak /MACHINE:%Platform% /DEF:"%~dp0def\\%Platform%\\%%a" /OUT:%1
-    if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
+    :: Test the current signed status, not a value expanded before the loop.
+    if errorlevel 1 exit /b
+    if not errorlevel 0 exit /b
     set DEF_FILES=%%b
 )
 
