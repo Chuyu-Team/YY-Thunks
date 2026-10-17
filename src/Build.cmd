@@ -10,6 +10,10 @@ set "include=%~dp0Thunks;%~dp0Shared;%~dp0;%include%"
 
 if "%Platform%"=="" set Platform=x86
 
+set "YY_THUNKS_SECURITY_FLAGS=/GS-"
+if "%YY_THUNKS_HARDENED%"=="1" if /I "%Platform%"=="x86" set "YY_THUNKS_SECURITY_FLAGS=/W4 /GS /Qspectre /DYY_THUNKS_HARDENED=1"
+if "%YY_THUNKS_HARDENED%"=="1" if /I "%Platform%"=="x64" set "YY_THUNKS_SECURITY_FLAGS=/W4 /GS /Qspectre /DYY_THUNKS_HARDENED=1"
+
 md "objs\\%Platform%"
 
 ::先生成 YY_Thunks_List.hpp
@@ -26,7 +30,7 @@ goto:eof
 :BuildObj
 echo BuildObj %1 %2 %3
 
-cl /O1 /Os /Oi /GS- /std:c++17 /execution-charset:utf-8 /guard:ehcont /Zc:sizedDealloc- /Zc:tlsGuards- /Zc:alignedNew- /arch:IA32 /Z7 /MT /Fo"objs\\%Platform%\\%1" /Zl /c /D "NDEBUG" /D "YY_Thunks_Target=%2" "%~dp0Thunks\YY_Thunks.cpp"
+cl /O1 /Os /Oi %YY_THUNKS_SECURITY_FLAGS% /std:c++17 /execution-charset:utf-8 /guard:ehcont /Zc:sizedDealloc- /Zc:tlsGuards- /Zc:alignedNew- /arch:IA32 /Z7 /MT /Fo"objs\\%Platform%\\%1" /Zl /c /D "NDEBUG" /D "YY_Thunks_Target=%2" "%~dp0Thunks\YY_Thunks.cpp"
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 
 ::生成weak符号，一些非必须符号安排为weak可以避免链接失败
@@ -40,7 +44,7 @@ echo BuildLib %1 %2 %3
 
 md "Lib\\%1\\%Platform%"
 
-cl /O1 /Os /Oi /GS- /std:c++17 /execution-charset:utf-8 /guard:ehcont /Zc:sizedDealloc- /Zc:tlsGuards- /Zc:alignedNew- /arch:IA32 /Z7 /MT /Fo"Lib\\%1\\%Platform%\\YY_Thunks_for_%1.obj" /Zl /c /D "__APPLY_CHROMIUM_WORKAROUNDS" /D "__USING_NTDLL_LIB" /D "NDEBUG" /D "YY_Thunks_Target=%2" /D "__FALLBACK_PREFIX=YY_Thunks_" "%~dp0Thunks\YY_Thunks.cpp"
+cl /O1 /Os /Oi %YY_THUNKS_SECURITY_FLAGS% /std:c++17 /execution-charset:utf-8 /guard:ehcont /Zc:sizedDealloc- /Zc:tlsGuards- /Zc:alignedNew- /arch:IA32 /Z7 /MT /Fo"Lib\\%1\\%Platform%\\YY_Thunks_for_%1.obj" /Zl /c /D "__APPLY_CHROMIUM_WORKAROUNDS" /D "__USING_NTDLL_LIB" /D "NDEBUG" /D "YY_Thunks_Target=%2" /D "__FALLBACK_PREFIX=YY_Thunks_" "%~dp0Thunks\YY_Thunks.cpp"
 
 if %ErrorLevel% NEQ 0 exit /b %ErrorLevel%
 

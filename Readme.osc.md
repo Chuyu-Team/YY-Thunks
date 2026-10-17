@@ -149,6 +149,27 @@ ULONGLONG WINAPI GetTickCount64(VOID)
 > 温馨提示：如果您看不懂链接器的配置指引那么请使用NuGet版！NuGet对新手友好。
 
 
+### 2.5. 构建启用安全选项的 x86/x64 对象和库
+
+在 x86 或 x64 Visual Studio 开发人员命令提示符中，准备好 `Build.cmd`
+原有的依赖（包括 LibMaker），然后运行：
+
+```cmd
+set YY_THUNKS_HARDENED=1
+call src\Build.cmd
+```
+
+此可选模式为对象和库的编译添加 `/W4 /GS /Qspectre`，需要支持 `/Qspectre`
+的 MSVC 编译器。使用方必须链接提供 `__security_init_cookie` 的兼容 MSVC CRT；
+DLL 入口会先初始化安全 cookie，再执行 YY-Thunks 初始化及 XP TLS 处理，
+随后仍调用原有或自定义的 CRT 入口。取消该变量或设置为 `0` 可恢复默认的
+`/GS-` 构建；ARM 和 ARM64 的编译选项保持原样。
+
+在同一开发人员命令提示符中运行
+`python src\YY-Thunks.UnitTest\hardening\test_hardening.py` 可执行独立回归测试。
+测试需要 Python 3 和 .NET Framework C# 编译器，验证实际批处理命令、入口回调，
+以及通过 `LoadLibrary` 加载的 DLL。
+
 ## 3. 兼容性
 
 ### 3.1. 支持的编译器
