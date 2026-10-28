@@ -669,11 +669,11 @@
 | GetPhysicallyInstalledSystemMemory         | 调用GetSystemFirmwareTable。
 | GetNamedPipeClientProcessId                | 内部维护管道PID。
 | GetNamedPipeServerProcessId                | 内部维护管道PID。
-| GetSystemCpuSetInformation                 | 返回FALSE，并设置 LastError = ERROR_NOT_SUPPORTED。不伪造 CPU Set 信息。 |
-| GetProcessDefaultCpuSets                   | 返回FALSE，并设置 LastError = ERROR_NOT_SUPPORTED，RequiredIdCount 置 0。 |
-| SetProcessDefaultCpuSets                   | 返回FALSE，并设置 LastError = ERROR_NOT_SUPPORTED。 |
-| GetThreadSelectedCpuSets                   | 返回FALSE，并设置 LastError = ERROR_NOT_SUPPORTED，RequiredIdCount 置 0。 |
-| SetThreadSelectedCpuSets                   | 返回FALSE，并设置 LastError = ERROR_NOT_SUPPORTED。 |
+| GetSystemCpuSetInformation                 | 按“一个逻辑处理器 = 一个 CPU Set”模拟，用 GetLogicalProcessorInformationEx 枚举（XP/2003 退化为 GetSystemInfo）。仅覆盖组 0 与亲和性掩码位宽内的处理器（x86 32 / x64 64）；缓冲区为空或不足时回填所需长度并返回 ERROR_INSUFFICIENT_BUFFER。 |
+| GetProcessDefaultCpuSets                   | 用 GetProcessAffinityMask 的亲和性掩码模拟，CPU Set Id = 掩码位序。缓冲区为 nullptr 时只回填所需数量。 |
+| SetProcessDefaultCpuSets                   | 通过 SetProcessAffinityMask 模拟，语义等价于设置进程亲和性。跨处理器组的 Id 返回 ERROR_NOT_SUPPORTED。 |
+| GetThreadSelectedCpuSets                   | 用 GetThreadGroupAffinity 模拟，CPU Set Id = 组号 * 掩码位宽 + 组内编号。XP/2003 无该查询接口，返回 ERROR_NOT_SUPPORTED。 |
+| SetThreadSelectedCpuSets                   | 用 SetThreadGroupAffinity 模拟；XP/2003 退化为 SetThreadAffinityMask（仅组 0）。 |
 
 ## mfplat.dll
 | 函数                                       | Fallback

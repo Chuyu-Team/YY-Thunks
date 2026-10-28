@@ -1388,12 +1388,191 @@ namespace YY ::Thunks
 #endif
 
 
+#if defined(YY_Thunks_Implemented) && (YY_Thunks_Target < __WindowsNT10_16299)
+namespace Fallback
+{
+    namespace
+    {
+        // 旧系统没有 CPU Set 概念，这里把“每个逻辑处理器”当作一个 CPU Set 来模拟：
+        // Id 固定取 组号 * 掩码位宽 + 组内编号，查询接口与设置接口共用同一套映射，
+        // 调用方拿到的 Id 因此仍能相互匹配（真实的 CPU Set Id 本身也只是不透明标识）。
+        //
+        // 亲和性掩码的位宽就是旧系统的处理器上限：NT 内核早期的亲和性 API 用 KAFFINITY 表达，
+        // x86 最多 32 个处理器、x64 最多 64 个；Windows 7 才引入处理器组把 64 个/组扩展成多组。
+        // 所以模拟实现只覆盖“组 0 + 掩码位宽内”的处理器，跨组集合如实报告不支持。
+        static const ULONG __uCpuSetIdBitCount = sizeof(KAFFINITY) * 8;
+
+        typedef BOOL(WINAPI* __PFN_GetThreadGroupAffinity)(_In_ HANDLE _hThread, _Out_ PGROUP_AFFINITY _pGroupAffinity);
+        typedef BOOL(WINAPI* __PFN_SetThreadGroupAffinity)(_In_ HANDLE _hThread, _In_ const GROUP_AFFINITY* _pGroupAffinity, _Out_opt_ PGROUP_AFFINITY _pPreviousGroupAffinity);
+        typedef BOOL(WINAPI* __PFN_GetLogicalProcessorInformationEx)(_In_ LOGICAL_PROCESSOR_RELATIONSHIP _eRelationshipType, _Out_writes_bytes_to_opt_(*_pcbBuffer, *_pcbBuffer) PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX _pBuffer, _Inout_ PDWORD _pcbBuffer);
+
+        // 这几个接口在 XP/2003 上并不存在，静态导入会让程序直接加载失败，因此按需动态解析。
+        static FARPROC __fastcall __TryGetKernel32Proc(const char* _szProcName)
+        {
+            const auto _hKernel32 = try_get_module_kernel32();
+            if (_hKernel32 == nullptr)
+                return nullptr;
+
+            return ::GetProcAddress(_hKernel32, _szProcName);
+        }
+
+        static ULONG __fastcall __CountAffinityMask(KAFFINITY _uMask)
+        {
+            ULONG _uCount = 0;
+
+            for (; _uMask != 0; _uMask &= _uMask - 1)
+                ++_uCount;
+
+            return _uCount;
+        }
+
+        // 把 CPU Set Id 列表折算成“单组”的亲和性掩码；跨组的 Id 旧接口无法表达。
+        static bool __fastcall __TryAffinityMaskFromCpuSetIds(
+            _In_reads_(_uCpuSetIdCount) const ULONG* _puCpuSetIds,
+            _In_ ULONG _uCpuSetIdCount,
+            _Out_ WORD& _uGroup,
+            _Out_ KAFFINITY& _uMask)
+        {
+            _uGroup = (WORD)(_puCpuSetIds[0] / __uCpuSetIdBitCount);
+            _uMask = 0;
+
+            for (ULONG _uIdIndex = 0; _uIdIndex != _uCpuSetIdCount; ++_uIdIndex)
+            {
+                const ULONG _uCpuSetId = _puCpuSetIds[_uIdIndex];
+                if (_uCpuSetId / __uCpuSetIdBitCount != _uGroup)
+                    return false;
+
+                _uMask |= (KAFFINITY)1 << (_uCpuSetId % __uCpuSetIdBitCount);
+            }
+
+            return true;
+        }
+
+        // 按掩码位序展开 CPU Set Id。
+        static void __fastcall __CpuSetIdsFromAffinityMask(
+            _In_ KAFFINITY _uMask,
+            _In_ WORD _uGroup,
+            _Out_writes_bytes_(_uCpuSetIdCount) PULONG _puCpuSetIds,
+            _In_ ULONG _uCpuSetIdCount)
+        {
+            for (ULONG _uBit = 0; _uBit != __uCpuSetIdBitCount && _uCpuSetIdCount != 0; ++_uBit)
+            {
+                if ((_uMask & ((KAFFINITY)1 << _uBit)) == 0)
+                    continue;
+
+                *_puCpuSetIds++ = _uGroup * __uCpuSetIdBitCount + _uBit;
+                --_uCpuSetIdCount;
+            }
+        }
+
+        struct __CPU_SET_PROCESSOR
+        {
+            WORD Group;
+            BYTE LogicalProcessorIndex;
+            BYTE CoreIndex;
+            BYTE EfficiencyClass;
+        };
+
+        // 用 GetLogicalProcessorInformationEx 枚举“每个逻辑处理器一条记录”。
+        // 该接口 Vista 才有，XP/2003 上返回 0，由调用方退化到 GetSystemInfo。
+        static ULONG __fastcall __EnumCpuSetProcessorsEx(
+            _Out_writes_to_(_cProcessors, return) __CPU_SET_PROCESSOR* _pProcessors,
+            _In_ ULONG _cProcessors)
+        {
+            const auto _pfnGetLogicalProcessorInformationEx = (__PFN_GetLogicalProcessorInformationEx)__TryGetKernel32Proc("GetLogicalProcessorInformationEx");
+            if (_pfnGetLogicalProcessorInformationEx == nullptr)
+                return 0;
+
+            // 单组 64 个处理器时约 5KB，取 8KB 留余量；更大的机器走退化路径。
+            BYTE _Buffer[8192];
+            DWORD _cbBuffer = sizeof(_Buffer);
+            if (_pfnGetLogicalProcessorInformationEx(RelationProcessorCore, (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)_Buffer, &_cbBuffer) == FALSE)
+                return 0;
+
+            ULONG _uCount = 0;
+            BYTE _uCoreIndex = 0; // 组 0 内已枚举的物理核数量，用于给出稳定的 CoreIndex
+
+            for (BYTE* _pCurrent = _Buffer, *_pBufferEnd = _Buffer + _cbBuffer; _pCurrent + sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX) <= _pBufferEnd;)
+            {
+                const auto _pInfo = (const SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*)_pCurrent;
+                if (_pInfo->Size < sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX))
+                    break;
+
+                if (_pInfo->Relationship == RelationProcessorCore)
+                {
+                    const PROCESSOR_RELATIONSHIP& _Relation = _pInfo->Processor;
+                    const GROUP_AFFINITY* _pGroupMask = _Relation.GroupMask;
+
+                    for (WORD _uGroupIndex = 0; _uGroupIndex != _Relation.GroupCount; ++_uGroupIndex)
+                    {
+                        const GROUP_AFFINITY& _GroupAffinity = _pGroupMask[_uGroupIndex];
+
+                        // 只模拟组 0：NT 早期的亲和性接口本身只能表达一个处理器组
+                        if (_GroupAffinity.Group == 0)
+                        {
+                            for (ULONG _uBit = 0; _uBit != __uCpuSetIdBitCount; ++_uBit)
+                            {
+                                if ((_GroupAffinity.Mask & ((KAFFINITY)1 << _uBit)) == 0)
+                                    continue;
+
+                                if (_uCount == _cProcessors)
+                                    return _uCount;
+
+                                _pProcessors[_uCount].Group = _GroupAffinity.Group;
+                                _pProcessors[_uCount].LogicalProcessorIndex = (BYTE)_uBit;
+                                _pProcessors[_uCount].CoreIndex = _uCoreIndex;
+                                _pProcessors[_uCount].EfficiencyClass = _Relation.EfficiencyClass;
+                                ++_uCount;
+                            }
+
+                            ++_uCoreIndex;
+                        }
+                    }
+                }
+
+                _pCurrent += _pInfo->Size;
+            }
+
+            return _uCount;
+        }
+
+        // XP/2003 没有处理器组信息，退化为“一个逻辑处理器一个核、只有组 0”。
+        static ULONG __fastcall __EnumCpuSetProcessors(
+            _Out_writes_to_(_cProcessors, return) __CPU_SET_PROCESSOR* _pProcessors,
+            _In_ ULONG _cProcessors)
+        {
+            ULONG _uCount = __EnumCpuSetProcessorsEx(_pProcessors, _cProcessors);
+            if (_uCount != 0)
+                return _uCount;
+
+            SYSTEM_INFO _SystemInfo = {};
+            GetSystemInfo(&_SystemInfo);
+
+            _uCount = _SystemInfo.dwNumberOfProcessors;
+            if (_uCount > _cProcessors)
+                _uCount = _cProcessors;
+            if (_uCount > __uCpuSetIdBitCount)
+                _uCount = __uCpuSetIdBitCount;
+
+            for (ULONG _uIndex = 0; _uIndex != _uCount; ++_uIndex)
+            {
+                _pProcessors[_uIndex].Group = 0;
+                _pProcessors[_uIndex].LogicalProcessorIndex = (BYTE)_uIndex;
+                _pProcessors[_uIndex].CoreIndex = (BYTE)_uIndex;
+                _pProcessors[_uIndex].EfficiencyClass = 0;
+            }
+
+            return _uCount;
+        }
+    }
+}
+#endif
+
+
 #if (YY_Thunks_Target < __WindowsNT10_14393)
 
     // 最低受支持的客户端	Windows 10版本 1607 [桌面应用 | UWP 应用]
     // 最低受支持的服务器	Windows Server 2016 [桌面应用 | UWP 应用]
-    // CPU Set 是 Windows 10 才引入的处理器调度概念，旧系统没有等价能力，这一组接口统一报告不支持。
-    // API Set 归属：api-ms-win-core-processthreads-l1-1-3.dll，导入库 kernel32。
     __DEFINE_THUNK(
     kernel32,
     16,
@@ -1417,12 +1596,34 @@ namespace YY ::Thunks
             return FALSE;
         }
 
-        // 旧系统既没有进程默认 CPU Set 集合，也没有 SetThreadSelectedCpuSets 之类的接口去使用这些 Id，
-        // 伪造一份 Id 只会让调用方拿到永远无法生效的调度参数，因此这里保持可预测的失败语义。
-        *_puRequiredIdCount = 0;
+        // 旧系统没有“进程默认 CPU Set”，用进程亲和性掩码（组 0）等价表达。
+        const HANDLE _hQueryProcess = _hProcess != nullptr ? _hProcess : GetCurrentProcess();
 
-        SetLastError(ERROR_NOT_SUPPORTED);
-        return FALSE;
+        DWORD_PTR _uProcessAffinityMask = 0;
+        DWORD_PTR _uSystemAffinityMask = 0;
+        if (GetProcessAffinityMask(_hQueryProcess, &_uProcessAffinityMask, &_uSystemAffinityMask) == FALSE)
+            return FALSE;
+
+        __WarningMessage__("旧系统没有 CPU Set，GetProcessDefaultCpuSets 按进程亲和性（组 0、掩码位宽内：x86 32 / x64 64 个处理器）模拟。");
+
+        const KAFFINITY _uMask = (KAFFINITY)_uProcessAffinityMask;
+        const ULONG _cCpuSetIds = Fallback::__CountAffinityMask(_uMask);
+
+        *_puRequiredIdCount = _cCpuSetIds;
+
+        // 与系统语义一致：缓冲区为空时只回填所需数量
+        if (_puCpuSetIds == nullptr)
+            return TRUE;
+
+        if (_uCpuSetIdCount < _cCpuSetIds)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
+
+        Fallback::__CpuSetIdsFromAffinityMask(_uMask, 0, _puCpuSetIds, _cCpuSetIds);
+
+        return TRUE;
     }
 #endif
 
@@ -1438,7 +1639,7 @@ namespace YY ::Thunks
     WINAPI,
     SetProcessDefaultCpuSets,
         _In_ HANDLE _hProcess,
-        _In_reads_opt_(_uCpuSetIdCount) const ULONG* _puCpuSetIds,
+        _In_reads_(_uCpuSetIdCount) const ULONG* _puCpuSetIds,
         _In_ ULONG _uCpuSetIdCount
         )
     {
@@ -1447,9 +1648,28 @@ namespace YY ::Thunks
             return _pfnSetProcessDefaultCpuSets(_hProcess, _puCpuSetIds, _uCpuSetIdCount);
         }
 
-        // 旧系统没有 CPU Set 调度能力，无法保存进程默认 CPU Set 集合。
-        SetLastError(ERROR_NOT_SUPPORTED);
-        return FALSE;
+        if (_puCpuSetIds == nullptr || _uCpuSetIdCount == 0)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        WORD _uGroup = 0;
+        KAFFINITY _uMask = 0;
+        if (Fallback::__TryAffinityMaskFromCpuSetIds(_puCpuSetIds, _uCpuSetIdCount, _uGroup, _uMask) == false || _uGroup != 0)
+        {
+            // 旧接口只能表达一个处理器组，跨组集合无法等价落到亲和性上
+            SetLastError(ERROR_NOT_SUPPORTED);
+            return FALSE;
+        }
+
+        __WarningMessage__("旧系统没有 CPU Set，SetProcessDefaultCpuSets 通过 SetProcessAffinityMask 模拟，语义为进程亲和性而非默认 CPU Set。");
+
+        const HANDLE _hTargetProcess = _hProcess != nullptr ? _hProcess : GetCurrentProcess();
+        if (SetProcessAffinityMask(_hTargetProcess, _uMask) == FALSE)
+            return FALSE;
+
+        return TRUE;
     }
 #endif
 
@@ -1481,11 +1701,43 @@ namespace YY ::Thunks
             return FALSE;
         }
 
-        // 与 GetProcessDefaultCpuSets 相同：旧系统没有任何 CPU Set 集合可供查询。
-        *_puRequiredIdCount = 0;
+        const auto _pfnGetThreadGroupAffinity = (Fallback::__PFN_GetThreadGroupAffinity)Fallback::__TryGetKernel32Proc("GetThreadGroupAffinity");
+        if (_pfnGetThreadGroupAffinity == nullptr)
+        {
+            // XP/2003 连线程组亲和性查询都没有，且没有不修改线程亲和性就能读到掩码的旧接口
+            SetLastError(ERROR_NOT_SUPPORTED);
+            return FALSE;
+        }
 
-        SetLastError(ERROR_NOT_SUPPORTED);
-        return FALSE;
+        GROUP_AFFINITY _ThreadGroupAffinity = {};
+        if (_pfnGetThreadGroupAffinity(_hThread, &_ThreadGroupAffinity) == FALSE)
+            return FALSE;
+
+        if (_ThreadGroupAffinity.Group != 0)
+        {
+            // 线程落在组 0 之外时，Id 无法用掩码位序表达
+            SetLastError(ERROR_NOT_SUPPORTED);
+            return FALSE;
+        }
+
+        __WarningMessage__("旧系统没有 CPU Set，GetThreadSelectedCpuSets 按线程组亲和性（组 0、掩码位宽内）模拟。");
+
+        const ULONG _cCpuSetIds = Fallback::__CountAffinityMask(_ThreadGroupAffinity.Mask);
+
+        *_puRequiredIdCount = _cCpuSetIds;
+
+        if (_puCpuSetIds == nullptr)
+            return TRUE;
+
+        if (_uCpuSetIdCount < _cCpuSetIds)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
+
+        Fallback::__CpuSetIdsFromAffinityMask(_ThreadGroupAffinity.Mask, _ThreadGroupAffinity.Group, _puCpuSetIds, _cCpuSetIds);
+
+        return TRUE;
     }
 #endif
 
@@ -1501,7 +1753,7 @@ namespace YY ::Thunks
     WINAPI,
     SetThreadSelectedCpuSets,
         _In_ HANDLE _hThread,
-        _In_reads_opt_(_uCpuSetIdCount) const ULONG* _puCpuSetIds,
+        _In_reads_(_uCpuSetIdCount) const ULONG* _puCpuSetIds,
         _In_ ULONG _uCpuSetIdCount
         )
     {
@@ -1510,10 +1762,42 @@ namespace YY ::Thunks
             return _pfnSetThreadSelectedCpuSets(_hThread, _puCpuSetIds, _uCpuSetIdCount);
         }
 
-        // 旧系统的线程亲和性只能通过 SetThreadAffinityMask/SetThreadGroupAffinity 表达，
-        // 无法用 CPU Set Id 调度，因此不假装成功。
-        SetLastError(ERROR_NOT_SUPPORTED);
-        return FALSE;
+        if (_puCpuSetIds == nullptr || _uCpuSetIdCount == 0)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        WORD _uGroup = 0;
+        KAFFINITY _uMask = 0;
+        if (Fallback::__TryAffinityMaskFromCpuSetIds(_puCpuSetIds, _uCpuSetIdCount, _uGroup, _uMask) == false)
+        {
+            SetLastError(ERROR_NOT_SUPPORTED);
+            return FALSE;
+        }
+
+        const auto _pfnSetThreadGroupAffinity = (Fallback::__PFN_SetThreadGroupAffinity)Fallback::__TryGetKernel32Proc("SetThreadGroupAffinity");
+        if (_pfnSetThreadGroupAffinity != nullptr)
+        {
+            __WarningMessage__("旧系统没有 CPU Set，SetThreadSelectedCpuSets 通过 SetThreadGroupAffinity 模拟。");
+
+            GROUP_AFFINITY _NewThreadGroupAffinity = {};
+            _NewThreadGroupAffinity.Mask = _uMask;
+            _NewThreadGroupAffinity.Group = _uGroup;
+
+            return _pfnSetThreadGroupAffinity(_hThread, &_NewThreadGroupAffinity, nullptr);
+        }
+
+        if (_uGroup != 0)
+        {
+            // SetThreadAffinityMask 只能作用于组 0
+            SetLastError(ERROR_NOT_SUPPORTED);
+            return FALSE;
+        }
+
+        __WarningMessage__("旧系统没有 CPU Set，SetThreadSelectedCpuSets 通过 SetThreadAffinityMask 模拟，处理器上限为掩码位宽（x86 32 / x64 64）。");
+
+        return SetThreadAffinityMask(_hThread, _uMask) != 0;
     }
 #endif
 
@@ -1546,14 +1830,82 @@ namespace YY ::Thunks
             return FALSE;
         }
 
-        // 这里刻意不按 GetLogicalProcessorInformationEx 去伪造 SYSTEM_CPU_SET_INFORMATION 列表：
-        // CPU Set Id 只有配合 SetThreadSelectedCpuSets 等调度接口才有意义，而旧系统没有这些接口，
-        // 返回的 Id 无法生效，只会让调用方误判系统具备 CPU Set 调度能力。
-        // 按“无法兼容时优先给出可预测失败”的原则，统一报告不支持，由调用方自行降级。
         *_puReturnedLength = 0;
 
-        SetLastError(ERROR_NOT_SUPPORTED);
-        return FALSE;
+        // 旧系统没有 CPU Set 调度，这里按“一个逻辑处理器 = 一个 CPU Set”模拟，
+        // 让按 CPU Set 规划亲和性的调用方仍能拿到真实的组号与组内处理器编号，
+        // 后续用 SetThreadSelectedCpuSets（本文件同样已模拟）即可真正落到亲和性上。
+        Fallback::__CPU_SET_PROCESSOR _Processors[sizeof(KAFFINITY) * 8] = {};
+        const ULONG _cProcessors = Fallback::__EnumCpuSetProcessors(_Processors, _countof(_Processors));
+        if (_cProcessors == 0)
+        {
+            SetLastError(ERROR_NOT_SUPPORTED);
+            return FALSE;
+        }
+
+        // _hProcess 非空时只报告该进程亲和性允许的处理器
+        KAFFINITY _uAllowedMask = (KAFFINITY)-1;
+        if (_hProcess != nullptr)
+        {
+            DWORD_PTR _uProcessAffinityMask = 0;
+            DWORD_PTR _uSystemAffinityMask = 0;
+            if (GetProcessAffinityMask(_hProcess, &_uProcessAffinityMask, &_uSystemAffinityMask) == FALSE)
+                return FALSE;
+
+            _uAllowedMask = (KAFFINITY)_uProcessAffinityMask;
+        }
+
+        // 模拟出来的集合全部是“已分配、非驻留、非实时”，_uFlags 里的过滤器位不会改变结果集
+        UNREFERENCED_PARAMETER(_uFlags);
+
+        ULONG _cMatchedProcessors = 0;
+        for (ULONG _uIndex = 0; _uIndex != _cProcessors; ++_uIndex)
+        {
+            if ((_uAllowedMask & ((KAFFINITY)1 << _Processors[_uIndex].LogicalProcessorIndex)) == 0)
+                continue;
+
+            ++_cMatchedProcessors;
+        }
+
+        const ULONG _cbRequired = _cMatchedProcessors * sizeof(SYSTEM_CPU_SET_INFORMATION);
+
+        *_puReturnedLength = _cbRequired;
+
+        // 与系统语义一致：缓冲区为空或空间不足时只回填所需长度
+        if (_pInformation == nullptr || _cbInformation < _cbRequired)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
+
+        __WarningMessage__("旧系统没有 CPU Set，GetSystemCpuSetInformation 按“一个逻辑处理器 = 一个 CPU Set”模拟，仅覆盖组 0 与掩码位宽内的处理器（x86 32 / x64 64）。");
+
+        BYTE* _pCurrent = (BYTE*)_pInformation;
+        for (ULONG _uIndex = 0; _uIndex != _cProcessors; ++_uIndex)
+        {
+            const auto& _Processor = _Processors[_uIndex];
+            if ((_uAllowedMask & ((KAFFINITY)1 << _Processor.LogicalProcessorIndex)) == 0)
+                continue;
+
+            const auto _pCpuSetInformation = (SYSTEM_CPU_SET_INFORMATION*)_pCurrent;
+
+            _pCpuSetInformation->Size = sizeof(SYSTEM_CPU_SET_INFORMATION);
+            _pCpuSetInformation->Type = CpuSetInformation;
+            _pCpuSetInformation->CpuSet.Id = _Processor.Group * Fallback::__uCpuSetIdBitCount + _Processor.LogicalProcessorIndex;
+            _pCpuSetInformation->CpuSet.Group = _Processor.Group;
+            _pCpuSetInformation->CpuSet.LogicalProcessorIndex = _Processor.LogicalProcessorIndex;
+            _pCpuSetInformation->CpuSet.CoreIndex = _Processor.CoreIndex;
+            _pCpuSetInformation->CpuSet.LastLevelCacheIndex = 0;
+            _pCpuSetInformation->CpuSet.NumaNodeIndex = 0;
+            _pCpuSetInformation->CpuSet.EfficiencyClass = _Processor.EfficiencyClass;
+            _pCpuSetInformation->CpuSet.AllFlags = SYSTEM_CPU_SET_INFORMATION_ALLOCATED;
+            _pCpuSetInformation->CpuSet.SchedulingClass = 0;
+            _pCpuSetInformation->CpuSet.AllocationTag = 0;
+
+            _pCurrent += sizeof(SYSTEM_CPU_SET_INFORMATION);
+        }
+
+        return TRUE;
     }
 #endif
 
