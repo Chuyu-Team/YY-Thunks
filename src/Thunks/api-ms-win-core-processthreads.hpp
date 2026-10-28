@@ -1386,4 +1386,175 @@ namespace YY ::Thunks
         return E_NOTIMPL;
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT10_14393)
+
+    // 最低受支持的客户端	Windows 10版本 1607 [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2016 [桌面应用 | UWP 应用]
+    // CPU Set 是 Windows 10 才引入的处理器调度概念，旧系统没有等价能力，这一组接口统一报告不支持。
+    // API Set 归属：api-ms-win-core-processthreads-l1-1-3.dll，导入库 kernel32。
+    __DEFINE_THUNK(
+    kernel32,
+    16,
+    BOOL,
+    WINAPI,
+    GetProcessDefaultCpuSets,
+        _In_ HANDLE _hProcess,
+        _Out_writes_to_opt_(_uCpuSetIdCount, *_puRequiredIdCount) PULONG _puCpuSetIds,
+        _In_ ULONG _uCpuSetIdCount,
+        _Out_ PULONG _puRequiredIdCount
+        )
+    {
+        if (const auto _pfnGetProcessDefaultCpuSets = try_get_GetProcessDefaultCpuSets())
+        {
+            return _pfnGetProcessDefaultCpuSets(_hProcess, _puCpuSetIds, _uCpuSetIdCount, _puRequiredIdCount);
+        }
+
+        if (_puRequiredIdCount == nullptr)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        // 旧系统既没有进程默认 CPU Set 集合，也没有 SetThreadSelectedCpuSets 之类的接口去使用这些 Id，
+        // 伪造一份 Id 只会让调用方拿到永远无法生效的调度参数，因此这里保持可预测的失败语义。
+        *_puRequiredIdCount = 0;
+
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT10_14393)
+
+    // 最低受支持的客户端	Windows 10版本 1607 [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2016 [桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    kernel32,
+    12,
+    BOOL,
+    WINAPI,
+    SetProcessDefaultCpuSets,
+        _In_ HANDLE _hProcess,
+        _In_reads_opt_(_uCpuSetIdCount) const ULONG* _puCpuSetIds,
+        _In_ ULONG _uCpuSetIdCount
+        )
+    {
+        if (const auto _pfnSetProcessDefaultCpuSets = try_get_SetProcessDefaultCpuSets())
+        {
+            return _pfnSetProcessDefaultCpuSets(_hProcess, _puCpuSetIds, _uCpuSetIdCount);
+        }
+
+        // 旧系统没有 CPU Set 调度能力，无法保存进程默认 CPU Set 集合。
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT10_14393)
+
+    // 最低受支持的客户端	Windows 10版本 1607 [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2016 [桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    kernel32,
+    16,
+    BOOL,
+    WINAPI,
+    GetThreadSelectedCpuSets,
+        _In_ HANDLE _hThread,
+        _Out_writes_to_opt_(_uCpuSetIdCount, *_puRequiredIdCount) PULONG _puCpuSetIds,
+        _In_ ULONG _uCpuSetIdCount,
+        _Out_ PULONG _puRequiredIdCount
+        )
+    {
+        if (const auto _pfnGetThreadSelectedCpuSets = try_get_GetThreadSelectedCpuSets())
+        {
+            return _pfnGetThreadSelectedCpuSets(_hThread, _puCpuSetIds, _uCpuSetIdCount, _puRequiredIdCount);
+        }
+
+        if (_puRequiredIdCount == nullptr)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        // 与 GetProcessDefaultCpuSets 相同：旧系统没有任何 CPU Set 集合可供查询。
+        *_puRequiredIdCount = 0;
+
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT10_14393)
+
+    // 最低受支持的客户端	Windows 10版本 1607 [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 2016 [桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    kernel32,
+    12,
+    BOOL,
+    WINAPI,
+    SetThreadSelectedCpuSets,
+        _In_ HANDLE _hThread,
+        _In_reads_opt_(_uCpuSetIdCount) const ULONG* _puCpuSetIds,
+        _In_ ULONG _uCpuSetIdCount
+        )
+    {
+        if (const auto _pfnSetThreadSelectedCpuSets = try_get_SetThreadSelectedCpuSets())
+        {
+            return _pfnSetThreadSelectedCpuSets(_hThread, _puCpuSetIds, _uCpuSetIdCount);
+        }
+
+        // 旧系统的线程亲和性只能通过 SetThreadAffinityMask/SetThreadGroupAffinity 表达，
+        // 无法用 CPU Set Id 调度，因此不假装成功。
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT10_16299)
+
+    // 最低受支持的客户端	Windows 10版本 1709 [桌面应用 | UWP 应用]
+    // 最低受支持的服务器	Windows Server 版本 1709 [桌面应用 | UWP 应用]
+    __DEFINE_THUNK(
+    kernel32,
+    20,
+    BOOL,
+    WINAPI,
+    GetSystemCpuSetInformation,
+        _Out_writes_bytes_to_opt_(_cbInformation, *_puReturnedLength) PSYSTEM_CPU_SET_INFORMATION _pInformation,
+        _In_ ULONG _cbInformation,
+        _Out_ PULONG _puReturnedLength,
+        _In_opt_ HANDLE _hProcess,
+        _In_ ULONG _uFlags
+        )
+    {
+        if (const auto _pfnGetSystemCpuSetInformation = try_get_GetSystemCpuSetInformation())
+        {
+            return _pfnGetSystemCpuSetInformation(_pInformation, _cbInformation, _puReturnedLength, _hProcess, _uFlags);
+        }
+
+        if (_puReturnedLength == nullptr)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        // 这里刻意不按 GetLogicalProcessorInformationEx 去伪造 SYSTEM_CPU_SET_INFORMATION 列表：
+        // CPU Set Id 只有配合 SetThreadSelectedCpuSets 等调度接口才有意义，而旧系统没有这些接口，
+        // 返回的 Id 无法生效，只会让调用方误判系统具备 CPU Set 调度能力。
+        // 按“无法兼容时优先给出可预测失败”的原则，统一报告不支持，由调用方自行降级。
+        *_puReturnedLength = 0;
+
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
+#endif
+
 } //namespace YY::Thunks
