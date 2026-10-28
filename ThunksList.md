@@ -669,6 +669,11 @@
 | GetPhysicallyInstalledSystemMemory         | 调用GetSystemFirmwareTable。
 | GetNamedPipeClientProcessId                | 内部维护管道PID。
 | GetNamedPipeServerProcessId                | 内部维护管道PID。
+| GetSystemCpuSetInformation                 | 返回FALSE，并设置 LastError = ERROR_NOT_SUPPORTED。不伪造 CPU Set 信息。 |
+| GetProcessDefaultCpuSets                   | 返回FALSE，并设置 LastError = ERROR_NOT_SUPPORTED，RequiredIdCount 置 0。 |
+| SetProcessDefaultCpuSets                   | 返回FALSE，并设置 LastError = ERROR_NOT_SUPPORTED。 |
+| GetThreadSelectedCpuSets                   | 返回FALSE，并设置 LastError = ERROR_NOT_SUPPORTED，RequiredIdCount 置 0。 |
+| SetThreadSelectedCpuSets                   | 返回FALSE，并设置 LastError = ERROR_NOT_SUPPORTED。 |
 
 ## mfplat.dll
 | 函数                                       | Fallback
