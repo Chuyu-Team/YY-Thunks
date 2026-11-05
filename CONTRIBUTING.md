@@ -1,6 +1,6 @@
 ﻿# 编码规范 - YY-Thunks
 
- > 最后更新：2026-09-18 18:13:53 +08:00
+ > 最后更新：2026-11-04 18:16:00 +08:00
 
 ## 1. 命名规范
 请参考仓库根目录的[C++编码风格约定.md](./C++编码风格约定.md)
@@ -45,12 +45,25 @@
 - 新增 API Set 头文件后，需要在测试工程 `YY-Thunks.UnitTest.vcxproj` 与其 `filters` 中登记，`YY_Thunks_List.hpp` 由构建系统自动重新生成，无需手工修改。
 - `YY_Thunks_List.hpp` 的生成顺序与 `vcxproj` 中 `ClInclude` 的登记顺序一致；存在跨头文件调用时，被调用方必须排在调用方之前，或在使用点之前的公共头文件（如 `YY_Thunks.h`）中声明。
 - 头文件内非 thunk 的类型/常量定义（如共享数据结构与布局常量）须限定在 `YY_Thunks_Implemented` 块内并以防重入宏保护：`YY_Thunks.cpp` 会在同一翻译单元内两次包含清单头文件（声明遍与实现遍），条件过宽会触发 C2011/C2086 重复定义编译错误。
+  - 若该类型/常量**仅服务于单个 thunk**，优先改为**函数内局部定义**（局部 struct / 局部 `const` 变量），天然规避两轮 include 重复编译，无需 `YY_Thunks_Implemented` 守卫，也不会污染命名空间作用域。只有当定义需要被多个 thunk 共享时，才使用 `YY_Thunks_Implemented` 块 + 防重入宏。
 - 清单登记约定：仅"提供 Fallback 实现"的 API 登记到 `ThunksList.md`；仅为支撑其他 Thunk 而被拦截、但本机已存在的 API（如 `CloseHandle`、`DuplicateHandle`、`CreateFileW`）不单独登记条目。`ThunksList.md` 中的分组按导入库/宿主 DLL 名（如 `## kernel32.dll`），而非 API Set 名。
+- `ThunksList.md` 描述写法约定：
+  - 第一列函数名，第二列 `Fallback` 列直接写实现方式，如 `内部实现。`、`调用Xxx。`、`返回E_NOTIMPL。`、`报告ERROR_NOT_SUPPORTED。`
+  - 行为与系统实现存在差异时，在实现方式后用 `注意：` 追加用户可见的已知限制摘要（如不输出的条目类型、顺序差异、字段可能为 0、规模假设），不要只写"内部实现"而隐藏差异。
+  - 存在较大负面影响、不建议直接使用时，函数名前加 `*` 前缀（现有文件星号后有/无空格不统一，新增条目统一写 `| *ApiName`，星号后不加空格）。
+  - 描述允许较长（现有最长约 188 字符），但只写调用者需要知道的信息，不复制设计文档细节。
 
 ## 5. 测试规范
 - 测试框架：MSTest Native Unit Test。
+- 测试文件位置：与被测 Thunks 头文件同名，放在 `src/YY-Thunks.UnitTest/<header>.UnitTest.cpp`，新用例追加到既有文件，不为单个 API 新建测试文件。
+- 命名空间与测试类：文件内用 `namespace api_ms_win_core_<module>`（由文件名推导）包裹，每个 API 一个 `TEST_CLASS(<ApiName>)`。
+- `TEST_METHOD` 命名：`<场景>_<预期结果>`，中文，与测试计划/测试用例名称逐字一致，便于失败时直接定位用例。
+- 断言统一使用 MSTest 宏（`Assert::AreEqual`、`Assert::IsTrue`、`Assert::AreNotEqual` 等），不使用 `assert`，保证失败信息可读且 Release 下同样生效。
 - 默认流程：先运行新增单元测试，通过后再扩展到其他受影响测试。
 - 测试覆盖：新增 fallback 需要同时覆盖可链接性/导出存在性与核心行为路径。
+- **强制 fallback 守卫**：单测工程定义 `__YY_Thunks_Unit_Test`，为每个 thunk 生成 `bool YY::Thunks::aways_null_try_get_<ApiName>`。测试类声明成员 `AwaysNullGuard Guard;` 并在构造函数中 `Guard |= YY::Thunks::aways_null_try_get_<ApiName>;`，即可让 `try_get_<ApiName>()` 恒返回 `nullptr`，从而在现代 Windows 上真实执行 fallback 分支。
+  - 新增 thunk 必须使用该守卫编写 fallback 测试，不得依赖“当前系统版本恰好低于门槛”这种环境条件。
+  - 由此带来的硬约束：fallback 的入口条件只能是 `try_get_*` 解析失败，不得再用运行时版本号判断作为唯一开关，否则该分支永远无法被单测覆盖。
 - 若 fallback 仅为假装成功且无额外行为分支，可在需求已明确接受的前提下不补单元测试，但需要在需求/交付说明中明确原因。
 - NCrypt 相关接口：尽量按“每个 API 单独一个 `TEST_CLASS`”拆分，便于定位失败接口。
 - 单元测试代码可使用标准库；Thunks 核心实现需优先兼容更宽的 VC / Windows 版本范围。
@@ -60,9 +73,14 @@
 - 阻塞级问题：破坏旧系统兼容性、导出签名不匹配、错误码/行为明显偏离系统语义、遗漏新增测试、引入不兼容的现代库设施到 Thunks 核心层。
 - 建议级问题：why 注释不足、边界条件解释不清、测试命名或场景表达不够直接。
 - 安全检查点：参数校验、COM 指针输出初始化、路径/模块加载安全、资源释放、整数与缓冲区边界、静态分析可接受性。
+- **`LastError` 语义审查**：fallback 若需“成功路径保持调用前的 `LastError`、失败路径返回错误码”。
 
 ## 7. 其他约定
 - Thunks 核心实现为兼容 VC6-2026，避免在该层使用 `std::vector`、`strcpy_s` 等受限设施，优先复用项目内部设施。
 - 单元测试与辅助代码不受上述标准库限制，可按测试便利性使用 STL。
 - 当行为无法完全兼容时，优先保持可预测失败语义，并在设计/实现文档中说明差异。
 - NuGet 配置型能力若同时覆盖 native 与 .NET，两侧应优先共用同一个 Property 名，并保持与各自现有 targets 风格一致。
+- **允许通过 `__declspec(dllimport)` 声明直接调用系统 API**：YY-Thunks 自身就是**链接时 Hook**——`YY_Thunks.cpp` 作为唯一 TU，通过 `__DEFINE_THUNK` / `_LCRT_DEFINE_IAT_SYMBOL_MAKE_NAME` 在链接期为缺失的 IAT 符号提供本地实现。因此 thunk 内部直接写 `::XxxApi(...)`（编译器按 SDK 声明生成 `__declspec(dllimport)` 引用）是安全的：只要该 API 在 YY-Thunks 中有对应 thunk，链接器就会把引用解析到 YY-Thunks 自己的实现，而**不会**把导入写入静态导入表，也就不会在缺少该导出的旧系统上加载失败。现有代码中的 `bcrypt.hpp`、`api-ms-win-core-winrt-string.hpp` 等大量使用该写法。
+  - 边界一：目标 API 若**完全未被 YY-Thunks 覆盖**（既无 thunk，也无同名的本地实现可见），则必须用 `try_get_XxxApi()` 动态解析后调用，否则链接期没有可解析的符号。
+  - 边界二：目标 API **有 thunk 但当前 `YY_Thunks_Target` 配置下该 thunk 不参与编译**（调用方守卫区间未被被调用方守卫区间包含），链接期同样没有可解析符号，`dllimport` 会退化为真实静态导入。因此仍必须遵守 §3「守卫包含关系」：调用方守卫区间要被被调用方守卫区间包含，或改用守卫更宽的等价 API。
+  - 同文件内可用未限定名调用前面已定义的 thunk（如 `api-ms-win-core-sysinfo.hpp` 的 GLPIEx fallback 调用 GLPI）；反之若目标 thunk 定义在本文件之后，需在文件前部声明后再调用。

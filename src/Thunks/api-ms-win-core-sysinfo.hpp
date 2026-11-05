@@ -56,6 +56,7 @@ namespace YY::Thunks
     __DEFINE_THUNK(
     kernel32,
     8,
+    _Success_(return)
     BOOL,
     WINAPI,
     GetLogicalProcessorInformation,
@@ -67,9 +68,437 @@ namespace YY::Thunks
         {
             return pGetLogicalProcessorInformation(Buffer, ReturnedLength);
         }
-    
-        SetLastError(ERROR_INVALID_FUNCTION);
-        return FALSE;
+
+        // 成功路径需原样恢复 LastError（原生实现不改写它）
+        const auto _uLastError = GetLastError();
+
+        // [阶段 1] 参数校验。顺序不可调整：(NULL, 100) 必须得到 ERROR_NOACCESS 而不是 ERROR_INSUFFICIENT_BUFFER。
+        if (ReturnedLength == nullptr)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        if (Buffer == nullptr && *ReturnedLength != 0)
+        {
+            SetLastError(ERROR_NOACCESS);
+            return FALSE;
+        }
+
+        struct LogicalProcessorSample
+        {
+            DWORD_PTR ProcessorMask;    // 该处理器在系统亲和性掩码中的单 bit
+            DWORD uApicId;              // x2APIC ID；不可用时为 0xFFFFFFFF
+            DWORD uCoreKey;             // 归并键
+            bool bSampled;              // 是否成功采样
+        };
+
+        struct ProcessorCoreInfo
+        {
+            DWORD_PTR ProcessorMask;    // 该核包含的逻辑处理器位掩码
+            DWORD uCoreKey;             // 归并键；kNoCoreKey 表示不与任何处理器合并
+            BYTE Flags;                 // 1 = 含多个逻辑处理器（SMT），0 = 否则
+        };
+
+        // 编译期上限，避免动态分配。本 fallback 的守卫是 YY_Thunks_Target < __WindowsNT5_1_SP3，而 x64 / ARM64 的
+        // __WindowsMinTarget 均高于该阈值（见 SharedDefs.h），故只有 x86-32 会编译到这里，亲和性掩码最多 32 位。
+        const DWORD kMaxLogicalProcessors = 32;
+
+
+        // [阶段 2] 采样。GetSystemInfo 自 Windows 2000 起原生存在、无 thunk，WOW64 下返回进程视图。
+        SYSTEM_INFO _SystemInfo;
+        GetSystemInfo(&_SystemInfo);
+
+        DWORD _cProcessorLimit = _SystemInfo.dwNumberOfProcessors;
+        if (_cProcessorLimit > kMaxLogicalProcessors)
+        {
+            _cProcessorLimit = kMaxLogicalProcessors;
+        }
+
+        LogicalProcessorSample _Samples[kMaxLogicalProcessors];
+        DWORD _cSamples = 0;
+
+        for (DWORD _iBit = 0; _iBit != kMaxLogicalProcessors && _cSamples != _cProcessorLimit; ++_iBit)
+        {
+            const DWORD_PTR _uBit = ((DWORD_PTR)1) << _iBit;
+            if ((_SystemInfo.dwActiveProcessorMask & _uBit) == 0)
+            {
+                continue;
+            }
+
+            auto& _Sample = _Samples[_cSamples];
+            _Sample.ProcessorMask = _uBit;
+            _Sample.uApicId = 0xFFFFFFFF;
+            _Sample.uCoreKey = _iBit;
+            _Sample.bSampled = false;
+            ++_cSamples;
+        }
+
+        if (_cSamples == 0)
+        {
+            // GetSystemInfo 返回了空掩码（理论上不可达）：保底 1 个逻辑处理器，保证 cbRequired 恒不为 0。
+            _Samples[0].ProcessorMask = 1;
+            _Samples[0].uApicId = 0xFFFFFFFF;
+            _Samples[0].uCoreKey = 0;
+            _Samples[0].bSampled = false;
+            _cSamples = 1;
+        }
+
+
+        // CPUID 读取：本 fallback 的守卫是 YY_Thunks_Target < __WindowsNT5_1_SP3，而 x64 / ARM64 的 __WindowsMinTarget
+        // 均高于该阈值（见 SharedDefs.h），故只有 x86-32 会编译到这里，直接用内联汇编即可（VC6 起可用，且能指定子叶）。
+        struct CpuidReader
+        {
+            /// <summary>
+            /// 读取指定 CPUID 叶 / 子叶的 4 个 32 位返回值。
+            /// </summary>
+            /// <param name="uLeaf">CPUID 叶号，如 0 / 1 / 0x0B / 0x1F / 4 / 0x8000001D。</param>
+            /// <param name="uSubLeaf">子叶号；叶不支持子叶时传 0。</param>
+            /// <param name="pRegs">输出缓冲区，必须指向至少 4 个连续 DWORD；依次写入 EAX / EBX / ECX / EDX。</param>
+            void Read(DWORD uLeaf, DWORD uSubLeaf, DWORD* pRegs) const
+            {
+                __asm
+                {
+                    push ebx
+                    push esi
+                    mov eax, uLeaf
+                    mov ecx, uSubLeaf
+                    cpuid
+                    mov esi, pRegs
+                    mov [esi], eax
+                    mov [esi + 4], ebx
+                    mov [esi + 8], ecx
+                    mov [esi + 12], edx
+                    pop esi
+                    pop ebx
+                }
+            }
+        } _Cpuid;
+
+        DWORD _Regs[4];
+
+        // 叶 0：EAX 为最大基础叶号，EBX/EDX/ECX 依次拼出 12 字节厂商串。
+        _Cpuid.Read(0, 0, _Regs);
+
+        const DWORD _cMaxBasicLeaf = _Regs[0];
+        const bool _bVendorIntel = _Regs[1] == 0x756E6547 && _Regs[3] == 0x49656E69 && _Regs[2] == 0x6C65746E;
+        const bool _bVendorAmd = _Regs[1] == 0x68747541 && _Regs[3] == 0x69746E65 && _Regs[2] == 0x444D4163;
+
+        // 叶 1：EDX[28] 为 HTT 能力位，EBX[23:16] 为每封装可寻址逻辑处理器数（不是每核线程数）。
+        bool _bHttCapable = false;
+        DWORD _cLogicalPerPackage = 0;
+
+        if (_cMaxBasicLeaf >= 1)
+        {
+            _Cpuid.Read(1, 0, _Regs);
+            _bHttCapable = (_Regs[3] & (1u << 28)) != 0;
+            _cLogicalPerPackage = (_Regs[1] >> 16) & 0xFF;
+        }
+
+        // x2APIC 拓扑叶：先试 0x0B（兼容面更广），子叶 0 的 ECX[15:8] 为 0 表示该叶不可用，再试 0x1F。
+        // 硬件不支持时 _uTopologyLeaf 保持 0，退化为 T2。
+        DWORD _uTopologyLeaf = 0;
+
+        if (_cMaxBasicLeaf >= 0x0B)
+        {
+            _Cpuid.Read(0x0B, 0, _Regs);
+            if (((_Regs[2] >> 8) & 0xFF) != 0)
+            {
+                _uTopologyLeaf = 0x0B;
+            }
+        }
+
+        if (_uTopologyLeaf == 0 && _cMaxBasicLeaf >= 0x1F)
+        {
+            _Cpuid.Read(0x1F, 0, _Regs);
+            if (((_Regs[2] >> 8) & 0xFF) != 0)
+            {
+                _uTopologyLeaf = 0x1F;
+            }
+        }
+
+        // 「每核线程数」只在无 x2APIC 拓扑叶时用于 T2 归并。默认 1：退化形态只缺失 SMT 关系，不会虚报核数。
+        DWORD _cThreadsPerCore = 1;
+        bool _bThreadsPerCoreKnown = false;
+
+        if (_uTopologyLeaf == 0 && _bHttCapable)
+        {
+            if (_bVendorIntel && _cMaxBasicLeaf >= 4)
+            {
+                // 叶 4 子叶 0：EAX[25:14]+1 为共享该缓存的逻辑处理器数；L1/L2 每核独占，故即为每核线程数。
+                _Cpuid.Read(4, 0, _Regs);
+
+                const DWORD _uCacheType = _Regs[0] & 0x1F;
+                const DWORD _uCacheLevel = (_Regs[0] >> 5) & 0x7;
+                if (_uCacheType != 0 && _uCacheLevel <= 2)
+                {
+                    _cThreadsPerCore = ((_Regs[0] >> 14) & 0xFFF) + 1;
+                    _bThreadsPerCoreKnown = true;
+                }
+            }
+            else if (_bVendorAmd)
+            {
+                _Cpuid.Read(0x80000000, 0, _Regs);
+                const DWORD _cMaxExtLeaf = _Regs[0];
+
+                if (_cMaxExtLeaf >= 0x8000001D)
+                {
+                    _Cpuid.Read(0x8000001D, 0, _Regs);
+
+                    const DWORD _uCacheType = _Regs[0] & 0x1F;
+                    const DWORD _uCacheLevel = (_Regs[0] >> 5) & 0x7;
+                    if (_uCacheType != 0 && _uCacheLevel <= 2)
+                    {
+                        _cThreadsPerCore = ((_Regs[0] >> 14) & 0xFFF) + 1;
+                        _bThreadsPerCoreKnown = true;
+                    }
+                }
+
+                if (!_bThreadsPerCoreKnown && _cMaxExtLeaf >= 0x80000008 && _cLogicalPerPackage != 0)
+                {
+                    // 叶 0x80000008 的 ECX[7:0]+1 为物理核数，用它反推每核线程数。
+                    _Cpuid.Read(0x80000008, 0, _Regs);
+
+                    const DWORD _cPhysicalCores = (_Regs[2] & 0xFF) + 1;
+                    if (_cPhysicalCores != 0 && _cLogicalPerPackage >= _cPhysicalCores)
+                    {
+                        _cThreadsPerCore = _cLogicalPerPackage / _cPhysicalCores;
+                        _bThreadsPerCoreKnown = true;
+                    }
+                }
+            }
+
+            if (_cThreadsPerCore == 0)
+            {
+                _cThreadsPerCore = 1;
+            }
+        }
+
+        // 整段逐处理器采样共用一个绑定守卫：构造时切到第一个处理器，扫描过程中用 Retarget() 逐个前进，
+        // 析构时统一恢复真正的原掩码，任何 break 都不会泄漏绑定，调用前后线程亲和性保持一致。
+        struct AffinityGuard
+        {
+            HANDLE _hThread;
+            DWORD_PTR _uOldMask;
+
+            AffinityGuard(HANDLE hThread, DWORD_PTR uNewMask)
+                : _hThread(hThread)
+                , _uOldMask(SetThreadAffinityMask(hThread, uNewMask))
+            {
+            }
+
+            ~AffinityGuard()
+            {
+                if (_uOldMask != 0)
+                {
+                    SetThreadAffinityMask(_hThread, _uOldMask);
+                }
+            }
+
+            bool IsBound() const
+            {
+                return _uOldMask != 0;
+            }
+
+            // 把线程前进到下一个处理器。返回 false 表示系统不允许修改本线程的亲和性。
+            bool Retarget(DWORD_PTR uNewMask) const
+            {
+                return SetThreadAffinityMask(_hThread, uNewMask) != 0;
+            }
+        };
+
+        // 拓扑叶的子叶结构（级类型、各级共享计数）对所有逻辑处理器一致，只有 EDX 的 x2APIC ID 逐处理器不同。
+        // 因此子叶枚举只在循环外做一次，循环内每个处理器只读「最末有效子叶」拿 x2APIC ID 这一次 CPUID。
+        // 实测纯 CPUID 几乎免费（32 处理器各 100 轮共 3200 次为 0 ms），减少次数对总耗时影响可忽略，
+        // 此处的主要价值是消除每处理器重复探测子叶结构的冗余，而不是节省 CPUID 本身。
+        DWORD _cSmtsPerCore = 0;
+        DWORD _cThreadsPerPackage = 0;
+        DWORD _uApicIdSubLeaf = 0xFFFFFFFF;
+
+        if (_uTopologyLeaf != 0)
+        {
+            for (DWORD _uSubLeaf = 0; _uSubLeaf != 32; ++_uSubLeaf)
+            {
+                _Cpuid.Read(_uTopologyLeaf, _uSubLeaf, _Regs);
+
+                const DWORD _uLevelType = (_Regs[2] >> 8) & 0xFF;
+                if (_uLevelType == 0)
+                {
+                    break;
+                }
+
+                // 每级子叶的 EDX 都是从位 0 起编码的 x2APIC ID，级越高有效位越多，故取最后一个有效子叶。
+                _uApicIdSubLeaf = _uSubLeaf;
+
+                if (_uLevelType == 1)
+                {
+                    // EBX[15:0] 为共享同一核的逻辑处理器数
+                    _cSmtsPerCore = _Regs[1] & 0xFFFF;
+                }
+                else if (_uLevelType == 2)
+                {
+                    // EBX[15:0] 为每封装逻辑处理器数，用于校验 SMT 计数
+                    _cThreadsPerPackage = _Regs[1] & 0xFFFF;
+                }
+            }
+        }
+
+        // 只有存在 SMT 时才需要逐处理器 APIC ID：每核单线程时 T1 的商恒等于 APIC ID、T2 的商恒等于位序号，
+        // 归并结果与 T3「每位一核」完全一致，APIC ID 取值不影响任何输出。跳过扫描可把无 SMT 平台的
+        // 成本从 _cSamples + 1 次跨 CPU 迁移降到 0 次（迁移是本函数唯一的可观测开销来源）。
+        const bool _bNeedApicId = _cSmtsPerCore > 1 || _cThreadsPerCore > 1;
+
+        if (_cMaxBasicLeaf >= 1 && _bNeedApicId)
+        {
+            const HANDLE _hThread = GetCurrentThread();
+
+            // 顺序扫描而不是「逐个切过去再切回」：本实现共 _cSamples + 1 次 SetThreadAffinityMask，
+            // 后者需 2 * _cSamples 次；而实测该调用的耗时几乎全部来自真实跨 CPU 迁移，
+            // 故往返切换的迁移次数是顺序扫描的两倍。32 逻辑处理器各扫 100 轮实测：125 ms vs 266 ms。
+            AffinityGuard _Affinity(_hThread, _Samples[0].ProcessorMask);
+            if (_Affinity.IsBound())
+            {
+                for (DWORD _i = 0; _i != _cSamples; ++_i)
+                {
+                    if (_i != 0 && !_Affinity.Retarget(_Samples[_i].ProcessorMask))
+                    {
+                        // 不允许继续修改线程亲和性：放弃剩余处理器的采样，已采样的仍按 T1 / T2 归并。
+                        break;
+                    }
+
+                    if (_uApicIdSubLeaf != 0xFFFFFFFF)
+                    {
+                        _Cpuid.Read(_uTopologyLeaf, _uApicIdSubLeaf, _Regs);
+                        _Samples[_i].uApicId = _Regs[3];
+                    }
+
+                    _Samples[_i].bSampled = true;
+                }
+            }
+            // 首个处理器都绑不上去时一个都不采样，由 _Affinity 析构保证亲和性不变，阶段 3 自动降级到 T3。
+        }
+
+        // SMT 计数不可能超过每封装逻辑处理器数；越界说明拓扑叶不可信，按 T2 处理。
+        if (_cThreadsPerPackage != 0 && _cSmtsPerCore > _cThreadsPerPackage)
+        {
+            _cSmtsPerCore = 0;
+        }
+
+
+        // [阶段 3] 归并。三路降级（SPEC §6.2）：T1 用「APIC ID / 每核线程数」推导核键；T2 在无拓扑叶的旧平台上
+        // 按活跃位序号分组；T3 每位一核。恒输出单 NUMA 节点。
+        const DWORD kNoCoreKey = 0xFFFFFFFF;
+
+        ProcessorCoreInfo _Cores[kMaxLogicalProcessors];
+        DWORD _cCores = 0;
+        DWORD_PTR _NumaMask = 0;
+
+        for (DWORD _i = 0; _i != _cSamples; ++_i)
+        {
+            LogicalProcessorSample& _Sample = _Samples[_i];
+            _NumaMask |= _Sample.ProcessorMask;
+
+            if (!_Sample.bSampled)
+            {
+                // 采样失败时拿不到任何拓扑线索，独立成核并保持 Flags = 0，宁可多报核也不误并。
+                _Sample.uCoreKey = kNoCoreKey;
+            }
+            else if (_Sample.uApicId != 0xFFFFFFFF && _cSmtsPerCore != 0)
+            {
+                // T1：同一核内的逻辑处理器共享「APIC ID / 每核线程数」这个商。
+                _Sample.uCoreKey = _Sample.uApicId / _cSmtsPerCore;
+            }
+            else if (_cThreadsPerCore > 1)
+            {
+                // T2：没有可用 APIC ID 时只能按活跃位序号分组——旧平台按物理顺序给逻辑处理器编号，
+                // 连续的 _cThreadsPerCore 个活跃位同属一核。此处必须是「活跃位序号」而不是位掩码位号，
+                // 否则掩码不从 bit0 开始时会把同一核的线程拆到两个核里。
+                _Sample.uCoreKey = _i / _cThreadsPerCore;
+            }
+            else
+            {
+                _Sample.uCoreKey = kNoCoreKey;
+            }
+
+            DWORD _j = 0;
+            for (; _j != _cCores; ++_j)
+            {
+                if (_Sample.uCoreKey != kNoCoreKey && _Cores[_j].uCoreKey == _Sample.uCoreKey)
+                {
+                    _Cores[_j].ProcessorMask |= _Sample.ProcessorMask;
+                    break;
+                }
+            }
+
+            if (_j == _cCores)
+            {
+                _Cores[_cCores].ProcessorMask = _Sample.ProcessorMask;
+                _Cores[_cCores].uCoreKey = _Sample.uCoreKey;
+                _Cores[_cCores].Flags = 0;
+                ++_cCores;
+            }
+        }
+
+        // 按掩码最低置位升序排列。条目数 <= kMaxLogicalProcessors，插入排序足够且全程无堆分配。
+        for (DWORD _i = 1; _i < _cCores; ++_i)
+        {
+            const ProcessorCoreInfo _Pending = _Cores[_i];
+            // _uMask & (0 - _uMask) 取出最低置位，用它的数值比较等价于比较位号，且无需按位宽分支。
+            const DWORD_PTR _uPendingLow = _Pending.ProcessorMask & ((DWORD_PTR)0 - _Pending.ProcessorMask);
+
+            DWORD _j = _i;
+            for (; _j != 0; --_j)
+            {
+                const DWORD_PTR _uPrevLow = _Cores[_j - 1].ProcessorMask & ((DWORD_PTR)0 - _Cores[_j - 1].ProcessorMask);
+                if (_uPrevLow <= _uPendingLow)
+                {
+                    break;
+                }
+
+                _Cores[_j] = _Cores[_j - 1];
+            }
+
+            _Cores[_j] = _Pending;
+        }
+
+        // Flags 语义：该核含多个逻辑处理器（SMT）时为 1。掩码必然非空，故「清掉最低位后是否仍有位」即可判定。
+        for (DWORD _i = 0; _i != _cCores; ++_i)
+        {
+            const DWORD_PTR _uRest = _Cores[_i].ProcessorMask & (_Cores[_i].ProcessorMask - 1);
+            _Cores[_i].Flags = (_uRest != 0) ? 1 : 0;
+        }
+
+
+        // [阶段 4] 落盘。顺序固定为「所有 Core 在前，单条 NumaNode 在后」。
+        const DWORD _cbRequired = (_cCores + 1) * sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
+
+        if (*ReturnedLength < _cbRequired)
+        {
+            *ReturnedLength = _cbRequired;
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
+
+        // 此处 Buffer 必然非空：Buffer == nullptr 且 *ReturnedLength == 0 已落入上面的「长度不足」分支。
+        auto _pInfo = Buffer;
+
+        for (DWORD _i = 0; _i != _cCores; ++_i, ++_pInfo)
+        {
+            memset(_pInfo, 0, sizeof(*_pInfo));
+            _pInfo->Relationship = RelationProcessorCore;
+            _pInfo->ProcessorMask = _Cores[_i].ProcessorMask;
+            // Flags 位于匿名联合体的 ProcessorCore 命名成员内，不能写成 _pInfo->Flags。
+            _pInfo->ProcessorCore.Flags = _Cores[_i].Flags;
+        }
+
+        memset(_pInfo, 0, sizeof(*_pInfo));
+        _pInfo->Relationship = RelationNumaNode;
+        _pInfo->ProcessorMask = _NumaMask;
+        _pInfo->NumaNode.NodeNumber = 0;
+
+        *ReturnedLength = _cbRequired;
+        SetLastError(_uLastError);
+        return TRUE;
     }
 #endif
 

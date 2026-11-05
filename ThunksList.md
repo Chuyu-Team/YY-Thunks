@@ -471,7 +471,7 @@
 | GetFileInformationByHandleEx               | 调用NtQueryInformationFile 或者 NtQueryDirectoryFile。
 | SetFileInformationByHandle                 | 调用NtSetInformationFile。
 | GetFinalPathNameByHandleW(A)               | 调用NtQueryObject以及NtQueryInformationFile。
-| GetLogicalProcessorInformation             | 返回FALSE，并设置 LastError = ERROR_INVALID_FUNCTION。
+| GetLogicalProcessorInformation             | 内部实现。基于CPUID与亲和性探测重建拓扑。注意：不输出RelationCache(2)与RelationProcessorPackage(3)条目。
 | GetLogicalProcessorInformationEx           | 调用GetLogicalProcessorInformation。
 | GetNumaHighestNodeNumber                   | 返回0。
 | RaiseFailFastException                     | 调用TerminateProcess。
