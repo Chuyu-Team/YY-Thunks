@@ -669,6 +669,11 @@
 | GetPhysicallyInstalledSystemMemory         | 调用GetSystemFirmwareTable。
 | GetNamedPipeClientProcessId                | 内部维护管道PID。
 | GetNamedPipeServerProcessId                | 内部维护管道PID。
+| *GetSystemCpuSetInformation                | 按"一逻辑处理器 = 一 CPU Set"模拟，拓扑取自 GetLogicalProcessorInformationEx。按 Relation.GroupCount 枚举全部处理器组（XP~Vista 上 GLPIEx 的 thunk 只报告 1 组，自动退化）。AllFlags 恒 0（不置 ALLOCATED/PARKED），CoreIndex 为紧凑序号（原生为物理核 id，数值不等），LastLevelCacheIndex/NumaNodeIndex/SchedulingClass/AllocationTag 恒 0。Flags 非 0 返回 ERROR_INVALID_PARAMETER；Process 只影响 AllocatedToTargetProcess，不裁剪集合，但无效句柄返回 ERROR_INVALID_HANDLE、权限不足返回 ERROR_ACCESS_DENIED。枚举缓冲区 8KB 栈不足时按系统回填长度改从堆上分配并重试一次。拓扑查询失败时透传系统错误码。
+| *GetProcessDefaultCpuSets                  | 读本库记录的进程默认 CPU Set。警告：全程用线程亲和性模拟，CPU Set 与亲和性是正交维度，混用会互相干扰；Id 为本地确定性编码（组号×位宽+位序），跨进程不一致。从未设置或已清除时返回 TRUE + 数量 0。NULL 句柄不是当前进程，返回 ERROR_INVALID_HANDLE(6)；须显式传 GetCurrentProcess()。
+| *SetProcessDefaultCpuSets                  | 只把状态记录到 YY_ThunksSharedData（进程内跨 DLL/静态库共享），**不改变任何已存在线程，也不调用 SetProcessAffinityMask**，与原生"只影响此后新建线程"一致。新线程由 TLS 回调在 DLL_THREAD_ATTACH 时继承。非本机 CpuSet Id 返回 ERROR_CPU_SET_INVALID(813)；Id 集合跨多个处理器组时取首个 Id 所属组、其它组丢弃并返回 TRUE；NULL 句柄返回 ERROR_INVALID_HANDLE(6)。跨 CPU 体系（x86↔x64）或目标进程未加载 YY-Thunks 时返回 ERROR_CALL_NOT_IMPLEMENTED(120)。组内处理器数量按组号缓存，运行期热添加的处理器在该进程内需重启后才生效。
+| *GetThreadSelectedCpuSets                  | 从线程组亲和性反推。线程掩码等于所属进程亲和性掩码时视为"未设置"，返回 TRUE + 数量 0（线程亲和性不可能大于进程亲和性）。警告：无法区分"线程继承进程默认"与"线程显式设为该范围"，两种情况下都会返回实际 Id。XP/2003 上由本项目的 GetThreadGroupAffinity thunk（内部走 NtQueryInformationThread）提供支持。
+| *SetThreadSelectedCpuSets                  | 直接映射到 SetThreadGroupAffinity（XP/2003 上由本项目 thunk 退化为 SetThreadAffinityMask）。支持跨进程线程（需 THREAD_SET_INFORMATION，不认 LIMITED 权限）。非本机 CpuSet Id 返回 ERROR_CPU_SET_INVALID(813)；Id 集合跨组时取首个 Id 所属组、其它组丢弃；请求位超出进程亲和性时透传系统的 ERROR_INVALID_PARAMETER(87)（CpuSet 优先级低于进程 Affinity，不生效符合预期，不放宽进程掩码）。清除用 {Group=0, Mask=0} 由系统重置。NULL 句柄返回 ERROR_INVALID_HANDLE(6)。
 
 ## mfplat.dll
 | 函数                                       | Fallback

@@ -157,6 +157,42 @@ extern "C" IMAGE_DOS_HEADER __ImageBase;
 #pragma pack(push, 8)
 namespace
 {
+    // ============================================================================
+    // 进程默认 CPU Set 记录
+    //
+    // 布局：Mask 在前、Group 在后，靠自然对齐让两者落在同一原子单元内：
+    //   x86: KAFFINITY(4B)@0 + WORD(2B)@4 → 补齐到 8B  = 2 指针 → InterlockedCompareExchange64
+    //   x64: KAFFINITY(8B)@0 + WORD(2B)@8 → 补齐到 16B = 2 指针 → InterlockedCompareExchange128
+    //
+    // 字段顺序很关键：若写成 { WORD Group; KAFFINITY Mask; }，x86 上 Mask 会因 4 字节对齐
+    // 落到偏移 4，与 Group 分居两个 32 位单元，单次 64 位 CAS 无法原子覆盖两者。
+    // Mask 在前则 Group 天然落在偏移 4（x86）/ 8（x64），一次 CAS 即可整体替换。
+    //
+    // 不需要任何位打包/解包：Value.Mask / Value.Group 直接读写即可。
+    // ============================================================================
+
+    union YY_ThunksCpuSetRecord
+    {
+        struct
+        {
+            // Mask 必须在前：见上方布局说明。
+            KAFFINITY Mask;
+            WORD      Group;
+        };
+
+        // 原子访问视图。长度恒为 2 个指针。
+        LONG_PTR Raw[2];
+
+#if !defined(_WIN64)
+        // x86 专用：把 Raw[0..1] 视为一个 64 位整体，供 InterlockedCompareExchange64 直接使用。
+        // 若拿 Raw[0]（只有 4 字节）强转成 LONG64*，则高 32 位（Group 所在处）既不参与比较、
+        // 交换时还会被写成 0，并且返回值是完整 64 位旧值，与截断后的比较值永不相等 → CAS 死循环。
+        LONG64 Value64;
+#endif
+    };
+
+    static_assert(sizeof(YY_ThunksCpuSetRecord) == 2 * sizeof(void*), "YY_ThunksCpuSetRecord 必须是 2 个指针大小");
+
     struct DllDirectoryListEntry : public YY::Thunks::ListEntryImpl<DllDirectoryListEntry>
     {
         size_t cchPath = 0;
@@ -180,12 +216,28 @@ namespace
         volatile DWORD bHasCoInitializeMultithreaded;
         // 主、备2条 管道PID池，用于支持GetNamedPipeClientProcessId&GetNamedPipeServerProcessId
         volatile ULONG_PTR pPipePeerPidPoolv1[2];
+
+        volatile YY_ThunksCpuSetRecord CpuSetDefaultRecord;
     };
+
+    // InterlockedCompareExchange128 在 x64 上要求目标 16 字节对齐（未对齐直接 #GP）。
+    // 偏移断言只能证明「记录在结构体内落在 2 指针对齐处」，无法证明「基址本身对齐」：
+    //   * 共享映射视图由 MapViewOfFile 返回，恒 64KB 对齐 → 安全；
+    //   * 静态回退实例 s_DefaultSharedData 的对齐取决于 #pragma pack(8) 下的
+    //     alignof(YY_ThunksSharedData) == 8，链接器把它放在哪不受控 → 可能落到 base%16==8，
+    //     此时 x64 的 cmpxchg16b 会直接崩进程。
+    // 因此除偏移断言外，还必须显式把基址对齐到 16，并用 alignof 断言把风险关进编译期。
+    static_assert(
+        offsetof(YY_ThunksSharedData, CpuSetDefaultRecord) % (2 * sizeof(void*)) == 0,
+        "CpuSetDefaultRecord 必须 2 指针对齐（x64 = 16 字节 / x86 = 8 字节）");
 }
 #pragma pack(pop)
 
 static YY_ThunksSharedData* s_pYY_ThunksSharedData;
-static YY_ThunksSharedData s_DefaultSharedData;
+__declspec(align(16)) static YY_ThunksSharedData s_DefaultSharedData;
+// 必须用 __alignof(变量)：decltype 会剥掉声明上的 __declspec(align())，
+// alignof(decltype(...)) 只能反映类型自身的自然对齐（pack(8) 下是 8），断了也没意义。
+static_assert(__alignof(s_DefaultSharedData) >= 16, "cmpxchg16b 要求共享数据基址 16 字节对齐");
 
 _Ret_notnull_ static YY_ThunksSharedData* __fastcall GetYY_ThunksSharedData() noexcept;
 

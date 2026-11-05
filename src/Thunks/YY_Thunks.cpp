@@ -1466,6 +1466,11 @@ __if_exists(YY::Thunks::Fallback::_CRT_CONCATENATE(try_get_, _FUNCTION))        
 
 #include "YY_Thunks_List.hpp"
 
+#if (YY_Thunks_Target < __WindowsNT10_10240)
+#pragma section(".CRT$XLY", long, read)      // MS CRT Loader TLS Callback（后段）
+extern "C" extern bool _tls_used;
+#endif
+
 #undef __DEFINE_THUNK
 #undef YY_Thunks_Implemented
 
@@ -1625,6 +1630,14 @@ _Ret_notnull_ static YY_ThunksSharedData* __fastcall GetYY_ThunksSharedData() no
 {
     if (auto _pData = s_pYY_ThunksSharedData)
         return _pData;
+
+#if (YY_Thunks_Target < __WindowsNT10_10240)
+    __declspec(allocate(".CRT$XLY")) static PIMAGE_TLS_CALLBACK const s_CpuSetThreadAttachCallback =
+        YY::Thunks::Fallback::CpuSetThreadAttachCallback;
+
+    __foreinclude(s_CpuSetThreadAttachCallback);
+    __foreinclude(_tls_used);
+#endif
 
     // 有一些外部代码没有再API完成后及时的调用GetLastError获取错误信息。而我们的GetYY_ThunksSharedData后面又CreateFileMappingW调用可能覆盖LastError，
     // 这会让可能导致那些不及时调用GetLastError的代码发生逻辑异常，暂时YY帮忙兜底一下……

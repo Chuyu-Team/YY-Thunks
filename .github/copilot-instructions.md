@@ -17,3 +17,4 @@
 - 参考`C++编码风格约定.md`。
 
 ## Project-Specific Rules
+- SDD需求统一创建到：`wiki\features` 目录内，类似：`wiki\features\cpuset-thunk\SDD-status.md`
