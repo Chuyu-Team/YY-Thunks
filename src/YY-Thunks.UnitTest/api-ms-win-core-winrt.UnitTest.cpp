@@ -7,6 +7,37 @@
 #include <windows.ui.viewmanagement.h>
 #include <UIViewSettingsInterop.h>
 
+#include "Thunks/WinRT/Windows.UI.ViewManagement.IUIViewSettings.h"
+
+// YY-Thunks declares its own minimal IUIViewSettings ABI to avoid pulling in the huge WinRT headers
+// (Issue #186). Make sure it stays in sync with the SDK definitions.
+namespace
+{
+    namespace Sdk = ABI::Windows::UI::ViewManagement;
+    namespace Local = YY::Thunks::WinRT::Windows::UI::ViewManagement;
+
+    constexpr bool IsSameGuid(const GUID& _Left, const GUID& _Right)
+    {
+        if (_Left.Data1 != _Right.Data1 || _Left.Data2 != _Right.Data2 || _Left.Data3 != _Right.Data3)
+            return false;
+
+        for (int i = 0; i != 8; ++i)
+        {
+            if (_Left.Data4[i] != _Right.Data4[i])
+                return false;
+        }
+        return true;
+    }
+
+    static_assert(IsSameGuid(__uuidof(Local::IUIViewSettings), __uuidof(Sdk::IUIViewSettings)), "IUIViewSettings IID does not match the SDK");
+    static_assert(sizeof(Local::UserInteractionMode) == sizeof(Sdk::UserInteractionMode), "UserInteractionMode size does not match the SDK");
+    static_assert(static_cast<int>(Local::UserInteractionMode_Mouse) == static_cast<int>(Sdk::UserInteractionMode_Mouse), "UserInteractionMode_Mouse does not match the SDK");
+    static_assert(static_cast<int>(Local::UserInteractionMode_Touch) == static_cast<int>(Sdk::UserInteractionMode_Touch), "UserInteractionMode_Touch does not match the SDK");
+    static_assert(sizeof(Local::IUIViewSettings) == sizeof(Sdk::IUIViewSettings), "IUIViewSettings layout does not match the SDK");
+    static_assert(std::is_same_v<decltype(&Local::IUIViewSettings::get_UserInteractionMode), HRESULT(STDMETHODCALLTYPE Local::IUIViewSettings::*)(Local::UserInteractionMode*)>, "get_UserInteractionMode signature mismatch");
+    static_assert(std::is_same_v<decltype(&Sdk::IUIViewSettings::get_UserInteractionMode), HRESULT(STDMETHODCALLTYPE Sdk::IUIViewSettings::*)(Sdk::UserInteractionMode*)>, "SDK get_UserInteractionMode signature has changed");
+}
+
 #pragma comment(linker, "/INCLUDE:_RoGetActivationFactory@Windows.UI.ViewManagement.UIViewSettings")
 
 namespace Microsoft {

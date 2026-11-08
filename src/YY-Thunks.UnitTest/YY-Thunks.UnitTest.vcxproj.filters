@@ -437,6 +437,9 @@
     <ClInclude Include="..\Thunks\ncrypy.hpp">
       <Filter>Thunks</Filter>
     </ClInclude>
+    <ClInclude Include="..\Thunks\WinRT\Windows.UI.ViewManagement.IUIViewSettings.h">
+      <Filter>WinRT</Filter>
+    </ClInclude>
     <ClInclude Include="..\Thunks\WinRT\Windows.UI.ViewManagement.UIViewSettings.h">
       <Filter>WinRT</Filter>
     </ClInclude>

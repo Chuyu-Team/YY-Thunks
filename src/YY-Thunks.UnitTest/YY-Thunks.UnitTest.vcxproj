@@ -293,6 +293,7 @@
     <ClInclude Include="..\Thunks\uxtheme.hpp" />
     <ClInclude Include="..\Thunks\wevtapi.hpp" />
     <ClInclude Include="..\Thunks\WinHttp.hpp" />
+    <ClInclude Include="..\Thunks\WinRT\Windows.UI.ViewManagement.IUIViewSettings.h" />
     <ClInclude Include="..\Thunks\WinRT\Windows.UI.ViewManagement.UIViewSettings.h" />
     <ClInclude Include="..\Thunks\WinUsb.hpp" />
     <ClInclude Include="..\Thunks\YY_Thunks.h" />

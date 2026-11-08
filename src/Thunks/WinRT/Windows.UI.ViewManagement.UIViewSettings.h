@@ -5,13 +5,14 @@
 #include <activation.h>
 #include <inspectable.h>
 
-#include <windows.ui.viewmanagement.h>
 #include <UIViewSettingsInterop.h>
+
+#include "Windows.UI.ViewManagement.IUIViewSettings.h"
 
 namespace YY::Thunks::Fallback {
 
 namespace {
-class CUIViewSettings : public ABI::Windows::UI::ViewManagement::IUIViewSettings
+class CUIViewSettings : public YY::Thunks::WinRT::Windows::UI::ViewManagement::IUIViewSettings
 {
     static constexpr const GUID s_Iids[] = { __uuidof(IUnknown), __uuidof(IAgileObject), __uuidof(IInspectable), __uuidof(IUIViewSettings) };
 
@@ -88,12 +89,12 @@ public:
     /////////////////////////////////////////////////////////
     // IUIViewSettings
     HRESULT STDMETHODCALLTYPE get_UserInteractionMode(
-        _Out_ ABI::Windows::UI::ViewManagement::UserInteractionMode* InteractionMode) override
+        _Out_ YY::Thunks::WinRT::Windows::UI::ViewManagement::UserInteractionMode* InteractionMode) override
     {
         if (!InteractionMode)
             return E_POINTER;
 
-        *InteractionMode = ABI::Windows::UI::ViewManagement::UserInteractionMode_Mouse;
+        *InteractionMode = YY::Thunks::WinRT::Windows::UI::ViewManagement::UserInteractionMode_Mouse;
         return S_OK;
     }
 };
