@@ -1261,11 +1261,6 @@ namespace YY::Thunks::internal
                         }
 
                         auto GlobalKeyedEventHandle = GetGlobalKeyedEventHandle();
-#if !defined(__USING_NTDLL_LIB)
-                        const auto NtReleaseKeyedEvent = try_get_NtReleaseKeyedEvent();
-                        if (!NtReleaseKeyedEvent)
-                            internal::RaiseStatus(STATUS_NOT_FOUND);
-#endif
 
                         for (auto pItem = LastWake; pItem;)
                         {
@@ -1273,7 +1268,9 @@ namespace YY::Thunks::internal
                             auto Tmp = pItem->back;
 
                             //唤醒等待的Key
-                            NtReleaseKeyedEvent(GlobalKeyedEventHandle, pItem, FALSE, nullptr);
+                            //A waiter whose wait timed out may be in SecondWaitWorkaroundNtWaitForKeyedEvent, which on XP
+                            //returns only once uWakeupThreadId is set: release through SecondWaitWorkaroundNtReleaseKeyedEvent.
+                            internal::SecondWaitWorkaroundNtReleaseKeyedEvent(GlobalKeyedEventHandle, pItem, FALSE, nullptr);
 
                             pItem = Tmp;
                         }
