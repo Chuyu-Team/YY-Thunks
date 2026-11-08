@@ -186,6 +186,7 @@
     <ClCompile Include="api-ms-win-core-winrt.UnitTest.cpp" />
     <ClCompile Include="credui.UnitTest.cpp" />
     <ClCompile Include="ncrypy.UnitTest.cpp" />
+    <ClCompile Include="api-ms-win-core-com.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-file.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-handle.UnitTest.cpp" />
     <ClCompile Include="api-ms-win-core-kernel32-legacy.UnitTest.cpp" />
