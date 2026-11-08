@@ -4,6 +4,7 @@
 #include <roapi.h>
 #include <activation.h>
 #include <inspectable.h>
+#include <winstring.h>
 
 #include <UIViewSettingsInterop.h>
 

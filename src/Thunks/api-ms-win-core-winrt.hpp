@@ -2,6 +2,9 @@
 #include <roapi.h>
 #include <activation.h>
 #include <inspectable.h>
+// WindowsGetStringRawBuffer is used below. <winstring.h> must be included explicitly because
+// api-ms-win-core-winrt-string.hpp only includes it for targets below Windows 8.
+#include <winstring.h>
 #endif
 
 #if (YY_Thunks_Target < __WindowsNT10_10240) && !defined(__Comment_Lib_ole32)
