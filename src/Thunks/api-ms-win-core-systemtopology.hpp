@@ -157,7 +157,69 @@ namespace YY::Thunks
             return pSetThreadGroupAffinity(hThread, GroupAffinity, PreviousGroupAffinity);
         }
 
-        auto NewMask = SetThreadAffinityMask(hThread, GroupAffinity->Mask);
+        if (!GroupAffinity)
+        {
+            SetLastError(ERROR_NOACCESS);
+            return FALSE;
+        }
+
+        if (GroupAffinity->Group != 0)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        KAFFINITY _uAffinityMask = GroupAffinity->Mask;
+        if (_uAffinityMask == 0)
+        {
+            //与系统行为保持一致：Mask为0时，表示使用线程所属进程的亲和性掩码。
+            //注意：hThread可能属于其他进程，不能直接使用当前进程的亲和性掩码。
+            HANDLE _hProcess;
+            if (hThread == GetCurrentThread())
+            {
+                _hProcess = NtGetCurrentProcess();
+            }
+            else
+            {
+                const auto _uProcessId = GetProcessIdOfThread(hThread);
+                if (_uProcessId == 0)
+                {
+                    return FALSE;
+                }
+
+                if (_uProcessId == GetCurrentProcessId())
+                {
+                    _hProcess = NtGetCurrentProcess();
+                }
+                else
+                {
+                    //Windows XP不支持PROCESS_QUERY_LIMITED_INFORMATION，这里由OpenProcess Thunk自动降级。
+                    _hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, _uProcessId);
+                    if (!_hProcess)
+                    {
+                        return FALSE;
+                    }
+                }
+            }
+
+            DWORD_PTR _ProcessAffinityMask = 0;
+            DWORD_PTR _SystemAffinityMask = 0;
+            const auto _bRet = GetProcessAffinityMask(_hProcess, &_ProcessAffinityMask, &_SystemAffinityMask);
+
+            if (_hProcess != NtGetCurrentProcess())
+            {
+                CloseHandle(_hProcess);
+            }
+
+            if (!_bRet)
+            {
+                return FALSE;
+            }
+
+            _uAffinityMask = static_cast<KAFFINITY>(_ProcessAffinityMask);
+        }
+
+        auto NewMask = SetThreadAffinityMask(hThread, _uAffinityMask);
 
         if (NewMask==0)
         {
