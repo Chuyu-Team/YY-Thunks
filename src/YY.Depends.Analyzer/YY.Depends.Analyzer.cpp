@@ -887,42 +887,6 @@ int __cdecl wmain(int argc, wchar_t* argv[])
 {
     _tsetlocale(0, _T(".936"));
 
-    auto _hFile = CreateNamedPipeW(L"\\\\.\\pipe\\YY.Depends.Analyzer", PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 100, 0, 0, 0, nullptr);
-    auto _hFile2 = CreateNamedPipeW(L"\\\\.\\pipe\\YY.Depends.Analyzer", PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 100, 0, 0, 0, nullptr);
-
-    BY_HANDLE_FILE_INFORMATION _oFileInformation1;
-    GetFileInformationByHandle(_hFile, &_oFileInformation1);
-
-    EnumDir(L"\\\\.\\pipe\\");
-
-
-    BY_HANDLE_FILE_INFORMATION _oFileInformation2;
-    GetFileInformationByHandle(_hFile2, &_oFileInformation2);
-
-
-    auto _hFile3= CreateFileW(L"\\\\.\\pipe\\YY.Depends.Analyzer", GENERIC_READ, 0, nullptr, OPEN_EXISTING, 0, nullptr);
-    BY_HANDLE_FILE_INFORMATION _oFileInformation3;
-    GetFileInformationByHandle(_hFile3, &_oFileInformation3);
-
-    //CloseHandle(_hFile);
-    //CloseHandle(_hFile2);
-    // CloseHandle(_hFile3);
-    DisconnectNamedPipe(_hFile);
-    ULONG ClientProcessId = 0;
-    GetNamedPipeClientProcessId(_hFile, &ClientProcessId);
-    ULONG ServerProcessId = 0;
-    GetNamedPipeServerProcessId(_hFile, &ServerProcessId);
-
-
-
-    wchar_t szPipeName1[512] = {};
-    auto pObjectNameInfo = (OBJECT_TYPE_INFORMATION*)szPipeName1;
-    auto _Stat1 = NtQueryObject(_hFile, ObjectBasicInformation, pObjectNameInfo, sizeof(OBJECT_TYPE_INFORMATION), nullptr);
-
-    wchar_t szPipeName2[512] = {};
-    auto pObjectNameInfo2 = (OBJECT_TYPE_INFORMATION*)szPipeName2;
-    auto _Stat2 = NtQueryObject(_hFile2, ObjectBasicInformation, pObjectNameInfo2, sizeof(OBJECT_TYPE_INFORMATION), nullptr);
-
     if (argc < 2)
     {
     __INVALIDARG:
