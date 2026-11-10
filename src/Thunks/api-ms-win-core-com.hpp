@@ -215,4 +215,95 @@ namespace YY::Thunks
         return S_OK;
     }
 #endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+// Exists in ole32 on every supported system (Windows 2000+), so there is no fallback.
+// It is intercepted because windows-rs >= 0.62 and windows-sys >= 0.61 import it from
+// combase.dll (raw-dylib), and combase.dll only exists on Windows 8 and later (issue #187).
+// Defining the IAT symbol here binds every importer (ole32.dll, combase.dll, or
+// api-ms-win-core-com-l1-1-0.dll) to this thunk, which resolves ole32!CoTaskMemAlloc at
+// run time. Do not call ::CoTaskMemAlloc here: that resolves back to this thunk.
+//
+// Contract: same as the system CoTaskMemAlloc. Returns nullptr if the allocation fails.
+__DEFINE_THUNK(
+ole32,
+4,
+LPVOID,
+STDAPICALLTYPE,
+CoTaskMemAlloc,
+    _In_ SIZE_T _cbSize
+    )
+{
+    // ole32 always exports this function. A null pointer here means a broken system,
+    // so crash on purpose instead of hiding it.
+    const auto _pfnCoTaskMemAlloc = try_get_CoTaskMemAlloc();
+    return _pfnCoTaskMemAlloc(_cbSize);
+}
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+// See CoTaskMemAlloc: intercepted only because of the combase.dll import (issue #187).
+//
+// Contract: same as the system CoTaskMemFree. nullptr is allowed and does nothing.
+__DEFINE_THUNK(
+ole32,
+4,
+void,
+STDAPICALLTYPE,
+CoTaskMemFree,
+    _Frees_ptr_opt_ LPVOID _pMemory
+    )
+{
+    const auto _pfnCoTaskMemFree = try_get_CoTaskMemFree();
+    _pfnCoTaskMemFree(_pMemory);
+}
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+// See CoTaskMemAlloc. Intercepted so that the whole CoTaskMem* family resolves the same
+// way no matter which DLL the importer names (issue #187).
+//
+// Contract: same as the system CoTaskMemRealloc.
+__DEFINE_THUNK(
+ole32,
+8,
+LPVOID,
+STDAPICALLTYPE,
+CoTaskMemRealloc,
+    _Pre_maybenull_ _Post_invalid_ LPVOID _pMemory,
+    _In_ SIZE_T _cbSize
+    )
+{
+    const auto _pfnCoTaskMemRealloc = try_get_CoTaskMemRealloc();
+    return _pfnCoTaskMemRealloc(_pMemory, _cbSize);
+}
+#endif
+
+
+#if (YY_Thunks_Target < __WindowsNT6_2)
+
+// See CoTaskMemAlloc: exists in ole32 since Windows 2000, intercepted only because
+// windows-rs >= 0.62 and windows-sys >= 0.61 import it from combase.dll (issue #187).
+//
+// Contract: same as the system CoCreateFreeThreadedMarshaler.
+__DEFINE_THUNK(
+ole32,
+8,
+HRESULT,
+STDAPICALLTYPE,
+CoCreateFreeThreadedMarshaler,
+    _In_opt_ LPUNKNOWN _pUnkOuter,
+    _Outptr_ LPUNKNOWN* _ppUnkMarshal
+    )
+{
+    const auto _pfnCoCreateFreeThreadedMarshaler = try_get_CoCreateFreeThreadedMarshaler();
+    return _pfnCoCreateFreeThreadedMarshaler(_pUnkOuter, _ppUnkMarshal);
+}
+#endif
 }
