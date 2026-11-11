@@ -489,7 +489,12 @@ namespace YY::Thunks::internal
     // 我们始终提供DllMainCRTStartupForYY_Thunks函数，虽然理论上Vista（包含）以上就不用修正了，但是为了做到体验统一
     // 避免Vista模式设置 DllMainCRTStartupForYY_Thunks 就发生链接失败问题。
     // 这个函数的存在意义是修复Windows XP系统显式加载的DLL里无法使用TLS问题。
+#if defined(YY_THUNKS_HARDENED) && YY_THUNKS_HARDENED == 1
+    extern "C" void __cdecl __security_init_cookie();
+    static __declspec(noinline) BOOL WINAPI DllMainCRTStartupForYY_ThunksBody(
+#else
     extern "C" BOOL WINAPI DllMainCRTStartupForYY_Thunks(
+#endif
         HINSTANCE const _hInstance,
         DWORD     const _uReason,
         LPVOID    const _pReserved
@@ -578,5 +583,19 @@ namespace YY::Thunks::internal
             break;
         }
     }
+#if defined(YY_THUNKS_HARDENED) && YY_THUNKS_HARDENED == 1
+    // Initialize the CRT cookie before entering any protected or XP TLS frame.
+    // Requires a compatible CRT; forward every notification and its result unchanged.
+    // Keep this bootstrap free of protected local buffers and exception handlers.
+    extern "C" BOOL WINAPI DllMainCRTStartupForYY_Thunks(
+        _In_ HINSTANCE const _hInstance,
+        _In_ DWORD const _uReason,
+        _In_opt_ LPVOID const _pReserved)
+    {
+        if (_uReason == DLL_PROCESS_ATTACH)
+            __security_init_cookie();
+        return DllMainCRTStartupForYY_ThunksBody(_hInstance, _uReason, _pReserved);
+    }
+#endif
 }
 #endif
