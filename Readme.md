@@ -152,13 +152,16 @@ rustc puts these imports inside each crate's rlib, so they do not use the YY-Thu
 libraries that hold the thunks are linked before the rlibs.
 
 1. Download [YY-Thunks-Lib](https://github.com/Chuyu-Team/YY-Thunks/releases) and unzip it to your project directory.
-2. Use LLD-Link, and add the YY-Thunks lib directory and the subsystem version, for example in `.cargo/config.toml`:
+2. Use LLD-Link, add the YY-Thunks lib directory and the subsystem version, and link the C runtime statically
+   (the dynamic one, `VCRUNTIME140.dll` and `api-ms-win-crt-*.dll`, does not exist on older Windows), for example
+   in `.cargo/config.toml`:
    ```toml
    [target.i686-pc-windows-msvc]
    linker = "rust-lld"
    rustflags = [
        "-C", "link-arg=/LIBPATH:YY-Thunks_Root_Dir/Lib/5.1.2600.0/x86",
        "-C", "link-arg=/SUBSYSTEM:CONSOLE,5.01",
+       "-C", "target-feature=+crt-static",
    ]
    ```
 3. In the `build.rs` of the final crate (bin or cdylib), link these libraries. Libraries named there come before
