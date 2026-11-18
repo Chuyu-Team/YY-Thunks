@@ -146,6 +146,44 @@ as NuGet is designed to be foolproof and easier to use.
        - 64bit DLL：`-alternatename:YY_ThunksOriginalDllMainCRTStartup=_DllMainCRTStartup`
 5. Rebuild the solution.
 
+#### 2.4.3. Rust projects (lib files + LLD-Link)
+Rust std, `windows-sys` 0.61 and later, and `windows`/`windows-core` 0.62 and later import some functions through `raw-dylib`.
+rustc puts these imports inside each crate's rlib, so they do not use the YY-Thunks lib files unless the
+libraries that hold the thunks are linked before the rlibs.
+
+1. Download [YY-Thunks-Lib](https://github.com/Chuyu-Team/YY-Thunks/releases) and unzip it to your project directory.
+2. Use LLD-Link, add the YY-Thunks lib directory and the subsystem version, and link the C runtime statically
+   (the dynamic one, `VCRUNTIME140.dll` and `api-ms-win-crt-*.dll`, does not exist on older Windows), for example
+   in `.cargo/config.toml`:
+   ```toml
+   [target.i686-pc-windows-msvc]
+   linker = "rust-lld"
+   rustflags = [
+       "-C", "link-arg=/LIBPATH:YY-Thunks_Root_Dir/Lib/5.1.2600.0/x86",
+       "-C", "link-arg=/SUBSYSTEM:CONSOLE,5.01",
+       "-C", "target-feature=+crt-static",
+   ]
+   ```
+3. In the `build.rs` of the final crate (bin or cdylib), link these libraries. Libraries named there come before
+   the rlibs, and LLD-Link uses the first library that defines a symbol:
+   ```rust
+   fn main() {
+       for lib in ["kernel32", "synchronization", "ole32"] {
+           println!("cargo:rustc-link-lib={lib}");
+       }
+   }
+   ```
+   | Library | Needed for |
+   | ------- | ---------- |
+   | `kernel32` | Rust std: `ProcessPrng` (every program) |
+   | `synchronization` | Rust std: `WaitOnAddress`, `WakeByAddressSingle`, `WakeByAddressAll` (every program) |
+   | `ole32` | `windows-core` 0.62 / `windows-sys` 0.61: `CoTaskMemAlloc`, `CoTaskMemFree`, `CoCreateFreeThreadedMarshaler` |
+4. If the project is a `Dynamic Link Library`, also follow step 4 of 2.4.2.
+5. Rebuild the project.
+
+> Note: The list depends on your dependencies. Other crates that use `windows-sys` 0.61 or later may import
+  from other DLLs, such as `ws2_32` or `ntdll`; link those libraries the same way. Check the result with `YY.Depends.Analyzer`.
+
 ## 3. Compatibility
 
 ### 3.1. Supported Compiler
