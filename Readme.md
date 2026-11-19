@@ -146,6 +146,28 @@ as NuGet is designed to be foolproof and easier to use.
        - 64bit DLL：`-alternatename:YY_ThunksOriginalDllMainCRTStartup=_DllMainCRTStartup`
 5. Rebuild the solution.
 
+### 2.5. Building hardened x86/x64 objects and libraries
+
+From an x86 or x64 Visual Studio developer command prompt, with the normal
+`Build.cmd` prerequisites (including LibMaker) available:
+
+```cmd
+set YY_THUNKS_HARDENED=1
+call src\Build.cmd
+```
+
+This opt-in adds `/W4 /GS /Qspectre` to both object and library builds. It requires
+an MSVC compiler that supports `/Qspectre`. Consumers must link a compatible MSVC
+CRT providing `__security_init_cookie`; the DLL entry initializes the cookie
+before YY-Thunks initialization or XP TLS handling. The usual original/custom
+CRT entry is still called afterwards. Unset the variable, or set it to `0`, to
+retain the default `/GS-` build. ARM and ARM64 builds retain their existing flags.
+
+Standalone regression tests run with
+`python src\YY-Thunks.UnitTest\hardening\test_hardening.py` in the same developer
+prompt. They require Python 3 and the .NET Framework C# compiler, and exercise
+the actual batch commands, startup callbacks, and a DLL loaded with `LoadLibrary`.
+
 ## 3. Compatibility
 
 ### 3.1. Supported Compiler
